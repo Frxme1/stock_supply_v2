@@ -89,7 +89,7 @@ function form_owner()
 
 
     // section search
-    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $search = isset($_GET['device_search']) ? $_GET['device_search'] : '';
     $search_sql = '';
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
@@ -119,10 +119,21 @@ function form_owner()
 
     <!-- form search -->
     <form method="GET" action="">
+<?php
+foreach ($_GET as $key => $value) {
+    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+        if (is_array($value)) {
+            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
+        } else {
+            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+        }
+    }
+}
+?>
         <div class="row align-items-center g-2">
             <label class="col-auto col-form-label">Employee</label>
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <input type="text" name="search" list="search_suggestions" class="form-control" placeholder="Search Employee..." value="<?= esc_attr($search) ?>" />
+                <input type="text" name="device_search" list="search_suggestions" class="form-control" placeholder="Search Employee..." value="<?= esc_attr($search) ?>" />
                 <datalist id="search_suggestions">
                     <?php foreach ($suggestions as $suggest): ?>
                         <option value="<?= esc_attr($suggest) ?>"></option>
@@ -130,7 +141,7 @@ function form_owner()
                 </datalist>
             </div>
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit">🔍 Search</button>
+                <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
             </div>
         </div>
 
@@ -147,63 +158,69 @@ function form_owner()
         </div>
     </form>
 
-    <div class="table-responsive-xl">
-        <table class="table table-bordered text-center">
-            <tr class="table-secondary">
-                <th class="py-3">NickName</th>
-                <th class="py-3">FirstName</th>
-                <th class="py-3">LastName</th>
-                <th class="py-3">Department</th>
-                <th class="py-3">Position</th>
-                <th class="py-3">Status</th>
-                <th class="py-3">Action</th>
-            </tr>
-            <?php foreach ($rows as $row): ?>
+    <div class="table-responsive-xl rounded">
+        <table class="table table-bordered table-sm">
+            <thead class="table-secondary">
                 <tr>
-                    <td><?= $row->Nickname ?></td>
-                    <td><?= $row->FirstName ?></td>
-                    <td><?= $row->LastName ?></td>
-                    <td style="width: 200px;"><?= $row->Department ?></td>
-                    <td><?= $row->Position ?></td>
-                    <td>
+                    <th class="text-nowrap py-3 text-start" style="width: 15%;">NickName</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 15%;">FirstName</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 15%;">LastName</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 25%;">Department</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 10%;">Position</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 10%;">Status</th>
+                    <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($rows as $index => $row): ?>
+                <tr>
+                    <td class="text-start align-middle"><?= $row->Nickname ?></td>
+                    <td class="text-start align-middle"><?= $row->FirstName ?></td>
+                    <td class="text-start align-middle"><?= $row->LastName ?></td>
+                    <td class="text-start align-middle" style="width: 200px;"><?= $row->Department ?></td>
+                    <td class="text-start align-middle"><?= $row->Position ?></td>
+                    <td class="text-start align-middle">
                         <?php
                         $status = $row->Status;
                         $emojis = [
-                            'Active'   => '🟢',
-                            'Resigned' => '🔴',
+                            'Active'   => '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>',
+                            'Resigned' => '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>',
                         ];
                         echo ($emojis[$status] ?? '') . ' ' . esc_html($status);
                         ?>
                     </td>
 
-                    <td>
-                        <div class="action-menu">
-                            <div style="text-align: center;">
-                                <button class="action-btn" style="background-color: #8bd8f4;">⋮</button>
-                            </div>
-                            <div class="action-dropdown" style="text-align: start;">
-                                <a href="?edit=<?= $row->OwnerID ?>">⚙️ Edit</a>
+                    <td class="text-center align-middle">
+                        <div class="dropdown action-menu text-center">
+                            <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                ...
+                            </button>
+                            <div class="dropdown-menu action-dropdown text-start">
+                                <div class="action-dropdown-header">Actions</div>
+                                <div class="action-dropdown-separator"></div>
+                                <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
                                 <?php if ($row->Status == 'Available'): ?>
-                                    <a href="?receive=<?= $row->OwnerID ?>">📦 Receive</a>
-                                    <a href="?maintenance=<?= $row->OwnerID ?>">🛠 Maintenance</a>
-                                    <a href="?retire=<?= $row->OwnerID ?>">⚫ Retired</a>
+                                    <a href="?receive=<?= $row->OwnerID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                    <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                    <a href="?retire=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                 <?php elseif ($row->Status == 'In Use'): ?>
-                                    <a href="?return=<?= $row->OwnerID ?>">↩️ Return</a>
-                                    <a href="?maintenance=<?= $row->OwnerID ?>">🛠 Maintenance</a>
-                                    <a href="?retire=<?= $row->OwnerID ?>">⚫ Retired</a>
+                                    <a href="?return=<?= $row->OwnerID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
+                                    <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                    <a href="?retire=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                 <?php elseif ($row->Status == 'Maintenance'): ?>
-                                    <a href="?available=<?= $row->OwnerID ?>">🟢 Available</a>
-                                    <a href="?retire=<?= $row->OwnerID ?>">⚫ Retired</a>
+                                    <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
+                                    <a href="?retire=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                 <?php elseif ($row->Status == 'Retired'): ?>
-                                    <a href="?available=<?= $row->OwnerID ?>">🟢 Available</a>
+                                    <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
                                 <?php endif; ?>
-                                <a href="#" onclick="confirmDelete('<?= $row->OwnerID ?>')">🗑 Delete</a>
+                                <a href="#" onclick="confirmDelete('<?= $row->OwnerID ?>')"><i class="fa-solid fa-trash-can"></i> Delete</a>
                             </div>
                         </div>
                     </td>
 
                 </tr>
             <?php endforeach; ?>
+            </tbody>
         </table>
     </div>
 

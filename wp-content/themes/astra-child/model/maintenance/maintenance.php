@@ -25,7 +25,7 @@ function device_crud_maintenance()
 
 
     // section search
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
     $where_sql = "WHERE Status = 'Maintenance'";
 
     if (!empty($search)) {
@@ -53,22 +53,35 @@ function device_crud_maintenance()
     $suggestions = $wpdb->get_col("SELECT DISTINCT Brand FROM $table_mainten ORDER BY Category LIMIT 50");
 
 
-    function formatName($el)
-    {
-        $el = trim($el);
-        $el = preg_replace('/\(\s*\)/', '', $el);
-        return htmlspecialchars($el ?: '-');
+    if (!function_exists('formatName')) {
+        function formatName($el)
+        {
+            $el = trim($el);
+            $el = preg_replace('/\(\s*\)/', '', $el);
+            return htmlspecialchars($el ?: '-');
+        }
     }
 ?>
 
 
-    <div class="container-fluid" style="margin: 0 -10px;">
+    <div class="container-fluid">
         <form method="GET" action="">
+<?php
+foreach ($_GET as $key => $value) {
+    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+        if (is_array($value)) {
+            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
+        } else {
+            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+        }
+    }
+}
+?>
             <div class="row align-items-center g-2">
                 <label class="col-auto col-form-label">Device</label>
 
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <input type="text" name="search" list="search_suggestions" class="form-control" placeholder="Search Device..." value="<?= esc_attr($search) ?>" />
+                    <input type="text" name="device_search" list="search_suggestions" class="form-control" placeholder="Search Device..." value="<?= esc_attr($search) ?>" />
                     <datalist id="search_suggestions">
                         <?php foreach ($suggestions as $suggest): ?>
                             <option value="<?= esc_attr($suggest) ?>"></option>
@@ -77,98 +90,151 @@ function device_crud_maintenance()
                 </div>
 
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit">🔍 Search</button>
+                    <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
                 </div>
             </div>
         </form>
 
 
         <br>
-        <div class="table-responsive-xl">
-            <table class="table table-bordered table-sm text-center">
-                <tr class="table-secondary">
-                    <th class="py-3">ID</th>
-                    <th class="py-3">Category</th>
-                    <th class="py-3">Brand</th>
-                    <th class="py-3">Model</th>
-                    <th class="py-3">Serial No.</th>
-                    <th class="py-3">Owner</th>
-                    <th class="py-3">Department</th>
-                    <!-- <th>KeywordID</th> -->
-                    <th class="py-3">Status</th>
-                    <th class="py-3">Repair Date</th>
-                    <th class="py-3">Details</th>
-                    <!-- <th>AddDeviceDate</th> -->
-                    <th class="py-3">Action</th>
-                </tr>
-                <?php foreach ($rows as $row): ?>
+        <div class="table-responsive-xl rounded">
+            <table class="table table-bordered table-sm">
+                <thead class="table-secondary">
                     <tr>
-                        <td><?= $row->DeviceID ?></td>
-                        <td><?= $row->Category ?></td>
-                        <td><?= $row->Brand ?></td>
-                        <td><?= $row->Model ?></td>
-                        <td><?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></td>
-                        <td style="min-width: 150px;">
-                            <?= $row->Owner ?>
+                        <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 25%;">Owner</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
+                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($rows as $index => $row): ?>
+                    <tr>
+                        <td class="align-middle text-start"><?= $row->DeviceID ?></td>
+                        <td class="text-start align-middle">
+                            <strong><?= $row->Brand ?> <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
+                            <small class="text-muted"><?= $row->Category ?> | SN: <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
                         </td>
-                        <td>
-                            <?php
-                            echo formatName($row->Department);
-                            ?>
+                        <td class="align-middle text-start">
+                            <strong><?= formatName($row->Owner) ?></strong><br>
+                            <small class="text-muted"><?= formatName($row->Department) ?></small>
                         </td>
 
-                        <td style="width: 10%; white-space: nowrap">
+                        <td class="align-middle text-start">
                             <?php
                             $status = $row->Status;
                             $emoji = '';
                             if (strcasecmp($status, 'Available') === 0) {
-                                $emoji = '🟢';
+                                $emoji = '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>';
                             } elseif (strcasecmp($status, 'In Use') === 0) {
-                                $emoji = '🔴';
+                                $emoji = '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>';
                             } elseif (strcasecmp($status, 'Maintenance') === 0) {
-                                $emoji = '🟡';
+                                $emoji = '<i class="fa-solid fa-circle text-warning" style="font-size:12px;"></i>';
                             } elseif (strcasecmp($status, 'Retired') === 0) {
-                                $emoji = '⚫';
+                                $emoji = '<i class="fa-solid fa-circle text-dark" style="font-size:12px;"></i>';
                             }
                             echo $emoji . ' ' . esc_html($status);
                             ?>
                         </td>
 
-                        <td style="width: 8rem;"><?= $row->RepairDate ?></td>
-                        <td><?= $row->Details ?></td>
-                        <!-- <td>AddDeviceDate</td> -->
-                        <td>
-                            <div class="action-menu">
-                                <div style="text-align: center;">
-                                    <button class="action-btn" style="background-color: #8bd8f4;">⋮</button>
-                                </div>
-                                <div class="action-dropdown" style="text-align: start; z-index: 10000;">
-                                    <a href="?edit=<?= $row->DeviceID ?>">⚙️ Edit</a>
-                                    <a href="?view=<?= $row->DeviceID ?>">🔍 View Details</a>
-                                    <?php if ($row->Status == 'Available'): ?>
-                                        <a href="?receive=<?= $row->DeviceID ?>">📦 Receive</a>
-                                        <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                        <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
-                                    <?php elseif ($row->Status == 'In Use'): ?>
-                                        <a href="?return=<?= $row->DeviceID ?>">↩️ Return</a>
-                                        <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                        <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
-                                    <?php elseif ($row->Status == 'Maintenance'): ?>
-                                        <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
-                                        <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
-                                    <?php elseif ($row->Status == 'Retired'): ?>
-                                        <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
-                                    <?php endif; ?>
-                                    <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')">🗑 Delete</a>
+                        <td class="align-middle text-center">
+                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
+                                <div class="dropdown action-menu mb-0 text-center">
+                                    <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                        ...
+                                    </button>
+                                    <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
+                                        <div class="action-dropdown-header">Actions</div>
+                                        <div class="action-dropdown-separator"></div>
+                                        <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                        <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
+                                        <?php if ($row->Status == 'Available'): ?>
+                                            <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                            <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <?php elseif ($row->Status == 'In Use'): ?>
+                                            <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
+                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                            <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <?php elseif ($row->Status == 'Maintenance'): ?>
+                                            <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
+                                            <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <?php elseif ($row->Status == 'Retired'): ?>
+                                            <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
+                                        <?php endif; ?>
+                                        <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')"><i class="fa-solid fa-trash-can"></i> Delete</a>
+                                    </div>
                                 </div>
                             </div>
                         </td>
-
+                    </tr>
+                    <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
+                        <td colspan="5" class="p-0 border-0">
+                            <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
+                                <div class="p-3 bg-light text-start m-2 rounded border">
+                                    <div class="row">
+                                        <div class="col-sm-3 mb-2 mb-sm-0">
+                                            <span class="text-muted d-block" style="font-size: 0.85em;">Repair Date</span>
+                                            <strong><?= formatName($row->RepairDate) ?></strong>
+                                        </div>
+                                        <div class="col-sm-9 mb-2 mb-sm-0">
+                                            <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance Reason / Details</span>
+                                            <strong class="text-danger"><?= formatName($row->Details) ?></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
+                </tbody>
             </table>
         </div>
         <!-- Pagination -->
+        <style>
+            .collapse-content {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+        </style>
+        <script>
+            function toggleRow(id) {
+                const allContents = document.querySelectorAll('.collapse-content');
+                allContents.forEach(content => {
+                    if (content.id !== 'content-' + id && content.style.maxHeight !== '0px' && content.style.maxHeight !== '') {
+                        content.style.maxHeight = '0px';
+                        const otherBtn = document.getElementById('btn-' + content.id.replace('content-', ''));
+                        if (otherBtn) otherBtn.innerHTML = '▼';
+                        setTimeout(() => {
+                            const tr = document.getElementById('details-' + content.id.replace('content-', ''));
+                            if (tr) tr.style.display = 'none';
+                        }, 300);
+                    }
+                });
+
+                const row = document.getElementById('details-' + id);
+                const content = document.getElementById('content-' + id);
+                const btn = document.getElementById('btn-' + id);
+
+                if (row.style.display === 'none' || row.style.display === '') {
+                    row.style.display = 'table-row';
+                    setTimeout(() => {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                    }, 10);
+                    if (btn) btn.innerHTML = '▲';
+                } else {
+                    content.style.maxHeight = '0px';
+                    if (btn) btn.innerHTML = '▼';
+                    setTimeout(() => {
+                        row.style.display = 'none';
+                    }, 300);
+                }
+            }
+        </script>
+        
         <div class="d-flex justify-content-center mt-4">
             <ul class="pagination">
                 <?php

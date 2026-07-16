@@ -36,7 +36,7 @@ function device_view_details($device_id = null)
     $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
     $offset = ($current_page - 1) * $page;
 
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
 
     $where = "WHERE h.DeviceID = %s";
     $params = [$device_id];
@@ -81,6 +81,17 @@ function device_view_details($device_id = null)
 ?>
     <div class="container-fluid px-3">
         <form method="GET" action="">
+<?php
+foreach ($_GET as $key => $value) {
+    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+        if (is_array($value)) {
+            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
+        } else {
+            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+        }
+    }
+}
+?>
             <div class="d-flex flex-column flex-md-row align-items-start gap-2 gap-md-3">
                 <input type="hidden" name="view" value="<?= esc_attr($device->DeviceID) ?>">
 
@@ -88,53 +99,17 @@ function device_view_details($device_id = null)
                     Device Details: <?= esc_html($device->DeviceID) ?> (<?= esc_html($device->Model) ?>)
                 </h2>
 
-                <!-- Section Search -->
-                <input type="text" name="search" list="search_suggestions"
-                    class="form-control w-100 w-md-auto"
-                    style="max-width: 400px;"
-                    placeholder="Search Details..."
-                    value="<?= esc_attr($search) ?>">
-
-                <!-- Button Search -->
-                <button type="submit" class="btn btn-info rounded-pill ms-md-2">
-                    🔍 Search
-                </button>
+                <!-- Button Search (Moved below) -->
 
                 <!-- Button Print Label -->
                 <button type="button" class="btn btn-secondary rounded-pill ms-md-2" onclick="printDeviceLabels([{ id: '<?= esc_js($device->DeviceID) ?>', sn: '<?= esc_js($device->SerialNumber) ?>' }])">
-                    🖨️ Print Label
+                    <i class="fa-solid fa-print"></i> Print Label
                 </button>
 
-                <!-- datalist suggestions -->
-                <datalist id="search_suggestions">
-                    <?php foreach ($suggestions as $suggest): ?>
-                        <option value="<?= esc_attr($suggest) ?>"></option>
-                    <?php endforeach; ?>
-                </datalist>
-
-
-                <div class="action-menu">
-                    <button class="action-btn" style="background-color: #8bd8f4;">☰</button>
-                    <div class="action-dropdown">
-                        <a href="?edit=<?= esc_attr($device->DeviceID) ?>">⚙️ Edit</a>
-                        <a href="?view=<?= esc_attr($device->DeviceID) ?>">🔍 View Details</a>
-                        <?php if ($device->StatusName == 'Available'): ?>
-                            <a href="?receive=<?= esc_attr($device->DeviceID) ?>">📦 Receive</a>
-                            <a href="?maintenance=<?= esc_attr($device->DeviceID) ?>">🛠 Maintenance</a>
-                            <a href="?retired=<?= esc_attr($device->DeviceID) ?>">⚫ Retired</a>
-                        <?php elseif ($device->StatusName == 'In Use'): ?>
-                            <a href="?return=<?= esc_attr($device->DeviceID) ?>">↩️ Return</a>
-                            <a href="?maintenance=<?= esc_attr($device->DeviceID) ?>">🛠 Maintenance</a>
-                            <a href="?retired=<?= esc_attr($device->DeviceID) ?>">⚫ Retired</a>
-                        <?php elseif ($device->StatusName == 'Maintenance'): ?>
-                            <a href="?available=<?= esc_attr($device->DeviceID) ?>">🟢 Available</a>
-                            <a href="?retired=<?= esc_attr($device->DeviceID) ?>">⚫ Retired</a>
-                        <?php elseif ($device->StatusName == 'Retired'): ?>
-                            <a href="?available=<?= esc_attr($device->DeviceID) ?>">🟢 Available</a>
-                        <?php endif; ?>
-                        <a href="#" onclick="confirmDelete('<?= esc_attr($device->DeviceID) ?>')">🗑 Delete</a>
-                    </div>
-                </div>
+                <!-- Back Button instead of Hamburger -->
+                <button type="button" class="btn btn-outline-secondary rounded-pill ms-md-2" onclick="history.back()">
+                    🔙 Back
+                </button>
 
             </div>
     </div>
@@ -146,24 +121,30 @@ function device_view_details($device_id = null)
 
 
     <h3>📋 Device</h3>
-    <div class="row mb-4">
-        <div class="col-12 d-flex flex-column flex-md-row justify-content-between">
-            <div class="d-flex flex-column gap-3" style="flex: 1; max-width: 30%;">
-                <div>ID : <?= ($device->DeviceID) ?></div>
-                <div>Category : <?= ($device->CategoryName) ?></div>
-            </div>
+    <div class="card shadow-sm border-0 mb-4" style="border-radius: var(--md-radius-md); background-color: #fff;">
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-12 d-flex flex-column flex-md-row justify-content-between">
+                    <div class="d-flex flex-column gap-3" style="flex: 1; max-width: 30%;">
+                        <div><span class="text-muted" style="font-size: 0.85em; display: block;">ID</span> <strong class="fs-5"><?= esc_html($device->DeviceID) ?></strong></div>
+                        <div><span class="text-muted" style="font-size: 0.85em; display: block;">Category</span> <strong><?= esc_html($device->CategoryName) ?></strong></div>
+                    </div>
 
-            <div class="d-flex flex-column gap-3" style="flex: 1; max-width: 30%;">
-                <div>Brand : <?= ($device->BrandName) ?></div>
-                <div>Model : <?= ($device->Model) ?></div>
-            </div>
+                    <div class="d-flex flex-column gap-3" style="flex: 1; max-width: 30%;">
+                        <div><span class="text-muted" style="font-size: 0.85em; display: block;">Brand</span> <strong><?= esc_html($device->BrandName) ?></strong></div>
+                        <div><span class="text-muted" style="font-size: 0.85em; display: block;">Model</span> <strong><?= esc_html($device->Model) ?></strong></div>
+                    </div>
 
-            <div class="d-flex flex-column gap-3" style="flex: 1; max-width: 30%;">
-                <div>SerialNumber : <?= ($device->SerialNumber) ?></div>
-                <div>Status :
-                    <?=
-                    ($device->StatusName === 'Available' ? '🟢 Available' : ($device->StatusName === 'In Use' ? '🔴 In Use' : ($device->StatusName === 'Maintenance' ? '🟡 Maintenance' : ($device->StatusName === 'Retired' ? '⚫ Retired' : '❔'))))
-                    ?>
+                    <div class="d-flex flex-column gap-3" style="flex: 1; max-width: 30%;">
+                        <div><span class="text-muted" style="font-size: 0.85em; display: block;">Serial Number</span> <strong class="fs-5"><?= esc_html($device->SerialNumber) ?></strong></div>
+                        <div><span class="text-muted" style="font-size: 0.85em; display: block;">Status</span>
+                            <strong>
+                            <?=
+                            ($device->StatusName === 'Available' ? '<i class="fa-solid fa-circle text-success"></i> Available' : ($device->StatusName === 'In Use' ? '<i class="fa-solid fa-circle text-danger"></i> In Use' : ($device->StatusName === 'Maintenance' ? '<i class="fa-solid fa-circle text-warning"></i> Maintenance' : ($device->StatusName === 'Retired' ? '<i class="fa-solid fa-circle text-dark"></i> Retired' : '❔'))))
+                            ?>
+                            </strong>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -173,9 +154,31 @@ function device_view_details($device_id = null)
     <br>
     <hr>
     <br>
-    <h3>🕒 History</h3>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">🕒 History</h3>
+        
+        <!-- Moved Search Section -->
+        <div class="d-flex align-items-center gap-3">
+            <input type="text" name="device_search" list="search_suggestions"
+                class="form-control form-control-sm"
+                style="max-width: 250px;"
+                placeholder="Search History..."
+                value="<?= esc_attr($search) ?>">
+            <button type="submit" class="btn btn-sm btn-info rounded-pill" style="white-space: nowrap; flex-shrink: 0;">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+            <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
+            <a href="<?= esc_url($reset_url) ?>" class="btn btn-sm btn-outline-secondary rounded-pill" style="white-space: nowrap; flex-shrink: 0;">Reset</a>
+            
+            <datalist id="search_suggestions">
+                <?php foreach ($suggestions as $suggest): ?>
+                    <option value="<?= esc_attr($suggest) ?>"></option>
+                <?php endforeach; ?>
+            </datalist>
+        </div>
+    </div>
 
-    <div class="table-responsive rounded">
+    <div class="table-responsive rounded shadow-sm bg-white">
         <table class="table table-bordered text-center mb-0">
             <thead class="table-secondary">
                 <tr>
@@ -183,7 +186,6 @@ function device_view_details($device_id = null)
                     <th class="py-3">Date</th>
                     <th class="py-3">Description</th>
                     <th class="py-3">User</th>
-                    <th class="py-3">Category</th>
                     <th class="py-3">Owner</th>
                 </tr>
             </thead>
@@ -196,9 +198,15 @@ function device_view_details($device_id = null)
                     <tr>
                         <td><?= esc_html($row->Action) ?></td>
                         <td><?= esc_html($date->format("d/m/Y H:i:s")) ?></td>
-                        <td><?= esc_html($row->Description) ?></td>
+                        <td class="text-start">
+                            <?php 
+                                $desc = $row->Description;
+                                $desc = preg_replace('/^Device ID [A-Za-z0-9_-]+\s*/i', '', $desc);
+                                $desc = ucfirst($desc);
+                                echo esc_html($desc);
+                            ?>
+                        </td>
                         <td><?= esc_html($row->user_email) ?></td>
-                        <td><?= esc_html($device->CategoryName ?? '-') ?></td>
                         <td><?= esc_html($row->Owner) ?></td>
                     </tr>
                 <?php endforeach; ?>

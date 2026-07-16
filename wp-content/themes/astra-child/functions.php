@@ -152,7 +152,7 @@ function enqueue_device_form_styles()
         'device-form-style',
         get_stylesheet_directory_uri() . '/css/style.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_device_form_styles');
@@ -167,7 +167,7 @@ function enqueue_device_dashboard_styles()
         'device-dashboard-style',
         get_stylesheet_directory_uri() . '/css/device_dashboard.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/device_dashboard.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/device_dashboard.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_device_dashboard_styles');
@@ -182,7 +182,7 @@ function enqueue_device_dashboard()
         'style-device-dashboard',
         get_stylesheet_directory_uri() . '/css/style_device_dashboard.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style_device_dashboard.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style_device_dashboard.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_device_dashboard');
@@ -195,7 +195,7 @@ function enqueue_monitor_dashboard()
         'style-monitor-dashboard',
         get_stylesheet_directory_uri() . '/css/style_monitor_dashboard.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style_monitor_dashboard.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style_monitor_dashboard.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_monitor_dashboard');
@@ -210,7 +210,7 @@ function enqueue_laptop_dashboard()
         'style-laptop-dashboard',
         get_stylesheet_directory_uri() . '/css/style_laptop_dashboard.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style_laptop_dashboard.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style_laptop_dashboard.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_laptop_dashboard');
@@ -223,7 +223,7 @@ function enqueue_accessories_dashboard()
         'style-accessories-dashboard',
         get_stylesheet_directory_uri() . '/css/style_accessories_dashboard.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style_accessories_dashboard.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style_accessories_dashboard.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_accessories_dashboard');
@@ -241,7 +241,7 @@ function enqueue_receive_device_styles()
         'receive-device-style',
         get_stylesheet_directory_uri() . '/css/style_receive_device.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style_receive_device.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style_receive_device.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_receive_device_styles');
@@ -255,7 +255,7 @@ function enqueue_maintenance_styles()
         'maintenance-style',
         get_stylesheet_directory_uri() . '/css/style_maintenance.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style_maintenance.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style_maintenance.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_maintenance_styles');
@@ -266,6 +266,7 @@ add_action('wp_enqueue_scripts', 'enqueue_maintenance_styles');
 function load_bootstrap_cdn()
 {
     wp_enqueue_style('bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
     wp_enqueue_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js', array(), null, true);
 }
 add_action('wp_enqueue_scripts', 'load_bootstrap_cdn');
@@ -279,7 +280,7 @@ function enqueue_action_menu_styles()
         'action-menu-style',
         get_stylesheet_directory_uri() . '/css/style_action_menu.css',
         [],
-        filemtime(get_stylesheet_directory_uri() . '/css/style_action_menu.css') //auto-refresh cache
+        filemtime(get_stylesheet_directory() . '/css/style_action_menu.css') //auto-refresh cache
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_action_menu_styles');

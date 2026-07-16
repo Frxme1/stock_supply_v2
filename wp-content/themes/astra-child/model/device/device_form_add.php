@@ -72,14 +72,16 @@ function device_form($editing = null)
 		$category_id = intval($_POST['CategoryID']);
 	}
 
-	function generate_next_device_id($category_data, $category_id)
-	{
-		if (!$category_id || !isset($category_data[$category_id])) {
-			return '';
+	if (!function_exists('generate_next_device_id')) {
+		function generate_next_device_id($category_data, $category_id)
+		{
+			if (!$category_id || !isset($category_data[$category_id])) {
+				return '';
+			}
+			$prefix = $category_data[$category_id]['prefix'];
+			$last_number = $category_data[$category_id]['last_number'] + 1;
+			return $prefix . str_pad($last_number, 3, '0', STR_PAD_LEFT);
 		}
-		$prefix = $category_data[$category_id]['prefix'];
-		$last_number = $category_data[$category_id]['last_number'] + 1;
-		return $prefix . str_pad($last_number, 3, '0', STR_PAD_LEFT);
 	}
 
 	$device_id = $editing

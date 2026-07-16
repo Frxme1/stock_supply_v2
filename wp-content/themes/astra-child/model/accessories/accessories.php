@@ -27,11 +27,10 @@ function device_crud_acc_sories()
 
     // --- ADVANCED FILTER LOGIC ---
     // Get filter parameters
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
     $filter_status = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
     $filter_keyword = isset($_GET['filter_keyword']) ? trim($_GET['filter_keyword']) : '';
     $filter_department = isset($_GET['filter_department']) ? trim($_GET['filter_department']) : '';
-
 
     $search_sql = "WHERE Category = 'Accessories'";
 
@@ -39,7 +38,18 @@ function device_crud_acc_sories()
         $like = '%' . $wpdb->esc_like($search) . '%';
         $search_sql .= $wpdb->prepare(
             " AND (Brand LIKE %s OR DeviceID LIKE %s OR Department LIKE %s OR NickName LIKE %s OR Status LIKE %s OR Model LIKE %s OR SerialNumber LIKE %s OR Owner LIKE %s OR ReceiveDate LIKE %s OR ReturnDate LIKE %s OR Keyword LIKE %s OR RepairDate LIKE %s)",
-            $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like
         );
     }
     if (!empty($filter_status)) {
@@ -62,31 +72,50 @@ function device_crud_acc_sories()
     $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY DeviceID DESC LIMIT $page OFFSET $offset");
     // -------------------------------------------
 
-    function formatName($el)
-    {
-        $el = trim($el);
-        $el = preg_replace('/\(\s*\)/', '', $el);
-        return htmlspecialchars($el ?: '-');
+    if (!function_exists('formatName')) {
+        function formatName($el)
+        {
+            $el = trim($el);
+            $el = preg_replace('/\(\s*\)/', '', $el);
+            return htmlspecialchars($el ?: '-');
+        }
     }
 
-?>
+    ?>
 
-    <div class="container-fluid" style="margin: 0 -20px;">
+    <div class="container-fluid">
         <div class="row mb-3 align-items-end">
             <div class="col-md-9">
                 <form method="GET" action="" id="advanced-filter-form">
+                    <?php
+                    foreach ($_GET as $key => $value) {
+                        if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                            if (is_array($value)) {
+                                foreach ($value as $v) {
+                                    echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
+                                }
+                            } else {
+                                echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                            }
+                        }
+                    }
+                    ?>
                     <div class="row g-2">
                         <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Search Text</label>
-                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="<?= esc_attr($search) ?>" />
+                            <input type="text" name="device_search" class="form-control form-control-sm"
+                                placeholder="Search..." value="<?= esc_attr($search) ?>" />
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
-                            <select name="filter_status" id="filter_status" class="form-select form-select-sm" onchange="toggleDepartment()">
+                            <select name="filter_status" id="filter_status" class="form-select form-select-sm"
+                                onchange="toggleDepartment()">
                                 <option value="">All Status</option>
-                                <option value="Available" <?= $filter_status == 'Available' ? 'selected' : '' ?>>Available</option>
+                                <option value="Available" <?= $filter_status == 'Available' ? 'selected' : '' ?>>Available
+                                </option>
                                 <option value="In Use" <?= $filter_status == 'In Use' ? 'selected' : '' ?>>In Use</option>
-                                <option value="Maintenance" <?= $filter_status == 'Maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                                <option value="Maintenance" <?= $filter_status == 'Maintenance' ? 'selected' : '' ?>>
+                                    Maintenance</option>
                                 <option value="Retired" <?= $filter_status == 'Retired' ? 'selected' : '' ?>>Retired</option>
                             </select>
                         </div>
@@ -94,8 +123,9 @@ function device_crud_acc_sories()
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Keyword</label>
                             <select name="filter_keyword" class="form-select form-select-sm">
                                 <option value="">All Keywords</option>
-                                <?php foreach($all_keywords as $kw): ?>
-                                    <option value="<?= esc_attr($kw) ?>" <?= $filter_keyword == $kw ? 'selected' : '' ?>><?= esc_html($kw) ?></option>
+                                <?php foreach ($all_keywords as $kw): ?>
+                                    <option value="<?= esc_attr($kw) ?>" <?= $filter_keyword == $kw ? 'selected' : '' ?>>
+                                        <?= esc_html($kw) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -103,72 +133,76 @@ function device_crud_acc_sories()
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Department</label>
                             <select name="filter_department" id="filter_department" class="form-select form-select-sm">
                                 <option value="">All Depts</option>
-                                <?php foreach($all_departments as $dept): ?>
-                                    <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>><?= formatName($dept) ?></option>
+                                <?php foreach ($all_departments as $dept): ?>
+                                    <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>>
+                                        <?= formatName($dept) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-12 col-md-3 d-flex align-items-end gap-2">
-                            <button class="btn btn-sm btn-info flex-grow-1" type="submit">🔍 Filter</button>
-                            <a href="?" class="btn btn-sm btn-outline-secondary">Reset</a>
+                            <button class="btn btn-sm btn-info flex-grow-1" type="submit"><i
+                                    class="fa-solid fa-magnifying-glass"></i> Filter</button>
+                            <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_keyword', 'filter_department', 'paged']); ?>
+                            <a href="<?= esc_url($reset_url) ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
                         </div>
                     </div>
+                </form>
             </div>
         </div>
 
         <script>
-        function toggleDepartment() {
-            var status = document.getElementById('filter_status').value;
-            var deptWrapper = document.getElementById('department_wrapper');
-            var deptSelect = document.getElementById('filter_department');
-            if (status === 'Available') {
-                deptWrapper.style.display = 'none';
-                deptSelect.value = '';
-            } else {
-                deptWrapper.style.display = 'block';
+            function toggleDepartment() {
+                var status = document.getElementById('filter_status').value;
+                var deptWrapper = document.getElementById('department_wrapper');
+                var deptSelect = document.getElementById('filter_department');
+                if (status === 'Available') {
+                    deptWrapper.style.display = 'none';
+                    deptSelect.value = '';
+                } else {
+                    deptWrapper.style.display = 'block';
+                }
             }
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleDepartment();
-            
-            // Check for import results
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('import_status')) {
-                const successCount = urlParams.get('import_success') || 0;
-                const errorCount = urlParams.get('import_error') || 0;
-                
-                let icon = 'success';
-                let title = 'Import Complete';
-                let text = `Successfully imported ${successCount} devices.`;
-                
-                if (errorCount > 0) {
-                    if (successCount > 0) {
-                        icon = 'warning';
-                        text += `<br>Failed to import ${errorCount} rows (Skipped). Check format or missing Brands/Categories.`;
+            document.addEventListener('DOMContentLoaded', function () {
+                toggleDepartment();
+
+                // Check for import results
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('import_status')) {
+                    const successCount = urlParams.get('import_success') || 0;
+                    const errorCount = urlParams.get('import_error') || 0;
+
+                    let icon = 'success';
+                    let title = 'Import Complete';
+                    let text = `Successfully imported ${successCount} devices.`;
+
+                    if (errorCount > 0) {
+                        if (successCount > 0) {
+                            icon = 'warning';
+                            text += `<br>Failed to import ${errorCount} rows (Skipped). Check format or missing Brands/Categories.`;
+                        } else {
+                            icon = 'error';
+                            title = 'Import Failed';
+                            text = `All ${errorCount} rows failed to import. Check format or missing Brands/Categories.`;
+                        }
+                    }
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: icon,
+                            title: title,
+                            html: text,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#6ABF57'
+                        }).then(() => {
+                            // Remove params
+                            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                            window.history.replaceState({ path: newUrl }, '', newUrl);
+                        });
                     } else {
-                        icon = 'error';
-                        title = 'Import Failed';
-                        text = `All ${errorCount} rows failed to import. Check format or missing Brands/Categories.`;
+                        alert(text.replace(/<br>/g, "\n"));
                     }
                 }
-                
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: icon,
-                        title: title,
-                        html: text,
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#6ABF57'
-                    }).then(() => {
-                        // Remove params
-                        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                        window.history.replaceState({path:newUrl}, '', newUrl);
-                    });
-                } else {
-                    alert(text.replace(/<br>/g, "\n"));
-                }
-            }
-        });
+            });
         </script>
 
         <!-- Import CSV Modal -->
@@ -176,30 +210,35 @@ function device_crud_acc_sories()
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="importCsvModalLabel">📥 Import Accessories (CSV)</h5>
+                        <h5 class="modal-title" id="importCsvModalLabel"><i class="fa-solid fa-file-import"></i> Import
+                            Accessories (CSV)</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body text-start">
-                        <form action="<?= esc_url(admin_url('admin-post.php')) ?>" method="POST" enctype="multipart/form-data">
+                        <form action="<?= esc_url(admin_url('admin-post.php')) ?>" method="POST"
+                            enctype="multipart/form-data">
                             <input type="hidden" name="action" value="import_device_csv">
                             <?php wp_nonce_field('import_device_csv_nonce', 'import_csv_nonce'); ?>
-                            
+
                             <div class="mb-3">
                                 <label for="csv_file" class="form-label">Select CSV File</label>
-                                <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                                <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv"
+                                    required>
                             </div>
-                            
+
                             <div class="alert alert-info" style="font-size: 0.85em;">
                                 <strong>Format Requirements:</strong>
                                 <ul class="mb-0 ps-3">
-                                    <li>Columns: <code>Brand, Category, Model, SerialNumber, AddDeviceDate, Keyword</code></li>
+                                    <li>Columns: <code>Brand, Category, Model, SerialNumber, AddDeviceDate, Keyword</code>
+                                    </li>
                                     <li>Make sure <code>Category</code> is set to <code>Accessories</code>.</li>
                                     <li>If Brand or Category does not exist, the row will be skipped (Error).</li>
                                     <li>Device IDs will be generated automatically.</li>
                                 </ul>
                             </div>
                             <div class="text-end">
-                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-success btn-sm">Import</button>
                             </div>
                         </form>
@@ -213,162 +252,168 @@ function device_crud_acc_sories()
                 <div class="d-flex align-items-center">
                     <select name="bulk_action" class="form-select me-2" style="width: auto;">
                         <option value="">-- Bulk Actions --</option>
-                        <option value="available">Set Available (🟢)</option>
-                        <option value="retired">Set Retired (⚫)</option>
-                        <option value="print_labels">Print Labels (🖨️)</option>
-                        <option value="delete">Delete (🗑)</option>
+                        <option value="available">Set Available (<i class="fa-solid fa-circle text-success"></i>)</option>
+                        <option value="retired">Set Retired (<i class="fa-solid fa-circle text-dark"></i>)</option>
+                        <option value="print_labels">Print Labels (<i class="fa-solid fa-print"></i>)</option>
+
                     </select>
                     <button type="button" class="btn btn-primary btn-sm" onclick="handleBulkAction('acc')">Apply</button>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importCsvModal">
-                        📥 Import CSV
+                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#importCsvModal">
+                        <i class="fa-solid fa-file-import"></i> Import CSV
                     </button>
                     <!-- Export button uses the same GET parameters for filtering -->
-                    <a href="<?= esc_url(add_query_arg(['export_csv' => 'device', 'category' => 'Accessories'], $_SERVER['REQUEST_URI'])) ?>" class="btn btn-secondary btn-sm">
-                        📤 Export CSV
+                    <a href="<?= esc_url(add_query_arg(['export_csv' => 'device', 'category' => 'Accessories'], $_SERVER['REQUEST_URI'])) ?>"
+                        class="btn btn-secondary btn-sm">
+                        <i class="fa-solid fa-file-export"></i> Export CSV
                     </a>
                 </div>
             </div>
 
 
-        <div class="table-responsive-xl">
-            <table class="table table-bordered table-sm text-center">
-                <tr class="table-secondary">
-                    <th class="py-3" style="width: 40px;"><input type="checkbox" id="selectAll-acc"></th>
-                    <th class="py-3">ID</th>
-                    <th class="py-3">Device Info</th>
-                    <th class="py-3">Owner</th>
-                    <th class="py-3">Status</th>
-                    <th class="py-3">Action</th>
-                </tr>
-                <?php foreach ($rows as $row): ?>
-                    <tr class="text-nowrap py-2" style="white-space: nowrap;">
-                        <td class="align-middle"><input type="checkbox" name="bulk_device_ids[]" value="<?= $row->DeviceID ?>" class="device-checkbox-acc" data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
-                        <td class="align-middle"><?= $row->DeviceID ?></td>
-                        <td class="text-start align-middle">
-                            <strong><?= $row->Brand ?> <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
-                            <small class="text-muted"><?= $row->Keyword ?> | SN: <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
-                        </td>
-                        <td class="align-middle" style="min-width: 100px;">
-                            <?php
-                            $owner = trim($row->Owner ?? '');
-                            $nickname = trim($row->Nickname ?? '');
+            <div class="table-responsive-xl rounded">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th class="py-3" style="width: 50px;"><input type="checkbox" id="selectAll-acc"></th>
+                            <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
+                            <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($rows as $index => $row): ?>
+                            <tr class="text-nowrap py-2" style="white-space: nowrap;">
+                                <td class="align-middle"><input type="checkbox" name="bulk_device_ids[]"
+                                        value="<?= $row->DeviceID ?>" class="device-checkbox-acc"
+                                        data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
+                                <td class="align-middle text-start"><?= $row->DeviceID ?></td>
+                                <td class="text-start align-middle">
+                                    <strong><?= $row->Brand ?>         <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
+                                    <small class="text-muted"><?= $row->Keyword ?> | SN:
+                                        <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
+                                </td>
+                                <td class="text-start align-middle" style="min-width: 100px;">
+                                    <?php
+                                    $owner = trim($row->Owner ?? '');
+                                    $nickname = trim($row->Nickname ?? '');
 
-                            if ($owner === '' && $nickname === '') {
-                                echo '-';
-                            } else {
-                                if ($nickname !== '') {
-                                    echo htmlspecialchars($nickname) . ' ';
-                                }
-
-                                if ($owner !== '') {
-                                    preg_match('/\((.*?)\)$/', $owner, $matches);
-                                    $position = $matches[1] ?? '';
-                                    $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
-                                    $nameParts = explode(' ', $nameOnly);
-
-                                    if (count($nameParts) > 1) {
-                                        $lastName = end($nameParts);
-                                        $lastInitial = strtoupper(mb_substr($lastName, 0, 1)) . '.';
+                                    if ($owner === '' && $nickname === '') {
+                                        echo '-';
                                     } else {
-                                        $lastInitial = '';
-                                    }
+                                        if ($nickname !== '') {
+                                            echo htmlspecialchars($nickname) . ' ';
+                                        }
 
-                                    echo htmlspecialchars($lastInitial);
-                                    if ($position !== '') {
-                                        echo ' (' . htmlspecialchars($position) . ')';
+                                        if ($owner !== '') {
+                                            preg_match('/\((.*?)\)$/', $owner, $matches);
+                                            $position = $matches[1] ?? '';
+                                            $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
+                                            $nameParts = explode(' ', $nameOnly);
+
+                                            if (count($nameParts) > 1) {
+                                                $lastName = end($nameParts);
+                                                $lastInitial = strtoupper(mb_substr($lastName, 0, 1)) . '.';
+                                            } else {
+                                                $lastInitial = '';
+                                            }
+
+                                            echo htmlspecialchars($lastInitial);
+                                            if ($position !== '') {
+                                                echo ' (' . htmlspecialchars($position) . ')';
+                                            }
+                                        }
                                     }
-                                }
-                            }
-                            ?>
-                        </td>
-                        <td class="align-middle" style="min-width: 130px;">
-                            <?php
-                            $status = $row->Status;
-                            $emoji = '';
-                            if (strcasecmp($status, 'Available') === 0) {
-                                $emoji = '🟢';
-                            } elseif (strcasecmp($status, 'In Use') === 0) {
-                                $emoji = '🔴';
-                            } elseif (strcasecmp($status, 'Maintenance') === 0) {
-                                $emoji = '🟡';
-                            } elseif (strcasecmp($status, 'Retired') === 0) {
-                                $emoji = '⚫';
-                            }
-                            echo $emoji . ' ' . esc_html($status);
-                            ?>
-                        </td>
-                        <td class="align-middle">
-                            <div class="d-flex justify-content-center align-items-center gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
-                                <div class="action-menu mb-0">
-                                    <div style="text-align: center;">
-                                        <button type="button" class="action-btn" style="background-color: #8bd8f4;">⋮</button>
+                                    ?>
+                                </td>
+                                <td class="text-start align-middle" style="min-width: 135px;">
+                                    <?php
+                                    $status = $row->Status;
+                                    $emoji = '';
+                                    if (strcasecmp($status, 'Available') === 0) {
+                                        $emoji = '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>';
+                                    } elseif (strcasecmp($status, 'In Use') === 0) {
+                                        $emoji = '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>';
+                                    } elseif (strcasecmp($status, 'Maintenance') === 0) {
+                                        $emoji = '<i class="fa-solid fa-circle text-warning" style="font-size:12px;"></i>';
+                                    } elseif (strcasecmp($status, 'Retired') === 0) {
+                                        $emoji = '<i class="fa-solid fa-circle text-dark" style="font-size:12px;"></i>';
+                                    }
+                                    echo $emoji . ' ' . esc_html($status);
+                                    ?>
+                                </td>
+                                <td class="align-middle text-center">
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            id="btn-<?= $row->DeviceID ?>"
+                                            onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
+                                        <div class="dropdown action-menu mb-0 text-center">
+                                            <button type="button" class="action-btn" data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                                ...
+                                            </button>
+                                            <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
+                                                <div class="action-dropdown-header">Actions</div>
+                                                <div class="action-dropdown-separator"></div>
+                                                <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
+                                                <a href="#"
+                                                    onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i class="fa-solid fa-print"></i>
+                                                    Print Label</a>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="action-dropdown" style="text-align: start; z-index: 10000;">
-                                        <a href="?edit=<?= $row->DeviceID ?>">⚙️ Edit</a>
-                                        <a href="?view=<?= $row->DeviceID ?>">🔍 View Details</a>
-                                        <?php if ($row->Status == 'Available'): ?>
-                                            <a href="?receive=<?= $row->DeviceID ?>">📦 Receive</a>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                            <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
-                                        <?php elseif ($row->Status == 'In Use'): ?>
-                                            <a href="?return=<?= $row->DeviceID ?>">↩️ Return</a>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                            <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
-                                        <?php elseif ($row->Status == 'Maintenance'): ?>
-                                            <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
-                                            <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
-                                        <?php elseif ($row->Status == 'Retired'): ?>
-                                            <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
-                                        <?php endif; ?>
-                                        <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')">🗑 Delete</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
-                        <td colspan="6" class="p-0 border-0">
-                            <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
-                                <div class="p-3 bg-light text-start m-2 rounded border">
-                                    <div class="row">
-                                        <div class="col-sm-3 mb-2 mb-sm-0">
-                                            <span class="text-muted d-block" style="font-size: 0.85em;">Department</span>
-                                            <strong><?= formatName($row->Department) ?></strong>
+                                </td>
+                            </tr>
+                            <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
+                                <td colspan="6" class="p-0 border-0">
+                                    <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
+                                        <div class="p-3 bg-light text-start m-2 rounded border">
+                                            <div class="row">
+                                                <div class="col-sm-3 mb-2 mb-sm-0">
+                                                    <span class="text-muted d-block"
+                                                        style="font-size: 0.85em;">Department</span>
+                                                    <strong><?= formatName($row->Department) ?></strong>
+                                                </div>
+                                                <div class="col-sm-3 mb-2 mb-sm-0">
+                                                    <span class="text-muted d-block" style="font-size: 0.85em;">Receive
+                                                        Date</span>
+                                                    <strong><?= formatName($row->ReceiveDate) ?></strong>
+                                                </div>
+                                                <div class="col-sm-3 mb-2 mb-sm-0">
+                                                    <span class="text-muted d-block" style="font-size: 0.85em;">Return
+                                                        Date</span>
+                                                    <strong><?= formatName($row->ReturnDate) ?></strong>
+                                                </div>
+                                                <div class="col-sm-3 mb-2 mb-sm-0">
+                                                    <span class="text-muted d-block" style="font-size: 0.85em;">Repair
+                                                        Date</span>
+                                                    <strong><?= formatName($row->RepairDate) ?></strong>
+                                                </div>
+
+                                                <?php if ($row->Status === 'Maintenance'): ?>
+                                                    <div class="col-sm-12 mt-2">
+                                                        <?php
+                                                        // Fetch latest maintenance detail
+                                                        $m_details = $wpdb->get_var($wpdb->prepare("SELECT Details FROM Maintenance WHERE DeviceID = %s ORDER BY RepairDate DESC LIMIT 1", $row->DeviceID));
+                                                        ?>
+                                                        <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance
+                                                            Reason</span>
+                                                        <strong class="text-danger"><?= formatName($m_details) ?></strong>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                        <div class="col-sm-3 mb-2 mb-sm-0">
-                                            <span class="text-muted d-block" style="font-size: 0.85em;">Receive Date</span>
-                                            <strong><?= formatName($row->ReceiveDate) ?></strong>
-                                        </div>
-                                        <div class="col-sm-3 mb-2 mb-sm-0">
-                                            <span class="text-muted d-block" style="font-size: 0.85em;">Return Date</span>
-                                            <strong><?= formatName($row->ReturnDate) ?></strong>
-                                        </div>
-                                        <div class="col-sm-3 mb-2 mb-sm-0">
-                                            <span class="text-muted d-block" style="font-size: 0.85em;">Repair Date</span>
-                                            <strong><?= formatName($row->RepairDate) ?></strong>
-                                        </div>
-                                        
-                                        <?php if ($row->Status === 'Maintenance'): ?>
-                                        <div class="col-sm-12 mt-2">
-                                            <?php 
-                                                // Fetch latest maintenance detail
-                                                $m_details = $wpdb->get_var($wpdb->prepare("SELECT Details FROM Maintenance WHERE DeviceID = %s ORDER BY RepairDate DESC LIMIT 1", $row->DeviceID));
-                                            ?>
-                                            <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance Reason</span>
-                                            <strong class="text-danger"><?= formatName($m_details) ?></strong>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
-        </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </form>
 
         <style>
@@ -461,11 +506,11 @@ function device_crud_acc_sories()
             </ul>
         </div>
     </div>
-    
-    <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
-    <script>function handleBulkAction(t){try{let e="bulk-action-form",n=".device-checkbox";t&&"device"!==t&&(e="bulk-action-form-"+t,n=".device-checkbox-"+t);const o=document.getElementById(e);if(!o)return;const c=o.querySelector('select[name="bulk_action"]'),l=c?c.value:"",r=o.querySelectorAll(n+":checked");if(!l)return void alert("Please select a bulk action.");if(0===r.length)return void alert("Please select at least one device.");if("print_labels"!==l)confirm("Are you sure you want to apply this action to the selected devices?")&&o.submit();else{const t=[];for(let e=0;e<r.length;e++)t.push({id:r[e].value,sn:r[e].getAttribute("data-sn")||"-"});"function"==typeof printDeviceLabels?printDeviceLabels(t):alert("Print function not loaded. Please try hard refreshing (Ctrl+F5).")}}catch(t){console.error("Error in bulk action:",t),alert("An error occurred: "+t.message)}}document.addEventListener("change",function(t){if(t.target&&t.target.id&&t.target.id.startsWith("selectAll")){let e=t.target.id.replace("selectAll-","");"selectAll"===t.target.id&&(e="device");let n="device"===e?".device-checkbox":".device-checkbox-"+e;const o=document.querySelectorAll(n);for(let t=0;t<o.length;t++)o[t].checked=t.target.checked}});</script>
 
-<?php
+    <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
+    <script>function handleBulkAction(t) { try { let e = "bulk-action-form", n = ".device-checkbox"; t && "device" !== t && (e = "bulk-action-form-" + t, n = ".device-checkbox-" + t); const o = document.getElementById(e); if (!o) return; const c = o.querySelector('select[name="bulk_action"]'), l = c ? c.value : "", r = o.querySelectorAll(n + ":checked"); if (!l) return void alert("Please select a bulk action."); if (0 === r.length) return void alert("Please select at least one device."); if ("print_labels" !== l) confirm("Are you sure you want to apply this action to the selected devices?") && o.submit(); else { const t = []; for (let e = 0; e < r.length; e++)t.push({ id: r[e].value, sn: r[e].getAttribute("data-sn") || "-" }); "function" == typeof printDeviceLabels ? printDeviceLabels(t) : alert("Print function not loaded. Please try hard refreshing (Ctrl+F5).") } } catch (t) { console.error("Error in bulk action:", t), alert("An error occurred: " + t.message) } } document.addEventListener("change", function (t) { if (t.target && t.target.id && t.target.id.startsWith("selectAll")) { let e = t.target.id.replace("selectAll-", ""); "selectAll" === t.target.id && (e = "device"); let n = "device" === e ? ".device-checkbox" : ".device-checkbox-" + e; const o = document.querySelectorAll(n); for (let t = 0; t < o.length; t++)o[t].checked = t.target.checked } });</script>
+
+    <?php
 
     return ob_get_clean();
 }

@@ -55,7 +55,7 @@ function device_dashboard_maintenance()
                 <div class="card-status" style="background: <?= $gradient ?>; color: #fff;">
                     <div class="card-top">
                         <div class="card-title"><?= esc_html($category) ?></div>
-                        <div class="card-icon">🛠️</div>
+                        <div class="card-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
                     </div>
                     <div class="card-bottom">
                         <div class="card-count"><strong><?= $count ?></strong> unit<?= $count > 1 ? 's' : '' ?></div>

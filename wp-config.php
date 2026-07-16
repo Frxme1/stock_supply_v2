@@ -24,10 +24,10 @@
 define( 'DB_NAME', 'tbssta_supply' );
 
 /** Database username */
-define( 'DB_USER', 'tbssta_supply' );
+define( 'DB_USER', 'root' );
 
 /** Database password */
-define( 'DB_PASSWORD', 'fLk17!8g7' );
+define( 'DB_PASSWORD', '' );
 
 /** Database hostname */
 define( 'DB_HOST', 'localhost' );
@@ -89,6 +89,8 @@ $table_prefix = 'wp_';
 define( 'WP_DEBUG', false );
 
 /* Add any custom values between this line and the "stop editing" line. */
+define( 'WP_HOME', 'http://localhost/stock_supply' );
+define( 'WP_SITEURL', 'http://localhost/stock_supply' );
 
 
 

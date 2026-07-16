@@ -97,9 +97,9 @@ function form_add_owner($editing = null)
 					<?php foreach ($status_emp as $status):
 						$emoji = '';
 						if (($status->Status_name) === 'Active') {
-							$emoji = '🟢 ';
+							$emoji = '<i class="fa-solid fa-circle text-success"></i> ';
 						} elseif (($status->Status_name) === 'Resigned') {
-							$emoji = '🔴 ';
+							$emoji = '<i class="fa-solid fa-circle text-danger"></i> ';
 						}
 					?>
 						<option value="<?= $status->StatusID ?>" <?= selected($editing->StatusID ?? '', $status->StatusID, false) ?>>

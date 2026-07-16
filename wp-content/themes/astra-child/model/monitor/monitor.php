@@ -25,7 +25,7 @@ function device_crud_monitor()
 
     // --- ADVANCED FILTER LOGIC ---
     // Get filter parameters
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
     $filter_status = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
     $filter_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
     $filter_department = isset($_GET['filter_department']) ? trim($_GET['filter_department']) : '';
@@ -70,23 +70,36 @@ function device_crud_monitor()
 
 
 
-    function formatName($el)
-    {
-        $el = trim($el);
-        $el = preg_replace('/\(\s*\)/', '', $el);
-        return htmlspecialchars($el ?: '-');
+    if (!function_exists('formatName')) {
+        function formatName($el)
+        {
+            $el = trim($el);
+            $el = preg_replace('/\(\s*\)/', '', $el);
+            return htmlspecialchars($el ?: '-');
+        }
     }
 ?>
 
     <!-- Search Form -->
-    <div class="container-fluid" style="margin: 0 -10px;">
+    <div class="container-fluid">
         <div class="row mb-3 align-items-end">
             <div class="col-md-9">
                 <form method="GET" action="" id="advanced-filter-form">
+<?php
+foreach ($_GET as $key => $value) {
+    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+        if (is_array($value)) {
+            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
+        } else {
+            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+        }
+    }
+}
+?>
                     <div class="row g-2">
                         <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Search Text</label>
-                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="<?= esc_attr($search) ?>" />
+                            <input type="text" name="device_search" class="form-control form-control-sm" placeholder="Search..." value="<?= esc_attr($search) ?>" />
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
@@ -117,10 +130,12 @@ function device_crud_monitor()
                             </select>
                         </div>
                         <div class="col-12 col-md-3 d-flex align-items-end gap-2">
-                            <button class="btn btn-sm btn-info flex-grow-1" type="submit">🔍 Filter</button>
-                            <a href="?" class="btn btn-sm btn-outline-secondary">Reset</a>
+                            <button class="btn btn-sm btn-info flex-grow-1" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Filter</button>
+                            <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_keyword', 'filter_department', 'paged']); ?>
+<a href="<?= esc_url($reset_url) ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
                         </div>
                     </div>
+                </form>
             </div>
         </div>
 
@@ -184,7 +199,7 @@ function device_crud_monitor()
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="importCsvModalLabel">📥 Import Monitors (CSV)</h5>
+                        <h5 class="modal-title" id="importCsvModalLabel"><i class="fa-solid fa-file-import"></i> Import Monitors (CSV)</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body text-start">
@@ -222,47 +237,47 @@ function device_crud_monitor()
                 <div class="d-flex align-items-center">
                     <select name="bulk_action" class="form-select me-2" style="width: auto;">
                         <option value="">-- Bulk Actions --</option>
-                        <option value="available">Set Available (🟢)</option>
-                        <option value="retired">Set Retired (⚫)</option>
-                        <option value="print_labels">Print Labels (🖨️)</option>
-                        <option value="delete">Delete (🗑)</option>
+                        <option value="available">Set Available (<i class="fa-solid fa-circle text-success"></i>)</option>
+                        <option value="retired">Set Retired (<i class="fa-solid fa-circle text-dark"></i>)</option>
+                        <option value="print_labels">Print Labels (<i class="fa-solid fa-print"></i>)</option>
+                        
                     </select>
                     <button type="button" class="btn btn-primary btn-sm" onclick="handleBulkAction('monitor')">Apply</button>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importCsvModal">
-                        📥 Import CSV
+                        <i class="fa-solid fa-file-import"></i> Import CSV
                     </button>
                     <!-- Export button uses the same GET parameters for filtering -->
                     <a href="<?= esc_url(add_query_arg(['export_csv' => 'device', 'category' => 'Monitor'], $_SERVER['REQUEST_URI'])) ?>" class="btn btn-secondary btn-sm">
-                        📤 Export CSV
+                        <i class="fa-solid fa-file-export"></i> Export CSV
                     </a>
                 </div>
             </div>
 
 
-        <div class="table-responsive-xxl">
-            <table class="table table-bordered table-sm text-center rounded-3">
+        <div class="table-responsive-xl rounded">
+            <table class="table table-bordered table-sm">
                 <thead class="table-secondary">
                     <tr>
-                        <th class="text-nowrap py-3" style="width: 40px;"><input type="checkbox" id="selectAll-monitor"></th>
-                        <th class="text-nowrap py-3">ID</th>
-                        <th class="text-nowrap py-3">Device Info</th>
-                        <th class="text-nowrap py-3">Owner</th>
-                        <th class="text-nowrap py-3">Status</th>
-                        <th class="text-nowrap py-3">Action</th>
+                        <th class="py-3" style="width: 50px;"><input type="checkbox" id="selectAll-monitor"></th>
+                        <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
+                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($rows as $row): ?>
+                    <?php foreach ($rows as $index => $row): ?>
                         <tr class="text-nowrap py-2" style="white-space: nowrap;">
                             <td class="align-middle"><input type="checkbox" name="bulk_device_ids[]" value="<?= $row->DeviceID ?>" class="device-checkbox-monitor" data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
-                            <td class="align-middle"><?= $row->DeviceID ?></td>
+                            <td class="align-middle text-start"><?= $row->DeviceID ?></td>
                             <td class="text-start align-middle">
                                 <strong><?= $row->Brand ?> <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
                                 <small class="text-muted"><?= $row->Category ?> | SN: <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
                             </td>
-                            <td class="align-middle" style="min-width: 120px;">
+                            <td class="text-start align-middle" style="min-width: 120px;">
                                 <?php
                                 $owner = trim($row->Owner ?? '');
                                 $nickname = trim($row->Nickname ?? '');
@@ -292,41 +307,46 @@ function device_crud_monitor()
                                 }
                                 ?>
                             </td>
-                            <td class="align-middle" style="min-width: 130px;">
+                            <td class="text-start align-middle" style="min-width: 135px;">
                                 <?php
                                 $status = $row->Status;
                                 $emojis = [
-                                    'Available'   => '🟢',
-                                    'In Use'      => '🔴',
-                                    'Maintenance' => '🟡',
-                                    'Retired'     => '⚫',
+                                    'Available' => '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>',
+                                    'In Use' => '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>',
+                                    'Maintenance' => '<i class="fa-solid fa-circle text-warning" style="font-size:12px;"></i>',
+                                    'Retired' => '<i class="fa-solid fa-circle text-dark" style="font-size:12px;"></i>'
                                 ];
                                 echo ($emojis[$status] ?? '') . ' ' . esc_html($status);
                                 ?>
                             </td>
-                            <td class="align-middle">
+                            <td class="align-middle text-center">
                                 <div class="d-flex justify-content-center align-items-center gap-2">
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
-                                    <div class="action-menu mb-0 text-center">
-                                        <button type="button" class="action-btn" style="background-color: #8bd8f4;">⋮</button>
-                                        <div class="action-dropdown text-start" style="z-index: 10000;">
-                                            <a href="?edit=<?= $row->DeviceID ?>">⚙️ Edit</a>
-                                            <a href="?view=<?= $row->DeviceID ?>">🔍 View Details</a>
+                                    <div class="dropdown action-menu mb-0 text-center">
+                                        <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                            ...
+                                        </button>
+                                        <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
+                                            <div class="action-dropdown-header">Actions</div>
+                                            <div class="action-dropdown-separator"></div>
+                                            <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                            <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
                                             <?php if ($status == 'Available'): ?>
-                                                <a href="?receive=<?= $row->DeviceID ?>">📦 Receive</a>
-                                                <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                                <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
+                                                <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($status == 'In Use'): ?>
-                                                <a href="?return=<?= $row->DeviceID ?>">↩️ Return</a>
-                                                <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                                <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
+                                                <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($status == 'Maintenance'): ?>
-                                                <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
-                                                <a href="?retired=<?= $row->DeviceID ?>">⚫ Retired</a>
+                                                <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
+                                                <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($status == 'Retired'): ?>
-                                                <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
+                                                <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
                                             <?php endif; ?>
-                                            <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')">🗑 Delete</a>
+                                            <a href="#" onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i class="fa-solid fa-print"></i> Print Label</a>
+                                            <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')"><i class="fa-solid fa-trash-can"></i> Delete</a>
                                         </div>
                                     </div>
                                 </div>

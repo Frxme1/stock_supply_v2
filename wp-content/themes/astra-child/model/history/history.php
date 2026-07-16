@@ -28,7 +28,7 @@ function form_history()
 
 
 
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
     $params = [];
 
     if (!empty($search)) {
@@ -69,12 +69,23 @@ function form_history()
 
     <div class="container-fluid px-3">
         <form method="GET" action="">
+<?php
+foreach ($_GET as $key => $value) {
+    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+        if (is_array($value)) {
+            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
+        } else {
+            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+        }
+    }
+}
+?>
             <div class="row align-items-center g-2">
 
                 <label class="col-auto col-form-label">History</label>
 
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <input type="text" name="search" list="search_suggestions" class="form-control" placeholder="Search History..." value="<?= esc_attr($search) ?>" />
+                    <input type="text" name="device_search" list="search_suggestions" class="form-control" placeholder="Search History..." value="<?= esc_attr($search) ?>" />
                     <datalist id="search_suggestions">
                         <?php foreach ($suggestions as $suggest): ?>
                             <option value="<?= esc_attr($suggest) ?>"></option>
@@ -83,64 +94,70 @@ function form_history()
                 </div>
 
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit">🔍 Search</button>
+                    <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
                 </div>
 
             </div>
         </form>
         <br>
 
-        <div class="table-responsive-xl">
-            <table class="table table-bordered table-sm text-center">
-                <tr class="table-secondary">
-                    <th class="py-3">Action</th>
-                    <th class="py-3">Date</th>
-                    <th class="py-3">Description</th>
-                    <th class="py-3">User</th>
-                    <th class="py-3">Category</th>
-                    <th class="py-3">Owner</th>
-                    <th class="py-3">Action</th>
-                </tr>
-                <?php foreach ($rows as $row): ?>
+        <div class="table-responsive-xl rounded">
+            <table class="table table-bordered table-sm">
+                <thead class="table-secondary">
+                    <tr>
+                        <th class="text-nowrap py-3 text-start" style="width: 10%;">Action</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 25%;">Description</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 15%;">User</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 10%;">Category</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Owner</th>
+                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($rows as $index => $row): ?>
                     <?php
                         $date = new DateTime($row->Date, new DateTimeZone('UTC'));
                         $date->setTimezone(new DateTimeZone('Asia/Bangkok'));
                     ?>
                     <tr>
-                        <td><?= $row->Action ?></td>
-                        <td><?= $date->format("d/m/Y H:i:s") ?></td>
-                        <td><?= $row->Description ?></td>
-                        <td><?= $row->user_email ?></td>
-                        <td>
+                        <td class="text-start align-middle"><?= $row->Action ?></td>
+                        <td class="text-start align-middle"><?= $date->format("d/m/Y H:i:s") ?></td>
+                        <td class="text-start align-middle"><?= $row->Description ?></td>
+                        <td class="text-start align-middle"><?= $row->user_email ?></td>
+                        <td class="text-start align-middle">
                             <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : $row->CategoryName ?>
                         </td>
-                        <td><?= $row->Owner ?></td>
-                        <td>
-                            <div class="action-menu">
-                                <div style="text-align: center;">
-                                    <button class="action-btn" style="background-color: #8bd8f4;">⋮</button>
-                                </div>
-                                <div class="action-dropdown">
-                                    <a href="?view=<?= $row->DeviceID ?>">🔍 View Details</a>
+                        <td class="text-start align-middle"><?= $row->Owner ?></td>
+                        <td class="text-center align-middle">
+                            <div class="dropdown action-menu text-center">
+                                <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                    ...
+                                </button>
+                                <div class="dropdown-menu action-dropdown text-start">
+                                    <div class="action-dropdown-header">Actions</div>
+                                    <div class="action-dropdown-separator"></div>
+                                    <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
                                     <?php if ($row->Status == 'Available'): ?>
-                                        <a href="?receive=<?= $row->DeviceID ?>">📦 Receive</a>
-                                        <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                        <a href="?retire=<?= $row->DeviceID ?>">⚫ Retired</a>
+                                        <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                        <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                        <a href="?retire=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                     <?php elseif ($row->Status == 'In Use'): ?>
-                                        <a href="?return=<?= $row->DeviceID ?>">↩️ Return</a>
-                                        <a href="?maintenance=<?= $row->DeviceID ?>">🛠 Maintenance</a>
-                                        <a href="?retire=<?= $row->DeviceID ?>">⚫ Retired</a>
+                                        <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
+                                        <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                        <a href="?retire=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                     <?php elseif ($row->Status == 'Maintenance'): ?>
-                                        <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
-                                        <a href="?retire=<?= $row->DeviceID ?>">⚫ Retired</a>
+                                        <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
+                                        <a href="?retire=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                     <?php elseif ($row->Status == 'Retired'): ?>
-                                        <a href="?available=<?= $row->DeviceID ?>">🟢 Available</a>
+                                        <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
+                </tbody>
             </table>
         </div>
         <!-- Pagination -->

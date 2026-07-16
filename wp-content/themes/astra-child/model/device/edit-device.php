@@ -189,12 +189,12 @@ function edit_device_form($editing = null)
 
             <div class="form-group">
                 <label>Status</label>
-                <select name="StatusID" required>
+                <select name="StatusID" id="StatusID" required>
                     <option value="">-- Select Status --</option>
                     <?php foreach ($statuses as $s): ?>
-                        <option value="<?= esc_attr($s->StatusID) ?>" <?= selected($editing->StatusID ?? '', $s->StatusID, false) ?>>
+                        <option value="<?= esc_attr($s->StatusID) ?>" data-name="<?= esc_attr(strtolower($s->StatusName)) ?>" <?= selected($editing->StatusID ?? '', $s->StatusID, false) ?>>
                             <?=
-                            ($s->StatusName === 'Available' ? '🟢 Available' : ($s->StatusName === 'In Use' ? '🔴 In Use' : ($s->StatusName === 'Maintenance' ? '🟡 Maintenance' : ($s->StatusName === 'Retired' ? '⚫ Retired' : '❔'))))
+                            ($s->StatusName === 'Available' ? '<i class="fa-solid fa-circle text-success"></i> Available' : ($s->StatusName === 'In Use' ? '<i class="fa-solid fa-circle text-danger"></i> In Use' : ($s->StatusName === 'Maintenance' ? '<i class="fa-solid fa-circle text-warning"></i> Maintenance' : ($s->StatusName === 'Retired' ? '<i class="fa-solid fa-circle text-dark"></i> Retired' : '❔'))))
                             ?>
                         </option>
                     <?php endforeach; ?>
@@ -223,9 +223,9 @@ function edit_device_form($editing = null)
                 <input type="text" name="SerialNumber" value="<?= esc_attr($editing->SerialNumber ?? '') ?>">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="owner-group">
                 <label>Owner (Employee)</label>
-                <select name="OwnerID">
+                <select name="OwnerID" id="OwnerID">
                     <option value="">-- No Owner --</option>
                     <?php foreach ($owners as $o): ?>
                         <option value="<?= esc_attr($o->OwnerID) ?>" <?= selected($editing->OwnerID ?? '', $o->OwnerID, false) ?>>
@@ -237,7 +237,7 @@ function edit_device_form($editing = null)
 
             <div class="form-group">
                 <label>Add Device Date</label>
-                <input type="date" name="AddDeviceDate" value="<?= esc_attr($editing->AddDeviceDate ?? '') ?>" min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
+                <input type="date" name="AddDeviceDate" id="AddDeviceDate" value="<?= esc_attr($editing->AddDeviceDate ?? '') ?>" min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
             </div>
         </div>
 
@@ -286,6 +286,60 @@ function edit_device_form($editing = null)
             margin-top: 20px;
         }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.getElementById('StatusID');
+            const ownerGroup = document.getElementById('owner-group');
+            const ownerSelect = document.getElementById('OwnerID');
+            const dateField = document.getElementById('AddDeviceDate');
+            
+            // ตรวจสอบค่า Status เริ่มต้นเพื่อใช้เทียบถ้ามีการเปลี่ยนสถานะ
+            const initialStatusName = statusSelect && statusSelect.options[statusSelect.selectedIndex] 
+                                        ? statusSelect.options[statusSelect.selectedIndex].getAttribute('data-name') 
+                                        : '';
+
+            function handleStatusChange() {
+                const selectedOption = statusSelect.options[statusSelect.selectedIndex];
+                const statusName = selectedOption ? selectedOption.getAttribute('data-name') : '';
+
+                if (statusName === 'retired') {
+                    // ซ่อนและล้างช่อง Owner
+                    if (ownerGroup) ownerGroup.style.display = 'none';
+                    if (ownerSelect) ownerSelect.value = '';
+                    
+                    // ล็อควันที่ และตั้งเป็นวันปัจจุบัน (เฉพาะกรณีที่เพิ่งเปลี่ยนเป็น retired ครั้งแรก หรือกำลังเลือกใหม่)
+                    if (dateField) {
+                        if (initialStatusName !== 'retired' || !dateField.value) {
+                            dateField.value = new Date().toISOString().split('T')[0];
+                        }
+                        // ทำให้เป็น readonly แทน disabled เพื่อให้ยังส่งค่าผ่าน form ได้
+                        dateField.readOnly = true;
+                        dateField.style.backgroundColor = '#f0f0f0';
+                        dateField.style.color = '#666';
+                        dateField.style.cursor = 'not-allowed';
+                    }
+                } else {
+                    // แสดงช่อง Owner ปกติ
+                    if (ownerGroup) ownerGroup.style.display = 'flex';
+                    
+                    // ปลดล็อควันที่
+                    if (dateField) {
+                        dateField.readOnly = false;
+                        dateField.style.backgroundColor = '';
+                        dateField.style.color = '';
+                        dateField.style.cursor = '';
+                    }
+                }
+            }
+
+            if (statusSelect) {
+                statusSelect.addEventListener('change', handleStatusChange);
+                handleStatusChange(); // เรียกครั้งแรกตอนโหลดหน้า
+            }
+        });
+    </script>
+
 
 <?php
     return ob_get_clean();

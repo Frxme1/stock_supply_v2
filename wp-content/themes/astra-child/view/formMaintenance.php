@@ -10,17 +10,19 @@ function form_maintenance($editing = null)
     echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
     // Alert function
-    function show_alert($icon, $title, $html = '', $redirect = '')
-    {
-        echo "<script>
-            Swal.fire({
-                icon: '$icon',
-                title: '$title',
-                html: `" . $html . "` ,
-                showConfirmButton: " . ($redirect ? "false" : "true") . ",
-                timer: " . ($redirect ? "1500" : "null") . "
-            })" . ($redirect ? ".then(() => { window.location.href = '$redirect'; })" : "") . ";
-        </script>";
+    if (!function_exists('show_alert')) {
+        function show_alert($icon, $title, $html = '', $redirect = '')
+        {
+            echo "<script>
+                Swal.fire({
+                    icon: '$icon',
+                    title: '$title',
+                    html: `" . $html . "` ,
+                    showConfirmButton: " . ($redirect ? "false" : "true") . ",
+                    timer: " . ($redirect ? "1500" : "null") . "
+                })" . ($redirect ? ".then(() => { window.location.href = '$redirect'; })" : "") . ";
+            </script>";
+        }
     }
 
     // Handle form submit

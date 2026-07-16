@@ -17,8 +17,8 @@ function device_dashboard_laptop()
     $status_config = [
         'Available'   => ['color' => '#6ABF57', 'icon' => '✅'],
         'In Use'      => ['color' => '#F05353', 'icon' => '🚫'],
-        'Maintenance' => ['color' => '#FDB840', 'icon' => '🛠️'],
-        'Retired'     => ['color' => '#000000', 'icon' => '🗑️'],
+        'Maintenance' => ['color' => '#FDB840', 'icon' => '<i class="fa-solid fa-screwdriver-wrench"></i>'],
+        'Retired'     => ['color' => '#000000', 'icon' => '<i class="fa-solid fa-trash-can"></i>'],
     ];
 
     // Map count per status

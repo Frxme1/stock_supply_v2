@@ -15,10 +15,10 @@ function device_dashboard_accessories()
     ");
 
     $status_config = [
-        'Available'   => ['color' => '#6ABF57', 'icon' => '✅'],
-        'In Use'      => ['color' => '#F05353', 'icon' => '🚫'],
-        'Maintenance' => ['color' => '#FDB840', 'icon' => '🛠️'],
-        'Retired'     => ['color' => '#000000', 'icon' => '🗑️'],
+        'Available' => ['color' => '#6ABF57', 'icon' => '✅'],
+        'In Use' => ['color' => '#F05353', 'icon' => '🚫'],
+        'Maintenance' => ['color' => '#FDB840', 'icon' => '<i class="fa-solid fa-screwdriver-wrench"></i>'],
+        'Retired' => ['color' => '#000000', 'icon' => '<i class="fa-solid fa-trash-can"></i>'],
     ];
 
     $summary_map = [];
@@ -27,15 +27,16 @@ function device_dashboard_accessories()
     }
 
     ob_start();
-?>
-    <div class="device-dashboard" style="background-color: #fff;">
+    ?>
+    <div class="device-dashboard" style="background-color: #ffffffff;">
         <div class="dashboard-cards">
             <?php foreach ($status_config as $status => $config):
                 $count = $summary_map[$status] ?? 0;
                 $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
                 $percent_accessories = $total_devices > 0 ? round(($total_accessories / $total_devices) * 100, 0) : 0;
-            ?>
-                <div class="card-status" style="background: linear-gradient(90deg, <?= $config['color'] ?>, #ffffff); color: #fff; position: relative;">
+                ?>
+                <div class="card-status"
+                    style="background: linear-gradient(90deg, <?= $config['color'] ?>, #ffffff); color: #fff; position: relative;">
                     <div class="card-top">
                         <div class="card-title"><?= esc_html($status) ?></div>
                         <div class="card-icon"><?= $config['icon'] ?></div>
@@ -57,13 +58,13 @@ function device_dashboard_accessories()
 
 
     <!-- Summary Accessories -->
-    <div class="all-device-summary" style="background-color: rgba(21, 165, 218, 0.03); border-radius: 10px; text-align: center; margin-top: 25px;" >
+    <div class="all-device-summary"
+        style="background-color: rgba(21, 165, 218, 0.03); border-radius: 10px; text-align: center; margin-top: 25px;">
         <h4>All Accessories</h4>
         <div class="summary-container">
             <svg class="circle-chart" viewBox="0 0 36 36">
                 <circle class="circle-bg" cx="18" cy="18" r="16" />
-                <circle class="circle-fill" cx="18" cy="18" r="16"
-                    stroke-dasharray="<?= $percent_accessories ?>, 100" />
+                <circle class="circle-fill" cx="18" cy="18" r="16" stroke-dasharray="<?= $percent_accessories ?>, 100" />
                 <text x="18" y="20" class="circle-text"><?= $percent_accessories ?>%</text>
             </svg>
             <div class="device-info">
@@ -99,7 +100,7 @@ function device_dashboard_accessories()
 
         .card-icon {
             font-size: 3rem;
-            opacity: 0.5;
+            opacity: 0.9;
         }
 
         .card-bottom {
@@ -145,7 +146,7 @@ function device_dashboard_accessories()
         }
     </style>
 
-<?php
+    <?php
     return ob_get_clean();
 }
 add_shortcode('device_dashboard_accessories', 'device_dashboard_accessories');
