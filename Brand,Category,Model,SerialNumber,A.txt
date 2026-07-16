@@ -1,0 +1,31 @@
+Brand,Category,Model,SerialNumber,AddDeviceDate,Keyword
+Dell,Monitor,U2422H,CN-0XTYM-12345,2026-07-15,Monitor
+Lenovo,Laptop,ThinkPad T14,PF3M2A1B,2026-07-15,Laptop
+Logitech,Accessories,MX Master 3S,2145LZM3A4B5,2026-07-15,Mouse
+Logitech,Accessories,MX Keys Mini,2210SY02P1A2,2026-07-15,Keyboard
+HP,Laptop,EliteBook 840,5CG1234ABC,2026-07-15,Laptop
+Acer,Monitor,Nitro VG240Y,MMT12345678,2026-07-15,Monitor
+Asus,Laptop,ZenBook 14,N3N0CV12345,2026-07-15,Laptop
+BenQ,Monitor,GW2480,ET12345678,2026-07-15,Monitor
+LG,Monitor,24MP400,104INUB1234,2026-07-15,Monitor
+ViewSonic,Monitor,VA2432-H,UEM1234567,2026-07-15,Monitor
+Samsung,Monitor,LF24T350F,0D4W1234567,2026-07-15,Monitor
+AOC,Monitor,24G2,ATN1234567,2026-07-15,Monitor
+Dell,Laptop,Latitude 5420,JTYL123,2026-07-15,Laptop
+Logitech,Accessories,G502 Hero,2111LZM1234,2026-07-15,Mouse
+Logitech,Accessories,G Pro X Keyboard,2222SY12345,2026-07-15,Keyboard
+Acer,Laptop,Swift 3,NXG1234567,2026-07-15,Laptop
+Lenovo,Laptop,ThinkBook 15,MP123456,2026-07-15,Laptop
+Asus,Monitor,ProArt PA278QV,G6LM123456,2026-07-15,Monitor
+HP,Monitor,E24i G4,CN4123456,2026-07-15,Monitor
+Logitech,Accessories,Desk Mat Studio,PAD123456,2026-07-15,Mouse pad
+Dell,Accessories,65W AC Adapter,CN-0123-456,2026-07-15,Adapter
+Lenovo,Accessories,65W USB-C Adapter,8SSA12345,2026-07-15,Adapter
+Samsung,Accessories,980 PRO 1TB,S5P2N12345,2026-07-15,SSD
+Acer,Monitor,K242HL,MMT987654,2026-07-15,Monitor
+Dell,Monitor,P2422H,CN-0ABCD-987,2026-07-15,Monitor
+Lenovo,Laptop,IdeaPad 5,PF987654,2026-07-15,Laptop
+Logitech,Accessories,M185,2122LZX123,2026-07-15,Mouse
+Logitech,Accessories,K120,2204MR123,2026-07-15,Keyboard
+HP,Accessories,45W Smart AC Adapter,H8123456,2026-07-15,Adapter
+Asus,Accessories,ROG Sheath,PAD98765,2026-07-15,Mouse pad

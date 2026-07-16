@@ -1,0 +1,294 @@
+<?php
+function edit_device_form($editing = null)
+{
+    ob_start();
+    global $wpdb;
+
+    $table_devices = 'Devices';
+
+    $brands = $wpdb->get_results("SELECT BrandID, BrandName FROM Brands");
+    $statuses = $wpdb->get_results("SELECT StatusID, StatusName FROM Statuses");
+    $keywords = $wpdb->get_results("SELECT KeywordID, KeywordName FROM Keywords");
+    $categories = $wpdb->get_results("SELECT CategoryID, CategoryName FROM Categories");
+    $owners = $wpdb->get_results("SELECT OwnerID, Nickname, FirstName, LastName FROM Owners ORDER BY Nickname ASC");
+
+
+    echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
+
+    if (!$editing && !empty($_GET['device'])) {
+        $DeviceID = sanitize_text_field($_GET['device']);
+        $editing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $DeviceID));
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['DeviceID'])) {
+        $DeviceID       = sanitize_text_field($_POST['DeviceID']);
+        $Model          = sanitize_text_field($_POST['Model']);
+        $SerialNumber   = sanitize_text_field($_POST['SerialNumber']);
+        $BrandID        = intval($_POST['BrandID']);
+        $StatusID       = intval($_POST['StatusID']);
+        $KeywordID      = intval($_POST['KeywordID']);
+        $OwnerID        = !empty($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
+        $AddDeviceDate_edit = sanitize_text_field($_POST['AddDeviceDate']);
+        $AddDeviceDate  = date('Y-m-d', strtotime($AddDeviceDate_edit));
+        $CategoryID     = intval($_POST['CategoryID']);
+
+
+        // Validate IDs
+        $valid_brand   = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Brands WHERE BrandID = %d", $BrandID));
+        $valid_status  = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Statuses WHERE StatusID = %d", $StatusID));
+        $valid_keyword = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Keywords WHERE KeywordID = %d", $KeywordID));
+
+
+        if (!$valid_brand || !$valid_status || !$valid_keyword) {
+            $message = !$valid_brand ? 'Invalid Brand selected!' : (!$valid_status ? 'Invalid Status selected!' : 'Invalid Keyword selected!');
+            echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: '{$message}',
+                    showConfirmButton: true
+                });
+            </script>";
+            return ob_get_clean(); // แก้ตรงนี้: return ผลลัพธ์ ไม่ใช่หยุดด้วย return ธรรมดา
+        }
+
+        $data = [
+            'Model'         => $Model,
+            'SerialNumber'  => $SerialNumber,
+            'BrandID'       => $BrandID,
+            'StatusID'      => $StatusID,
+            'KeywordID'     => $KeywordID,
+            'OwnerID'       => $OwnerID,
+            'AddDeviceDate' => $AddDeviceDate,
+            'UpdatedAt'     => current_time('mysql'),
+        ];
+
+        $format = ['%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s'];
+        $where = ['DeviceID' => $DeviceID];
+        $where_format = ['%s'];
+
+        // Get previous info for history
+        $device_info = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $DeviceID));
+
+        $updated = $wpdb->update($table_devices, $data, $where, $format, $where_format);
+
+        // Get category slug
+        $category_slug = '';
+        if ($device_info && isset($device_info->CategoryID)) {
+            $category_slug = $wpdb->get_var($wpdb->prepare(
+                "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
+                $device_info->CategoryID
+            ));
+        }
+        $redirect_url = $category_slug ? '/' . urlencode($category_slug) . '/' : '/Home';
+
+        $owner_nickname = '-';
+        if (!empty($device_info->OwnerID)) {
+            $owner_info = $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $device_info->OwnerID));
+            if ($owner_info) {
+                $owner_nickname = $owner_info;
+            }
+        }
+
+        if ($updated === false) {
+            error_log('Update failed: ' . $wpdb->last_error);
+            echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Update failed',
+                    text: '" . esc_js($wpdb->last_error) . "',
+                    showConfirmButton: true
+                });
+            </script>";
+        } elseif ($updated === 0) {
+            echo "<script>
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No changes detected',
+                    showConfirmButton: true
+                });
+            </script>";
+        } else {
+            $current_user = wp_get_current_user();
+            $user_email = $current_user->user_email ?? '';
+
+            $wpdb->insert('History_new', [
+                'DeviceID'    => $DeviceID,
+                'Action'      => 'Update Device',
+                'Date'        => current_time('mysql'),
+                'Description' => "Device ID {$DeviceID} information updated",
+                'user_email'  => $user_email,
+                'CategoryID'  => $device_info->CategoryID ?? null,
+                'Owner'       => $owner_nickname
+            ]);
+
+            echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Device updated!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    window.location.href = '{$redirect_url}';
+                });
+            </script>";
+        }
+
+        // รีเฟรชหลัง update
+        $editing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $DeviceID));
+    }
+?>
+
+    <!-- HTML ฟอร์ม -->
+    <form method="POST" action="">
+        <h2 style="text-align: center;">Edit Device</h2>
+        <input type="hidden" name="DeviceID" value="<?= esc_attr($editing->DeviceID ?? '') ?>">
+        <?php
+        $hideKeyword = false;
+        foreach ($categories as $c) {
+            if (isset($editing->CategoryID) && $c->CategoryID == $editing->CategoryID) {
+                $cName = strtolower(trim($c->CategoryName));
+                if ($cName === 'monitor' || $cName === 'laptop') {
+                    $hideKeyword = true;
+                }
+                break;
+            }
+        }
+        ?>
+        <div class="form-grid">
+
+
+
+            <div class="form-group">
+                <label>Category</label>
+                <select disabled style="background-color: #f0f0f0; color: #666; cursor: not-allowed;">
+                    <?php foreach ($categories as $c): ?>
+                        <option value="<?= esc_attr($c->CategoryID) ?>" <?= selected($editing->CategoryID ?? '', $c->CategoryID, false) ?>>
+                            <?= esc_html($c->CategoryName) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+
+            <div class="form-group">
+                <label>DeviceID</label>
+                <input type="text" style="background-color: #f0f0f0; color: #666; cursor: not-allowed;" value="<?= esc_attr($editing->DeviceID ?? '') ?>" disabled>
+            </div>
+
+            <div class="form-group">
+                <label>Brand</label>
+                <select name="BrandID" required>
+                    <option value="">-- Select Brand --</option>
+                    <?php foreach ($brands as $b): ?>
+                        <option value="<?= esc_attr($b->BrandID) ?>" <?= selected($editing->BrandID ?? '', $b->BrandID, false) ?>>
+                            <?= esc_html($b->BrandName) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="StatusID" required>
+                    <option value="">-- Select Status --</option>
+                    <?php foreach ($statuses as $s): ?>
+                        <option value="<?= esc_attr($s->StatusID) ?>" <?= selected($editing->StatusID ?? '', $s->StatusID, false) ?>>
+                            <?=
+                            ($s->StatusName === 'Available' ? '🟢 Available' : ($s->StatusName === 'In Use' ? '🔴 In Use' : ($s->StatusName === 'Maintenance' ? '🟡 Maintenance' : ($s->StatusName === 'Retired' ? '⚫ Retired' : '❔'))))
+                            ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group" <?= $hideKeyword ? 'style="display: none;"' : '' ?>>
+                <label>Keyword</label>
+                <select name="KeywordID" <?= $hideKeyword ? '' : 'required' ?>>
+                    <option value="">-- Select Keyword --</option>
+                    <?php foreach ($keywords as $k): ?>
+                        <option value="<?= esc_attr($k->KeywordID) ?>" <?= selected($editing->KeywordID ?? '', $k->KeywordID, false) ?>>
+                            <?= esc_html($k->KeywordName) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Model</label>
+                <input type="text" name="Model" value="<?= esc_attr($editing->Model ?? '') ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label>Serial Number</label>
+                <input type="text" name="SerialNumber" value="<?= esc_attr($editing->SerialNumber ?? '') ?>">
+            </div>
+
+            <div class="form-group">
+                <label>Owner (Employee)</label>
+                <select name="OwnerID">
+                    <option value="">-- No Owner --</option>
+                    <?php foreach ($owners as $o): ?>
+                        <option value="<?= esc_attr($o->OwnerID) ?>" <?= selected($editing->OwnerID ?? '', $o->OwnerID, false) ?>>
+                            <?= esc_html($o->Nickname . ($o->FirstName ? ' (' . $o->FirstName . ' ' . $o->LastName . ')' : '')) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Add Device Date</label>
+                <input type="date" name="AddDeviceDate" value="<?= esc_attr($editing->AddDeviceDate ?? '') ?>" min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
+            <button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57">Update</button>
+        </div>
+    </form>
+
+    <style>
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 50px;
+            font-size: 14px;
+        }
+
+        .form-actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+
+<?php
+    return ob_get_clean();
+}
+
+add_shortcode('edit_device', 'edit_device_form');

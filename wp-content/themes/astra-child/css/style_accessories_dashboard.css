@@ -1,0 +1,120 @@
+        .dashboard-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        .card {
+            flex: 0 1 calc(50% - 10px);
+            /* Two cards per row */
+            border-radius: 10px;
+            padding: 20px;
+            min-width: 260px;
+            position: relative;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+        }
+
+        .card-count {
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+
+        .unit {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .card-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #ffffff;
+            opacity: 0.7;
+            border-radius: 4px;
+        }
+
+        .card-percent {
+            text-align: right;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .summary-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .circle-chart {
+            width: 90px;
+            height: 90px;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: #eee;
+            stroke-width: 3.8;
+        }
+
+        .circle-fill {
+            fill: none;
+            stroke: #6ABF57;
+            stroke-width: 3.8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
+
+        .circle-text {
+            fill: #6ABF57;
+            ;
+            font-size: 8px;
+            text-anchor: middle;
+            dominant-baseline: central;
+
+        }
+
+
+        .device-info h1 {
+            color: #6ABF57;
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .device-info p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                flex: 0 1 100%;
+            }
+        }

@@ -1,0 +1,11 @@
+#nc-cart-drawer .nc-drawer-container .nc-drawer-checkout-btn,
+.fl-north-commerce .nc-cart-btn {
+    border-color: #ccc;
+}
+
+.fl-builder-content .fl-north-commerce .qty-counter button,
+.fl-builder-content .fl-north-commerce .nc-cart-btn,
+.fl-builder-content .fl-north-commerce .nc-guest-btn {
+    background-color: inherit;
+    border: none;
+}

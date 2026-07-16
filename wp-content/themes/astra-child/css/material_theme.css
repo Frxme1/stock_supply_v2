@@ -1,0 +1,850 @@
+/* ============================================================
+   Material Design Theme for Device Management System
+   Inspired by Google Material UI (MUI) Design Language
+   ============================================================ */
+
+/* ---- Google Fonts: Roboto ---- */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+/* ============================================================
+   1. CSS VARIABLES — Material Design Color Palette
+   ============================================================ */
+:root {
+    /* Primary: Indigo 600 (MUI default) */
+    --md-primary: #1976D2;
+    --md-primary-light: #42A5F5;
+    --md-primary-dark: #1565C0;
+    --md-primary-surface: rgba(25, 118, 210, 0.08);
+
+    /* Secondary: Teal 500 */
+    --md-secondary: #009688;
+    --md-secondary-light: #4DB6AC;
+
+    /* Error / Success / Warning */
+    --md-error: #D32F2F;
+    --md-success: #2E7D32;
+    --md-warning: #ED6C02;
+    --md-info: #0288D1;
+
+    /* Surfaces & Text */
+    --md-surface: #FFFFFF;
+    --md-background: #FAFAFA;
+    --md-text-primary: rgba(0, 0, 0, 0.87);
+    --md-text-secondary: rgba(0, 0, 0, 0.60);
+    --md-text-disabled: rgba(0, 0, 0, 0.38);
+    --md-divider: rgba(0, 0, 0, 0.12);
+
+    /* Elevation Shadows (MUI dp levels) */
+    --md-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --md-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+    --md-shadow-3: 0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.10);
+    --md-shadow-4: 0 15px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05);
+
+    /* Border Radius */
+    --md-radius-sm: 4px;
+    --md-radius-md: 8px;
+    --md-radius-lg: 12px;
+    --md-radius-xl: 16px;
+    --md-radius-pill: 50px;
+
+    /* Transition */
+    --md-transition: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+/* ============================================================
+   2. GLOBAL RESET & TYPOGRAPHY
+   ============================================================ */
+body,
+html {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    color: var(--md-text-primary);
+    background-color: var(--md-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+}
+
+/* Remove Astra Theme white content wrappers */
+.ast-separate-container .ast-article-single,
+.ast-separate-container .ast-article-post,
+.ast-separate-container .ast-article-page,
+.ast-separate-container .comment-respond,
+.ast-separate-container .ast-comment-list li,
+.ast-separate-container .ast-woocommerce-container,
+.ast-separate-container .ast-single-post,
+.ast-separate-container .bs-container {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.ast-separate-container .site-content>.ast-container {
+    background-color: transparent !important;
+}
+
+.site-content,
+.content-area,
+.entry-content,
+.ast-container,
+.site-main {
+    background-color: transparent !important;
+}
+
+.ast-separate-container .site-main {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Remove any page-level white box */
+.page .entry-content,
+.single .entry-content {
+    background-color: transparent !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 500;
+    color: var(--md-text-primary);
+    letter-spacing: -0.01em;
+}
+
+h1 {
+    font-size: 2.125rem;
+    font-weight: 300;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+h4 {
+    font-size: 1.125rem;
+}
+
+p,
+span,
+label,
+td,
+th,
+li,
+a {
+    font-family: 'Roboto', sans-serif !important;
+}
+
+a {
+    color: var(--md-primary);
+    text-decoration: none;
+    transition: color 0.2s var(--md-transition);
+}
+
+a:hover {
+    color: var(--md-primary-dark);
+}
+
+
+/* ============================================================
+   3. BUTTONS — Material Contained, Outlined, Text
+   ============================================================ */
+
+/* --- Contained Buttons (default .btn) --- */
+.btn {
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 500;
+    font-size: 0.875rem;
+    letter-spacing: 0.02857em;
+    text-transform: uppercase;
+    border-radius: var(--md-radius-sm) !important;
+    padding: 8px 22px;
+    border: none;
+    box-shadow: var(--md-shadow-1);
+    transition: all 0.25s var(--md-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    box-shadow: var(--md-shadow-2);
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    box-shadow: var(--md-shadow-3);
+    transform: translateY(0);
+}
+
+/* Ripple Effect */
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s var(--md-transition), height 0.5s var(--md-transition), opacity 0.5s;
+    opacity: 0;
+}
+
+.btn:active::after {
+    width: 300px;
+    height: 300px;
+    opacity: 1;
+    transition: 0s;
+}
+
+/* Primary Button */
+.btn-primary,
+.btn-info {
+    background-color: var(--md-primary) !important;
+    border-color: var(--md-primary) !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-info:hover {
+    background-color: var(--md-primary-dark) !important;
+    border-color: var(--md-primary-dark) !important;
+}
+
+/* Success Button */
+.btn-success {
+    background-color: var(--md-success) !important;
+    border-color: var(--md-success) !important;
+}
+
+/* Danger Button */
+.btn-danger {
+    background-color: var(--md-error) !important;
+    border-color: var(--md-error) !important;
+}
+
+/* Warning Button */
+.btn-warning {
+    background-color: var(--md-warning) !important;
+    border-color: var(--md-warning) !important;
+    color: #fff !important;
+}
+
+/* Outlined Buttons */
+.btn-outline-primary {
+    color: var(--md-primary) !important;
+    border: 1px solid var(--md-primary) !important;
+    background: transparent !important;
+    box-shadow: none;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--md-primary-surface) !important;
+    box-shadow: none;
+}
+
+/* Rounded Pill Override — Material uses slightly rounded, not full pill */
+.btn.rounded-pill {
+    border-radius: 20px !important;
+}
+
+/* Small Button */
+.btn-sm {
+    font-size: 0.8125rem;
+    padding: 6px 16px;
+}
+
+
+/* ============================================================
+   4. FORM CONTROLS — Material Outlined Inputs
+   ============================================================ */
+.form-control,
+.form-select {
+    font-family: 'Roboto', sans-serif !important;
+    font-size: 0.9375rem;
+    border: 1px solid var(--md-divider) !important;
+    border-radius: var(--md-radius-sm) !important;
+    padding: 10px 14px;
+    background-color: var(--md-surface);
+    color: var(--md-text-primary);
+    transition: border-color 0.2s var(--md-transition), box-shadow 0.2s var(--md-transition);
+    box-shadow: none !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--md-primary) !important;
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2) !important;
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--md-text-disabled);
+    font-weight: 400;
+}
+
+/* Labels */
+.form-label,
+.col-form-label,
+label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--md-text-secondary);
+    margin-bottom: 6px;
+}
+
+/* Select Dropdown Arrow */
+.form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(0,0,0,0.54)' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+}
+
+/* Custom form-group-input Override for Material look */
+.form-group-input input,
+.form-group-input select {
+    border-radius: var(--md-radius-sm) !important;
+    border: 1px solid rgba(0, 0, 0, 0.23) !important;
+    transition: border-color 0.2s var(--md-transition);
+}
+
+.form-group-input input:focus,
+.form-group-input select:focus {
+    border-color: var(--md-primary) !important;
+    border-width: 2px !important;
+    box-shadow: none !important;
+}
+
+.form-group-input label {
+    font-weight: 500;
+    color: var(--md-text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Checkbox — Material Style */
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--md-primary);
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+
+/* ============================================================
+   5. DATA TABLE — Material Design
+   ============================================================ */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none !important;
+    background: transparent;
+    border-radius: var(--md-radius-md);
+    overflow: visible;
+    box-shadow: var(--md-shadow-1);
+}
+
+.table> :not(caption)>*>* {
+    border-bottom: 1px solid var(--md-divider) !important;
+    border-top: none !important;
+}
+
+/* Header */
+.table .table-secondary,
+.table tr.table-secondary {
+    background-color: var(--md-surface) !important;
+}
+
+.table .table-secondary th,
+.table tr.table-secondary th {
+    background-color: var(--md-surface) !important;
+    color: var(--md-text-secondary) !important;
+    font-weight: 500 !important;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 14px 16px !important;
+    border-bottom: 2px solid var(--md-divider) !important;
+    white-space: nowrap;
+}
+
+/* Body Rows */
+.table td {
+    padding: 12px 16px !important;
+    font-size: 0.875rem;
+    color: var(--md-text-primary);
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s var(--md-transition);
+}
+
+.table tbody tr:hover {
+    background-color: var(--md-primary-surface) !important;
+}
+
+/* Remove bordered table default borders */
+.table-bordered {
+    border: none !important;
+}
+
+.table-bordered> :not(caption)>* {
+    border-width: 0 !important;
+}
+
+.table-bordered> :not(caption)>*>* {
+    border-width: 0 0 1px 0 !important;
+    border-color: var(--md-divider) !important;
+}
+
+
+/* ============================================================
+   6. DASHBOARD CARDS — Material Elevation
+   ============================================================ */
+.device-dashboard {
+    background-color: var(--md-background) !important;
+}
+
+.card-status {
+    border-radius: var(--md-radius-lg) !important;
+    box-shadow: var(--md-shadow-2) !important;
+    transition: box-shadow 0.3s var(--md-transition), transform 0.3s var(--md-transition);
+    padding: 22px !important;
+}
+
+.card-status:hover {
+    box-shadow: var(--md-shadow-3) !important;
+    transform: translateY(-4px);
+}
+
+.card-title {
+    font-weight: 500 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.02em;
+}
+
+.card-icon {
+    font-size: 2.5rem !important;
+    opacity: 0.6 !important;
+}
+
+.card-count {
+    font-size: 1.1rem !important;
+    font-weight: 400;
+}
+
+.progress-bar {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-radius: var(--md-radius-sm) !important;
+    height: 6px !important;
+}
+
+.progress-fill {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: var(--md-radius-sm) !important;
+    transition: width 0.6s var(--md-transition);
+}
+
+.percent-text {
+    font-size: 0.8125rem !important;
+    font-weight: 500;
+    color: var(--md-text-secondary) !important;
+}
+
+
+/* ============================================================
+   7. DASHBOARD SUMMARY CARDS
+   ============================================================ */
+.all-device-summary-container {
+    gap: 20px;
+}
+
+.all-device-summary {
+    background-color: var(--md-surface) !important;
+    border-radius: var(--md-radius-lg) !important;
+    box-shadow: var(--md-shadow-1);
+    padding: 28px 20px !important;
+    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition);
+    border: 1px solid var(--md-divider);
+}
+
+.all-device-summary:hover {
+    box-shadow: var(--md-shadow-2);
+    transform: translateY(-2px);
+}
+
+.all-device-summary h4 {
+    font-size: 0.875rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--md-text-secondary) !important;
+    font-weight: 500 !important;
+    margin-bottom: 12px;
+}
+
+.all-device-summary h3 {
+    font-size: 2rem !important;
+    font-weight: 300 !important;
+    color: var(--md-text-primary) !important;
+}
+
+/* Circle Chart */
+.circle-chart {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.circle-bg {
+    stroke: #E0E0E0 !important;
+    stroke-width: 3.5;
+}
+
+
+/* ============================================================
+   8. ACTION MENU — Material Dropdown
+   ============================================================ */
+.action-menu {
+    font-family: 'Roboto', sans-serif !important;
+}
+
+.action-btn {
+    background: var(--md-primary) !important;
+    border: none !important;
+    padding: 6px 12px !important;
+    border-radius: 50% !important;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px !important;
+    cursor: pointer;
+    transition: all 0.2s var(--md-transition);
+    box-shadow: var(--md-shadow-1);
+    color: #fff;
+}
+
+.action-btn:hover {
+    background-color: var(--md-primary-dark) !important;
+    box-shadow: var(--md-shadow-2);
+}
+
+.action-dropdown {
+    background-color: var(--md-surface) !important;
+    border-radius: var(--md-radius-sm) !important;
+    box-shadow: var(--md-shadow-3) !important;
+    border: none !important;
+    min-width: 180px !important;
+    padding: 8px 0 !important;
+    z-index: 10000 !important;
+}
+
+.action-dropdown a {
+    color: var(--md-text-primary) !important;
+    padding: 10px 16px !important;
+    font-size: 0.875rem;
+    font-weight: 400;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.15s var(--md-transition) !important;
+}
+
+.action-dropdown a:hover {
+    background-color: var(--md-primary-surface) !important;
+    color: var(--md-primary) !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.action-menu:hover .action-dropdown {
+    animation: fadeIn 0.2s var(--md-transition);
+}
+
+
+/* ============================================================
+   9. PAGINATION — Material Design
+   ============================================================ */
+.pagination {
+    gap: 4px;
+}
+
+.pagination .page-item .page-link {
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--md-text-primary);
+    background-color: transparent;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0 2px;
+    transition: all 0.2s var(--md-transition);
+}
+
+.pagination .page-item .page-link:hover {
+    background-color: var(--md-primary-surface);
+    color: var(--md-primary);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--md-primary) !important;
+    color: #fff !important;
+    box-shadow: var(--md-shadow-1);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: var(--md-text-disabled);
+    background: transparent;
+}
+
+/* Previous / Next buttons — wider rounded rect */
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+    width: auto;
+    border-radius: 18px !important;
+    padding: 0 16px;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+
+/* ============================================================
+   10. FORM PAGES — Material Paper Surface
+   ============================================================ */
+.container-fluid {
+    background-color: transparent;
+}
+
+/* Search Bar Row */
+.row.align-items-center.g-2 {
+    background: transparent;
+    padding: 16px 20px;
+    border-radius: var(--md-radius-md);
+    box-shadow: var(--md-shadow-1);
+    margin-bottom: 16px;
+    border: 1px solid var(--md-divider);
+}
+
+/* Bulk Action Toolbar */
+#bulk-action-form>.d-flex.align-items-center.mb-3 {
+    background: transparent;
+    padding: 10px 16px;
+    border-radius: var(--md-radius-md);
+    box-shadow: var(--md-shadow-1);
+    border: 1px solid var(--md-divider);
+}
+
+/* Form Card */
+form {
+    font-family: 'Roboto', sans-serif !important;
+}
+
+.form-grid {
+    gap: 20px;
+}
+
+
+/* ============================================================
+   11. RECEIVE DEVICE & MAINTENANCE FORMS — Material Paper
+   ============================================================ */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-actions {
+    margin-top: 28px;
+}
+
+.form-actions .btn {
+    min-width: 120px;
+}
+
+
+/* ============================================================
+   12. SWEETALERT2 — Material Override
+   ============================================================ */
+.swal2-popup {
+    font-family: 'Roboto', sans-serif !important;
+    border-radius: var(--md-radius-lg) !important;
+    box-shadow: var(--md-shadow-4) !important;
+    padding: 32px !important;
+}
+
+.swal2-title {
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 1.25rem !important;
+    color: var(--md-text-primary) !important;
+}
+
+.swal2-html-container {
+    font-family: 'Roboto', sans-serif !important;
+    color: var(--md-text-secondary) !important;
+    font-size: 0.9375rem !important;
+}
+
+.swal2-styled.swal2-confirm {
+    background-color: var(--md-primary) !important;
+    border-radius: var(--md-radius-sm) !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    box-shadow: var(--md-shadow-1) !important;
+    padding: 10px 24px !important;
+}
+
+.swal2-styled.swal2-cancel {
+    border-radius: var(--md-radius-sm) !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   13. SCROLLBAR — Material Thin
+   ============================================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+
+/* ============================================================
+   14. GENERAL UTILITIES & OVERRIDES
+   ============================================================ */
+
+/* MUI-like Chips for Status */
+td .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--md-radius-pill);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+/* MUI-like Dividers */
+hr,
+.divider {
+    border-color: var(--md-divider);
+    opacity: 1;
+}
+
+/* Card hover subtle scale */
+.card {
+    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition);
+}
+
+.card:hover {
+    box-shadow: var(--md-shadow-3);
+    transform: translateY(-3px);
+}
+
+/* Table wrapper with Material Paper look */
+.table-responsive-xxl {
+    background: transparent;
+    border-radius: var(--md-radius-md);
+    box-shadow: var(--md-shadow-1);
+    overflow: visible;
+    border: 1px solid var(--md-divider);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .row.align-items-center.g-2 {
+        padding: 12px 14px;
+    }
+
+    .table .table-secondary th,
+    .table tr.table-secondary th {
+        font-size: 0.75rem;
+        padding: 10px 8px !important;
+    }
+
+    .table td {
+        padding: 10px 8px !important;
+        font-size: 0.8125rem;
+    }
+
+    .all-device-summary {
+        padding: 20px 16px !important;
+    }
+}
+
+
+/* ============================================================
+   15. ANIMATION KEYFRAMES
+   ============================================================ */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.device-dashboard,
+.all-device-summary-container,
+.table-responsive-xxl,
+#bulk-action-form {
+    animation: slideUp 0.4s var(--md-transition);
+}
+
+/* Subtle page load fade-in */
+@keyframes fadeInPage {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.container-fluid {
+    animation: fadeInPage 0.3s ease-out;
+}
