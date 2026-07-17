@@ -68,7 +68,7 @@ function form_edit_owner($editing = null)
             showConfirmButton: false,
             timer: 1500
         }).then(() => {
-            window.location.href = '/Owner';
+            window.location.href = '" . esc_url(home_url('/Owner/')) . "';
         });
     </script>";
             return ob_get_clean();

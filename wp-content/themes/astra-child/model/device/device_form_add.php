@@ -1,18 +1,20 @@
 <?php
 function device_form($editing = null)
 {
+	ob_start();
+
 	global $wpdb;
 	$table_device = 'Devices';
 
-	$brands     = $wpdb->get_results("SELECT BrandID, BrandName FROM Brands");
+	$brands = $wpdb->get_results("SELECT BrandID, BrandName FROM Brands");
 	$categories = $wpdb->get_results("SELECT CategoryID, CategoryName FROM Categories");
-	$keywords   = $wpdb->get_results("SELECT KeywordID, KeywordName FROM Keywords");
-	$statuses   = $wpdb->get_results("SELECT StatusID, StatusName FROM Statuses");
+	$keywords = $wpdb->get_results("SELECT KeywordID, KeywordName FROM Keywords");
+	$statuses = $wpdb->get_results("SELECT StatusID, StatusName FROM Statuses");
 
 
 
 	// Keywords เฉพาะ Accessories
-	$accessory_keywords = ['Keyboard', 'Mouse', 'Power Supply', 'PC', 'Adapter','SSD'];
+	$accessory_keywords = ['Keyboard', 'Mouse', 'Power Supply', 'PC', 'Adapter', 'SSD'];
 	$accessory_keyword_ids = [];
 
 	foreach ($accessory_keywords as $name) {
@@ -96,7 +98,7 @@ function device_form($editing = null)
 
 
 
-?>
+	?>
 
 	<script>
 		window.categoryData = <?= json_encode($category_data); ?>;
@@ -130,7 +132,7 @@ function device_form($editing = null)
 
 			<div class="form-group">
 				<label>Brand</label>
-				<select name="BrandID" id="brand-select">
+				<select name="BrandID" id="brand-select" required>
 					<option value="" style="text-align: center;">-- Select --</option>
 					<?php foreach ($brands as $brand): ?>
 						<option value="<?= $brand->BrandID ?>" <?= selected($editing->BrandID ?? '', $brand->BrandID, false) ?>>
@@ -143,17 +145,17 @@ function device_form($editing = null)
 
 			<div class="form-group">
 				<label>Model</label>
-				<input type="text" name="Model" value="<?= esc_attr($editing->Model ?? '') ?>">
+				<input type="text" name="Model" value="<?= esc_attr($editing->Model ?? '') ?>" required>
 			</div>
 
 			<div class="form-group">
 				<label>Serial No</label>
-				<input type="text" name="SerialNumber" value="<?= esc_attr($editing->SerialNumber ?? '') ?>">
+				<input type="text" name="SerialNumber" value="<?= esc_attr($editing->SerialNumber ?? '') ?>" required>
 			</div>
 
 			<div class="form-group">
 				<label>Keyword</label>
-				<select name="KeywordID" id="keyword_select">
+				<select name="KeywordID" id="keyword_select" required>
 					<option value="" style="text-align: center;">-- Select --</option>
 					<?php foreach ($keywords as $key): ?>
 						<option value="<?= $key->KeywordID ?>" <?= selected($editing->KeywordID ?? '', $key->KeywordID, false) ?>>
@@ -177,14 +179,16 @@ function device_form($editing = null)
 
 			<div class="form-group">
 				<label>Add Device Date</label>
-				<input type="date" name="AddDeviceDate" value="<?= esc_attr($dateValue) ?>" min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
+				<input type="date" name="AddDeviceDate" value="<?= esc_attr($dateValue) ?>"
+					min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
 			</div>
 		</div>
 
 
 		<div class="form-actions">
 			<button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
-			<button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57" name="<?= $editing ? 'update_device' : 'add_device' ?>">
+			<button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57"
+				name="<?= $editing ? 'update_device' : 'add_device' ?>">
 				<?= $editing ? 'Update' : 'Submit' ?>
 			</button>
 		</div>
@@ -194,6 +198,7 @@ function device_form($editing = null)
 	<script>
 		window.keywordMap = <?= json_encode($keyword_map); ?>;
 		window.accessoryKeywordIDs = <?= json_encode($accessory_keyword_ids); ?>;
+		window.siteUrl = "<?= esc_url(home_url('/')) ?>";
 	</script>
 	<script src="<?= get_stylesheet_directory_uri() ?>/js/category_keyword_filter.js?v=<?= time() ?>"></script>
 
@@ -236,6 +241,14 @@ function device_form($editing = null)
 			font-size: 14px;
 		}
 
+		.form-group input[readonly] {
+			background-color: #d1d5db;
+			/* เทาเข้ม */
+			color: #4b5563;
+			cursor: not-allowed;
+			border-color: #9ca3af;
+		}
+
 		.form-actions {
 			text-align: center;
 			margin-top: 20px;
@@ -244,9 +257,9 @@ function device_form($editing = null)
 
 
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-	<script src="<?= get_stylesheet_directory_uri(); ?>/js/alert_add_devices.js"></script>
+	<script src="<?= get_stylesheet_directory_uri(); ?>/js/alert_add_devices.js?v=<?= time() ?>"></script>
 
-<?php
+	<?php
 	return ob_get_clean();
 }
 

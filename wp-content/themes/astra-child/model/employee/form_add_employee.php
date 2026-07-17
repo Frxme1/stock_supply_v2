@@ -14,14 +14,14 @@ function form_add_owner($editing = null)
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$owner_id = $_POST['OwnerID'] ?? null;
 		$nickname = trim($_POST['Nickname'] ?? '');
-	
+
 		$data = [
-			'Nickname'     => $nickname,
-			'FirstName'    => $_POST['FirstName'] ?? '',
-			'LastName'     => $_POST['LastName'] ?? '',
+			'Nickname' => $nickname,
+			'FirstName' => $_POST['FirstName'] ?? '',
+			'LastName' => $_POST['LastName'] ?? '',
 			'DepartmentID' => !empty($_POST['DepartmentID']) ? $_POST['DepartmentID'] : null,
-			'PositionID'   => !empty($_POST['PositionID']) ? $_POST['PositionID'] : null,
-			'StatusID'     => !empty($_POST['StatusID']) ? $_POST['StatusID'] : null,
+			'PositionID' => !empty($_POST['PositionID']) ? $_POST['PositionID'] : null,
+			'StatusID' => !empty($_POST['StatusID']) ? $_POST['StatusID'] : null,
 		];
 
 
@@ -39,13 +39,13 @@ function form_add_owner($editing = null)
 				$description = "Added Employee: {$nickname}";
 
 				$wpdb->insert('History_new', [
-					'DeviceID'    => 0,
-					'Action'      => 'Add Employee',
-					'Date'        => current_time('mysql'),
+					'DeviceID' => 0,
+					'Action' => 'Add Employee',
+					'Date' => current_time('mysql'),
 					'Description' => $description,
-					'user_email'  => $user_email,
-					'CategoryID'  => $category_id,
-					'Owner'       => $nickname
+					'user_email' => $user_email,
+					'CategoryID' => $category_id,
+					'Owner' => $nickname
 				]);
 				echo "<script>
                 Swal.fire({
@@ -54,7 +54,7 @@ function form_add_owner($editing = null)
                     showConfirmButton: false,
                     timer: 1500
                 }).then(() => {
-                    window.location.href = '/Owner';
+                    window.location.href = '" . esc_url(home_url('/Owner/')) . "';
                 });
             </script>";
 				exit;
@@ -65,7 +65,7 @@ function form_add_owner($editing = null)
 	}
 
 
-?>
+	?>
 
 	<form method="POST" action="">
 		<?php if ($editing): ?>
@@ -101,7 +101,7 @@ function form_add_owner($editing = null)
 						} elseif (($status->Status_name) === 'Resigned') {
 							$emoji = '<i class="fa-solid fa-circle text-danger"></i> ';
 						}
-					?>
+						?>
 						<option value="<?= $status->StatusID ?>" <?= selected($editing->StatusID ?? '', $status->StatusID, false) ?>>
 							<?= esc_html($emoji . $status->Status_name) ?>
 						</option>
@@ -142,7 +142,8 @@ function form_add_owner($editing = null)
 
 		<div class="form-actions">
 			<button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
-			<button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57"><?= $editing ? 'Update' : 'Submit' ?></button>
+			<button type="submit" class="btn btn-success border rounded-pill"
+				style="background-color: #6ABF57"><?= $editing ? 'Update' : 'Submit' ?></button>
 		</div>
 
 
@@ -187,7 +188,7 @@ function form_add_owner($editing = null)
 			margin-top: 20px;
 		}
 	</style>
-<?php
+	<?php
 	return ob_get_clean();
 }
 

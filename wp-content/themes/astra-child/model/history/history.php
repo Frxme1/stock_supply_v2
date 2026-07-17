@@ -10,15 +10,8 @@ function form_history()
 
     $action_result = handle_device_actions();
     if ($action_result) {
-        echo $action_result;
-        return;
+        return $action_result;
     }
-
-    // delte data > 12 month
-    $wpdb->query("
-    DELETE FROM $table_history
-    WHERE Date < DATE_SUB(NOW(), INTERVAL 12 MONTH)
-");
 
 
     $page = 25;
@@ -52,9 +45,11 @@ function form_history()
     // get results
     $rows = $wpdb->get_results(
         $wpdb->prepare("
-        SELECT H.*, C.CategoryName
+        SELECT H.*, C.CategoryName, S.StatusName AS Status
         FROM $table_history AS H
         LEFT JOIN $table_category AS C ON H.CategoryID = C.CategoryID
+        LEFT JOIN Devices AS D ON H.DeviceID = D.DeviceID
+        LEFT JOIN Statuses AS S ON D.StatusID = S.StatusID
         $search_sql
         ORDER BY H.HistoryID DESC
         LIMIT %d OFFSET %d
@@ -141,14 +136,14 @@ foreach ($_GET as $key => $value) {
                                     <?php if ($row->Status == 'Available'): ?>
                                         <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
                                         <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                        <a href="?retire=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                     <?php elseif ($row->Status == 'In Use'): ?>
                                         <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
                                         <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                        <a href="?retire=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                     <?php elseif ($row->Status == 'Maintenance'): ?>
                                         <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                        <a href="?retire=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                     <?php elseif ($row->Status == 'Retired'): ?>
                                         <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
                                     <?php endif; ?>

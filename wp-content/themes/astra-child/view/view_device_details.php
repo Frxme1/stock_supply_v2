@@ -9,14 +9,12 @@ function device_view_details($device_id = null)
     $table_status  = 'Statuses';
     $table_history = 'History_new';
 
-    ob_start();
-
     if (isset($_GET['delete'])) {
         $history_id = $_GET['delete'];
         $wpdb->delete($table_history, ['HistoryID' => $history_id], ['%s']);
     }
 
-    $device_id = $_GET['view'] ?? '';
+    $device_id = $device_id ?: ($_GET['view'] ?? '');
     if (empty($device_id)) return '<p>No Device ID provided.</p>';
 
     $device = $wpdb->get_row($wpdb->prepare("

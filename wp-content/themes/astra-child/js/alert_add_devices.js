@@ -13,8 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Clear params from URL
 			window.history.replaceState({}, document.title, window.location.pathname);
 
-			// Redirect to /slug/
-			window.location.href = `/${categorySlug}/`;
+			// Redirect to siteUrl + categorySlug
+			const siteUrl = window.siteUrl || '/';
+			window.location.href = siteUrl + categorySlug + '/';
 		});
 	}
 });

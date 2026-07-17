@@ -83,7 +83,6 @@
         padding: 60px 40px;
         font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         border-top: 1px solid #f0f0f0;
-        margin-left: 50px;
         transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 

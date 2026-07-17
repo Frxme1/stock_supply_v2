@@ -30,14 +30,12 @@ function edit_device_form($editing = null)
         $OwnerID        = !empty($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
         $AddDeviceDate_edit = sanitize_text_field($_POST['AddDeviceDate']);
         $AddDeviceDate  = date('Y-m-d', strtotime($AddDeviceDate_edit));
-        $CategoryID     = intval($_POST['CategoryID']);
-
+        $Reason         = !empty($_POST['Reason']) ? sanitize_text_field($_POST['Reason']) : '';
 
         // Validate IDs
         $valid_brand   = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Brands WHERE BrandID = %d", $BrandID));
         $valid_status  = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Statuses WHERE StatusID = %d", $StatusID));
         $valid_keyword = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Keywords WHERE KeywordID = %d", $KeywordID));
-
 
         if (!$valid_brand || !$valid_status || !$valid_keyword) {
             $message = !$valid_brand ? 'Invalid Brand selected!' : (!$valid_status ? 'Invalid Status selected!' : 'Invalid Keyword selected!');
@@ -74,12 +72,15 @@ function edit_device_form($editing = null)
         // Get category slug
         $category_slug = '';
         if ($device_info && isset($device_info->CategoryID)) {
-            $category_slug = $wpdb->get_var($wpdb->prepare(
+            $category_name = $wpdb->get_var($wpdb->prepare(
                 "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
                 $device_info->CategoryID
             ));
+            if ($category_name) {
+                $category_slug = sanitize_title($category_name);
+            }
         }
-        $redirect_url = $category_slug ? '/' . urlencode($category_slug) . '/' : '/Home';
+        $redirect_url = $category_slug ? home_url('/' . $category_slug . '/') : home_url('/');
 
         $owner_nickname = '-';
         if (!empty($device_info->OwnerID)) {
@@ -111,11 +112,16 @@ function edit_device_form($editing = null)
             $current_user = wp_get_current_user();
             $user_email = $current_user->user_email ?? '';
 
+            $history_description = "Device ID {$DeviceID} information updated";
+            if ($Reason !== '') {
+                $history_description .= " | Reason: " . $Reason;
+            }
+
             $wpdb->insert('History_new', [
                 'DeviceID'    => $DeviceID,
                 'Action'      => 'Update Device',
                 'Date'        => current_time('mysql'),
-                'Description' => "Device ID {$DeviceID} information updated",
+                'Description' => $history_description,
                 'user_email'  => $user_email,
                 'CategoryID'  => $device_info->CategoryID ?? null,
                 'Owner'       => $owner_nickname
@@ -192,6 +198,7 @@ function edit_device_form($editing = null)
                 <select name="StatusID" id="StatusID" required>
                     <option value="">-- Select Status --</option>
                     <?php foreach ($statuses as $s): ?>
+                        <?php if (in_array($s->StatusName, ['Maintenance', 'Retired']) && (!isset($editing->StatusID) || $editing->StatusID != $s->StatusID)) continue; ?>
                         <option value="<?= esc_attr($s->StatusID) ?>" data-name="<?= esc_attr(strtolower($s->StatusName)) ?>" <?= selected($editing->StatusID ?? '', $s->StatusID, false) ?>>
                             <?=
                             ($s->StatusName === 'Available' ? '<i class="fa-solid fa-circle text-success"></i> Available' : ($s->StatusName === 'In Use' ? '<i class="fa-solid fa-circle text-danger"></i> In Use' : ($s->StatusName === 'Maintenance' ? '<i class="fa-solid fa-circle text-warning"></i> Maintenance' : ($s->StatusName === 'Retired' ? '<i class="fa-solid fa-circle text-dark"></i> Retired' : '❔'))))
@@ -238,6 +245,11 @@ function edit_device_form($editing = null)
             <div class="form-group">
                 <label>Add Device Date</label>
                 <input type="date" name="AddDeviceDate" id="AddDeviceDate" value="<?= esc_attr($editing->AddDeviceDate ?? '') ?>" min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
+            </div>
+
+            <div class="form-group" id="reason-group" style="display: none; grid-column: span 2;">
+                <label>Reason <span class="text-danger">*</span></label>
+                <input type="text" name="Reason" id="Reason" placeholder="Please enter reason (Required for Retired)">
             </div>
         </div>
 
@@ -302,12 +314,30 @@ function edit_device_form($editing = null)
             function handleStatusChange() {
                 const selectedOption = statusSelect.options[statusSelect.selectedIndex];
                 const statusName = selectedOption ? selectedOption.getAttribute('data-name') : '';
+                const reasonGroup = document.getElementById('reason-group');
+                const reasonInput = document.getElementById('Reason');
 
                 if (statusName === 'retired') {
+                    if (reasonGroup) reasonGroup.style.display = 'flex';
+                    if (reasonInput) reasonInput.required = true;
+                } else {
+                    if (reasonGroup) reasonGroup.style.display = 'none';
+                    if (reasonInput) {
+                        reasonInput.required = false;
+                        reasonInput.value = '';
+                    }
+                }
+
+                if (statusName === 'retired' || statusName === 'available') {
                     // ซ่อนและล้างช่อง Owner
                     if (ownerGroup) ownerGroup.style.display = 'none';
                     if (ownerSelect) ownerSelect.value = '';
-                    
+                } else {
+                    // แสดงช่อง Owner ปกติ
+                    if (ownerGroup) ownerGroup.style.display = 'flex';
+                }
+
+                if (statusName === 'retired') {
                     // ล็อควันที่ และตั้งเป็นวันปัจจุบัน (เฉพาะกรณีที่เพิ่งเปลี่ยนเป็น retired ครั้งแรก หรือกำลังเลือกใหม่)
                     if (dateField) {
                         if (initialStatusName !== 'retired' || !dateField.value) {
@@ -320,9 +350,6 @@ function edit_device_form($editing = null)
                         dateField.style.cursor = 'not-allowed';
                     }
                 } else {
-                    // แสดงช่อง Owner ปกติ
-                    if (ownerGroup) ownerGroup.style.display = 'flex';
-                    
                     // ปลดล็อควันที่
                     if (dateField) {
                         dateField.readOnly = false;

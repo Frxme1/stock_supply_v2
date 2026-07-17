@@ -30,6 +30,9 @@ function form_maintenance($editing = null)
         $DeviceID   = sanitize_text_field($_POST['DeviceID']);
         $RepairDate = sanitize_text_field($_POST['RepairDate']);
         $Details    = sanitize_textarea_field($_POST['Details']);
+        if ($Details === 'อื่นๆ / Others' && !empty($_POST['OtherDetails'])) {
+            $Details = 'อื่นๆ / Others - ' . sanitize_text_field($_POST['OtherDetails']);
+        }
 
         $device_info = $wpdb->get_row($wpdb->prepare(
             "SELECT user_email, CategoryID, OwnerID FROM $table_device WHERE DeviceID = %s",
@@ -107,7 +110,7 @@ function form_maintenance($editing = null)
             'Owner'       => $owner_nickname
         ]);
 
-        show_alert('success', 'Maintenance Device!', '', '/maintenance');
+        show_alert('success', 'Maintenance Device!', '', home_url('/maintenance/'));
         return ob_get_clean();
     }
 
@@ -172,22 +175,50 @@ function form_maintenance($editing = null)
 
         </div>
 
+        <?php
+        $details_val = $editing->Details ?? '';
+        $is_other = false;
+        $other_text = '';
+        $known_options = [
+            'จอแสดงผลมีปัญหา / Screen Issue',
+            'แบตเตอรี่เสื่อม / Battery Issue',
+            'เครื่องเปิดไม่ติด / Power Issue',
+            'คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue',
+            'อัปเกรดอุปกรณ์ / Hardware Upgrade',
+            'ซอฟต์แวร์มีปัญหา / Software Issue'
+        ];
+
+        if (!empty($details_val) && !in_array($details_val, $known_options)) {
+            $is_other = true;
+            if (strpos($details_val, 'อื่นๆ / Others - ') === 0) {
+                $other_text = substr($details_val, strlen('อื่นๆ / Others - '));
+            } elseif ($details_val !== 'อื่นๆ / Others') {
+                $other_text = $details_val;
+            }
+        }
+        ?>
+
         <div class="form-group">
             <label>Details</label>
             <select name="Details" class="rounded-4" style="padding: 10px; border: 1px solid #ccc; background-color: #fff;" required>
                 <option value="" disabled selected>-- Select Maintenance Reason --</option>
-                <option value="จอแสดงผลมีปัญหา / Screen Issue" <?= ($editing->Details ?? '') == 'จอแสดงผลมีปัญหา / Screen Issue' ? 'selected' : '' ?>>จอแสดงผลมีปัญหา / Screen Issue</option>
-                <option value="แบตเตอรี่เสื่อม / Battery Issue" <?= ($editing->Details ?? '') == 'แบตเตอรี่เสื่อม / Battery Issue' ? 'selected' : '' ?>>แบตเตอรี่เสื่อม / Battery Issue</option>
-                <option value="เครื่องเปิดไม่ติด / Power Issue" <?= ($editing->Details ?? '') == 'เครื่องเปิดไม่ติด / Power Issue' ? 'selected' : '' ?>>เครื่องเปิดไม่ติด / Power Issue</option>
-                <option value="คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue" <?= ($editing->Details ?? '') == 'คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue' ? 'selected' : '' ?>>คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue</option>
-                <option value="อัปเกรดอุปกรณ์ / Hardware Upgrade" <?= ($editing->Details ?? '') == 'อัปเกรดอุปกรณ์ / Hardware Upgrade' ? 'selected' : '' ?>>อัปเกรดอุปกรณ์ / Hardware Upgrade</option>
-                <option value="ซอฟต์แวร์มีปัญหา / Software Issue" <?= ($editing->Details ?? '') == 'ซอฟต์แวร์มีปัญหา / Software Issue' ? 'selected' : '' ?>>ซอฟต์แวร์มีปัญหา / Software Issue</option>
-                <option value="อื่นๆ / Others" <?= ($editing->Details ?? '') == 'อื่นๆ / Others' ? 'selected' : '' ?>>อื่นๆ / Others</option>
+                <option value="จอแสดงผลมีปัญหา / Screen Issue" <?= $details_val === 'จอแสดงผลมีปัญหา / Screen Issue' ? 'selected' : '' ?>>จอแสดงผลมีปัญหา / Screen Issue</option>
+                <option value="แบตเตอรี่เสื่อม / Battery Issue" <?= $details_val === 'แบตเตอรี่เสื่อม / Battery Issue' ? 'selected' : '' ?>>แบตเตอรี่เสื่อม / Battery Issue</option>
+                <option value="เครื่องเปิดไม่ติด / Power Issue" <?= $details_val === 'เครื่องเปิดไม่ติด / Power Issue' ? 'selected' : '' ?>>เครื่องเปิดไม่ติด / Power Issue</option>
+                <option value="คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue" <?= $details_val === 'คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue' ? 'selected' : '' ?>>คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue</option>
+                <option value="อัปเกรดอุปกรณ์ / Hardware Upgrade" <?= $details_val === 'อัปเกรดอุปกรณ์ / Hardware Upgrade' ? 'selected' : '' ?>>อัปเกรดอุปกรณ์ / Hardware Upgrade</option>
+                <option value="ซอฟต์แวร์มีปัญหา / Software Issue" <?= $details_val === 'ซอฟต์แวร์มีปัญหา / Software Issue' ? 'selected' : '' ?>>ซอฟต์แวร์มีปัญหา / Software Issue</option>
+                <option value="อื่นๆ / Others" <?= $is_other ? 'selected' : '' ?>>อื่นๆ / Others</option>
             </select>
+        </div>
+        
+        <div class="form-group" id="other-details-group" style="display: <?= $is_other ? 'flex' : 'none' ?>;">
+            <label>Additional Details <span class="text-danger">*</span></label>
+            <input type="text" name="OtherDetails" id="OtherDetails" placeholder="Please specify reason..." value="<?= esc_attr($other_text) ?>" <?= $is_other ? 'required' : '' ?>>
         </div>
 
         <div class="form-actions">
-            <button type="reset" class="btn btn-dark border rounded-pill" style="background-color: #000">Cancel</button>
+            <button type="button" class="btn btn-dark border rounded-pill" style="background-color: #000" onclick="window.history.back();">Cancel</button>
             <button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57" name="update_device">Maintenance</button>
         </div>
     </form>
@@ -232,6 +263,27 @@ function form_maintenance($editing = null)
             margin-top: 20px;
         }
     </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const detailsSelect = document.querySelector('select[name="Details"]');
+        const otherGroup = document.getElementById('other-details-group');
+        const otherInput = document.getElementById('OtherDetails');
+
+        if (detailsSelect) {
+            detailsSelect.addEventListener('change', function() {
+                if (this.value === 'อื่นๆ / Others') {
+                    otherGroup.style.display = 'flex';
+                    otherInput.required = true;
+                } else {
+                    otherGroup.style.display = 'none';
+                    otherInput.required = false;
+                    otherInput.value = '';
+                }
+            });
+        }
+    });
+    </script>
 
 <?php
     return ob_get_clean();

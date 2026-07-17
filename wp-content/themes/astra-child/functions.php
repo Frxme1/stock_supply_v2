@@ -64,8 +64,29 @@ require_once get_stylesheet_directory() . '/view/formEmployee.php';
 require_once get_stylesheet_directory() . '/view/formMaintenance.php';
 require_once get_stylesheet_directory() . '/view/view_device_details.php';
 
+// Keep the history retention policy out of the History page request.
+function astra_child_cleanup_expired_history()
+{
+    global $wpdb;
+
+    $cutoff = wp_date('Y-m-d H:i:s', strtotime('-12 months'));
+    $wpdb->query($wpdb->prepare(
+        'DELETE FROM History_new WHERE Date < %s',
+        $cutoff
+    ));
+}
+add_action('astra_child_cleanup_expired_history', 'astra_child_cleanup_expired_history');
+
+function astra_child_schedule_history_cleanup()
+{
+    if (!wp_next_scheduled('astra_child_cleanup_expired_history')) {
+        wp_schedule_event(time(), 'daily', 'astra_child_cleanup_expired_history');
+    }
+}
+add_action('init', 'astra_child_schedule_history_cleanup');
+
 // Redirect old QR code URLs to the new system
-add_action('template_redirect', function() {
+add_action('template_redirect', function () {
     $request_uri = $_SERVER['REQUEST_URI'];
     if (strpos($request_uri, 'view-device.php') !== false && isset($_GET['id'])) {
         $device_id = sanitize_text_field($_GET['id']);
@@ -286,6 +307,25 @@ function enqueue_action_menu_styles()
 add_action('wp_enqueue_scripts', 'enqueue_action_menu_styles');
 
 
+// Animated Dropdown Component
+function enqueue_animated_dropdown()
+{
+    wp_enqueue_style(
+        'animated-dropdown-style',
+        get_stylesheet_directory_uri() . '/css/animated-dropdown.css',
+        [],
+        filemtime(get_stylesheet_directory() . '/css/animated-dropdown.css')
+    );
+    wp_enqueue_script(
+        'animated-dropdown-script',
+        get_stylesheet_directory_uri() . '/js/animated-dropdown.js',
+        [],
+        filemtime(get_stylesheet_directory() . '/js/animated-dropdown.js'),
+        true
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_animated_dropdown');
+
 // Material Design Theme (loads last to override all styles)
 function enqueue_material_theme()
 {
@@ -313,10 +353,12 @@ add_action('wp_enqueue_scripts', 'load_sweetalert_delete_script');
 
 function load_sweetalert_delete_details_script()
 {
-
-    wp_enqueue_script('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array(), null, true);
-
+    // check enqueue SweetAlert2
+    if (!wp_script_is('sweetalert2', 'enqueued')) {
+        wp_enqueue_script('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array(), null, true);
+    }
     wp_enqueue_script('sweetalert_delete_details', get_stylesheet_directory_uri() . '/js/sweetalert_delete_details.js', array('sweetalert2'), null, true);
+    wp_enqueue_script('sweetalert_retire', get_stylesheet_directory_uri() . '/js/sweetalert_retire.js', array('sweetalert2'), '1.1', true);
 }
 add_action('wp_enqueue_scripts', 'load_sweetalert_delete_details_script');
 

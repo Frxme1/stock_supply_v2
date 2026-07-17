@@ -12,8 +12,7 @@ function device_crud_acc_sories()
 
     $action_result = handle_device_actions();
     if ($action_result) {
-        echo $action_result;
-        return;
+        return ob_get_clean() . $action_result;
     }
 
     echo device_dashboard_accessories();
@@ -108,7 +107,7 @@ function device_crud_acc_sories()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
-                            <select name="filter_status" id="filter_status" class="form-select form-select-sm"
+                            <select name="filter_status" id="filter_status" class="form-select form-select-sm staggered-dropdown"
                                 onchange="toggleDepartment()">
                                 <option value="">All Status</option>
                                 <option value="Available" <?= $filter_status == 'Available' ? 'selected' : '' ?>>Available
@@ -121,7 +120,7 @@ function device_crud_acc_sories()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Keyword</label>
-                            <select name="filter_keyword" class="form-select form-select-sm">
+                            <select name="filter_keyword" class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Keywords</option>
                                 <?php foreach ($all_keywords as $kw): ?>
                                     <option value="<?= esc_attr($kw) ?>" <?= $filter_keyword == $kw ? 'selected' : '' ?>>
@@ -131,7 +130,7 @@ function device_crud_acc_sories()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2" id="department_wrapper">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Department</label>
-                            <select name="filter_department" id="filter_department" class="form-select form-select-sm">
+                            <select name="filter_department" id="filter_department" class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Depts</option>
                                 <?php foreach ($all_departments as $dept): ?>
                                     <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>>
@@ -249,7 +248,7 @@ function device_crud_acc_sories()
 
         <form method="POST" action="" id="bulk-action-form-acc">
             <div class="d-flex align-items-center justify-content-between mb-3">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center" style="display: none !important;">
                     <select name="bulk_action" class="form-select me-2" style="width: auto;">
                         <option value="">-- Bulk Actions --</option>
                         <option value="available">Set Available (<i class="fa-solid fa-circle text-success"></i>)</option>
@@ -277,7 +276,7 @@ function device_crud_acc_sories()
                 <table class="table table-bordered table-sm">
                     <thead class="table-secondary">
                         <tr>
-                            <th class="py-3" style="width: 50px;"><input type="checkbox" id="selectAll-acc"></th>
+                            <th class="py-3" style="width: 50px; display: none;"><input type="checkbox" id="selectAll-acc"></th>
                             <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
                             <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
                             <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
@@ -288,7 +287,7 @@ function device_crud_acc_sories()
                     <tbody>
                         <?php foreach ($rows as $index => $row): ?>
                             <tr class="text-nowrap py-2" style="white-space: nowrap;">
-                                <td class="align-middle"><input type="checkbox" name="bulk_device_ids[]"
+                                <td class="align-middle" style="display: none;"><input type="checkbox" name="bulk_device_ids[]"
                                         value="<?= $row->DeviceID ?>" class="device-checkbox-acc"
                                         data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
                                 <td class="align-middle text-start"><?= $row->DeviceID ?></td>
@@ -359,7 +358,11 @@ function device_crud_acc_sories()
                                             <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
                                                 <div class="action-dropdown-header">Actions</div>
                                                 <div class="action-dropdown-separator"></div>
-                                                <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
+                                                    <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <?php else: ?>
+                                                    <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <?php endif; ?>
                                                 <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
                                                 <a href="#"
                                                     onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i class="fa-solid fa-print"></i>

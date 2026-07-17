@@ -177,9 +177,8 @@ function device_dashboard()
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="md-chart-card">
+            <div class="md-chart-card">
             <h4 class="md-chart-title">Status Overview</h4>
             <div class="md-status-list">
                 <?php foreach ($status_config as $status => $config):

@@ -61,7 +61,7 @@ function form_owner()
                 showConfirmButton: false,
                 timer: 1500
             }).then(() => {
-                window.location.href = '/Owner';
+                window.location.href = '" . esc_url(home_url('/Owner/')) . "';
             });
         </script>";
             exit;
@@ -150,7 +150,7 @@ foreach ($_GET as $key => $value) {
 
 
     <!-- form add-owner -->
-    <form action="/add-owner" method="post" style="margin-top: 10px;">
+    <form action="<?= esc_url(home_url('/add-owner/')) ?>" method="post" style="margin-top: 10px;">
         <div class="section-search" style="margin-bottom: 20px;">
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                 <button class="rounded-pill" style="width: 6rem; background-color: #6ABF57;" type="submit">Add</button>
@@ -202,14 +202,14 @@ foreach ($_GET as $key => $value) {
                                 <?php if ($row->Status == 'Available'): ?>
                                     <a href="?receive=<?= $row->OwnerID ?>"><i class="fa-solid fa-box"></i> Receive</a>
                                     <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                    <a href="?retire=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                    <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                 <?php elseif ($row->Status == 'In Use'): ?>
                                     <a href="?return=<?= $row->OwnerID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
                                     <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                    <a href="?retire=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                    <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                 <?php elseif ($row->Status == 'Maintenance'): ?>
                                     <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                    <a href="?retire=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                    <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                 <?php elseif ($row->Status == 'Retired'): ?>
                                     <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
                                 <?php endif; ?>

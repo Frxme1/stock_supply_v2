@@ -12,8 +12,7 @@ function device_crud_laptop()
 
     $action_result = handle_device_actions();
     if ($action_result) {
-        echo $action_result;
-        return;
+        return ob_get_clean() . $action_result;
     }
 
 
@@ -124,7 +123,7 @@ function device_crud_laptop()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
-                            <select name="filter_status" id="filter_status" class="form-select form-select-sm"
+                            <select name="filter_status" id="filter_status" class="form-select form-select-sm staggered-dropdown"
                                 onchange="toggleDepartment()">
                                 <option value="">All Status</option>
                                 <option value="Available" <?= $filter_status == 'Available' ? 'selected' : '' ?>>Available
@@ -137,7 +136,7 @@ function device_crud_laptop()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Brand</label>
-                            <select name="filter_brand" class="form-select form-select-sm">
+                            <select name="filter_brand" class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Brands</option>
                                 <?php foreach ($all_brands as $brand): ?>
                                     <option value="<?= esc_attr($brand) ?>" <?= $filter_brand == $brand ? 'selected' : '' ?>>
@@ -147,7 +146,7 @@ function device_crud_laptop()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2" id="department_wrapper">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Department</label>
-                            <select name="filter_department" id="filter_department" class="form-select form-select-sm">
+                            <select name="filter_department" id="filter_department" class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Depts</option>
                                 <?php foreach ($all_departments as $dept): ?>
                                     <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>>
@@ -267,7 +266,7 @@ function device_crud_laptop()
 
         <form method="POST" action="" id="bulk-action-form-laptop">
             <div class="d-flex align-items-center justify-content-between mb-3">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center" style="display: none !important;">
                     <select name="bulk_action" class="form-select me-2" style="width: auto;">
                         <option value="">-- Bulk Actions --</option>
                         <option value="available">Set Available (<i class="fa-solid fa-circle text-success"></i>)</option>
@@ -295,7 +294,7 @@ function device_crud_laptop()
                 <table class="table table-bordered table-sm">
                     <thead class="table-secondary">
                         <tr>
-                            <th class="py-3" style="width: 50px;"><input type="checkbox" id="selectAll-laptop"></th>
+                            <th class="py-3" style="width: 50px; display: none;"><input type="checkbox" id="selectAll-laptop"></th>
                             <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
                             <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
                             <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
@@ -306,7 +305,7 @@ function device_crud_laptop()
                     <tbody>
                         <?php foreach ($rows as $index => $row): ?>
                             <tr class="text-nowrap py-2" style="white-space: nowrap;">
-                                <td class="align-middle"><input type="checkbox" name="bulk_device_ids[]"
+                                <td class="align-middle" style="display: none;"><input type="checkbox" name="bulk_device_ids[]"
                                         value="<?= $row->DeviceID ?>" class="device-checkbox-laptop"
                                         data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
                                 <td class="align-middle text-start"><?= $row->DeviceID ?></td>
@@ -378,19 +377,23 @@ function device_crud_laptop()
                                                 style="z-index: 10000;">
                                                 <div class="action-dropdown-header">Actions</div>
                                                 <div class="action-dropdown-separator"></div>
-                                                <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
+                                                    <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <?php else: ?>
+                                                    <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <?php endif; ?>
                                                 <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
                                                 <?php if ($row->Status == 'Available'): ?>
                                                     <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
                                                     <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                    <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                                    <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                 <?php elseif ($row->Status == 'In Use'): ?>
                                                     <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
                                                     <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                    <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                                    <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                 <?php elseif ($row->Status == 'Maintenance'): ?>
                                                     <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                                    <a href="?retired=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                                    <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                 <?php elseif ($row->Status == 'Retired'): ?>
                                                     <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
                                                 <?php endif; ?>
@@ -435,6 +438,24 @@ function device_crud_laptop()
                                                         <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance
                                                             Reason</span>
                                                         <strong class="text-danger"><?= formatName($m_details) ?></strong>
+                                                    </div>
+                                                <?php endif; ?>
+                                                <?php if (strcasecmp($row->Status, 'Retired') === 0): ?>
+                                                    <div class="col-sm-12 mt-2">
+                                                        <?php
+                                                        $r_details = $wpdb->get_var($wpdb->prepare(
+                                                            "SELECT Description FROM History_new WHERE DeviceID = %s AND (Action = 'Retired' OR (Action = 'Update Device' AND Description LIKE '%%| Reason:%%')) ORDER BY HistoryID DESC LIMIT 1", 
+                                                            $row->DeviceID
+                                                        ));
+                                                        $r_reason = '-';
+                                                        if ($r_details) {
+                                                            if (preg_match('/\|\s*Reason:\s*(.*)$/i', $r_details, $matches)) {
+                                                                $r_reason = trim($matches[1]);
+                                                            }
+                                                        }
+                                                        ?>
+                                                        <span class="text-muted d-block" style="font-size: 0.85em;">Retired Reason</span>
+                                                        <strong class="text-danger"><?= formatName($r_reason) ?></strong>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>

@@ -24,11 +24,11 @@ function receive_device($device_data = null)
 
     // เมื่อฟอร์มถูกส่ง
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_device'])) {
-        $device_id     = $_POST['DeviceID'];
-        $owner_id      = $_POST['OwnerID'];
+        $device_id = $_POST['DeviceID'];
+        $owner_id = $_POST['OwnerID'];
         $department_id = $_POST['DepartmentID'];
-        $receive_date  = $_POST['ReceiveDate'];
-        $position_id   = $_POST['PositionID'];
+        $receive_date = $_POST['ReceiveDate'];
+        $position_id = $_POST['PositionID'];
 
         // ดึงสถานะ "In Use"
         $status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
@@ -37,12 +37,12 @@ function receive_device($device_data = null)
         $updated = $wpdb->update(
             $devices_table,
             [
-                'OwnerID'      => $owner_id,
+                'OwnerID' => $owner_id,
                 'DepartmentID' => $department_id,
-                'PositionID'   => $position_id,
-                'ReceiveDate'  => $receive_date,
-                'StatusID'     => $status_id,
-                'ReturnDate'   => null,
+                'PositionID' => $position_id,
+                'ReceiveDate' => $receive_date,
+                'StatusID' => $status_id,
+                'ReturnDate' => null,
             ],
             ['DeviceID' => $device_id]
         );
@@ -73,17 +73,17 @@ function receive_device($device_data = null)
 
             // บันทึกประวัติ
             $wpdb->insert('History_new', [
-                'DeviceID'    => $device_id,
-                'Action'      => 'Receive',
-                'Date'        => current_time('mysql'),
+                'DeviceID' => $device_id,
+                'Action' => 'Receive',
+                'Date' => current_time('mysql'),
                 'Description' => "Device ID {$device_id} received and assigned to owner",
-                'user_email'  => $user_email,
-                'CategoryID'  => $category_id,
-                'Owner'       => $owner_nickname
+                'user_email' => $user_email,
+                'CategoryID' => $category_id,
+                'Owner' => $owner_nickname
             ]);
 
             // แสดงแจ้งเตือนสำเร็จ
-            $redirect_url = '/' . urlencode($category_name);
+            $redirect_url = home_url('/' . sanitize_title($category_name) . '/');
             echo "<script>
         Swal.fire({
             icon: 'success',
@@ -107,7 +107,7 @@ function receive_device($device_data = null)
 
 
     $date_value = !empty($device_data->ReceiveDate) ? date('Y-m-d', strtotime($device_data->ReceiveDate)) : '';
-?>
+    ?>
 
     <form method="POST" style="width: 600px">
         <h2 style="text-align: center;">Receive Device</h2>
@@ -118,7 +118,8 @@ function receive_device($device_data = null)
 
             <div class="form-group">
                 <label>DeviceID</label>
-                <input type="text" value="<?= esc_attr($device_data->DeviceID ?? '') ?>" readonly>
+                <input type="text" value="<?= esc_attr($device_data->DeviceID ?? '') ?>" readonly
+                    style="background-color: #f0f0f0; color: #666; cursor: not-allowed;">
             </div>
 
         </div>
@@ -126,17 +127,24 @@ function receive_device($device_data = null)
 
 
         <div class="d-flex gap-0 column-gap-3">
-            <div class="form-group" style="position: relative;">
+            <div class="form-group">
                 <label>Owner</label>
-                <input type="text" id="owner_input" placeholder="Nickname" autocomplete="off" required>
-                <input type="hidden" name="OwnerID" id="OwnerID">
-                <ul id="owner_dropdown" class="dropdown-list"></ul>
+                <select name="OwnerID" id="OwnerID" required onchange="handleOwnerChange()">
+                    <option value="">-- Select Owner --</option>
+                    <?php foreach ($owners_data as $o): ?>
+                        <option value="<?= esc_attr($o->OwnerID) ?>" data-dept="<?= esc_attr($o->DepartmentID) ?>"
+                            data-pos="<?= esc_attr($o->PositionID) ?>">
+                            <?= esc_html($o->Nickname) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
             <div class="form-group">
                 <label>Department</label>
-                <select name="DepartmentID" id="DepartmentID">
-                    <option value="">-- Select --</option>
+                <select name="DepartmentID" id="DepartmentID"
+                    style="background-color: #f0f0f0; color: #666; pointer-events: none; cursor: not-allowed; appearance: none; -webkit-appearance: none; -moz-appearance: none;" tabindex="-1"
+                    onmousedown="return false;">
                     <?php foreach ($departments as $dep): ?>
                         <option value="<?= $dep->DepartmentID ?>" <?= selected($device_data->DepartmentID ?? '', $dep->DepartmentID, false) ?>>
                             <?= esc_html($dep->DepartmentName) ?>
@@ -152,7 +160,9 @@ function receive_device($device_data = null)
 
             <div class="form-group">
                 <label>Position</label>
-                <select name="PositionID" id="PositionID">
+                <select name="PositionID" id="PositionID"
+                    style="background-color: #f0f0f0; color: #666; pointer-events: none; cursor: not-allowed; appearance: none; -webkit-appearance: none; -moz-appearance: none;" tabindex="-1"
+                    onmousedown="return false;">
                     <option value="">-- Select --</option>
                     <?php foreach ($positions as $pos): ?>
                         <option value="<?= $pos->PositionID ?>" <?= selected($device_data->PositionID ?? '', $pos->PositionID, false) ?>>
@@ -165,23 +175,39 @@ function receive_device($device_data = null)
 
             <div class="form-group">
                 <label>Receive Date</label>
-                <input type="date" name="ReceiveDate" value="<?= esc_attr($date_value) ?>" max="<?= date('Y-m-d') ?>" required>
+                <input type="date" name="ReceiveDate" value="<?= esc_attr($date_value) ?>" max="<?= date('Y-m-d') ?>"
+                    required>
             </div>
         </div>
 
 
         <div class="form-actions">
             <button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
-            <button type="submit" name="update_device" class="btn btn-success border rounded-pill" style="background-color: #6ABF57">Receive</button>
+            <button type="submit" name="update_device" class="btn btn-success border rounded-pill"
+                style="background-color: #6ABF57">Receive</button>
         </div>
 
     </form>
 
     <script>
-        window.ownersData = <?= json_encode($owners_data) ?>;
-    </script>
+        function handleOwnerChange() {
+            const ownerSelect = document.getElementById('OwnerID');
+            const deptSelect = document.getElementById('DepartmentID');
+            const posSelect = document.getElementById('PositionID');
 
-    <script src="<?= get_stylesheet_directory_uri() ?>/js/list_owner.js"></script>
+            const selectedOption = ownerSelect.options[ownerSelect.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                const dept = selectedOption.getAttribute('data-dept');
+                const pos = selectedOption.getAttribute('data-pos');
+
+                if (dept) deptSelect.value = dept;
+                if (pos) posSelect.value = pos;
+            } else {
+                deptSelect.value = '';
+                posSelect.value = '';
+            }
+        }
+    </script>
 
     <style>
         form {
@@ -226,48 +252,10 @@ function receive_device($device_data = null)
             display: grid !important;
             grid-template-columns: 1fr 1fr;
         }
-
-        .dropdown-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ccc;
-            max-height: 140px;
-            overflow-y: auto;
-            z-index: 999;
-            display: none;
-            list-style: none;
-            margin: 4px 0 0 0;
-            padding: 0;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-            font-size: 14px;
-        }
-
-        .dropdown-list li {
-            padding: 8px 12px;
-            /* ลด padding */
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .dropdown-list li:hover {
-            background-color: #e6f0ff;
-            /* สีสว่างนวลเท่ากับธีม */
-        }
-
-        .entry-content ul,
-        .entry-content ol {
-            margin: 0;
-            padding: 0;
-            padding-left: 0;
-        }
     </style>
 
 
-<?php
+    <?php
     return ob_get_clean();
 }
 add_shortcode('receive_device', 'receive_device');

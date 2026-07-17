@@ -24,7 +24,7 @@ function handle_device_actions()
                 $owner_nickname = $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $device_info->OwnerID));
             }
             $safe_owner = $owner_nickname ?? '-';
-            $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : 0;
+            $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : null;
             
             if ($action === 'delete') {
                 $wpdb->insert('History_new', [
@@ -52,10 +52,11 @@ function handle_device_actions()
                             'DepartmentID' => null,
                             'ReceiveDate'  => null,
                             'ReturnDate'   => null,
-                            'RepairDate'   => null
+                            'RepairDate'   => null,
+                            'PositionID'   => null
                         ],
                         ['DeviceID' => $device_id],
-                        ['%d', null, null, null, null, null],
+                        ['%d', null, null, null, null, null, null],
                         ['%s']
                     );
                     if ($updated !== false) {
@@ -79,10 +80,12 @@ function handle_device_actions()
                         $table_devices,
                         [
                             'StatusID'     => $retired_status_id,
+                            'OwnerID'      => null,
                             'DepartmentID' => null,
                             'ReceiveDate'  => null,
                             'RepairDate'   => null,
-                            'ReturnDate'   => null
+                            'ReturnDate'   => null,
+                            'PositionID'   => null
                         ],
                         ['DeviceID' => $device_id]
                     );
@@ -225,17 +228,34 @@ function handle_device_actions()
                 $update_data = [
                     'StatusID'     => $return_status_id,
                     'ReturnDate'   => $return_date,
-                    'OwnerID' => 0,
                     'DepartmentID' => null,
                     'ReceiveDate'  => null,
                     'RepairDate'   => null,
                 ];
 
-                // Update
-                $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
+                // Keep the original owner for the ReturnDate trigger, then clear the assignment.
+                $wpdb->query('START TRANSACTION');
+                $return_updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
+                $owner_cleared = $return_updated !== false
+                    ? $wpdb->update(
+                        $table_devices,
+                        ['OwnerID' => null, 'PositionID' => null],
+                        ['DeviceID' => $device_id],
+                        [null, null],
+                        ['%s']
+                    )
+                    : false;
+
+                if ($return_updated !== false && $owner_cleared !== false) {
+                    $wpdb->query('COMMIT');
+                    $updated = true;
+                } else {
+                    $wpdb->query('ROLLBACK');
+                    $updated = false;
+                }
 
                 // if update pass -> History
-                if ($updated !== false) {
+                if ($updated) {
                     $owner_nickname = null;
                     if ($device_info->OwnerID) {
                         $owner_nickname = $wpdb->get_var($wpdb->prepare(
@@ -254,31 +274,31 @@ function handle_device_actions()
                         'Description' => "Device ID {$device_id} returned and status set to Available",
                         'user_email'  => $user_email,
                         'CategoryID'  => $device_info->CategoryID,
-                        'Owner'       => $owner_nickname
+                        'Owner'       => $owner_nickname ?? '-'
                     ]);
+
+                    $category_slug = $wpdb->get_var($wpdb->prepare(
+                        "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
+                        $device_info->CategoryID
+                    ));
+
+
+                    $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
+
+                    // Redirect 
+                    echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                    echo "<script>
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Return Success!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = '{$redirect_url}';
+                    });
+                </script>";
+                    exit;
                 }
-
-                $category_slug = $wpdb->get_var($wpdb->prepare(
-                    "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
-                    $device_info->CategoryID
-                ));
-
-
-                $redirect_url = $category_slug ? '/' . urlencode($category_slug) . '/' : '/Home';
-
-                // Redirect 
-                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
-                echo "<script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Return Success!',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    window.location.href = '{$redirect_url}';
-                });
-            </script>";
-                exit;
             }
         }
 
@@ -314,10 +334,11 @@ function handle_device_actions()
                     'DepartmentID' => null,
                     'ReceiveDate'  => null,
                     'ReturnDate'   => null,
-                    'RepairDate'   => null
+                    'RepairDate'   => null,
+                    'PositionID'   => null
                 ],
                 ['DeviceID' => $device_id],
-                ['%d', null, null, null, null, null],
+                ['%d', null, null, null, null, null, null],
                 ['%s']
             );
 
@@ -332,7 +353,7 @@ function handle_device_actions()
                 }
 
                 // fallback หากไม่มีค่า (เนื่องจาก NOT NULL)
-                $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : 0;
+                    $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : null;
                 $safe_owner       = $owner_nickname ?? '-';
 
                 $current_user = wp_get_current_user();
@@ -354,7 +375,7 @@ function handle_device_actions()
             "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
             $device_info->CategoryID
         ));
-        $redirect_url = $category_slug ? '/' . urlencode($category_slug) . '/' : '/Home';
+        $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
 
         if ($updated !== false && $updated >= 0) {
             echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
@@ -392,10 +413,12 @@ function handle_device_actions()
                 // อัปเดตสถานะเป็น Retired
                 $update_data = [
                     'StatusID'     => $retired_status_id,
+                    'OwnerID'      => null,
                     'DepartmentID' => null,
                     'ReceiveDate'  => null,
                     'RepairDate'   => null,
-                    'ReturnDate'   => null
+                    'ReturnDate'   => null,
+                    'PositionID'   => null
                 ];
 
                 $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
@@ -414,14 +437,20 @@ function handle_device_actions()
                     $user_email = $current_user->user_email ?? 'unknown@domain.com';
 
                     // fallback ค่าที่จำเป็น (เพราะ NOT NULL)
-                    $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : 0;
+                        $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : null;
                     $safe_owner       = $owner_nickname ?? '-';
+
+                    $reason = isset($_GET['reason']) ? sanitize_text_field($_GET['reason']) : '';
+                    $description_text = "Device ID {$device_id} set to Retired";
+                    if (!empty($reason)) {
+                        $description_text .= " | Reason: " . $reason;
+                    }
 
                     $insert_result = $wpdb->insert('History_new', [
                         'DeviceID'    => $device_id,
                         'Action'      => 'Retired',
                         'Date'        => current_time('mysql'),
-                        'Description' => "Device ID {$device_id} set to Retired",
+                        'Description' => $description_text,
                         'user_email'  => $user_email,
                         'CategoryID'  => $safe_category_id,
                         'Owner'       => $safe_owner
@@ -429,6 +458,16 @@ function handle_device_actions()
 
                     if ($insert_result === false) {
                         error_log('[ERROR] Insert History_new (Retired) failed: ' . $wpdb->last_error);
+                        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                        echo "<script>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'History Insert Failed!',
+                            text: 'Error: " . esc_js($wpdb->last_error) . "',
+                            showConfirmButton: true
+                        });
+                        </script>";
+                        exit;
                     }
                 }
 
@@ -438,7 +477,7 @@ function handle_device_actions()
                     $device_info->CategoryID
                 ));
 
-                $redirect_url = $category_slug ? '/' . urlencode($category_slug) . '/' : '/Home';
+                $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
 
                 echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
                 echo "<script>
