@@ -312,7 +312,7 @@ function device_view_details($device_id = null)
                 <div class="vd-subtitle">ID: <?= esc_html($device->DeviceID) ?> &nbsp;&bull;&nbsp; <?= esc_html($device->Model) ?></div>
             </div>
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-secondary vd-btn" onclick="history.back()">
+                <button type="button" class="btn btn-outline-secondary vd-btn" onclick="if(document.referrer && document.referrer.includes(window.location.host)) { history.back(); } else { window.location.href = '<?= esc_url(home_url('/home/')) ?>'; }">
                     <i class="fa-solid fa-arrow-left"></i> Back
                 </button>
                 <button type="button" class="btn btn-dark vd-btn" onclick="printDeviceLabels([{ id: '<?= esc_js($device->DeviceID) ?>', sn: '<?= esc_js($device->SerialNumber) ?>' }])">
@@ -379,16 +379,18 @@ function device_view_details($device_id = null)
                         }
                     }
                     ?>
-                    <input type="text" name="device_search" list="search_suggestions"
-                        class="form-control form-control-sm vd-search-bar"
-                        style="max-width: 250px;"
-                        placeholder="Search History..."
-                        value="<?= esc_attr($search) ?>">
-                    <button type="submit" class="btn btn-sm btn-info vd-btn vd-btn-icon">
-                        <i class="fa-solid fa-magnifying-glass"></i>
+                    <div style="max-width: 250px;">
+                        <?php 
+                        $search_placeholder = 'Search History...';
+                        $search_list = 'search_suggestions';
+                        include get_stylesheet_directory() . '/view/animated-search.php'; 
+                        ?>
+                    </div>
+                    <button type="submit" class="btn-filter-modern">
+                        <i class="fa-solid fa-filter"></i> Filter
                     </button>
                     <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
-                    <a href="<?= esc_url($reset_url) ?>" class="btn btn-sm btn-outline-secondary vd-btn vd-btn-icon">Reset</a>
+                    <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                     
                     <datalist id="search_suggestions">
                         <?php foreach ($suggestions as $suggest): ?>

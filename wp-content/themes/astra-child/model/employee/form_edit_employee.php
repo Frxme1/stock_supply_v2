@@ -105,9 +105,9 @@ function form_edit_owner($editing = null)
                         // กำหนดอิโมจิตามชื่อ status
                         $emoji = '';
                         if (($status->Status_name) === 'Active') {
-                            $emoji = '<i class="fa-solid fa-circle text-success"></i> ';
+                            $emoji = '🟢 ';
                         } elseif (($status->Status_name) === 'Resigned') {
-                            $emoji = '<i class="fa-solid fa-circle text-danger"></i> ';
+                            $emoji = '🔴 ';
                         }
                     ?>
                         <option value="<?= $status->StatusID ?>" <?= selected($editing->StatusID ?? '', $status->StatusID, false) ?>>

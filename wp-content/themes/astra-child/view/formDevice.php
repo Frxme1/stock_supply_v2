@@ -111,8 +111,10 @@ function device_crud()
                     <div class="row g-2">
                         <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Search Text</label>
-                            <input type="text" name="device_search" class="form-control form-control-sm"
-                                placeholder="Search..." value="<?= esc_attr($search) ?>" />
+                            <?php
+                            $search_placeholder = 'Search...';
+                            include get_stylesheet_directory() . '/view/animated-search.php';
+                            ?>
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
@@ -150,12 +152,11 @@ function device_crud()
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-12 col-md-3 d-flex align-items-end gap-2">
-                            <button class="btn btn-sm btn-info flex-grow-1" type="submit"><i
-                                    class="fa-solid fa-magnifying-glass"></i> Filter</button>
+                        <div class="col-12 col-sm-6 col-md-auto d-flex align-items-end gap-2" style="width: 200px;">
+                            <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
+                                Filter</button>
                             <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
-                            <a href="<?= esc_url($reset_url) ?>#advanced-filter-form"
-                                class="btn btn-sm btn-outline-secondary">Reset</a>
+                            <a href="<?= esc_url($reset_url) ?>#advanced-filter-form" class="btn-reset-modern">Reset</a>
                         </div>
                     </div>
                 </form>
@@ -357,13 +358,13 @@ function device_crud()
                                         <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
                                             <div class="action-dropdown-header">Actions</div>
                                             <div class="action-dropdown-separator"></div>
-                                                <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i>
-                                                    View Details</a>
-                                                <a href="<?= home_url('/history/?device_search=') ?><?= $row->DeviceID ?>"><i 
-                                                        class="fa-solid fa-clock-rotate-left"></i> History</a>
-                                                <a href="#"
-                                                    onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i
-                                                        class="fa-solid fa-print"></i> Print Label</a>
+                                            <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i>
+                                                View Details</a>
+                                            <a href="<?= home_url('/history/?device_search=') ?><?= $row->DeviceID ?>"><i
+                                                    class="fa-solid fa-clock-rotate-left"></i> History</a>
+                                            <a href="#"
+                                                onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i
+                                                    class="fa-solid fa-print"></i> Print Label</a>
                                         </div>
                                     </div>
                                 </div>
@@ -426,7 +427,7 @@ function device_crud()
             .next-table-wrapper {
                 background: #ffffff;
                 margin-top: 20px;
-                border-radius: 12px;
+                border-radius: 20px;
                 border: 1.5px solid #e5e7eb;
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
                 overflow: visible;

@@ -60,27 +60,33 @@ function device_crud_maintenance()
             return htmlspecialchars($el ?: '-');
         }
     }
-?>
+    ?>
 
 
     <div class="container-fluid">
         <form method="GET" action="">
-<?php
-foreach ($_GET as $key => $value) {
-    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
-        if (is_array($value)) {
-            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
-        } else {
-            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
-        }
-    }
-}
-?>
+            <?php
+            foreach ($_GET as $key => $value) {
+                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                    if (is_array($value)) {
+                        foreach ($value as $v) {
+                            echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
+                        }
+                    } else {
+                        echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                    }
+                }
+            }
+            ?>
             <div class="row align-items-center g-2">
                 <label class="col-auto col-form-label">Device</label>
 
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <input type="text" name="device_search" list="search_suggestions" class="form-control" placeholder="Search Device..." value="<?= esc_attr($search) ?>" />
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+                    <?php
+                    $search_placeholder = 'Search Device...';
+                    $search_list = 'search_suggestions';
+                    include get_stylesheet_directory() . '/view/animated-search.php';
+                    ?>
                     <datalist id="search_suggestions">
                         <?php foreach ($suggestions as $suggest): ?>
                             <option value="<?= esc_attr($suggest) ?>"></option>
@@ -88,8 +94,11 @@ foreach ($_GET as $key => $value) {
                     </datalist>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+                    <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
+                        Filter</button>
+                    <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
+                    <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
             </div>
         </form>
@@ -108,108 +117,124 @@ foreach ($_GET as $key => $value) {
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($rows as $index => $row): ?>
-                    <tr>
-                        <td class="align-middle text-start"><?= $row->DeviceID ?></td>
-                        <td class="text-start align-middle">
-                            <strong><?= $row->Brand ?> <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
-                            <small class="text-muted"><?= $row->Category ?> | SN: <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
-                        </td>
-                        <td class="align-middle text-start">
-                            <strong><?= formatName($row->Owner) ?></strong><br>
-                            <small class="text-muted"><?= formatName($row->Department) ?></small>
-                        </td>
+                    <?php foreach ($rows as $index => $row): ?>
+                        <tr>
+                            <td class="align-middle text-start"><?= $row->DeviceID ?></td>
+                            <td class="text-start align-middle">
+                                <strong><?= $row->Brand ?>         <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
+                                <small class="text-muted"><?= $row->Category ?> | SN:
+                                    <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
+                            </td>
+                            <td class="align-middle text-start">
+                                <strong><?= formatName($row->Owner) ?></strong><br>
+                                <small class="text-muted"><?= formatName($row->Department) ?></small>
+                            </td>
 
-                        <td class="align-middle text-start">
-                            <?php
-                            $status = $row->Status;
-                            $emoji = '';
-                            if (strcasecmp($status, 'Available') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>';
-                            } elseif (strcasecmp($status, 'In Use') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>';
-                            } elseif (strcasecmp($status, 'Maintenance') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-warning" style="font-size:12px;"></i>';
-                            } elseif (strcasecmp($status, 'Retired') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-dark" style="font-size:12px;"></i>';
-                            }
-                            echo $emoji . ' ' . esc_html($status);
-                            ?>
-                        </td>
+                            <td class="align-middle text-start">
+                                <?php
+                                $status = $row->Status;
+                                $emoji = '';
+                                if (strcasecmp($status, 'Available') === 0) {
+                                    $emoji = '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>';
+                                } elseif (strcasecmp($status, 'In Use') === 0) {
+                                    $emoji = '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>';
+                                } elseif (strcasecmp($status, 'Maintenance') === 0) {
+                                    $emoji = '<i class="fa-solid fa-circle text-warning" style="font-size:12px;"></i>';
+                                } elseif (strcasecmp($status, 'Retired') === 0) {
+                                    $emoji = '<i class="fa-solid fa-circle text-dark" style="font-size:12px;"></i>';
+                                }
+                                echo $emoji . ' ' . esc_html($status);
+                                ?>
+                            </td>
 
-                        <td class="align-middle text-center">
-                            <div class="d-flex justify-content-center align-items-center gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
-                                <div class="dropdown action-menu mb-0 text-center">
-                                    <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                                        ...
-                                    </button>
-                                    <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
-                                        <div class="action-dropdown-header">Actions</div>
-                                        <div class="action-dropdown-separator"></div>
-                                        <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                        <?php else: ?>
-                                            <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                        <?php endif; ?>
-                                        <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
-                                        <?php if ($row->Status == 'Available'): ?>
-                                            <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($row->Status == 'In Use'): ?>
-                                            <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($row->Status == 'Maintenance'): ?>
-                                            <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($row->Status == 'Retired'): ?>
-                                            <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                        <?php endif; ?>
-                                        <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')"><i class="fa-solid fa-trash-can"></i> Delete</a>
+                            <td class="align-middle text-center">
+                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
+                                    <div class="dropdown action-menu mb-0 text-center">
+                                        <button type="button" class="action-btn" data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                            ...
+                                        </button>
+                                        <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
+                                            <div class="action-dropdown-header">Actions</div>
+                                            <div class="action-dropdown-separator"></div>
+                                            <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i>
+                                                    Edit</a>
+                                            <?php else: ?>
+                                                <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                            <?php endif; ?>
+                                            <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i>
+                                                View Details</a>
+                                            <?php if ($row->Status == 'Available'): ?>
+                                                <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($row->Status == 'In Use'): ?>
+                                                <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
+                                                    Return</a>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($row->Status == 'Maintenance'): ?>
+                                                <a href="?available=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-circle text-success"></i> Available</a>
+                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($row->Status == 'Retired'): ?>
+                                                <a href="?available=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-circle text-success"></i> Available</a>
+                                            <?php endif; ?>
+                                            <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')"><i
+                                                    class="fa-solid fa-trash-can"></i> Delete</a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
-                        <td colspan="5" class="p-0 border-0">
-                            <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
-                                <div class="p-3 bg-light text-start m-2 rounded border">
-                                    <div class="row">
-                                        <div class="col-sm-3 mb-2 mb-sm-0">
-                                            <span class="text-muted d-block" style="font-size: 0.85em;">Repair Date</span>
-                                            <strong><?= formatName($row->RepairDate) ?></strong>
-                                        </div>
-                                        <div class="col-sm-9 mb-2 mb-sm-0">
-                                            <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance Reason / Details</span>
-                                            <strong class="text-danger"><?= formatName($row->Details) ?></strong>
-                                        </div>
-                                        <?php if (strcasecmp($row->Status, 'Retired') === 0): ?>
-                                            <div class="col-sm-12 mt-2">
-                                                <?php
-                                                $r_details = $wpdb->get_var($wpdb->prepare(
-                                                    "SELECT Description FROM History_new WHERE DeviceID = %s AND (Action = 'Retired' OR (Action = 'Update Device' AND Description LIKE '%%| Reason:%%')) ORDER BY HistoryID DESC LIMIT 1", 
-                                                    $row->DeviceID
-                                                ));
-                                                $r_reason = '-';
-                                                if ($r_details) {
-                                                    if (preg_match('/\|\s*Reason:\s*(.*)$/i', $r_details, $matches)) {
-                                                        $r_reason = trim($matches[1]);
-                                                    }
-                                                }
-                                                ?>
-                                                <span class="text-muted d-block" style="font-size: 0.85em;">Retired Reason</span>
-                                                <strong class="text-danger"><?= formatName($r_reason) ?></strong>
+                            </td>
+                        </tr>
+                        <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
+                            <td colspan="5" class="p-0 border-0">
+                                <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
+                                    <div class="p-3 bg-light text-start m-2 rounded border">
+                                        <div class="row">
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;">Repair Date</span>
+                                                <strong><?= formatName($row->RepairDate) ?></strong>
                                             </div>
-                                        <?php endif; ?>
+                                            <div class="col-sm-9 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance Reason /
+                                                    Details</span>
+                                                <strong class="text-danger"><?= formatName($row->Details) ?></strong>
+                                            </div>
+                                            <?php if (strcasecmp($row->Status, 'Retired') === 0): ?>
+                                                <div class="col-sm-12 mt-2">
+                                                    <?php
+                                                    $r_details = $wpdb->get_var($wpdb->prepare(
+                                                        "SELECT Description FROM History_new WHERE DeviceID = %s AND (Action = 'Retired' OR (Action = 'Update Device' AND Description LIKE '%%| Reason:%%')) ORDER BY HistoryID DESC LIMIT 1",
+                                                        $row->DeviceID
+                                                    ));
+                                                    $r_reason = '-';
+                                                    if ($r_details) {
+                                                        if (preg_match('/\|\s*Reason:\s*(.*)$/i', $r_details, $matches)) {
+                                                            $r_reason = trim($matches[1]);
+                                                        }
+                                                    }
+                                                    ?>
+                                                    <span class="text-muted d-block" style="font-size: 0.85em;">Retired
+                                                        Reason</span>
+                                                    <strong class="text-danger"><?= formatName($r_reason) ?></strong>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
@@ -255,7 +280,7 @@ foreach ($_GET as $key => $value) {
                 }
             }
         </script>
-        
+
         <div class="d-flex justify-content-center mt-4">
             <ul class="pagination">
                 <?php
@@ -304,7 +329,7 @@ foreach ($_GET as $key => $value) {
         </div>
     </div>
 
-<?php
+    <?php
 
     return ob_get_clean();
 }

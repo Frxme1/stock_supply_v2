@@ -23,13 +23,13 @@ function form_owner()
 
             // insert to History_new (Action Delete)
             $wpdb->insert('History_new', [
-                'DeviceID'    => $owner_data->OwnerID,
-                'Action'      => 'Delete Employee',
-                'Date'        => current_time('mysql'),
+                'DeviceID' => $owner_data->OwnerID,
+                'Action' => 'Delete Employee',
+                'Date' => current_time('mysql'),
                 'Description' => 'Deleted employee: ' . $owner_fullname,
-                'user_email'  => wp_get_current_user()->user_email,
-                'CategoryID'  => 'Employee',
-                'Owner'       => $owner_fullname,
+                'user_email' => wp_get_current_user()->user_email,
+                'CategoryID' => 'Employee',
+                'Owner' => $owner_fullname,
             ]);
 
             // ดึง StatusID ของ 'Available'
@@ -39,12 +39,12 @@ function form_owner()
             $wpdb->update(
                 $table_devices,
                 [
-                    'StatusID'     => $available_status_id,
-                    'OwnerID'      => null,
+                    'StatusID' => $available_status_id,
+                    'OwnerID' => null,
                     'DepartmentID' => null,
-                    'ReceiveDate'  => null,
-                    'ReturnDate'   => null,
-                    'RepairDate'   => null
+                    'ReceiveDate' => null,
+                    'ReturnDate' => null,
+                    'RepairDate' => null
                 ],
                 ['OwnerID' => $owner_id],
                 ['%d', null, null, null, null, null],
@@ -115,33 +115,42 @@ function form_owner()
 
 
 
-?>
+    ?>
 
     <!-- form search -->
     <form method="GET" action="">
-<?php
-foreach ($_GET as $key => $value) {
-    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
-        if (is_array($value)) {
-            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
-        } else {
-            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+        <?php
+        foreach ($_GET as $key => $value) {
+            if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                if (is_array($value)) {
+                    foreach ($value as $v) {
+                        echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
+                    }
+                } else {
+                    echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                }
+            }
         }
-    }
-}
-?>
+        ?>
         <div class="row align-items-center g-2">
             <label class="col-auto col-form-label">Employee</label>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <input type="text" name="device_search" list="search_suggestions" class="form-control" placeholder="Search Employee..." value="<?= esc_attr($search) ?>" />
+            <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+                <?php
+                $search_placeholder = 'Search Employee...';
+                $search_list = 'search_suggestions';
+                include get_stylesheet_directory() . '/view/animated-search.php';
+                ?>
                 <datalist id="search_suggestions">
                     <?php foreach ($suggestions as $suggest): ?>
                         <option value="<?= esc_attr($suggest) ?>"></option>
                     <?php endforeach; ?>
                 </datalist>
             </div>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+            <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+                <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
+                    Filter</button>
+                <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
+                <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
             </div>
         </div>
 
@@ -158,9 +167,9 @@ foreach ($_GET as $key => $value) {
         </div>
     </form>
 
-    <div class="table-responsive-xl rounded">
-        <table class="table table-bordered table-sm">
-            <thead class="table-secondary">
+    <div class="table-responsive-xl next-table-wrapper">
+        <table class="table next-table" style="width: 100%;">
+            <thead>
                 <tr>
                     <th class="text-nowrap py-3 text-start" style="width: 15%;">NickName</th>
                     <th class="text-nowrap py-3 text-start" style="width: 15%;">FirstName</th>
@@ -172,54 +181,62 @@ foreach ($_GET as $key => $value) {
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($rows as $index => $row): ?>
-                <tr>
-                    <td class="text-start align-middle"><?= $row->Nickname ?></td>
-                    <td class="text-start align-middle"><?= $row->FirstName ?></td>
-                    <td class="text-start align-middle"><?= $row->LastName ?></td>
-                    <td class="text-start align-middle" style="width: 200px;"><?= $row->Department ?></td>
-                    <td class="text-start align-middle"><?= $row->Position ?></td>
-                    <td class="text-start align-middle">
-                        <?php
-                        $status = $row->Status;
-                        $emojis = [
-                            'Active'   => '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>',
-                            'Resigned' => '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>',
-                        ];
-                        echo ($emojis[$status] ?? '') . ' ' . esc_html($status);
-                        ?>
-                    </td>
+                <?php foreach ($rows as $index => $row): ?>
+                    <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
+                        <td class="text-start align-middle"><?= $row->Nickname ?></td>
+                        <td class="text-start align-middle"><?= $row->FirstName ?></td>
+                        <td class="text-start align-middle"><?= $row->LastName ?></td>
+                        <td class="text-start align-middle" style="width: 200px;"><?= $row->Department ?></td>
+                        <td class="text-start align-middle"><?= $row->Position ?></td>
+                        <td class="text-start align-middle">
+                            <?php
+                            $status = $row->Status;
+                            $emojis = [
+                                'Active' => '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>',
+                                'Resigned' => '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>',
+                            ];
+                            echo ($emojis[$status] ?? '') . ' ' . esc_html($status);
+                            ?>
+                        </td>
 
-                    <td class="text-center align-middle">
-                        <div class="dropdown action-menu text-center">
-                            <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                                ...
-                            </button>
-                            <div class="dropdown-menu action-dropdown text-start">
-                                <div class="action-dropdown-header">Actions</div>
-                                <div class="action-dropdown-separator"></div>
-                                <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                <?php if ($row->Status == 'Available'): ?>
-                                    <a href="?receive=<?= $row->OwnerID ?>"><i class="fa-solid fa-box"></i> Receive</a>
-                                    <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                    <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                <?php elseif ($row->Status == 'In Use'): ?>
-                                    <a href="?return=<?= $row->OwnerID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
-                                    <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                    <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                <?php elseif ($row->Status == 'Maintenance'): ?>
-                                    <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                    <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                <?php elseif ($row->Status == 'Retired'): ?>
-                                    <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                <?php endif; ?>
-                                <a href="#" onclick="confirmDelete('<?= $row->OwnerID ?>')"><i class="fa-solid fa-trash-can"></i> Delete</a>
+                        <td class="text-center align-middle">
+                            <div class="dropdown action-menu text-center">
+                                <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                    ...
+                                </button>
+                                <div class="dropdown-menu action-dropdown text-start">
+                                    <div class="action-dropdown-header">Actions</div>
+                                    <div class="action-dropdown-separator"></div>
+                                    <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                    <?php if ($row->Status == 'Available'): ?>
+                                        <a href="?receive=<?= $row->OwnerID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                        <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i>
+                                            Maintenance</a>
+                                        <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i
+                                                class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                    <?php elseif ($row->Status == 'In Use'): ?>
+                                        <a href="?return=<?= $row->OwnerID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
+                                        <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i>
+                                            Maintenance</a>
+                                        <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i
+                                                class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                    <?php elseif ($row->Status == 'Maintenance'): ?>
+                                        <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i>
+                                            Available</a>
+                                        <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i
+                                                class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                    <?php elseif ($row->Status == 'Retired'): ?>
+                                        <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i>
+                                            Available</a>
+                                    <?php endif; ?>
+                                    <a href="#" onclick="confirmDelete('<?= $row->OwnerID ?>')"><i
+                                            class="fa-solid fa-trash-can"></i> Delete</a>
+                                </div>
                             </div>
-                        </div>
-                    </td>
+                        </td>
 
-                </tr>
-            <?php endforeach; ?>
+                    </tr>
+                <?php endforeach; ?>
             </tbody>
         </table>
     </div>
@@ -273,9 +290,99 @@ foreach ($_GET as $key => $value) {
         </ul>
     </div>
 
+    <style>
+        /* Next.js Table UI */
+        .next-table-wrapper {
+            background: #ffffff;
+            margin-top: 20px;
+            border-radius: 20px;
+            border: 1.5px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: visible;
+            margin-bottom: 2rem;
+        }
 
+        .next-table {
+            margin: 0;
+            border-collapse: collapse;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            border-radius: 20px;
+            overflow: hidden;
+        }
 
-<?php
+        .next-table thead {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .next-table thead th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        .next-table thead th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        .next-table th {
+            color: #6b7280;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.5rem;
+            border: none;
+        }
+
+        .next-table tbody tr.next-table-row {
+            border-bottom: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+            opacity: 0;
+            animation: rowFadeIn 0.4s ease-out forwards;
+            position: relative;
+        }
+
+        .next-table tbody tr.next-table-row:last-child {
+            border-bottom: none;
+        }
+
+        .next-table tbody tr.next-table-row:hover {
+            background-color: #f8fafc;
+            z-index: 10;
+        }
+
+        .next-table td {
+            padding: 1rem 1.5rem;
+            border: none;
+            vertical-align: middle;
+        }
+
+        /* Action buttons */
+        .next-table .btn-outline-secondary {
+            border-color: #e5e7eb;
+            color: #4b5563;
+            background: #ffffff;
+            transition: all 0.2s;
+        }
+
+        .next-table .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        @keyframes rowFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+    <?php
 
     return ob_get_clean();
 }

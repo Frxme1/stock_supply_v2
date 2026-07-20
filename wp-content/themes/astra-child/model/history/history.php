@@ -60,27 +60,33 @@ function form_history()
     $suggestions = $wpdb->get_col("SELECT DISTINCT Action FROM $table_history LIMIT 50");
     ob_start();
 
-?>
+    ?>
 
     <div class="container-fluid px-3">
         <form method="GET" action="">
-<?php
-foreach ($_GET as $key => $value) {
-    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
-        if (is_array($value)) {
-            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
-        } else {
-            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
-        }
-    }
-}
-?>
+            <?php
+            foreach ($_GET as $key => $value) {
+                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                    if (is_array($value)) {
+                        foreach ($value as $v) {
+                            echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
+                        }
+                    } else {
+                        echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                    }
+                }
+            }
+            ?>
             <div class="row align-items-center g-2">
 
                 <label class="col-auto col-form-label">History</label>
 
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <input type="text" name="device_search" list="search_suggestions" class="form-control" placeholder="Search History..." value="<?= esc_attr($search) ?>" />
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+                    <?php
+                    $search_placeholder = 'Search History...';
+                    $search_list = 'search_suggestions';
+                    include get_stylesheet_directory() . '/view/animated-search.php';
+                    ?>
                     <datalist id="search_suggestions">
                         <?php foreach ($suggestions as $suggest): ?>
                             <option value="<?= esc_attr($suggest) ?>"></option>
@@ -88,8 +94,11 @@ foreach ($_GET as $key => $value) {
                     </datalist>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                    <button class="btn btn-info rounded-pill" style="width: 7rem;" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+                    <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
+                        Filter</button>
+                    <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
+                    <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
 
             </div>
@@ -110,48 +119,57 @@ foreach ($_GET as $key => $value) {
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($rows as $index => $row): ?>
-                    <?php
+                    <?php foreach ($rows as $index => $row): ?>
+                        <?php
                         $date = new DateTime($row->Date, new DateTimeZone('UTC'));
                         $date->setTimezone(new DateTimeZone('Asia/Bangkok'));
-                    ?>
-                    <tr>
-                        <td class="text-start align-middle"><?= $row->Action ?></td>
-                        <td class="text-start align-middle"><?= $date->format("d/m/Y H:i:s") ?></td>
-                        <td class="text-start align-middle"><?= $row->Description ?></td>
-                        <td class="text-start align-middle"><?= $row->user_email ?></td>
-                        <td class="text-start align-middle">
-                            <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : $row->CategoryName ?>
-                        </td>
-                        <td class="text-start align-middle"><?= $row->Owner ?></td>
-                        <td class="text-center align-middle">
-                            <div class="dropdown action-menu text-center">
-                                <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                                    ...
-                                </button>
-                                <div class="dropdown-menu action-dropdown text-start">
-                                    <div class="action-dropdown-header">Actions</div>
-                                    <div class="action-dropdown-separator"></div>
-                                    <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
-                                    <?php if ($row->Status == 'Available'): ?>
-                                        <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
-                                        <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                        <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                    <?php elseif ($row->Status == 'In Use'): ?>
-                                        <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
-                                        <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                        <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                    <?php elseif ($row->Status == 'Maintenance'): ?>
-                                        <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                        <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                    <?php elseif ($row->Status == 'Retired'): ?>
-                                        <a href="?available=<?= $row->DeviceID ?>"><i class="fa-solid fa-circle text-success"></i> Available</a>
-                                    <?php endif; ?>
+                        ?>
+                        <tr>
+                            <td class="text-start align-middle"><?= $row->Action ?></td>
+                            <td class="text-start align-middle"><?= $date->format("d/m/Y H:i:s") ?></td>
+                            <td class="text-start align-middle"><?= $row->Description ?></td>
+                            <td class="text-start align-middle"><?= $row->user_email ?></td>
+                            <td class="text-start align-middle">
+                                <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : $row->CategoryName ?>
+                            </td>
+                            <td class="text-start align-middle"><?= $row->Owner ?></td>
+                            <td class="text-center align-middle">
+                                <div class="dropdown action-menu text-center">
+                                    <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                        ...
+                                    </button>
+                                    <div class="dropdown-menu action-dropdown text-start">
+                                        <div class="action-dropdown-header">Actions</div>
+                                        <div class="action-dropdown-separator"></div>
+                                        <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View
+                                            Details</a>
+                                        <?php if ($row->Status == 'Available'): ?>
+                                            <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                    class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                    class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <?php elseif ($row->Status == 'In Use'): ?>
+                                            <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
+                                                Return</a>
+                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                    class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                    class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <?php elseif ($row->Status == 'Maintenance'): ?>
+                                            <a href="?available=<?= $row->DeviceID ?>"><i
+                                                    class="fa-solid fa-circle text-success"></i> Available</a>
+                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                    class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                        <?php elseif ($row->Status == 'Retired'): ?>
+                                            <a href="?available=<?= $row->DeviceID ?>"><i
+                                                    class="fa-solid fa-circle text-success"></i> Available</a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
@@ -206,7 +224,7 @@ foreach ($_GET as $key => $value) {
 
 
 
-<?php
+    <?php
 
     return ob_get_clean();
 }

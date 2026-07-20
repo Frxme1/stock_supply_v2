@@ -11,8 +11,6 @@ function confirmRetire(id, paramName = 'retired') {
             }
         },
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, retire it!'
     }).then((result) => {
         if (result.isConfirmed) {
@@ -37,8 +35,6 @@ function confirmLost(id, paramName = 'lost') {
             }
         },
         showCancelButton: true,
-        confirmButtonColor: '#ff9800',
-        cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, mark as lost!'
     }).then((result) => {
         if (result.isConfirmed) {

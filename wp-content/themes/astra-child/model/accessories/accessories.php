@@ -102,13 +102,15 @@ function device_crud_acc_sories()
                     <div class="row g-2">
                         <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Search Text</label>
-                            <input type="text" name="device_search" class="form-control form-control-sm"
-                                placeholder="Search..." value="<?= esc_attr($search) ?>" />
+                            <?php
+                            $search_placeholder = 'Search...';
+                            include get_stylesheet_directory() . '/view/animated-search.php';
+                            ?>
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
-                            <select name="filter_status" id="filter_status" class="form-select form-select-sm staggered-dropdown"
-                                onchange="toggleDepartment()">
+                            <select name="filter_status" id="filter_status"
+                                class="form-select form-select-sm staggered-dropdown" onchange="toggleDepartment()">
                                 <option value="">All Status</option>
                                 <option value="Available" <?= $filter_status == 'Available' ? 'selected' : '' ?>>Available
                                 </option>
@@ -124,25 +126,28 @@ function device_crud_acc_sories()
                                 <option value="">All Keywords</option>
                                 <?php foreach ($all_keywords as $kw): ?>
                                     <option value="<?= esc_attr($kw) ?>" <?= $filter_keyword == $kw ? 'selected' : '' ?>>
-                                        <?= esc_html($kw) ?></option>
+                                        <?= esc_html($kw) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-2" id="department_wrapper">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Department</label>
-                            <select name="filter_department" id="filter_department" class="form-select form-select-sm staggered-dropdown">
+                            <select name="filter_department" id="filter_department"
+                                class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Depts</option>
                                 <?php foreach ($all_departments as $dept): ?>
                                     <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>>
-                                        <?= formatName($dept) ?></option>
+                                        <?= formatName($dept) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-12 col-md-3 d-flex align-items-end gap-2">
-                            <button class="btn btn-sm btn-info flex-grow-1" type="submit"><i
-                                    class="fa-solid fa-magnifying-glass"></i> Filter</button>
+                        <div class="col-12 col-sm-6 col-md-auto d-flex align-items-end gap-2" style="width: 200px;">
+                            <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
+                                Filter</button>
                             <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_keyword', 'filter_department', 'paged']); ?>
-                            <a href="<?= esc_url($reset_url) ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+                            <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                         </div>
                     </div>
                 </form>
@@ -259,10 +264,7 @@ function device_crud_acc_sories()
                     <button type="button" class="btn btn-primary btn-sm" onclick="handleBulkAction('acc')">Apply</button>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal"
-                        data-bs-target="#importCsvModal">
-                        <i class="fa-solid fa-file-import"></i> Import CSV
-                    </button>
+
                     <!-- Export button uses the same GET parameters for filtering -->
                     <a href="<?= esc_url(add_query_arg(['export_csv' => 'device', 'category' => 'Accessories'], $_SERVER['REQUEST_URI'])) ?>"
                         class="btn btn-secondary btn-sm">
@@ -276,7 +278,8 @@ function device_crud_acc_sories()
                 <table class="table table-bordered table-sm">
                     <thead class="table-secondary">
                         <tr>
-                            <th class="py-3" style="width: 50px; display: none;"><input type="checkbox" id="selectAll-acc"></th>
+                            <th class="py-3" style="width: 50px; display: none;"><input type="checkbox" id="selectAll-acc">
+                            </th>
                             <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
                             <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
                             <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
@@ -359,13 +362,16 @@ function device_crud_acc_sories()
                                                 <div class="action-dropdown-header">Actions</div>
                                                 <div class="action-dropdown-separator"></div>
                                                 <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                                    <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                    <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i>
+                                                        Edit</a>
                                                 <?php else: ?>
                                                     <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
                                                 <?php endif; ?>
-                                                <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
+                                                <a href="?view=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-magnifying-glass"></i> View Details</a>
                                                 <a href="#"
-                                                    onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i class="fa-solid fa-print"></i>
+                                                    onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i
+                                                        class="fa-solid fa-print"></i>
                                                     Print Label</a>
                                             </div>
                                         </div>
