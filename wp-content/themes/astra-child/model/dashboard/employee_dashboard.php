@@ -4,13 +4,13 @@ function employee_dashboard()
     global $wpdb;
     $table_owner = 'ViewOwnersWithNames';
 
-    // ดึงจำนวนพนักงานทั้งหมด (นับทั้ง Admin และ User ที่มีตำแหน่ง Full-time หรือ Intern)
+    // ดึงจำนวนพนักงานทั้งหมด
     $total_employees = $wpdb->get_var("
     SELECT COUNT(*) FROM $table_owner
     WHERE Position IN ('Full-time', 'Intern')
 ");
 
-    // สรุปจำนวนตามตำแหน่ง (นับทั้ง Admin และ User)
+    // สรุปจำนวนตามตำแหน่ง
     $position_summary = $wpdb->get_results("
     SELECT Position, COUNT(*) as count
     FROM $table_owner
@@ -22,12 +22,12 @@ function employee_dashboard()
     // ตั้งค่ารูปแบบแต่ละตำแหน่ง
     $position_config = [
         'Full-time' => [
-            'icon' => '👔',
-            'gradient' => 'linear-gradient(to right, #2196F3, #BBDEFB)'
+            'icon' => '<i class="fa-solid fa-user-tie"></i>',
+            'color' => '#2196F3'
         ],
         'Intern' => [
-            'icon' => '🎓',
-            'gradient' => 'linear-gradient(to right, #4CAF50, #C8E6C9)'
+            'icon' => '<i class="fa-solid fa-user-graduate"></i>',
+            'color' => '#4CAF50'
         ],
     ];
 
@@ -39,184 +39,153 @@ function employee_dashboard()
 
     ob_start();
 ?>
-
-    <div class="employee-dashboard">
-        <div class="dashboard-cards">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <div class="next-dashboard">
+        <div class="next-grid mt-4" style="grid-template-columns: repeat(2, 1fr);">
             <?php foreach ($position_config as $position => $config):
                 $count = $summary_map[$position] ?? 0;
-                $percent = $total_employees > 0 ? round(($count / $total_employees) * 100) : 0;
+                $percent = $total_employees > 0 ? round(($count / $total_employees) * 100, 0) : 0;
             ?>
-                <div class="card-status" style="background: <?= $config['gradient'] ?>; position:relative;">
-                    <div class="card-top">
-                        <div class="card-title"><?= esc_html($position) ?></div>
-                        <div class="card-icon"><?= $config['icon'] ?></div>
+                <div class="next-card slide-up">
+                    <div class="next-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="next-status-dot" style="background: <?= $config['color'] ?>;"></span>
+                            <span class="next-card-title"><?= esc_html($position) ?></span>
+                        </div>
+                        <div class="next-icon-wrapper-sm" style="background: <?= $config['color'] ?>15; color: <?= $config['color'] ?>;">
+                            <?= $config['icon'] ?>
+                        </div>
                     </div>
-                    <div class="card-bottom">
-                        <div class="card-count"><strong><?= $count ?></strong> person<?= $count > 1 ? 's' : '' ?></div>
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: <?= $percent ?>%;"></div>
+                    <div class="next-card-body mt-3">
+                        <span class="next-number-md count-up" data-count="<?= $count ?>">0</span>
+                        <div class="next-progress-wrap mt-2">
+                            <div class="next-progress-bar">
+                                <div class="next-progress-fill" style="width: 0%; background: <?= $config['color'] ?>;" data-width="<?= $percent ?>%"></div>
                             </div>
-                            <div class="percent-text"><?= $percent ?>%</div>
+                            <span class="next-progress-text"><?= $percent ?>%</span>
                         </div>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
 
-        <div class="all-employee-summary" style="margin-bottom: -50px;">
-            <h4>All Employees</h4>
-            <div class="employee-summary-container">
-                <svg class="circle-chart" viewBox="0 0 36 36">
-                    <circle class="circle-bg" cx="18" cy="18" r="16" />
-                    <circle class="circle-fill" cx="18" cy="18" r="16" stroke-dasharray="100, 100" />
-                    <text x="18" y="20" class="circle-text">100%</text>
-                </svg>
-                <div class="employee-info">
-                    <h2><?= $total_employees ?></h2>
-                    <p>person<?= $total_employees > 1 ? 's' : '' ?> </p>
+        <div class="next-grid-2 mt-4" style="grid-template-columns: 1fr;">
+            <div class="next-card slide-up" style="animation-delay: 0.2s;">
+                <h3 class="next-section-title">All Employees</h3>
+                <div class="next-donut-container mt-4" style="justify-content: center; gap: 3rem;">
+                    <div class="next-donut-wrap">
+                        <svg class="next-donut" viewBox="0 0 150 150">
+                            <circle cx="75" cy="75" r="60" fill="none" stroke="#f3f4f6" stroke-width="12" />
+                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#2196F3" stroke-width="12"
+                                data-dash="376.99 376.99"
+                                stroke-dasharray="0 376.99"
+                                transform="rotate(-90 75 75)" stroke-linecap="round" />
+                        </svg>
+                        <div class="next-donut-center">
+                            <span class="next-donut-value count-up" data-count="100">0</span>
+                            <span class="next-donut-label">%</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="next-number" style="font-size: 3.5rem; color: #2196F3;"><span class="count-up" data-count="<?= $total_employees ?>">0</span></div>
+                        <div class="next-trend-text mt-2">Total Persons</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <style>
-        .employee-dashboard {
-            padding: 20px;
-            margin: 20px;
+        /* Next.js Inspired UI (Shared) */
+        .next-dashboard {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #111827;
+            background: transparent !important;
+            padding-bottom: 2rem;
         }
-
-        .dashboard-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+        .next-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+        .next-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+        .next-card {
+            background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03); transition: all 0.2s ease-in-out;
         }
-
-
-        .card-status {
-            border-radius: 12px;
-            padding: 20px;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+        .next-card:hover { border-color: #d1d5db; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04); transform: translateY(-2px); }
+        .next-card-header { display: flex; justify-content: space-between; align-items: center; }
+        .next-card-title { font-size: 0.875rem; font-weight: 500; color: #4b5563; margin: 0; }
+        .next-section-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0; }
+        .next-icon-wrapper-sm {
+            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;
         }
-
-        .card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .card-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-        }
-
-        .card-bottom {
-            margin-top: 20px;
-        }
-
-        .card-count {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-        }
-
-        .progress-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 5px;
-        }
-
-        .percent-text {
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-
-        .all-employee-summary {
-            background: #f4faff;
-            padding: 30px;
-            margin-top: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .employee-summary-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        .circle-chart {
-            width: 80px;
-            height: 80px;
-        }
-
-        .circle-bg {
-            fill: none;
-            stroke: #e0e0e0;
-            stroke-width: 3.8;
-        }
-
-        .circle-fill {
-            fill: none;
-            stroke: #2196F3;
-            stroke-width: 3.8;
-            stroke-linecap: round;
-        }
-
-        .circle-text {
-            font-size: 0.5rem;
-            text-anchor: middle;
-            fill: #333;
-        }
-
-        .employee-info h2 {
-            margin: 0;
-            font-size: 2rem;
-            color: #2196F3;
-
-        }
-
-        @media (max-width: 768px) {
-            .card-status {
-                text-align: center;
-            }
-
-            .card-top {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .employee-summary-container {
-                flex-direction: column;
-            }
-        }
+        .next-number { font-weight: 700; line-height: 1.2; letter-spacing: -0.025em; }
+        .next-number-md { font-size: 1.5rem; font-weight: 700; line-height: 1.2; display: block; }
+        .next-status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .next-progress-wrap { display: flex; align-items: center; gap: 0.75rem; }
+        .next-progress-bar { flex: 1; height: 6px; background: #f3f4f6; border-radius: 9999px; overflow: hidden; }
+        .next-progress-fill { height: 100%; border-radius: 9999px; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .next-progress-text { font-size: 0.875rem; color: #6b7280; font-weight: 500; min-width: 32px; text-align: right; }
+        .next-donut-container { display: flex; align-items: center; }
+        .next-donut-wrap { position: relative; width: 140px; height: 140px; }
+        .next-donut { width: 100%; height: 100%; transform: scale(1); transition: transform 0.3s ease; }
+        .next-donut:hover { transform: scale(1.03); }
+        .donut-segment { transition: stroke-dasharray 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .next-donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: flex; flex-direction: column; }
+        .next-donut-value { font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1; }
+        .next-donut-label { font-size: 0.7rem; color: #6b7280; margin-top: 0.35rem; text-transform: uppercase; font-weight: 500; }
+        .next-trend-text { font-size: 0.875rem; color: #6b7280; }
+        .mt-4 { margin-top: 1.5rem; }
+        .slide-up { opacity: 0; transform: translateY(15px); animation: nextSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes nextSlideUp { to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 1024px) { .next-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 640px) { .next-donut-container { flex-direction: column; } }
     </style>
+    
+    <script>
+        if (typeof initNextDashboardShared !== 'function') {
+            window.initNextDashboardShared = function() {
+                document.querySelectorAll('.count-up:not(.initialized)').forEach(el => {
+                    el.classList.add('initialized');
+                    const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+                    if (target > 0) {
+                        const duration = 1800;
+                        const easeOutQuart = t => 1 - (--t) * t * t * t;
+                        let startTime = null;
+                        const step = (timestamp) => {
+                            if (!startTime) startTime = timestamp;
+                            const progress = Math.min((timestamp - startTime) / duration, 1);
+                            el.innerText = Math.floor(easeOutQuart(progress) * target).toLocaleString();
+                            if (progress < 1) window.requestAnimationFrame(step);
+                            else el.innerText = target.toLocaleString();
+                        };
+                        window.requestAnimationFrame(step);
+                    } else el.innerText = "0";
+                });
 
+                setTimeout(() => {
+                    document.querySelectorAll('.donut-segment:not(.initialized)').forEach(segment => {
+                        segment.classList.add('initialized');
+                        const targetDash = segment.getAttribute('data-dash');
+                        if (targetDash) segment.setAttribute('stroke-dasharray', targetDash);
+                    });
+                }, 150);
+
+                setTimeout(() => {
+                    document.querySelectorAll('.next-progress-fill:not(.initialized)').forEach(bar => {
+                        bar.classList.add('initialized');
+                        const targetWidth = bar.getAttribute('data-width');
+                        if (targetWidth) bar.style.width = targetWidth;
+                    });
+                }, 250);
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener("DOMContentLoaded", window.initNextDashboardShared);
+        } else {
+            window.initNextDashboardShared();
+        }
+    </script>
 <?php
     return ob_get_clean();
 }

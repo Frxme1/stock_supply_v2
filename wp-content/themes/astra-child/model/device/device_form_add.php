@@ -109,7 +109,14 @@ function device_form($editing = null)
 	<form method="POST" action="">
 		<input type="hidden" name="DeviceID" value="<?= esc_attr($device_id) ?>">
 
-		<h2 style="text-align: center;"><?= $editing ? 'Edit Device' : 'Add Device' ?></h2>
+		<div class="d-flex justify-content-between align-items-center mb-4" style="max-width: 600px; margin: 0 auto;">
+			<h2 style="text-align: center; margin: 0; flex-grow: 1;"><?= $editing ? 'Edit Device' : 'Add Device' ?></h2>
+			<?php if (!$editing): ?>
+				<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importCsvModal">
+					<i class="fa-solid fa-file-import"></i> Import CSV
+				</button>
+			<?php endif; ?>
+		</div>
 
 		<div class="form-grid">
 			<div class="form-group">
@@ -156,7 +163,7 @@ function device_form($editing = null)
 			<div class="form-group">
 				<label>Keyword</label>
 				<select name="KeywordID" id="keyword_select" required>
-					<option value="" style="text-align: center;">-- Select --</option>
+					<option value="" style="text-align: center; margin-top: -12px;">-- Select --</option>
 					<?php foreach ($keywords as $key): ?>
 						<option value="<?= $key->KeywordID ?>" <?= selected($editing->KeywordID ?? '', $key->KeywordID, false) ?>>
 							<?= esc_html($key->KeywordName) ?>
@@ -207,51 +214,293 @@ function device_form($editing = null)
 
 
 
+	<!-- Import CSV Modal -->
+	<div class="modal fade" id="importCsvModal" tabindex="-1" aria-labelledby="importCsvModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="importCsvModalLabel"><i class="fa-solid fa-file-import"></i> Import Devices
+						(CSV)</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body text-start">
+					<form action="<?= esc_url(admin_url('admin-post.php')) ?>" method="POST" enctype="multipart/form-data"
+						style="max-width: 100%; margin: 0; padding: 0; background: none; border-radius: 0;">
+						<input type="hidden" name="action" value="import_device_csv">
+						<?php wp_nonce_field('import_device_csv_nonce', 'import_csv_nonce'); ?>
+
+						<div class="mb-3">
+							<label for="csv_file" class="form-label"
+								style="font-weight: 600; margin-bottom: 5px; display: block;">Select CSV File</label>
+							<input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required
+								style="padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;">
+						</div>
+
+						<div class="alert alert-info" style="font-size: 0.85em;">
+							<strong>Format Requirements:</strong>
+							<ul class="mb-0 ps-3">
+								<li>Columns: <code>Brand, Category, Model, SerialNumber, AddDeviceDate, Keyword</code></li>
+								<li>If Brand or Category does not exist, the row will be skipped (Error).</li>
+								<li>Device IDs will be generated automatically.</li>
+							</ul>
+						</div>
+						<div class="text-end" style="margin-top: 15px;">
+							<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-success btn-sm">Import</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- CSV Preview Script -->
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			const csvFileInput = document.getElementById('csv_file');
+			if (csvFileInput) {
+				csvFileInput.addEventListener('change', function (e) {
+					const file = e.target.files[0];
+					if (!file) return;
+
+					const reader = new FileReader();
+					reader.onload = function (e) {
+						const text = e.target.result;
+						const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
+
+						if (rows.length <= 1) {
+							Swal.fire({
+								icon: 'error',
+								title: 'Invalid File',
+								text: 'The CSV file is empty or contains no data rows.',
+								confirmButtonColor: '#6ABF57'
+							});
+							csvFileInput.value = '';
+							return;
+						}
+
+						const headers = rows[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+						let tableHtml = `
+						<div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;">
+							<table class="table table-bordered table-striped table-hover table-sm text-start mb-0" style="font-size: 13px;">
+								<thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+									<tr>
+										${headers.map(h => `<th class="py-2 px-3 text-nowrap">${h}</th>`).join('')}
+									</tr>
+								</thead>
+								<tbody>`;
+
+						let previewRows = rows.slice(1);
+						previewRows.forEach(row => {
+							const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
+							tableHtml += `<tr>`;
+							for (let i = 0; i < headers.length; i++) {
+								tableHtml += `<td class="py-2 px-3 text-nowrap">${cols[i] || '-'}</td>`;
+							}
+							tableHtml += `</tr>`;
+						});
+
+						tableHtml += `</tbody></table></div>`;
+						tableHtml += `<div class="text-start mt-2 text-muted fw-bold" style="font-size: 13px;"><i class="fa-solid fa-list"></i> Total Rows to Import: <span class="text-success">${previewRows.length}</span> devices</div>`;
+
+						Swal.fire({
+							title: '<i class="fa-solid fa-file-csv" style="color: #6ABF57;"></i> CSV Preview',
+							html: tableHtml,
+							width: '80%',
+							confirmButtonText: '<i class="fa-solid fa-check"></i> Looks Good',
+							confirmButtonColor: '#6ABF57',
+							showCancelButton: true,
+							cancelButtonText: '<i class="fa-solid fa-rotate-left"></i> Change File',
+							cancelButtonColor: '#6c757d',
+							customClass: {
+								popup: 'rounded-4 shadow-sm'
+							}
+						}).then((result) => {
+							if (!result.isConfirmed) {
+								csvFileInput.value = '';
+							}
+						});
+					};
+					reader.readAsText(file);
+				});
+			}
+		});
+	</script>
+
 	<style>
+		/* Next.js Inspired Form UI */
 		form {
-			max-width: 600px;
-			margin: 20px auto;
-			background: #f9f9f9;
-			padding: 20px;
-			border-radius: 8px;
+			max-width: 650px;
+			margin: 40px auto;
+			margin-top: 10px;
+			background: #ffffff;
+			padding: 2.5rem;
+			border-radius: 16px;
+			border: 1px solid #e5e7eb;
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+			animation: formFadeIn 0.5s ease-out forwards;
+		}
+
+		@keyframes formFadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.d-flex h2 {
+			font-weight: 700;
+			color: #111827;
+			letter-spacing: -0.025em;
 		}
 
 		.form-grid {
 			display: grid;
 			grid-template-columns: 1fr 1fr;
-			gap: 20px;
+			gap: 1.5rem;
+			margin-top: 1rem;
 		}
 
 		.form-group {
 			display: flex;
 			flex-direction: column;
-			margin-bottom: 15px;
+			margin-bottom: 0;
+			position: relative;
 		}
 
 		.form-group label {
+			font-size: 0.875rem;
 			font-weight: 600;
+			color: #374151;
 			margin-bottom: 5px;
+			transition: color 0.2s ease;
 		}
 
+		.form-group:focus-within label {
+			color: #3b82f6;
+		}
+
+		/* Unified Input and Select Styling */
 		.form-group input,
 		.form-group select {
-			padding: 10px;
-			border: 1px solid #ccc;
-			border-radius: 50px;
-			font-size: 14px;
+			width: 100%;
+			box-sizing: border-box;
+			height: 44px; /* Ensure uniform height */
+			padding: 0.5rem 1rem;
+			font-size: 0.95rem;
+			color: #111827;
+			background-color: #ffffff;
+			border: 1px solid #d1d5db;
+			border-radius: 10px;
+			transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+			appearance: none; /* For custom select arrow */
 		}
 
-		.form-group input[readonly] {
-			background-color: #d1d5db;
-			/* เทาเข้ม */
-			color: #4b5563;
-			cursor: not-allowed;
+		/* Select specific - Custom Arrow */
+		.form-group select {
+			background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+			background-position: right 0.75rem center;
+			background-repeat: no-repeat;
+			background-size: 1.25em 1.25em;
+			cursor: pointer;
+		}
+
+		/* Hover and Focus States */
+		.form-group input:hover,
+		.form-group select:hover {
 			border-color: #9ca3af;
 		}
 
+		.form-group input:focus,
+		.form-group select:focus {
+			outline: none;
+			border-color: #3b82f6;
+			box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+			transform: translateY(-1px);
+		}
+
+		/* Click Animation for Select (Active state) */
+		.form-group select:active {
+			transform: scale(0.98);
+		}
+
+		/* Readonly Input Styling */
+		.form-group input[readonly] {
+			background-color: #f9fafb;
+			color: #6b7280;
+			cursor: not-allowed;
+			border-color: #e5e7eb;
+			box-shadow: none;
+		}
+
+		.form-group input[readonly]:focus {
+			box-shadow: none;
+			border-color: #e5e7eb;
+			transform: none;
+		}
+
 		.form-actions {
-			text-align: center;
-			margin-top: 20px;
+			display: flex;
+			justify-content: center;
+			gap: 1rem;
+			margin-top: 2.5rem;
+			padding-top: 1.5rem;
+			border-top: 1px solid #f3f4f6;
+		}
+
+		.form-actions button {
+			padding: 0.6rem 2rem;
+			font-weight: 600;
+			font-size: 0.95rem;
+			letter-spacing: 0.025em;
+			transition: all 0.2s ease;
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+		}
+
+		.form-actions button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+		}
+
+		.form-actions button:active {
+			transform: translateY(0);
+		}
+
+		/* Import CSV Button */
+		.btn-success.btn-sm[data-bs-target="#importCsvModal"] {
+			background-color: #ffffff;
+			color: #4b5563;
+			border: 1px solid #d1d5db;
+			border-radius: 8px;
+			padding: 0.4rem 0.8rem;
+			font-weight: 600;
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+			transition: all 0.2s;
+		}
+
+		.btn-success.btn-sm[data-bs-target="#importCsvModal"]:hover {
+			background-color: #f9fafb;
+			border-color: #9ca3af;
+			color: #111827;
+			transform: translateY(-1px);
+		}
+
+		@media (max-width: 640px) {
+			.form-grid {
+				grid-template-columns: 1fr;
+			}
+
+			form {
+				margin: 20px;
+				padding: 1.5rem;
+			}
 		}
 	</style>
 

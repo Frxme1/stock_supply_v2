@@ -36,7 +36,18 @@ function device_crud()
         $like = '%' . $wpdb->esc_like($search) . '%';
         $search_sql .= $wpdb->prepare(
             " AND (DeviceID LIKE %s OR Category LIKE %s OR Brand LIKE %s OR Model LIKE %s OR NickName LIKE %s OR SerialNumber LIKE %s OR Owner LIKE %s OR Status LIKE %s OR Department LIKE %s OR ReceiveDate LIKE %s OR ReturnDate LIKE %s OR RepairDate LIKE %s)",
-            $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like,
+            $like
         );
     }
     if (!empty($filter_status)) {
@@ -77,36 +88,42 @@ function device_crud()
 
 
 
-?>
+    ?>
 
 
     <div class="container-fluid">
         <div class="row mb-3 align-items-end">
             <div class="col-md-9">
-                <form method="GET" action="" id="advanced-filter-form">
-<?php
-foreach ($_GET as $key => $value) {
-    if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
-        if (is_array($value)) {
-            foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
-        } else {
-            echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
-        }
-    }
-}
-?>
+                <form method="GET" action="#advanced-filter-form" id="advanced-filter-form">
+                    <?php
+                    foreach ($_GET as $key => $value) {
+                        if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                            if (is_array($value)) {
+                                foreach ($value as $v) {
+                                    echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
+                                }
+                            } else {
+                                echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                            }
+                        }
+                    }
+                    ?>
                     <div class="row g-2">
                         <div class="col-12 col-sm-6 col-md-3">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Search Text</label>
-                            <input type="text" name="device_search" class="form-control form-control-sm" placeholder="Search..." value="<?= esc_attr($search) ?>" />
+                            <input type="text" name="device_search" class="form-control form-control-sm"
+                                placeholder="Search..." value="<?= esc_attr($search) ?>" />
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
-                            <select name="filter_status" id="filter_status" class="form-select form-select-sm staggered-dropdown" onchange="toggleDepartment()">
+                            <select name="filter_status" id="filter_status"
+                                class="form-select form-select-sm staggered-dropdown" onchange="toggleDepartment()">
                                 <option value="">All Status</option>
-                                <option value="Available" <?= $filter_status == 'Available' ? 'selected' : '' ?>>Available</option>
+                                <option value="Available" <?= $filter_status == 'Available' ? 'selected' : '' ?>>Available
+                                </option>
                                 <option value="In Use" <?= $filter_status == 'In Use' ? 'selected' : '' ?>>In Use</option>
-                                <option value="Maintenance" <?= $filter_status == 'Maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                                <option value="Maintenance" <?= $filter_status == 'Maintenance' ? 'selected' : '' ?>>
+                                    Maintenance</option>
                                 <option value="Retired" <?= $filter_status == 'Retired' ? 'selected' : '' ?>>Retired</option>
                             </select>
                         </div>
@@ -114,24 +131,31 @@ foreach ($_GET as $key => $value) {
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Brand</label>
                             <select name="filter_brand" class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Brands</option>
-                                <?php foreach($all_brands as $brand): ?>
-                                    <option value="<?= esc_attr($brand) ?>" <?= $filter_brand == $brand ? 'selected' : '' ?>><?= esc_html($brand) ?></option>
+                                <?php foreach ($all_brands as $brand): ?>
+                                    <option value="<?= esc_attr($brand) ?>" <?= $filter_brand == $brand ? 'selected' : '' ?>>
+                                        <?= esc_html($brand) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-2" id="department_wrapper">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Department</label>
-                            <select name="filter_department" id="filter_department" class="form-select form-select-sm staggered-dropdown">
+                            <select name="filter_department" id="filter_department"
+                                class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Depts</option>
-                                <?php foreach($all_departments as $dept): ?>
-                                    <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>><?= formatName($dept) ?></option>
+                                <?php foreach ($all_departments as $dept): ?>
+                                    <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>>
+                                        <?= formatName($dept) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-12 col-md-3 d-flex align-items-end gap-2">
-                            <button class="btn btn-sm btn-info flex-grow-1" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Filter</button>
+                            <button class="btn btn-sm btn-info flex-grow-1" type="submit"><i
+                                    class="fa-solid fa-magnifying-glass"></i> Filter</button>
                             <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
-<a href="<?= esc_url($reset_url) ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+                            <a href="<?= esc_url($reset_url) ?>#advanced-filter-form"
+                                class="btn btn-sm btn-outline-secondary">Reset</a>
                         </div>
                     </div>
                 </form>
@@ -139,58 +163,58 @@ foreach ($_GET as $key => $value) {
         </div>
 
         <script>
-        function toggleDepartment() {
-            var status = document.getElementById('filter_status').value;
-            var deptWrapper = document.getElementById('department_wrapper');
-            var deptSelect = document.getElementById('filter_department');
-            if (status === 'Available') {
-                deptWrapper.style.display = 'none';
-                deptSelect.value = '';
-            } else {
-                deptWrapper.style.display = 'block';
+            function toggleDepartment() {
+                var status = document.getElementById('filter_status').value;
+                var deptWrapper = document.getElementById('department_wrapper');
+                var deptSelect = document.getElementById('filter_department');
+                if (status === 'Available') {
+                    deptWrapper.style.display = 'none';
+                    deptSelect.value = '';
+                } else {
+                    deptWrapper.style.display = 'block';
+                }
             }
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleDepartment();
-            
-            // Check for import results
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('import_status')) {
-                const successCount = urlParams.get('import_success') || 0;
-                const errorCount = urlParams.get('import_error') || 0;
-                
-                let icon = 'success';
-                let title = 'Import Complete';
-                let text = `Successfully imported ${successCount} devices.`;
-                
-                if (errorCount > 0) {
-                    if (successCount > 0) {
-                        icon = 'warning';
-                        text += `<br>Failed to import ${errorCount} rows (Skipped). Check format or missing Brands/Categories.`;
+            document.addEventListener('DOMContentLoaded', function () {
+                toggleDepartment();
+
+                // Check for import results
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('import_status')) {
+                    const successCount = urlParams.get('import_success') || 0;
+                    const errorCount = urlParams.get('import_error') || 0;
+
+                    let icon = 'success';
+                    let title = 'Import Complete';
+                    let text = `Successfully imported ${successCount} devices.`;
+
+                    if (errorCount > 0) {
+                        if (successCount > 0) {
+                            icon = 'warning';
+                            text += `<br>Failed to import ${errorCount} rows (Skipped). Check format or missing Brands/Categories.`;
+                        } else {
+                            icon = 'error';
+                            title = 'Import Failed';
+                            text = `All ${errorCount} rows failed to import. Check format or missing Brands/Categories.`;
+                        }
+                    }
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: icon,
+                            title: title,
+                            html: text,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#6ABF57'
+                        }).then(() => {
+                            // Remove params
+                            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                            window.history.replaceState({ path: newUrl }, '', newUrl);
+                        });
                     } else {
-                        icon = 'error';
-                        title = 'Import Failed';
-                        text = `All ${errorCount} rows failed to import. Check format or missing Brands/Categories.`;
+                        alert(text.replace(/<br>/g, "\n"));
                     }
                 }
-                
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: icon,
-                        title: title,
-                        html: text,
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#6ABF57'
-                    }).then(() => {
-                        // Remove params
-                        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                        window.history.replaceState({path:newUrl}, '', newUrl);
-                    });
-                } else {
-                    alert(text.replace(/<br>/g, "\n"));
-                }
-            }
-        });
+            });
         </script>
         <br>
 
@@ -199,29 +223,34 @@ foreach ($_GET as $key => $value) {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="importCsvModalLabel"><i class="fa-solid fa-file-import"></i> Import Devices (CSV)</h5>
+                        <h5 class="modal-title" id="importCsvModalLabel"><i class="fa-solid fa-file-import"></i> Import
+                            Devices (CSV)</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body text-start">
-                        <form action="<?= esc_url(admin_url('admin-post.php')) ?>" method="POST" enctype="multipart/form-data">
+                        <form action="<?= esc_url(admin_url('admin-post.php')) ?>" method="POST"
+                            enctype="multipart/form-data">
                             <input type="hidden" name="action" value="import_device_csv">
                             <?php wp_nonce_field('import_device_csv_nonce', 'import_csv_nonce'); ?>
-                            
+
                             <div class="mb-3">
                                 <label for="csv_file" class="form-label">Select CSV File</label>
-                                <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                                <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv"
+                                    required>
                             </div>
-                            
+
                             <div class="alert alert-info" style="font-size: 0.85em;">
                                 <strong>Format Requirements:</strong>
                                 <ul class="mb-0 ps-3">
-                                    <li>Columns: <code>Brand, Category, Model, SerialNumber, AddDeviceDate, Keyword</code></li>
+                                    <li>Columns: <code>Brand, Category, Model, SerialNumber, AddDeviceDate, Keyword</code>
+                                    </li>
                                     <li>If Brand or Category does not exist, the row will be skipped (Error).</li>
                                     <li>Device IDs will be generated automatically.</li>
                                 </ul>
                             </div>
                             <div class="text-end">
-                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-success btn-sm">Import</button>
                             </div>
                         </form>
@@ -230,161 +259,157 @@ foreach ($_GET as $key => $value) {
             </div>
         </div>
 
-        <form method="POST" action="" id="bulk-action-form">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <div class="d-flex align-items-center" style="display: none !important;">
-                    <select name="bulk_action" class="form-select me-2" style="width: auto;">
-                        <option value="">-- Bulk Actions --</option>
-                        <option value="available">Set Available (<i class="fa-solid fa-circle text-success"></i>)</option>
-                        <option value="retired">Set Retired (<i class="fa-solid fa-circle text-dark"></i>)</option>
-                        <option value="print_labels">Print Labels (<i class="fa-solid fa-print"></i>)</option>
-                        
-                    </select>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="handleBulkAction('device')">Apply</button>
-                </div>
-                
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importCsvModal">
-                        <i class="fa-solid fa-file-import"></i> Import CSV
-                    </button>
-                    <!-- Export button uses the same GET parameters for filtering -->
-                    <a href="<?= esc_url(add_query_arg('export_csv', 'device', $_SERVER['REQUEST_URI'])) ?>" class="btn btn-secondary btn-sm">
-                        <i class="fa-solid fa-file-export"></i> Export CSV
-                    </a>
-                </div>
-            </div>
 
 
-            <div id="device_table" class="table-responsive-xl rounded">
-                <table class="table table-bordered table-sm" style="width: 100%;">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th class="py-3" style="width: 50px;"><input type="checkbox" id="selectAll"></th>
-                            <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
-                            <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
+        <a href="<?= esc_url(add_query_arg('export_csv', 'device', $_SERVER['REQUEST_URI'])) ?>"
+            class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-file-export"></i> Export CSV
+        </a>
+
+        <div id="device_table" class="table-responsive-xl next-table-wrapper">
+            <table class="table next-table" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th class="py-3 text-start" style="display: none;"><input type="checkbox" id="selectAll"></th>
+                        <th class="py-3 text-start">ID</th>
+                        <th class="py-3 text-start">Device Info</th>
+                        <th class="py-3 text-start">Owner</th>
+                        <th class="py-3 text-start">Status</th>
+                        <th class="py-3 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <?php foreach ($rows as $index => $row): ?>
+                        <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
+                            <td class="align-middle" style="display: none;"><input type="checkbox" name="bulk_device_ids[]"
+                                    value="<?= $row->DeviceID ?>" class="device-checkbox"
+                                    data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
+                            <td class="align-middle text-start font-medium text-gray-900"><?= $row->DeviceID ?></td>
+                            <td class="text-start align-middle">
+                                <div class="device-title"><?= $row->Brand ?>         <?= !empty($row->Model) ? $row->Model : '' ?>
+                                </div>
+                                <div class="device-subtitle"><?= $row->Category ?> | SN:
+                                    <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?>
+                                </div>
+                            </td>
+                            <td class="text-start align-middle">
+                                <?php
+                                $owner = trim($row->Owner ?? '');
+                                $nickname = trim($row->Nickname ?? '');
+
+                                if ($owner === '' && $nickname === '') {
+                                    echo '<span class="text-muted">-</span>';
+                                } else {
+                                    if ($nickname !== '') {
+                                        echo '<span class="owner-name">' . htmlspecialchars($nickname) . '</span> ';
+                                    }
+
+                                    if ($owner !== '') {
+                                        preg_match('/\((.*?)\)$/', $owner, $matches);
+                                        $position = $matches[1] ?? '';
+                                        $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
+                                        $nameParts = explode(' ', $nameOnly);
+
+                                        if (count($nameParts) > 1) {
+                                            $lastName = end($nameParts);
+                                            $lastInitial = strtoupper(mb_substr($lastName, 0, 1)) . '.';
+                                        } else {
+                                            $lastInitial = '';
+                                        }
+
+                                        echo '<span class="owner-name">' . htmlspecialchars($lastInitial) . '</span>';
+                                        if ($position !== '') {
+                                            echo ' <span class="owner-position">(' . htmlspecialchars($position) . ')</span>';
+                                        }
+                                    }
+                                }
+                                ?>
+                            </td>
+                            <td class="text-start align-middle">
+                                <?php
+                                $status = $row->Status;
+                                $statusClass = '';
+                                if (strcasecmp($status, 'Available') === 0) {
+                                    $statusClass = 'status-available';
+                                } elseif (strcasecmp($status, 'In Use') === 0) {
+                                    $statusClass = 'status-inuse';
+                                } elseif (strcasecmp($status, 'Maintenance') === 0) {
+                                    $statusClass = 'status-maintenance';
+                                } elseif (strcasecmp($status, 'Retired') === 0) {
+                                    $statusClass = 'status-retired';
+                                }
+                                ?>
+                                <div class="status-badge <?= $statusClass ?>">
+                                    <span class="status-dot"></span>
+                                    <?= esc_html($status) ?>
+                                </div>
+                            </td>
+                            <td class="align-middle text-center">
+                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
+                                    <div class="dropdown action-menu mb-0 text-center">
+                                        <button type="button" class="action-btn" data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                            ...
+                                        </button>
+                                        <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
+                                            <div class="action-dropdown-header">Actions</div>
+                                            <div class="action-dropdown-separator"></div>
+                                                <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i>
+                                                    View Details</a>
+                                                <a href="<?= home_url('/history/?device_search=') ?><?= $row->DeviceID ?>"><i 
+                                                        class="fa-solid fa-clock-rotate-left"></i> History</a>
+                                                <a href="#"
+                                                    onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i
+                                                        class="fa-solid fa-print"></i> Print Label</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
+                        <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
+                            <td colspan="6" class="p-0 border-0">
+                                <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
+                                    <div class="p-3 bg-light text-start m-2 rounded border">
+                                        <div class="row">
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;">Department</span>
+                                                <strong><?= formatName($row->Department) ?></strong>
+                                            </div>
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;">Assign
+                                                    Date</span>
+                                                <strong><?= formatName($row->ReceiveDate) ?></strong>
+                                            </div>
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;">Return
+                                                    Date</span>
+                                                <strong><?= formatName($row->ReturnDate) ?></strong>
+                                            </div>
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;">Repair
+                                                    Date</span>
+                                                <strong><?= formatName($row->RepairDate) ?></strong>
+                                            </div>
 
-                <?php foreach ($rows as $index => $row): ?>
-                    <tr class="text-nowrap py-2" style="white-space: nowrap;">
-                        <td class="align-middle"><input type="checkbox" name="bulk_device_ids[]" value="<?= $row->DeviceID ?>" class="device-checkbox" data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
-                        <td class="align-middle text-start"><?= $row->DeviceID ?></td>
-                        <td class="text-start align-middle">
-                            <strong><?= $row->Brand ?> <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
-                            <small class="text-muted"><?= $row->Category ?> | SN: <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
-                        </td>
-                        <td class="text-start align-middle" style="min-width: 100px;">
-                            <?php
-                            $owner = trim($row->Owner ?? '');
-                            $nickname = trim($row->Nickname ?? '');
-
-                            if ($owner === '' && $nickname === '') {
-                                echo '-';
-                            } else {
-                                if ($nickname !== '') {
-                                    echo htmlspecialchars($nickname) . ' ';
-                                }
-
-                                if ($owner !== '') {
-                                    preg_match('/\((.*?)\)$/', $owner, $matches);
-                                    $position = $matches[1] ?? '';
-                                    $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
-                                    $nameParts = explode(' ', $nameOnly);
-
-                                    if (count($nameParts) > 1) {
-                                        $lastName = end($nameParts);
-                                        $lastInitial = strtoupper(mb_substr($lastName, 0, 1)) . '.';
-                                    } else {
-                                        $lastInitial = '';
-                                    }
-
-                                    echo htmlspecialchars($lastInitial);
-                                    if ($position !== '') {
-                                        echo ' (' . htmlspecialchars($position) . ')';
-                                    }
-                                }
-                            }
-                            ?>
-                        </td>
-                        <td class="text-start align-middle" style="min-width: 135px;">
-                            <?php
-                            $status = $row->Status;
-                            $emoji = '';
-                            if (strcasecmp($status, 'Available') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>';
-                            } elseif (strcasecmp($status, 'In Use') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>';
-                            } elseif (strcasecmp($status, 'Maintenance') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-warning" style="font-size:12px;"></i>';
-                            } elseif (strcasecmp($status, 'Retired') === 0) {
-                                $emoji = '<i class="fa-solid fa-circle text-dark" style="font-size:12px;"></i>';
-                            }
-                            echo $emoji . ' ' . esc_html($status);
-                            ?>
-                        </td>
-                        <td class="align-middle text-center">
-                            <div class="d-flex justify-content-center align-items-center gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
-                                <div class="dropdown action-menu mb-0 text-center">
-                                    <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                                        ...
-                                    </button>
-                                    <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
-                                        <div class="action-dropdown-header">Actions</div>
-                                        <div class="action-dropdown-separator"></div>
-                                        <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                        <?php else: ?>
-                                            <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                        <?php endif; ?>
-                                        <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
-                                        <a href="#" onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i class="fa-solid fa-print"></i> Print Label</a>
+                                            <?php if ($row->Status === 'Maintenance'): ?>
+                                                <div class="col-sm-12 mt-2">
+                                                    <?php
+                                                    // Fetch latest maintenance detail
+                                                    $m_details = $wpdb->get_var($wpdb->prepare("SELECT Details FROM Maintenance WHERE DeviceID = %s ORDER BY RepairDate DESC LIMIT 1", $row->DeviceID));
+                                                    ?>
+                                                    <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance
+                                                        Reason</span>
+                                                    <strong class="text-danger"><?= formatName($m_details) ?></strong>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
-                        <td colspan="6" class="p-0 border-0">
-                            <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
-                                <div class="p-3 bg-light text-start m-2 rounded border">
-                                    <div class="row">
-                                    <div class="col-sm-3 mb-2 mb-sm-0">
-                                        <span class="text-muted d-block" style="font-size: 0.85em;">Department</span>
-                                        <strong><?= formatName($row->Department) ?></strong>
-                                    </div>
-                                    <div class="col-sm-3 mb-2 mb-sm-0">
-                                        <span class="text-muted d-block" style="font-size: 0.85em;">Receive Date</span>
-                                        <strong><?= formatName($row->ReceiveDate) ?></strong>
-                                    </div>
-                                    <div class="col-sm-3 mb-2 mb-sm-0">
-                                        <span class="text-muted d-block" style="font-size: 0.85em;">Return Date</span>
-                                        <strong><?= formatName($row->ReturnDate) ?></strong>
-                                    </div>
-                                    <div class="col-sm-3 mb-2 mb-sm-0">
-                                        <span class="text-muted d-block" style="font-size: 0.85em;">Repair Date</span>
-                                        <strong><?= formatName($row->RepairDate) ?></strong>
-                                    </div>
-                                    
-                                    <?php if ($row->Status === 'Maintenance'): ?>
-                                    <div class="col-sm-12 mt-2">
-                                        <?php 
-                                            // Fetch latest maintenance detail
-                                            $m_details = $wpdb->get_var($wpdb->prepare("SELECT Details FROM Maintenance WHERE DeviceID = %s ORDER BY RepairDate DESC LIMIT 1", $row->DeviceID));
-                                        ?>
-                                        <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance Reason</span>
-                                        <strong class="text-danger"><?= formatName($m_details) ?></strong>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
@@ -395,6 +420,198 @@ foreach ($_GET as $key => $value) {
                 max-height: 0;
                 overflow: hidden;
                 transition: max-height 0.3s ease;
+            }
+
+            /* Next.js Table UI */
+            .next-table-wrapper {
+                background: #ffffff;
+                margin-top: 20px;
+                border-radius: 12px;
+                border: 1.5px solid #e5e7eb;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                overflow: visible;
+                margin-bottom: 2rem;
+            }
+
+            .next-table {
+                margin: 0;
+                border-collapse: collapse;
+                width: 100%;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                border-radius: 20px;
+                overflow: hidden;
+            }
+
+            .next-table thead {
+                background: #f9fafb;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .next-table thead th:first-child {
+                border-top-left-radius: 12px;
+            }
+
+            .next-table thead th:last-child {
+                border-top-right-radius: 12px;
+            }
+
+            .next-table th {
+                color: #6b7280;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                padding: 1rem 1.5rem;
+                border: none;
+            }
+
+            .next-table tbody tr.next-table-row {
+                border-bottom: 1px solid #e5e7eb;
+                transition: all 0.2s ease;
+                opacity: 0;
+                animation: rowFadeIn 0.4s ease-out forwards;
+                position: relative;
+            }
+
+            .next-table tbody tr.next-table-row:last-child {
+                border-bottom: none;
+            }
+
+            .next-table tbody tr.next-table-row:hover {
+                background-color: #f8fafc;
+                z-index: 10;
+            }
+
+            .next-table tbody tr.next-table-row:focus-within,
+            .next-table tbody tr.next-table-row:has(.show) {
+                z-index: 50;
+            }
+
+            .next-table td {
+                padding: 1rem 1.5rem;
+                border: none;
+                vertical-align: middle;
+            }
+
+            .next-table .font-medium {
+                font-weight: 500;
+            }
+
+            .next-table .text-gray-900 {
+                color: #111827;
+            }
+
+            .device-title {
+                font-weight: 600;
+                color: #111827;
+                font-size: 0.95rem;
+                margin-bottom: 2px;
+            }
+
+            .device-subtitle {
+                font-size: 0.8rem;
+                color: #6b7280;
+            }
+
+            .owner-name {
+                font-weight: 500;
+                color: #374151;
+            }
+
+            .owner-position {
+                font-size: 0.8rem;
+                color: #9ca3af;
+            }
+
+            /* Status Badges */
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 10px;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+            }
+
+            .status-available {
+                background: #ecfdf5;
+                color: #059669;
+            }
+
+            .status-available .status-dot {
+                background: #10b981;
+            }
+
+            .status-inuse {
+                background: #fef2f2;
+                color: #dc2626;
+            }
+
+            .status-inuse .status-dot {
+                background: #ef4444;
+            }
+
+            .status-maintenance {
+                background: #fffbeb;
+                color: #d97706;
+            }
+
+            .status-maintenance .status-dot {
+                background: #f59e0b;
+            }
+
+            .status-retired {
+                background: #f3f4f6;
+                color: #374151;
+            }
+
+            .status-retired .status-dot {
+                background: #6b7280;
+            }
+
+            /* Action buttons */
+            .next-table .btn-outline-secondary {
+                border-color: #e5e7eb;
+                color: #4b5563;
+                background: #ffffff;
+                transition: all 0.2s;
+            }
+
+            .next-table .btn-outline-secondary:hover {
+                background: #f3f4f6;
+                color: #111827;
+            }
+
+            .next-table .action-btn {
+                background: none;
+                border: none;
+                color: #6b7280;
+                font-size: 1.25rem;
+                cursor: pointer;
+                transition: color 0.2s;
+            }
+
+            .next-table .action-btn:hover {
+                color: #111827;
+            }
+
+            @keyframes rowFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
         </style>
         <script>
@@ -482,9 +699,9 @@ foreach ($_GET as $key => $value) {
     </div>
 
     <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
-    <script>function handleBulkAction(t){try{let e="bulk-action-form",n=".device-checkbox";t&&"device"!==t&&(e="bulk-action-form-"+t,n=".device-checkbox-"+t);const o=document.getElementById(e);if(!o)return;const c=o.querySelector('select[name="bulk_action"]'),l=c?c.value:"",r=o.querySelectorAll(n+":checked");if(!l)return void alert("Please select a bulk action.");if(0===r.length)return void alert("Please select at least one device.");if("print_labels"!==l)confirm("Are you sure you want to apply this action to the selected devices?")&&o.submit();else{const t=[];for(let e=0;e<r.length;e++)t.push({id:r[e].value,sn:r[e].getAttribute("data-sn")||"-"});"function"==typeof printDeviceLabels?printDeviceLabels(t):alert("Print function not loaded. Please try hard refreshing (Ctrl+F5).")}}catch(t){console.error("Error in bulk action:",t),alert("An error occurred: "+t.message)}}document.addEventListener("change",function(t){if(t.target&&t.target.id&&t.target.id.startsWith("selectAll")){let e=t.target.id.replace("selectAll-","");"selectAll"===t.target.id&&(e="device");let n="device"===e?".device-checkbox":".device-checkbox-"+e;const o=document.querySelectorAll(n);for(let t=0;t<o.length;t++)o[t].checked=t.target.checked}});</script>
+    <script>function handleBulkAction(t) { try { let e = "bulk-action-form", n = ".device-checkbox"; t && "device" !== t && (e = "bulk-action-form-" + t, n = ".device-checkbox-" + t); const o = document.getElementById(e); if (!o) return; const c = o.querySelector('select[name="bulk_action"]'), l = c ? c.value : "", r = o.querySelectorAll(n + ":checked"); if (!l) return void alert("Please select a bulk action."); if (0 === r.length) return void alert("Please select at least one device."); if ("print_labels" !== l) confirm("Are you sure you want to apply this action to the selected devices?") && o.submit(); else { const t = []; for (let e = 0; e < r.length; e++)t.push({ id: r[e].value, sn: r[e].getAttribute("data-sn") || "-" }); "function" == typeof printDeviceLabels ? printDeviceLabels(t) : alert("Print function not loaded. Please try hard refreshing (Ctrl+F5).") } } catch (t) { console.error("Error in bulk action:", t), alert("An error occurred: " + t.message) } } document.addEventListener("change", function (t) { if (t.target && t.target.id && t.target.id.startsWith("selectAll")) { let e = t.target.id.replace("selectAll-", ""); "selectAll" === t.target.id && (e = "device"); let n = "device" === e ? ".device-checkbox" : ".device-checkbox-" + e; const o = document.querySelectorAll(n); for (let t = 0; t < o.length; t++)o[t].checked = t.target.checked } });</script>
 
-<?php
+    <?php
     return ob_get_clean();
 }
 

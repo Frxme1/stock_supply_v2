@@ -307,6 +307,19 @@ function enqueue_action_menu_styles()
 add_action('wp_enqueue_scripts', 'enqueue_action_menu_styles');
 
 
+// Particles Background Component
+function enqueue_particles_background()
+{
+    wp_enqueue_script(
+        'particles-background-script',
+        get_stylesheet_directory_uri() . '/js/particles.js',
+        [],
+        filemtime(get_stylesheet_directory() . '/js/particles.js'),
+        true
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_particles_background');
+
 // Animated Dropdown Component
 function enqueue_animated_dropdown()
 {

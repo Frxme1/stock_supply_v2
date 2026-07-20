@@ -505,4 +505,97 @@ function handle_device_actions()
     </script>";
         return false;
     }
+
+    if (isset($_GET['lost'])) {
+        $device_id = sanitize_text_field($_GET['lost']);
+        $lost_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Lost'");
+
+        if ($lost_status_id) {
+            // ดึงข้อมูล Device
+            $device_info = $wpdb->get_row($wpdb->prepare(
+                "SELECT OwnerID, CategoryID FROM $table_devices WHERE DeviceID = %s",
+                $device_id
+            ));
+
+            if ($device_info) {
+                // อัปเดตสถานะเป็น Lost
+                $update_data = [
+                    'StatusID'     => $lost_status_id,
+                    'OwnerID'      => null,
+                    'DepartmentID' => null,
+                    'ReceiveDate'  => null,
+                    'RepairDate'   => null,
+                    'ReturnDate'   => null,
+                    'PositionID'   => null
+                ];
+
+                $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
+
+                if ($updated !== false) {
+                    // เตรียมข้อมูล History
+                    $owner_nickname = null;
+                    if (!empty($device_info->OwnerID)) {
+                        $owner_nickname = $wpdb->get_var($wpdb->prepare(
+                            "SELECT Nickname FROM Owners WHERE OwnerID = %d",
+                            $device_info->OwnerID
+                        ));
+                    }
+
+                    $current_user = wp_get_current_user();
+                    $user_email = $current_user->user_email ?? 'unknown@domain.com';
+
+                    $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : null;
+                    $safe_owner       = $owner_nickname ?? '-';
+
+                    $reason = isset($_GET['reason']) ? sanitize_text_field($_GET['reason']) : '';
+                    $description_text = "Device ID {$device_id} set to Lost";
+                    if (!empty($reason)) {
+                        $description_text .= " | Reason: " . $reason;
+                    }
+
+                    $wpdb->insert('History_new', [
+                        'DeviceID'    => $device_id,
+                        'Action'      => 'Lost',
+                        'Date'        => current_time('mysql'),
+                        'Description' => $description_text,
+                        'user_email'  => $user_email,
+                        'CategoryID'  => $safe_category_id,
+                        'Owner'       => $safe_owner
+                    ]);
+                }
+
+                // Redirect
+                $category_slug = $wpdb->get_var($wpdb->prepare(
+                    "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
+                    $device_info->CategoryID
+                ));
+
+                $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
+
+                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Status Updated to Lost!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    window.location.href = '{$redirect_url}';
+                });
+            </script>";
+                exit;
+            }
+        } else {
+             echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+             echo "<script>
+             Swal.fire({
+                 icon: 'warning',
+                 title: 'Status Not Found!',
+                 text: 'Please add \"Lost\" to your Statuses table.',
+                 showConfirmButton: true
+             });
+         </script>";
+         exit;
+        }
+    }
 }

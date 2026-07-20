@@ -109,24 +109,17 @@ function receive_device($device_data = null)
     $date_value = !empty($device_data->ReceiveDate) ? date('Y-m-d', strtotime($device_data->ReceiveDate)) : '';
     ?>
 
-    <form method="POST" style="width: 600px">
-        <h2 style="text-align: center;">Receive Device</h2>
+    <form method="POST">
+        <h2>Assign Device</h2>
 
         <input type="hidden" name="DeviceID" value="<?= esc_attr($device_data->DeviceID ?? '') ?>">
 
         <div class="form-grid">
-
             <div class="form-group">
                 <label>DeviceID</label>
-                <input type="text" value="<?= esc_attr($device_data->DeviceID ?? '') ?>" readonly
-                    style="background-color: #f0f0f0; color: #666; cursor: not-allowed;">
+                <input type="text" value="<?= esc_attr($device_data->DeviceID ?? '') ?>" readonly>
             </div>
 
-        </div>
-
-
-
-        <div class="d-flex gap-0 column-gap-3">
             <div class="form-group">
                 <label>Owner</label>
                 <select name="OwnerID" id="OwnerID" required onchange="handleOwnerChange()">
@@ -142,9 +135,7 @@ function receive_device($device_data = null)
 
             <div class="form-group">
                 <label>Department</label>
-                <select name="DepartmentID" id="DepartmentID"
-                    style="background-color: #f0f0f0; color: #666; pointer-events: none; cursor: not-allowed; appearance: none; -webkit-appearance: none; -moz-appearance: none;" tabindex="-1"
-                    onmousedown="return false;">
+                <select name="DepartmentID" id="DepartmentID" disabled tabindex="-1">
                     <?php foreach ($departments as $dep): ?>
                         <option value="<?= $dep->DepartmentID ?>" <?= selected($device_data->DepartmentID ?? '', $dep->DepartmentID, false) ?>>
                             <?= esc_html($dep->DepartmentName) ?>
@@ -153,16 +144,9 @@ function receive_device($device_data = null)
                 </select>
             </div>
 
-        </div>
-
-
-        <div class="d-flex gap-0 column-gap-3">
-
             <div class="form-group">
                 <label>Position</label>
-                <select name="PositionID" id="PositionID"
-                    style="background-color: #f0f0f0; color: #666; pointer-events: none; cursor: not-allowed; appearance: none; -webkit-appearance: none; -moz-appearance: none;" tabindex="-1"
-                    onmousedown="return false;">
+                <select name="PositionID" id="PositionID" disabled tabindex="-1">
                     <option value="">-- Select --</option>
                     <?php foreach ($positions as $pos): ?>
                         <option value="<?= $pos->PositionID ?>" <?= selected($device_data->PositionID ?? '', $pos->PositionID, false) ?>>
@@ -172,19 +156,17 @@ function receive_device($device_data = null)
                 </select>
             </div>
 
-
             <div class="form-group">
-                <label>Receive Date</label>
-                <input type="date" name="ReceiveDate" value="<?= esc_attr($date_value) ?>" max="<?= date('Y-m-d') ?>"
+                <label>Assign Date</label>
+                <input type="date" name="ReceiveDate" value="<?= esc_attr($date_value) ?>" min="<?= date('Y-m-d') ?>"
                     required>
             </div>
         </div>
 
-
         <div class="form-actions">
             <button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
             <button type="submit" name="update_device" class="btn btn-success border rounded-pill"
-                style="background-color: #6ABF57">Receive</button>
+                style="background-color: #6ABF57">Assign</button>
         </div>
 
     </form>
@@ -210,50 +192,162 @@ function receive_device($device_data = null)
     </script>
 
     <style>
+        /* Next.js Inspired Form UI */
         form {
-            max-width: 600px;
-            margin: 20px auto;
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
+            max-width: 650px;
+            margin: 40px auto;
+            margin-top: 10px;
+            background: #ffffff;
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            animation: formFadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes formFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        form h2 {
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: -0.025em;
+            margin-bottom: 1.5rem;
+            text-align: center;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 1.5rem;
+            margin-top: 1rem;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            margin-bottom: 15px;
+            margin-bottom: 0;
+            position: relative;
         }
 
         .form-group label {
+            font-size: 0.875rem;
             font-weight: 600;
-            margin-bottom: 5px;
+            color: #374151;
+            margin-bottom: 6px;
+            transition: color 0.2s ease;
         }
 
+        .form-group:focus-within label {
+            color: #3b82f6;
+        }
+
+        /* Unified Input and Select Styling */
         .form-group input,
         .form-group select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 50px;
-            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            height: 44px;
+            /* Ensure uniform height */
+            padding: 0.5rem 1rem;
+            font-size: 0.95rem;
+            color: #111827;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            appearance: none;
+            /* For custom select arrow */
+        }
+
+        /* Select specific - Custom Arrow */
+        .form-group select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+            cursor: pointer;
+        }
+
+        /* Hover and Focus States */
+        .form-group input:hover:not([readonly]):not([disabled]),
+        .form-group select:hover:not([readonly]):not([disabled]) {
+            border-color: #9ca3af;
+        }
+
+        .form-group input:focus:not([readonly]):not([disabled]),
+        .form-group select:focus:not([readonly]):not([disabled]) {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+            transform: translateY(-1px);
+        }
+
+        /* Click Animation for Select (Active state) */
+        .form-group select:active:not([disabled]) {
+            transform: scale(0.98);
+        }
+
+        /* Readonly/Disabled Input Styling */
+        .form-group input[readonly],
+        .form-group input[disabled],
+        .form-group select[disabled] {
+            background-color: #f9fafb !important;
+            color: #6b7280 !important;
+            cursor: not-allowed !important;
+            border-color: #e5e7eb !important;
+            box-shadow: none !important;
         }
 
         .form-actions {
-            text-align: center;
-            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f3f4f6;
         }
 
-        .d-flex {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
+        .form-actions button {
+            padding: 0.6rem 2rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.025em;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .form-actions button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .form-actions button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            form {
+                margin: 20px;
+                padding: 1.5rem;
+            }
         }
     </style>
-
 
     <?php
     return ob_get_clean();

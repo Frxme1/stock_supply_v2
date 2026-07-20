@@ -260,43 +260,150 @@ function edit_device_form($editing = null)
     </form>
 
     <style>
-        form {
-            max-width: 600px;
-            margin: 20px auto;
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-        }
+		/* Next.js Inspired Form UI */
+		form {
+			max-width: 650px;
+			margin: 40px auto;
+			margin-top: 10px;
+			background: #ffffff;
+			padding: 2.5rem;
+			border-radius: 16px;
+			border: 1px solid #e5e7eb;
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+			animation: formFadeIn 0.5s ease-out forwards;
+		}
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+		@keyframes formFadeIn {
+			from { opacity: 0; transform: translateY(10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
+		form h2 {
+			font-weight: 700;
+			color: #111827;
+			letter-spacing: -0.025em;
+			margin-bottom: 1.5rem;
+		}
 
-        .form-group label {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
+		.form-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.5rem;
+			margin-top: 1rem;
+		}
 
-        .form-group input,
-        .form-group select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 50px;
-            font-size: 14px;
-        }
+		.form-group {
+			display: flex;
+			flex-direction: column;
+			margin-bottom: 0;
+			position: relative;
+		}
 
-        .form-actions {
-            text-align: center;
-            margin-top: 20px;
-        }
+		.form-group label {
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: #374151;
+			margin-bottom: 6px;
+			transition: color 0.2s ease;
+		}
+
+		.form-group:focus-within label {
+			color: #3b82f6;
+		}
+
+		/* Unified Input and Select Styling */
+		.form-group input,
+		.form-group select {
+			width: 100%;
+			box-sizing: border-box;
+			height: 44px; /* Ensure uniform height */
+			padding: 0.5rem 1rem;
+			font-size: 0.95rem;
+			color: #111827;
+			background-color: #ffffff;
+			border: 1px solid #d1d5db;
+			border-radius: 10px;
+			transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+			appearance: none; /* For custom select arrow */
+		}
+
+		/* Select specific - Custom Arrow */
+		.form-group select {
+			background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+			background-position: right 0.75rem center;
+			background-repeat: no-repeat;
+			background-size: 1.25em 1.25em;
+			cursor: pointer;
+		}
+
+		/* Hover and Focus States */
+		.form-group input:hover:not([readonly]):not([disabled]),
+		.form-group select:hover:not([readonly]):not([disabled]) {
+			border-color: #9ca3af;
+		}
+
+		.form-group input:focus:not([readonly]):not([disabled]),
+		.form-group select:focus:not([readonly]):not([disabled]) {
+			outline: none;
+			border-color: #3b82f6;
+			box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+			transform: translateY(-1px);
+		}
+
+		/* Click Animation for Select (Active state) */
+		.form-group select:active:not([disabled]) {
+			transform: scale(0.98);
+		}
+
+		/* Readonly/Disabled Input Styling */
+		.form-group input[readonly],
+		.form-group input[disabled],
+		.form-group select[disabled] {
+			background-color: #f9fafb !important;
+			color: #6b7280 !important;
+			cursor: not-allowed !important;
+			border-color: #e5e7eb !important;
+			box-shadow: none !important;
+		}
+
+		.form-actions {
+			display: flex;
+			justify-content: center;
+			gap: 1rem;
+			margin-top: 2.5rem;
+			padding-top: 1.5rem;
+			border-top: 1px solid #f3f4f6;
+		}
+
+		.form-actions button {
+			padding: 0.6rem 2rem;
+			font-weight: 600;
+			font-size: 0.95rem;
+			letter-spacing: 0.025em;
+			transition: all 0.2s ease;
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+		}
+
+		.form-actions button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+		}
+
+		.form-actions button:active {
+			transform: translateY(0);
+		}
+
+		@media (max-width: 640px) {
+			.form-grid {
+				grid-template-columns: 1fr;
+			}
+			form {
+				margin: 20px;
+				padding: 1.5rem;
+			}
+		}
     </style>
 
     <script>

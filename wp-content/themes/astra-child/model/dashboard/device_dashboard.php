@@ -42,637 +42,533 @@ function device_dashboard()
 
     <!-- FontAwesome & Chart.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- ===== SECTION 1: Category Summary Cards ===== -->
-    <div class="md-dashboard">
-        <div class="md-summary-row">
+    
+    <div class="next-dashboard">
+        <!-- ===== SECTION 1: Category Summary Cards ===== -->
+        <div class="next-grid">
             <?php
             $delay = 0;
             foreach ($category_config as $cat):
                 $percent = $total_devices > 0 ? round(($cat['count'] / $total_devices) * 100, 1) : 0;
                 $is_total = ($cat['label'] === 'All Devices');
                 ?>
-                <div class="md-summary-card"
-                    style="animation: slideUpFade 0.5s ease backwards; animation-delay: <?= $delay ?>s;">
-                    <?php $delay += 0.1; ?>
-                    <div class="md-summary-header">
-                        <span class="md-summary-title"><?= esc_html($cat['label']) ?></span>
-                        <span class="md-summary-icon"
-                            style="background: <?= $cat['color'] ?>1A; color: <?= $cat['color'] ?>;"><?= $cat['icon'] ?></span>
+                <div class="next-card slide-up" style="animation-delay: <?= $delay ?>s;">
+                    <?php $delay += 0.05; ?>
+                    <div class="next-card-header">
+                        <span class="next-card-title"><?= esc_html($cat['label']) ?></span>
+                        <div class="next-icon-wrapper" style="background: <?= $cat['color'] ?>15; color: <?= $cat['color'] ?>;">
+                            <?= $cat['icon'] ?>
+                        </div>
                     </div>
-                    <div class="md-summary-body">
+                    <div class="next-card-body">
+                        <div class="next-number-wrap">
+                            <span class="next-number count-up" data-count="<?= $cat['count'] ?>">0</span>
+                        </div>
                         <?php if (!$is_total): ?>
-                            <div class="md-summary-trend" style="color: <?= $cat['color'] ?>;">
-                                <span class="md-trend-badge"
-                                    style="background: <?= $cat['color'] ?>1A; color: <?= $cat['color'] ?>;">
+                            <div class="next-trend">
+                                <span class="next-badge" style="background: <?= $cat['color'] ?>15; color: <?= $cat['color'] ?>;">
                                     <?= $percent ?>%
                                 </span>
-                                <svg class="md-sparkline" viewBox="0 0 60 20" style="stroke: <?= $cat['color'] ?>;">
-                                    <polyline points="0,18 10,14 20,16 30,8 40,12 50,6 60,10" fill="none" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
+                                <span class="next-trend-text text-muted">of total</span>
+                            </div>
+                        <?php else: ?>
+                            <div class="next-trend">
+                                <span class="next-trend-text text-muted" style="visibility: hidden;">-</span>
                             </div>
                         <?php endif; ?>
                     </div>
-                    <div class="md-summary-number count-up" data-count="<?= $cat['count'] ?>"
-                        style="color: <?= $cat['color'] ?>;">
-                        0
-                    </div>
-                    <span class="md-summary-unit">unit<?= $cat['count'] > 1 ? 's' : '' ?></span>
                 </div>
             <?php endforeach; ?>
         </div>
 
         <!-- ===== SECTION 2: Status Cards ===== -->
-        <div class="md-status-row">
+        <div class="next-grid mt-4">
             <?php
             $delay2 = 0;
             foreach ($status_config as $status => $config):
                 $count = $summary_map[$status] ?? 0;
                 $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
                 ?>
-                <div class="md-status-card"
-                    style="animation: slideUpFade 0.5s ease backwards; animation-delay: <?= $delay2 ?>s;">
-                    <?php $delay2 += 0.1; ?>
-                    <div class="md-status-indicator" style="background: <?= $config['color'] ?>;"></div>
-                    <div class="md-status-content">
-                        <div class="md-status-top">
-                            <span class="md-status-label"><?= esc_html($status) ?></span>
-                            <span class="md-status-emoji"><?= $config['icon'] ?></span>
+                <div class="next-card slide-up" style="animation-delay: <?= $delay2 ?>s;">
+                    <?php $delay2 += 0.05; ?>
+                    <div class="next-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="next-status-dot" style="background: <?= $config['color'] ?>;"></span>
+                            <span class="next-card-title"><?= esc_html($status) ?></span>
                         </div>
-                        <div class="md-status-number count-up" data-count="<?= $count ?>">0</div>
-                        <div class="md-status-bar-wrap">
-                            <div class="md-status-bar">
-                                <div class="md-status-bar-fill"
-                                    style="width: <?= $percent ?>%; background: <?= $config['color'] ?>;"></div>
+                        <div class="next-icon-wrapper-sm" style="color: <?= $config['color'] ?>;">
+                            <?= $config['icon'] ?>
+                        </div>
+                    </div>
+                    <div class="next-card-body mt-3">
+                        <span class="next-number-md count-up" data-count="<?= $count ?>">0</span>
+                        <div class="next-progress-wrap mt-2">
+                            <div class="next-progress-bar">
+                                <div class="next-progress-fill" style="width: 0%; background: <?= $config['color'] ?>;" data-width="<?= $percent ?>%"></div>
                             </div>
-                            <span class="md-status-percent"><?= $percent ?>%</span>
+                            <span class="next-progress-text"><?= $percent ?>%</span>
                         </div>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
 
-        <!-- ===== SECTION 3: Donut Chart Overview ===== -->
-        <div class="md-chart-row">
-            <div class="md-chart-card">
-                <h4 class="md-chart-title">Device Distribution</h4>
-                <div class="md-donut-wrap"
-                    style="position: relative; height: 180px; width: 100%; display: flex; align-items: center; justify-content: center;">
-                    <?php
-                    $p_monitor = $total_devices > 0 ? ($total_monitor / $total_devices) * 100 : 0;
-                    $p_laptop = $total_devices > 0 ? ($total_laptop / $total_devices) * 100 : 0;
-                    $p_accessories = $total_devices > 0 ? ($total_accessories / $total_devices) * 100 : 0;
-                    $circumference = 2 * 3.14159 * 60;
-                    $offset_monitor = 0;
-                    $offset_laptop = $p_monitor;
-                    $offset_accessories = $p_monitor + $p_laptop;
-                    ?>
-                    <svg class="md-donut" viewBox="0 0 150 150" style="width: 150px; height: 150px;">
-                        <circle cx="75" cy="75" r="60" fill="none" stroke="#E0E0E0" stroke-width="18" />
-                        <!-- Monitor -->
-                        <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#FDB840" stroke-width="18"
-                            data-dash="<?= ($p_monitor / 100) * $circumference ?> <?= $circumference ?>"
-                            stroke-dasharray="0 <?= $circumference ?>"
-                            stroke-dashoffset="<?= -($offset_monitor / 100) * $circumference ?>"
-                            transform="rotate(-90 75 75)" stroke-linecap="round"
-                            style="transition: stroke-dasharray 1.5s ease-out;" />
-                        <!-- Laptop -->
-                        <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#15A5DA" stroke-width="18"
-                            data-dash="<?= ($p_laptop / 100) * $circumference ?> <?= $circumference ?>"
-                            stroke-dasharray="0 <?= $circumference ?>"
-                            stroke-dashoffset="<?= -($offset_laptop / 100) * $circumference ?>"
-                            transform="rotate(-90 75 75)" stroke-linecap="round"
-                            style="transition: stroke-dasharray 1.5s ease-out;" />
-                        <!-- Accessories -->
-                        <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#6ABF57" stroke-width="18"
-                            data-dash="<?= ($p_accessories / 100) * $circumference ?> <?= $circumference ?>"
-                            stroke-dasharray="0 <?= $circumference ?>"
-                            stroke-dashoffset="<?= -($offset_accessories / 100) * $circumference ?>"
-                            transform="rotate(-90 75 75)" stroke-linecap="round"
-                            style="transition: stroke-dasharray 1.5s ease-out;" />
-                    </svg>
-                    <div class="md-donut-center"
-                        style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-                        <span class="md-donut-label">Total</span>
-                        <span class="md-donut-value count-up" data-count="<?php echo $total_devices; ?>">0</span>
+        <!-- ===== SECTION 3: Charts ===== -->
+        <div class="next-grid-2 mt-4">
+            <!-- Donut Chart -->
+            <div class="next-card slide-up" style="animation-delay: 0.2s;">
+                <h3 class="next-section-title">Device Distribution</h3>
+                <div class="next-donut-container mt-4">
+                    <div class="next-donut-wrap">
+                        <?php
+                        $p_monitor = $total_devices > 0 ? ($total_monitor / $total_devices) * 100 : 0;
+                        $p_laptop = $total_devices > 0 ? ($total_laptop / $total_devices) * 100 : 0;
+                        $p_accessories = $total_devices > 0 ? ($total_accessories / $total_devices) * 100 : 0;
+                        $circumference = 2 * 3.14159 * 60;
+                        $offset_monitor = 0;
+                        $offset_laptop = $p_monitor;
+                        $offset_accessories = $p_monitor + $p_laptop;
+                        ?>
+                        <svg class="next-donut" viewBox="0 0 150 150">
+                            <circle cx="75" cy="75" r="60" fill="none" stroke="#f3f4f6" stroke-width="12" />
+                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#FDB840" stroke-width="12"
+                                data-dash="<?= ($p_monitor / 100) * $circumference ?> <?= $circumference ?>"
+                                stroke-dasharray="0 <?= $circumference ?>"
+                                stroke-dashoffset="<?= -($offset_monitor / 100) * $circumference ?>"
+                                transform="rotate(-90 75 75)" stroke-linecap="round" />
+                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#15A5DA" stroke-width="12"
+                                data-dash="<?= ($p_laptop / 100) * $circumference ?> <?= $circumference ?>"
+                                stroke-dasharray="0 <?= $circumference ?>"
+                                stroke-dashoffset="<?= -($offset_laptop / 100) * $circumference ?>"
+                                transform="rotate(-90 75 75)" stroke-linecap="round" />
+                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#6ABF57" stroke-width="12"
+                                data-dash="<?= ($p_accessories / 100) * $circumference ?> <?= $circumference ?>"
+                                stroke-dasharray="0 <?= $circumference ?>"
+                                stroke-dashoffset="<?= -($offset_accessories / 100) * $circumference ?>"
+                                transform="rotate(-90 75 75)" stroke-linecap="round" />
+                        </svg>
+                        <div class="next-donut-center">
+                            <span class="next-donut-value count-up" data-count="<?= $total_devices ?>">0</span>
+                            <span class="next-donut-label">Total</span>
+                        </div>
                     </div>
-                </div>
-                <div class="md-chart-legend">
-                    <div class="md-legend-item">
-                        <span class="md-legend-dot" style="background: #FDB840;"></span>
-                        <span class="md-legend-text">Monitor</span>
-                        <span class="md-legend-count count-up" data-count="<?php echo $total_monitor; ?>">0</span>
-                    </div>
-                    <div class="md-legend-item">
-                        <span class="md-legend-dot" style="background: #15A5DA;"></span>
-                        <span class="md-legend-text">Laptop</span>
-                        <span class="md-legend-count count-up" data-count="<?php echo $total_laptop; ?>">0</span>
-                    </div>
-                    <div class="md-legend-item">
-                        <span class="md-legend-dot" style="background: #6ABF57;"></span>
-                        <span class="md-legend-text">Accessories</span>
-                        <span class="md-legend-count count-up" data-count="<?php echo $total_accessories; ?>">0</span>
+                    <div class="next-legend-wrap">
+                        <div class="next-legend-item">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="next-legend-dot" style="background: #FDB840;"></span>
+                                <span class="next-legend-label">Monitor</span>
+                            </div>
+                            <span class="next-legend-value count-up" data-count="<?= $total_monitor ?>">0</span>
+                        </div>
+                        <div class="next-legend-item">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="next-legend-dot" style="background: #15A5DA;"></span>
+                                <span class="next-legend-label">Laptop</span>
+                            </div>
+                            <span class="next-legend-value count-up" data-count="<?= $total_laptop ?>">0</span>
+                        </div>
+                        <div class="next-legend-item">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="next-legend-dot" style="background: #6ABF57;"></span>
+                                <span class="next-legend-label">Accessories</span>
+                            </div>
+                            <span class="next-legend-value count-up" data-count="<?= $total_accessories ?>">0</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="md-chart-card">
-            <h4 class="md-chart-title">Status Overview</h4>
-            <div class="md-status-list">
-                <?php foreach ($status_config as $status => $config):
-                    $count = $summary_map[$status] ?? 0;
-                    $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
-                    ?>
-                    <div class="md-status-list-item">
-                        <div class="md-status-list-left">
-                            <span class="md-legend-dot" style="background: <?= $config['color'] ?>;"></span>
-                            <span class="md-status-list-name"><?= esc_html($status) ?></span>
-                        </div>
-                        <div class="md-status-list-right">
-                            <div class="md-status-list-bar">
-                                <div class="md-status-list-bar-fill"
-                                    style="width: <?= $percent ?>%; background: <?= $config['color'] ?>;"></div>
+            <!-- Status Overview -->
+            <div class="next-card slide-up" style="animation-delay: 0.25s;">
+                <h3 class="next-section-title">Status Overview</h3>
+                <div class="next-status-list mt-4">
+                    <?php foreach ($status_config as $status => $config):
+                        $count = $summary_map[$status] ?? 0;
+                        $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
+                        ?>
+                        <div class="next-list-item">
+                            <div class="next-list-left">
+                                <div class="next-icon-wrapper-sm" style="background: <?= $config['color'] ?>15; color: <?= $config['color'] ?>;">
+                                    <?= $config['icon'] ?>
+                                </div>
+                                <span class="next-list-name"><?= esc_html($status) ?></span>
                             </div>
-                            <span class="md-status-list-count"><?= $count ?></span>
+                            <div class="next-list-right">
+                                <div class="next-progress-wrap-sm">
+                                    <div class="next-progress-bar">
+                                        <div class="next-progress-fill" style="width: 0%; background: <?= $config['color'] ?>;" data-width="<?= $percent ?>%"></div>
+                                    </div>
+                                </div>
+                                <span class="next-list-value count-up" data-count="<?= $count ?>">0</span>
+                            </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
     </div>
-    </div>
 
     <style>
-        /* ===== MD DASHBOARD LAYOUT ===== */
-        .md-dashboard {
-            padding: 0;
-            font-family: 'Roboto', sans-serif;
+        /* Next.js / Vercel Inspired UI */
+        .next-dashboard {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #111827;
             background: transparent !important;
+            padding-bottom: 2rem;
+            padding-top: 0.5rem;
         }
 
-        /* ===== SUMMARY CARDS ROW ===== */
-        .md-summary-row {
+        .next-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 24px;
+            gap: 1.25rem;
         }
 
-        .md-summary-card {
+        .next-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .next-card {
             background: #ffffff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
-            transition: box-shadow 0.3s ease, transform 0.25s ease;
-            display: flex;
-            flex-direction: column;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease-in-out;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(0, 0, 0, 0.06);
         }
 
-        .md-summary-card:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
-            transform: translateY(-5px);
+        .next-card:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            transform: translateY(-2px);
         }
 
-        .md-summary-header {
+        .next-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
         }
 
-        .md-summary-title {
+        .next-card-title {
             font-size: 0.875rem;
             font-weight: 500;
-            color: rgba(0, 0, 0, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .md-summary-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .md-summary-body {
-            margin-bottom: 8px;
-            min-height: 28px;
-        }
-
-        .md-summary-trend {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .md-trend-badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 20px;
-        }
-
-        .md-sparkline {
-            width: 60px;
-            height: 20px;
-        }
-
-        .md-summary-number {
-            font-size: 2rem;
-            font-weight: 700;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-        }
-
-        .md-summary-unit {
-            font-size: 0.8rem;
-            color: rgba(0, 0, 0, 0.45);
-            font-weight: 400;
-            margin-top: 2px;
-        }
-
-        /* ===== STATUS CARDS ROW ===== */
-        .md-status-row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        .md-status-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
-            display: flex;
-            overflow: hidden;
-            transition: box-shadow 0.3s ease, transform 0.25s ease;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .md-status-card:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
-            transform: translateY(-5px);
-        }
-
-        .md-status-indicator {
-            width: 5px;
-            min-height: 100%;
-            flex-shrink: 0;
-        }
-
-        .md-status-content {
-            padding: 18px 20px;
-            flex: 1;
-        }
-
-        .md-status-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .md-status-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: rgba(0, 0, 0, 0.6);
-        }
-
-        .md-status-emoji {
-            font-size: 1.3rem;
-            opacity: 0.7;
-        }
-
-        .md-status-number {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: rgba(0, 0, 0, 0.87);
-            margin-bottom: 12px;
-        }
-
-        .md-status-bar-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .md-status-bar {
-            flex: 1;
-            height: 6px;
-            background: #F0F0F0;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .md-status-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .md-status-percent {
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: rgba(0, 0, 0, 0.45);
-            min-width: 36px;
-            text-align: right;
-        }
-
-        /* ===== CHART ROW ===== */
-        .md-chart-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .md-chart-card {
-            flex: 1;
-            min-width: 0;
-            /* Prevents overflow */
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 28px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
-            transition: box-shadow 0.3s ease, transform 0.25s ease;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .md-chart-card:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
-            transform: translateY(-3px);
-        }
-
-        .md-chart-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: rgba(0, 0, 0, 0.87);
-            margin: 0 0 24px 0;
+            color: #4b5563;
             letter-spacing: -0.01em;
         }
 
-        .md-chart-content {
-            display: flex;
-            align-items: center;
-            gap: 40px;
+        .next-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #111827;
+            margin: 0;
+            letter-spacing: -0.025em;
         }
 
-        /* ===== DONUT CHART ===== */
-        .md-donut-wrap {
+        .next-icon-wrapper {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .next-icon-wrapper-sm {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+        }
+
+        .next-number {
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.025em;
+            color: #111827;
+        }
+
+        .next-number-md {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #111827;
+            display: block;
+        }
+
+        .next-card-body {
+            margin-top: 1.25rem;
+        }
+
+        .next-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .next-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            letter-spacing: -0.01em;
+        }
+
+        .next-trend-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .next-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .next-progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .next-progress-wrap-sm {
+            width: 100px;
+        }
+
+        .next-progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #f3f4f6;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .next-progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .next-progress-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+            min-width: 32px;
+            text-align: right;
+        }
+
+        .next-donut-container {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+        }
+
+        .next-donut-wrap {
             position: relative;
-            width: 160px;
-            height: 160px;
+            width: 150px;
+            height: 150px;
             flex-shrink: 0;
         }
 
-        .md-donut {
+        .next-donut {
             width: 100%;
             height: 100%;
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+        
+        .next-donut:hover {
+            transform: scale(1.03);
         }
 
-        .md-donut-center {
+        .donut-segment {
+            transition: stroke-dasharray 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .next-donut-center {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            display: flex;
+            flex-direction: column;
         }
 
-        .md-donut-label {
-            display: block;
-            font-size: 0.75rem;
-            color: rgba(0, 0, 0, 0.45);
-            font-weight: 400;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .md-donut-value {
-            display: block;
-            font-size: 1.5rem;
+        .next-donut-value {
+            font-size: 1.75rem;
             font-weight: 700;
-            color: rgba(0, 0, 0, 0.87);
-            line-height: 1.2;
+            color: #111827;
+            line-height: 1;
+            letter-spacing: -0.025em;
         }
 
-        /* ===== LEGEND ===== */
-        .md-chart-legend {
+        .next-donut-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+
+        .next-legend-wrap {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            flex: 1;
+            gap: 1rem;
         }
 
-        .md-legend-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .md-legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .md-legend-text {
-            font-size: 0.875rem;
-            color: rgba(0, 0, 0, 0.6);
-            flex: 1;
-        }
-
-        .md-legend-count {
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: rgba(0, 0, 0, 0.87);
-        }
-
-        /* ===== STATUS LIST (Right Panel) ===== */
-        .md-status-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .md-status-list-item {
+        .next-legend-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .next-legend-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
-        .md-status-list-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 120px;
+        .next-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
         }
 
-        .md-status-list-name {
+        .next-legend-label {
             font-size: 0.875rem;
-            color: rgba(0, 0, 0, 0.7);
-            font-weight: 400;
+            color: #4b5563;
+            font-weight: 500;
         }
 
-        .md-status-list-right {
+        .next-legend-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .next-status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .next-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .next-list-item:hover {
+            background: #f9fafb;
+            border-color: #f3f4f6;
+            transform: translateX(2px);
+        }
+
+        .next-list-left {
             display: flex;
             align-items: center;
-            gap: 12px;
-            flex: 1;
+            gap: 0.75rem;
         }
 
-        .md-status-list-bar {
-            flex: 1;
-            height: 8px;
-            background: #F0F0F0;
-            border-radius: 4px;
-            overflow: hidden;
+        .next-list-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
         }
 
-        .md-status-list-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        .next-list-right {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
         }
 
-        .md-status-list-count {
+        .next-list-value {
             font-size: 0.9375rem;
             font-weight: 600;
-            color: rgba(0, 0, 0, 0.87);
-            min-width: 30px;
+            color: #111827;
+            min-width: 24px;
             text-align: right;
         }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 1024px) {
-            .md-summary-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .mt-4 { margin-top: 1.5rem; }
 
-            .md-status-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* Animations */
+        .slide-up {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: nextSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        @media (max-width: 800px) {
-            .md-chart-row {
-                flex-direction: column;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .md-summary-row {
-                grid-template-columns: 1fr;
-            }
-
-            .md-status-row {
-                grid-template-columns: 1fr;
-            }
-
-            .md-chart-content {
-                flex-direction: column;
-                gap: 24px;
-            }
-        }
-
-        /* ===== ANIMATIONS ===== */
-        .md-summary-card,
-        .md-status-card,
-        .md-chart-card {
-            animation: mdSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-        }
-
-        .md-summary-card:nth-child(1) {
-            animation-delay: 0.05s;
-        }
-
-        .md-summary-card:nth-child(2) {
-            animation-delay: 0.1s;
-        }
-
-        .md-summary-card:nth-child(3) {
-            animation-delay: 0.15s;
-        }
-
-        .md-summary-card:nth-child(4) {
-            animation-delay: 0.2s;
-        }
-
-        .md-status-card:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .md-status-card:nth-child(2) {
-            animation-delay: 0.15s;
-        }
-
-        .md-status-card:nth-child(3) {
-            animation-delay: 0.2s;
-        }
-
-        .md-status-card:nth-child(4) {
-            animation-delay: 0.25s;
-        }
-
-        @keyframes mdSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
+        @keyframes nextSlideUp {
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        @keyframes slideUpFade {
-            0% {
-                opacity: 0;
-                transform: translateY(30px);
-            }
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .next-grid { grid-template-columns: repeat(2, 1fr); }
+            .next-grid-2 { grid-template-columns: 1fr; }
+        }
 
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @media (max-width: 640px) {
+            .next-grid { grid-template-columns: 1fr; }
+            .next-donut-container { flex-direction: column; gap: 1.5rem; }
+            .next-legend-wrap { width: 100%; }
         }
     </style>
 
     <script>
-        function initReactLikeDashboard() {
-            // --- 1. Number Count Up Animation ---
+        function initNextDashboard() {
+            // Smooth Count Up Animation (Spring-like)
             const countElements = document.querySelectorAll('.count-up');
             countElements.forEach(el => {
                 const target = parseInt(el.getAttribute('data-count'), 10);
-                const duration = 1500; // ms
-                let current = 0;
-
+                const duration = 1800; // ms
+                
                 if (target > 0) {
-                    const timer = setInterval(() => {
-                        current += Math.ceil(target / 50);
-                        if (current >= target) {
-                            el.innerText = target.toLocaleString();
-                            clearInterval(timer);
+                    const easeOutQuart = t => 1 - (--t) * t * t * t;
+                    let startTime = null;
+                    
+                    const step = (timestamp) => {
+                        if (!startTime) startTime = timestamp;
+                        const progress = Math.min((timestamp - startTime) / duration, 1);
+                        const easeProgress = easeOutQuart(progress);
+                        
+                        const current = Math.floor(easeProgress * target);
+                        el.innerText = current.toLocaleString();
+                        
+                        if (progress < 1) {
+                            window.requestAnimationFrame(step);
                         } else {
-                            el.innerText = current.toLocaleString();
+                            el.innerText = target.toLocaleString();
                         }
-                    }, 30);
+                    };
+                    window.requestAnimationFrame(step);
                 } else {
                     el.innerText = "0";
                 }
             });
 
-            // --- 2. SVG Donut Chart Animation ---
+            // SVG Donut Chart Animation (Delayed for effect)
             setTimeout(() => {
                 const segments = document.querySelectorAll('.donut-segment');
                 segments.forEach(segment => {
@@ -681,14 +577,24 @@ function device_dashboard()
                         segment.setAttribute('stroke-dasharray', targetDash);
                     }
                 });
-            }, 100);
+            }, 150);
+
+            // Progress Bar Animation
+            setTimeout(() => {
+                const progressBars = document.querySelectorAll('.next-progress-fill');
+                progressBars.forEach(bar => {
+                    const targetWidth = bar.getAttribute('data-width');
+                    if (targetWidth) {
+                        bar.style.width = targetWidth;
+                    }
+                });
+            }, 250);
         }
 
-        // Run immediately if DOM is already ready, otherwise wait for DOMContentLoaded
         if (document.readyState === 'loading') {
-            document.addEventListener("DOMContentLoaded", initReactLikeDashboard);
+            document.addEventListener("DOMContentLoaded", initNextDashboard);
         } else {
-            initReactLikeDashboard();
+            initNextDashboard();
         }
     </script>
 
