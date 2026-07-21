@@ -110,6 +110,11 @@ function form_maintenance($editing = null)
             'Owner' => $owner_nickname
         ]);
 
+        // ส่งอีเมลแจ้งเตือน
+        if (function_exists('stock_supply_send_email') && !empty($device_info->OwnerID)) {
+            stock_supply_send_email('Maintenance', $DeviceID, $device_info->OwnerID, $Details);
+        }
+
         show_alert('success', 'Maintenance Device!', '', home_url('/maintenance/'));
         return ob_get_clean();
     }

@@ -1,2 +1,6 @@
-
-
+/* Custom styles */
+.swal2-container.swal2-backdrop-show {
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+}

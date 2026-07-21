@@ -24,11 +24,13 @@ function receive_device($device_data = null)
 
     // เมื่อฟอร์มถูกส่ง
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_device'])) {
-        $device_id = $_POST['DeviceID'];
-        $owner_id = $_POST['OwnerID'];
-        $department_id = $_POST['DepartmentID'];
-        $receive_date = $_POST['ReceiveDate'];
-        $position_id = $_POST['PositionID'];
+        $device_id = $_POST['DeviceID'] ?? null;
+        $owner_id = $_POST['OwnerID'] ?? null;
+        $receive_date = $_POST['ReceiveDate'] ?? null;
+
+        $owner_info = $wpdb->get_row($wpdb->prepare("SELECT DepartmentID, PositionID FROM Owners WHERE OwnerID = %d", $owner_id));
+        $department_id = $owner_info->DepartmentID ?? null;
+        $position_id = $owner_info->PositionID ?? null;
 
         // ดึงสถานะ "In Use"
         $status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
@@ -81,6 +83,11 @@ function receive_device($device_data = null)
                 'CategoryID' => $category_id,
                 'Owner' => $owner_nickname
             ]);
+
+            // ส่งอีเมลแจ้งเตือน
+            if (function_exists('stock_supply_send_email')) {
+                stock_supply_send_email('Assign', $device_id, $owner_id);
+            }
 
             // แสดงแจ้งเตือนสำเร็จ
             $redirect_url = home_url('/' . sanitize_title($category_name) . '/');

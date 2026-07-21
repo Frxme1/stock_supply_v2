@@ -22,6 +22,7 @@ function form_add_owner($editing = null)
 			'DepartmentID' => !empty($_POST['DepartmentID']) ? $_POST['DepartmentID'] : null,
 			'PositionID' => !empty($_POST['PositionID']) ? $_POST['PositionID'] : null,
 			'StatusID' => !empty($_POST['StatusID']) ? $_POST['StatusID'] : null,
+			'Email' => $_POST['Email'] ?? null,
 		];
 
 
@@ -88,6 +89,11 @@ function form_add_owner($editing = null)
 			<div class="form-group">
 				<label>Last Name</label>
 				<input type="text" name="LastName" value="<?= esc_attr($editing->LastName ?? '') ?>">
+			</div>
+
+			<div class="form-group">
+				<label>Email</label>
+				<input type="email" name="Email" value="<?= esc_attr($editing->Email ?? '') ?>">
 			</div>
 
 			<div class="form-group">

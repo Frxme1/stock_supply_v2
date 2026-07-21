@@ -63,6 +63,36 @@ function form_history()
     ?>
 
     <div class="container-fluid px-3">
+    <style>
+        .history-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .history-header i { color: #6366f1; font-size: 1.5rem; }
+        .history-header h2 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+        
+        .table-wrapper { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; padding: 20px; box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08); margin-bottom: 40px; overflow-x: auto; }
+        .table-custom { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .table-custom th { background: transparent; padding: 16px; text-align: left; font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; }
+        .table-custom td { padding: 16px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 0.95rem; transition: all 0.2s ease; }
+        .table-custom tbody tr { transition: all 0.3s ease; }
+        .table-custom tbody tr:hover { background: rgba(255, 255, 255, 0.9); transform: scale(1.005); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); border-radius: 12px; }
+        .table-custom tbody tr:hover td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .table-custom tbody tr:hover td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+        .badge-history { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-history::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+        
+        .badge-add { background: #dcfce7; color: #166534; } .badge-add::before { background: #22c55e; }
+        .badge-update { background: #fef3c7; color: #b45309; } .badge-update::before { background: #f59e0b; }
+        .badge-delete { background: #fee2e2; color: #991b1b; } .badge-delete::before { background: #ef4444; }
+        .badge-receive { background: #e0e7ff; color: #3730a3; } .badge-receive::before { background: #4f46e5; }
+        .badge-maintenance { background: #ffedd5; color: #9a3412; } .badge-maintenance::before { background: #ea580c; }
+        .badge-return { background: #f3e8ff; color: #6b21a8; } .badge-return::before { background: #9333ea; }
+        .badge-default { background: #f1f5f9; color: #475569; } .badge-default::before { background: #94a3b8; }
+    </style>
+    
+    <div class="history-header">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <h2>System History</h2>
+    </div>
         <form method="GET" action="">
             <?php
             foreach ($_GET as $key => $value) {
@@ -77,11 +107,8 @@ function form_history()
                 }
             }
             ?>
-            <div class="row align-items-center g-2">
-
-                <label class="col-auto col-form-label">History</label>
-
-                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+            <div class="row align-items-center g-2 mb-4">
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 250px;">
                     <?php
                     $search_placeholder = 'Search History...';
                     $search_list = 'search_suggestions';
@@ -94,28 +121,25 @@ function form_history()
                     </datalist>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
-                    <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
-                        Filter</button>
+                <div class="col-12 col-sm-6 col-md-auto d-flex gap-2">
+                    <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i> Filter</button>
                     <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
-
             </div>
         </form>
-        <br>
 
-        <div class="table-responsive-xl rounded">
-            <table class="table table-bordered table-sm">
-                <thead class="table-secondary">
+        <div class="table-wrapper">
+            <table class="table-custom">
+                <thead>
                     <tr>
-                        <th class="text-nowrap py-3 text-start" style="width: 10%;">Action</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 25%;">Description</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 15%;">User</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 10%;">Category</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Owner</th>
-                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
+                        <th style="width: 12%;">Action</th>
+                        <th style="width: 15%;">Date</th>
+                        <th style="width: 28%;">Description</th>
+                        <th style="width: 15%;">User</th>
+                        <th style="width: 10%;">Category</th>
+                        <th style="width: 10%;">Owner</th>
+                        <th class="text-center" style="width: 10%;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -123,16 +147,27 @@ function form_history()
                         <?php
                         $date = new DateTime($row->Date, new DateTimeZone('UTC'));
                         $date->setTimezone(new DateTimeZone('Asia/Bangkok'));
+                        
+                        $action_lower = strtolower($row->Action);
+                        $badge_class = 'badge-default';
+                        if (strpos($action_lower, 'add') !== false) $badge_class = 'badge-add';
+                        elseif (strpos($action_lower, 'update') !== false) $badge_class = 'badge-update';
+                        elseif (strpos($action_lower, 'delete') !== false) $badge_class = 'badge-delete';
+                        elseif (strpos($action_lower, 'receive') !== false) $badge_class = 'badge-receive';
+                        elseif (strpos($action_lower, 'maintenance') !== false) $badge_class = 'badge-maintenance';
+                        elseif (strpos($action_lower, 'return') !== false) $badge_class = 'badge-return';
                         ?>
                         <tr>
-                            <td class="text-start align-middle"><?= $row->Action ?></td>
-                            <td class="text-start align-middle"><?= $date->format("d/m/Y H:i:s") ?></td>
-                            <td class="text-start align-middle"><?= $row->Description ?></td>
-                            <td class="text-start align-middle"><?= $row->user_email ?></td>
-                            <td class="text-start align-middle">
-                                <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : $row->CategoryName ?>
+                            <td class="align-middle">
+                                <span class="badge-history <?= $badge_class ?>"><?= esc_html($row->Action) ?></span>
                             </td>
-                            <td class="text-start align-middle"><?= $row->Owner ?></td>
+                            <td class="align-middle fw-medium"><?= $date->format("d/m/Y H:i:s") ?></td>
+                            <td class="align-middle text-muted"><?= esc_html($row->Description) ?></td>
+                            <td class="align-middle"><?= esc_html($row->user_email) ?></td>
+                            <td class="align-middle">
+                                <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : esc_html($row->CategoryName) ?>
+                            </td>
+                            <td class="align-middle"><?= esc_html($row->Owner) ?></td>
                             <td class="text-center align-middle">
                                 <div class="dropdown action-menu text-center">
                                     <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">

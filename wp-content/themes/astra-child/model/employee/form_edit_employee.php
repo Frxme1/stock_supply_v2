@@ -21,6 +21,7 @@ function form_edit_owner($editing = null)
         $departmentID = $_POST['DepartmentID'];
         $positionID   = $_POST['PositionID'];
         $statusID     = $_POST['StatusID'];
+        $email        = $_POST['Email'] ?? null;
 
         $updated = $wpdb->update(
             $table_owner,
@@ -28,6 +29,7 @@ function form_edit_owner($editing = null)
                 'Nickname'     => $nickname,
                 'FirstName'    => $firstname,
                 'LastName'     => $lastname,
+                'Email'        => $email,
                 'DepartmentID' => $departmentID,
                 'PositionID'   => $positionID,
                 'StatusID'     => $statusID
@@ -95,6 +97,11 @@ function form_edit_owner($editing = null)
             <div class="form-group">
                 <label>LastName</label>
                 <input type="text" name="LastName" value="<?= esc_attr($editing->LastName ?? '') ?>">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="Email" value="<?= esc_attr($editing->Email ?? '') ?>">
             </div>
 
             <div class="form-group">

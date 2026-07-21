@@ -181,6 +181,8 @@ function device_crud_maintenance()
                                                 <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
                                                         class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($row->Status == 'Maintenance'): ?>
+                                                <a href="?return_to_owner=<?= $row->DeviceID ?>"><i 
+                                                        class="fa-solid fa-user-check"></i> Return to Owner</a>
                                                 <a href="?available=<?= $row->DeviceID ?>"><i
                                                         class="fa-solid fa-circle text-success"></i> Available</a>
                                                 <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i

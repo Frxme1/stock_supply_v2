@@ -49,6 +49,10 @@ require_once get_stylesheet_directory() . '/model/employee/form_edit_employee.ph
 require_once get_stylesheet_directory() . '/controller/export_csv.php';
 require_once get_stylesheet_directory() . '/controller/import_csv.php';
 
+// require Request System
+require_once get_stylesheet_directory() . '/model/request/form_request.php';
+require_once get_stylesheet_directory() . '/model/request/request_dashboard.php';
+
 
 // require Dashboard
 require_once get_stylesheet_directory() . '/model/dashboard/device_dashboard.php';
@@ -468,3 +472,328 @@ function adjust_sidebar_height_script()
     <?php
 }
 add_action('wp_footer', 'adjust_sidebar_height_script');
+
+// Email Notification Helper
+function stock_supply_send_email($action, $device_id, $owner_id, $reason = '')
+{
+    global $wpdb;
+    if (empty($owner_id) || empty($device_id))
+        return false;
+
+    // Get Owner details
+    $owner = $wpdb->get_row($wpdb->prepare("SELECT Email, Nickname, FirstName, LastName FROM Owners WHERE OwnerID = %d", $owner_id));
+    if (!$owner || empty($owner->Email))
+        return false;
+
+    $device = null;
+    $device_desc = '';
+
+    // If action is Request-related, $device_id is actually $request_id
+    if ($action !== 'RequestSubmitted' && $action !== 'RequestRejected') {
+        // Get Device details
+        $device = $wpdb->get_row($wpdb->prepare("
+            SELECT d.DeviceID, b.BrandName as Brand, d.Model, d.SerialNumber, c.CategoryName 
+            FROM Devices d
+            LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+            LEFT JOIN Brands b ON d.BrandID = b.BrandID
+            WHERE d.DeviceID = %s
+        ", $device_id));
+
+        if (!$device)
+            return false;
+        $device_desc = esc_html($device->CategoryName . ' - ' . $device->Brand . ' ' . $device->Model . ' (SN: ' . $device->SerialNumber . ')');
+    }
+
+    $to = $owner->Email;
+    $subject = '';
+    $message = '<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">';
+
+    $name = !empty($owner->FirstName) ? $owner->FirstName . ' ' . $owner->LastName : $owner->Nickname;
+    $message .= '<h3>Dear ' . esc_html($name) . ',</h3>';
+
+    if ($action === 'Assign') {
+        $subject = 'IT Device Assigned to You (' . $device->DeviceID . ')';
+        $message .= '<p>This is to inform you that the following IT device has been assigned to you:</p>';
+        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
+        $message .= '<strong>Details:</strong> ' . $device_desc . '</p>';
+        $message .= '<p>Please keep this device in good condition.</p>';
+    } elseif ($action === 'Return') {
+        $subject = 'IT Device Return Confirmation (' . $device->DeviceID . ')';
+        $message .= '<p>We have successfully received the returned IT device from you:</p>';
+        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
+        $message .= '<strong>Details:</strong> ' . $device_desc . '</p>';
+        $message .= '<p>Thank you for taking care of the device.</p>';
+    } elseif ($action === 'Maintenance') {
+        $subject = 'IT Device Sent for Maintenance (' . $device->DeviceID . ')';
+        $message .= '<p>Your assigned IT device has been sent for maintenance:</p>';
+        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
+        $message .= '<strong>Details:</strong> ' . $device_desc . '<br>';
+        if (!empty($reason)) {
+            $message .= '<strong>Reason:</strong> <span style="color: #d9534f;">' . esc_html($reason) . '</span></p>';
+        } else {
+            $message .= '</p>';
+        }
+        $message .= '<p>We will notify you once the maintenance is complete.</p>';
+    } elseif ($action === 'Return_to_Owner') {
+        $subject = 'IT Device Maintenance Completed (' . $device->DeviceID . ')';
+        $message .= '<p>The maintenance for your assigned IT device has been completed and it has been returned to you:</p>';
+        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
+        $message .= '<strong>Details:</strong> ' . $device_desc . '</p>';
+        $message .= '<p>Please verify that your device is functioning properly.</p>';
+    } elseif ($action === 'RequestSubmitted') {
+        $subject = 'IT Device Request Submitted (Req #' . $device_id . ')';
+        $message .= '<p>Your request for an IT device has been successfully submitted:</p>';
+        $message .= '<p><strong>Request ID:</strong> ' . esc_html($device_id) . '<br>';
+        $message .= '<strong>Reason:</strong> ' . esc_html($reason) . '</p>';
+        $message .= '<p>The IT team will review your request and get back to you shortly.</p>';
+    } elseif ($action === 'RequestRejected') {
+        $subject = 'IT Device Request Rejected (Req #' . $device_id . ')';
+        $message .= '<p>We regret to inform you that your request for an IT device has been rejected:</p>';
+        $message .= '<p><strong>Request ID:</strong> ' . esc_html($device_id) . '<br>';
+        if (!empty($reason)) {
+            $message .= '<strong>Reason for rejection:</strong> <span style="color: #d9534f;">' . esc_html($reason) . '</span></p>';
+        } else {
+            $message .= '</p>';
+        }
+        $message .= '<p>If you have any questions, please contact the IT department.</p>';
+    } elseif ($action === 'RepairApproved') {
+        $subject = 'IT Repair Request Approved (' . $device->DeviceID . ')';
+        $message .= '<p>Your request to repair the following IT device has been approved:</p>';
+        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
+        $message .= '<strong>Details:</strong> ' . $device_desc . '<br>';
+        $message .= '<strong>Reported Issue:</strong> ' . esc_html($reason) . '</p>';
+        $message .= '<p>The device has now been formally sent for Maintenance.</p>';
+    } elseif ($action === 'RepairRejected') {
+        $subject = 'IT Repair Request Rejected (' . $device->DeviceID . ')';
+        $message .= '<p>We regret to inform you that your request to repair the following IT device has been rejected:</p>';
+        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
+        $message .= '<strong>Details:</strong> ' . $device_desc . '<br>';
+        if (!empty($reason)) {
+            $message .= '<strong>Reason for rejection:</strong> <span style="color: #d9534f;">' . esc_html($reason) . '</span></p>';
+        } else {
+            $message .= '</p>';
+        }
+        $message .= '<p>If you have any questions, please contact the IT department.</p>';
+    } else {
+        return false;
+    }
+
+    $message .= '<hr style="border:0; border-top: 1px solid #eee; margin: 20px 0;">';
+    $message .= '<p style="font-size: 12px; color: #777;">This is an automated email. Please do not reply.</p>';
+    $message .= '</div>';
+
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+
+    return wp_mail($to, $subject, $message, $headers);
+}
+
+// DB Setup
+function stock_supply_setup_db()
+{
+    global $wpdb;
+    $table_name = 'Device_Requests';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE $table_name (
+        RequestID int(11) NOT NULL AUTO_INCREMENT,
+        OwnerID int(11) NOT NULL,
+        CategoryID int(11) NOT NULL,
+        Reason text NOT NULL,
+        Status varchar(50) NOT NULL DEFAULT 'Pending',
+        AssignedDeviceID varchar(100) DEFAULT NULL,
+        RequestDate datetime DEFAULT '0000-00-00 00:00:00',
+        ActionDate datetime DEFAULT NULL,
+        IT_Admin_Email varchar(100) DEFAULT NULL,
+        PRIMARY KEY  (RequestID)
+    ) $charset_collate;";
+
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+add_action('after_setup_theme', 'stock_supply_setup_db');
+
+// Auto create pages for the Request System
+function auto_create_request_pages()
+{
+    // Create Employee Request Form Page
+    $form_page = get_page_by_title('แบบฟอร์มขอยืมอุปกรณ์');
+    if (!$form_page) {
+        wp_insert_post([
+            'post_title' => 'แบบฟอร์มขอยืมอุปกรณ์',
+            'post_name' => 'request-device-form',
+            'post_content' => '[device_request_form]',
+            'post_status' => 'publish',
+            'post_type' => 'page',
+            'page_template' => 'template-blank-form.php'
+        ]);
+    }
+
+    // Create IT Dashboard Page
+    $dashboard_page = get_page_by_title('จัดการคำขอยืมอุปกรณ์');
+    if (!$dashboard_page) {
+        wp_insert_post([
+            'post_title' => 'จัดการคำขอยืมอุปกรณ์',
+            'post_name' => 'request-dashboard',
+            'post_content' => '[device_request_dashboard]',
+            'post_status' => 'publish',
+            'post_type' => 'page'
+        ]);
+    }
+}
+add_action('admin_init', 'auto_create_request_pages');
+
+// ==========================================
+// Page Transition Loading Screen
+// ==========================================
+function stock_supply_add_page_loader() {
+    ?>
+    <style>
+        /* Loading Screen Overlay */
+        #stock-supply-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #f8fafc; /* Sleek light background */
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Hide loader class */
+        #stock-supply-loader.loader-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Conveyor Loop Animation */
+        @keyframes loading-ui-conveyor-loop {
+            0% { transform: translateX(var(--loader-start-x)); }
+            100% { transform: translateX(var(--loader-end-x)); }
+        }
+
+        .conveyor-loop-container {
+            position: relative;
+            display: inline-flex;
+            height: 1em;
+            width: var(--loader-width);
+            align-items: center;
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 2.5rem;
+            line-height: 1;
+            color: #1e293b;
+            user-select: none;
+        }
+
+        .conveyor-track {
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            white-space: nowrap;
+        }
+
+        .conveyor-glyph {
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            height: 100%;
+            width: 1ch;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #f8fafc; /* Matches loader background to mask track */
+            animation: loading-ui-conveyor-loop 1.8s linear infinite;
+        }
+
+        /* Optional loading text */
+        .ss-loading-text {
+            margin-top: 24px;
+            font-family: 'Inter', 'Prompt', sans-serif;
+            color: #475569;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: ss-pulse 1.5s infinite;
+        }
+        
+        @keyframes ss-pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+
+    <div id="stock-supply-loader">
+        <span class="conveyor-loop-container" style="--loader-width: 10ch; --loader-start-x: -2ch; --loader-end-x: 12ch;">
+            <span class="conveyor-track">░░░░░░░░░░</span>
+            <span class="conveyor-glyph" style="z-index: 30; animation-delay: 0s;">█</span>
+            <span class="conveyor-glyph" style="z-index: 20; animation-delay: 0.05s;">▓</span>
+            <span class="conveyor-glyph" style="z-index: 10; animation-delay: 0.1s;">▒</span>
+        </span>
+        <div class="ss-loading-text">Loading</div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var loader = document.getElementById("stock-supply-loader");
+            if (!loader) return;
+            
+            // Function to hide loader
+            function hideLoader() {
+                loader.classList.add("loader-hidden");
+            }
+
+            // Function to show loader
+            function showLoader() {
+                loader.classList.remove("loader-hidden");
+            }
+
+            // Hide loader when the page has fully loaded
+            window.addEventListener("load", function() {
+                setTimeout(hideLoader, 200); // slight delay for smooth transition
+            });
+
+            // Fallback: hide loader after 5 seconds just in case something hangs
+            setTimeout(hideLoader, 5000);
+
+            // Show loader when navigating away via normal links
+            var links = document.querySelectorAll("a:not([target='_blank']):not([href^='#']):not([href^='mailto:']):not([href^='tel:']):not(.no-loader)");
+            
+            links.forEach(function(link) {
+                link.addEventListener("click", function(e) {
+                    // Ignore clicks with modifiers (ctrl, shift, meta) or middle click
+                    if (e.ctrlKey || e.shiftKey || e.metaKey || e.button === 1) return;
+                    
+                    var href = this.getAttribute("href");
+                    var isJsVoid = href && href.toLowerCase().indexOf('javascript:') === 0;
+                    var isSamePageAnchor = href && href.indexOf(window.location.pathname + '#') !== -1;
+                    
+                    if (href && !isJsVoid && !isSamePageAnchor && !this.hasAttribute("download")) {
+                        showLoader();
+                        // Fallback: if navigation doesn't happen within 3 seconds, hide the loader
+                        setTimeout(hideLoader, 3000);
+                    }
+                });
+            });
+            
+            // Hide loader when navigating back/forward using browser cache (BFCache)
+            window.addEventListener("pageshow", function(event) {
+                if (event.persisted) {
+                    hideLoader();
+                }
+            });
+        });
+    </script>
+    <?php
+}
+add_action('wp_footer', 'stock_supply_add_page_loader', 100);

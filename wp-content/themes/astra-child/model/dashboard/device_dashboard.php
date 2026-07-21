@@ -28,6 +28,29 @@ function device_dashboard()
     foreach ($status_summary as $row) {
         $summary_map[$row->Status] = intval($row->count);
     }
+    // Prepare Data for ApexCharts
+    $js_status_labels = json_encode(array_keys($summary_map));
+    $js_status_counts = json_encode(array_values($summary_map));
+    
+    $js_cat_labels = json_encode(['Monitor', 'Laptop', 'Accessories']);
+    $js_cat_counts = json_encode([(int)$total_monitor, (int)$total_laptop, (int)$total_accessories]);
+
+    $dept_summary = $wpdb->get_results("
+        SELECT Department, COUNT(*) as count 
+        FROM $table_device_wn 
+        WHERE Department IS NOT NULL AND Department != '' AND Department != '-'
+        GROUP BY Department 
+        ORDER BY count DESC 
+        LIMIT 7
+    ");
+    $dept_labels = [];
+    $dept_counts = [];
+    foreach($dept_summary as $row) {
+        $dept_labels[] = $row->Department;
+        $dept_counts[] = intval($row->count);
+    }
+    $js_dept_labels = json_encode($dept_labels);
+    $js_dept_counts = json_encode($dept_counts);
 
     // Category config
     $category_config = [
@@ -40,8 +63,9 @@ function device_dashboard()
     ob_start();
     ?>
 
-    <!-- FontAwesome & Chart.js -->
+    <!-- FontAwesome & ApexCharts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
     <div class="next-dashboard">
         <!-- ===== SECTION 1: Category Summary Cards ===== -->
@@ -114,97 +138,26 @@ function device_dashboard()
         </div>
 
         <!-- ===== SECTION 3: Charts ===== -->
-        <div class="next-grid-2 mt-4">
+        <div class="next-grid-3 mt-4">
+            
             <!-- Donut Chart -->
             <div class="next-card slide-up" style="animation-delay: 0.2s;">
                 <h3 class="next-section-title">Device Distribution</h3>
-                <div class="next-donut-container mt-4">
-                    <div class="next-donut-wrap">
-                        <?php
-                        $p_monitor = $total_devices > 0 ? ($total_monitor / $total_devices) * 100 : 0;
-                        $p_laptop = $total_devices > 0 ? ($total_laptop / $total_devices) * 100 : 0;
-                        $p_accessories = $total_devices > 0 ? ($total_accessories / $total_devices) * 100 : 0;
-                        $circumference = 2 * 3.14159 * 60;
-                        $offset_monitor = 0;
-                        $offset_laptop = $p_monitor;
-                        $offset_accessories = $p_monitor + $p_laptop;
-                        ?>
-                        <svg class="next-donut" viewBox="0 0 150 150">
-                            <circle cx="75" cy="75" r="60" fill="none" stroke="#f3f4f6" stroke-width="12" />
-                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#FDB840" stroke-width="12"
-                                data-dash="<?= ($p_monitor / 100) * $circumference ?> <?= $circumference ?>"
-                                stroke-dasharray="0 <?= $circumference ?>"
-                                stroke-dashoffset="<?= -($offset_monitor / 100) * $circumference ?>"
-                                transform="rotate(-90 75 75)" stroke-linecap="round" />
-                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#15A5DA" stroke-width="12"
-                                data-dash="<?= ($p_laptop / 100) * $circumference ?> <?= $circumference ?>"
-                                stroke-dasharray="0 <?= $circumference ?>"
-                                stroke-dashoffset="<?= -($offset_laptop / 100) * $circumference ?>"
-                                transform="rotate(-90 75 75)" stroke-linecap="round" />
-                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#6ABF57" stroke-width="12"
-                                data-dash="<?= ($p_accessories / 100) * $circumference ?> <?= $circumference ?>"
-                                stroke-dasharray="0 <?= $circumference ?>"
-                                stroke-dashoffset="<?= -($offset_accessories / 100) * $circumference ?>"
-                                transform="rotate(-90 75 75)" stroke-linecap="round" />
-                        </svg>
-                        <div class="next-donut-center">
-                            <span class="next-donut-value count-up" data-count="<?= $total_devices ?>">0</span>
-                            <span class="next-donut-label">Total</span>
-                        </div>
-                    </div>
-                    <div class="next-legend-wrap">
-                        <div class="next-legend-item">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="next-legend-dot" style="background: #FDB840;"></span>
-                                <span class="next-legend-label">Monitor</span>
-                            </div>
-                            <span class="next-legend-value count-up" data-count="<?= $total_monitor ?>">0</span>
-                        </div>
-                        <div class="next-legend-item">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="next-legend-dot" style="background: #15A5DA;"></span>
-                                <span class="next-legend-label">Laptop</span>
-                            </div>
-                            <span class="next-legend-value count-up" data-count="<?= $total_laptop ?>">0</span>
-                        </div>
-                        <div class="next-legend-item">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="next-legend-dot" style="background: #6ABF57;"></span>
-                                <span class="next-legend-label">Accessories</span>
-                            </div>
-                            <span class="next-legend-value count-up" data-count="<?= $total_accessories ?>">0</span>
-                        </div>
-                    </div>
-                </div>
+                <div id="chart-distribution" class="mt-4"></div>
             </div>
 
-            <!-- Status Overview -->
+            <!-- Status Overview Chart -->
             <div class="next-card slide-up" style="animation-delay: 0.25s;">
                 <h3 class="next-section-title">Status Overview</h3>
-                <div class="next-status-list mt-4">
-                    <?php foreach ($status_config as $status => $config):
-                        $count = $summary_map[$status] ?? 0;
-                        $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
-                        ?>
-                        <div class="next-list-item">
-                            <div class="next-list-left">
-                                <div class="next-icon-wrapper-sm" style="background: <?= $config['color'] ?>15; color: <?= $config['color'] ?>;">
-                                    <?= $config['icon'] ?>
-                                </div>
-                                <span class="next-list-name"><?= esc_html($status) ?></span>
-                            </div>
-                            <div class="next-list-right">
-                                <div class="next-progress-wrap-sm">
-                                    <div class="next-progress-bar">
-                                        <div class="next-progress-fill" style="width: 0%; background: <?= $config['color'] ?>;" data-width="<?= $percent ?>%"></div>
-                                    </div>
-                                </div>
-                                <span class="next-list-value count-up" data-count="<?= $count ?>">0</span>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                <div id="chart-status" class="mt-4"></div>
             </div>
+
+            <!-- Department Chart -->
+            <div class="next-card slide-up" style="animation-delay: 0.3s;">
+                <h3 class="next-section-title">Devices by Department</h3>
+                <div id="chart-department" class="mt-4"></div>
+            </div>
+
         </div>
     </div>
 
@@ -227,6 +180,12 @@ function device_dashboard()
         .next-grid-2 {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .next-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.25rem;
         }
 
@@ -526,7 +485,7 @@ function device_dashboard()
         /* Responsive */
         @media (max-width: 1024px) {
             .next-grid { grid-template-columns: repeat(2, 1fr); }
-            .next-grid-2 { grid-template-columns: 1fr; }
+            .next-grid-2, .next-grid-3 { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 640px) {
@@ -568,18 +527,7 @@ function device_dashboard()
                 }
             });
 
-            // SVG Donut Chart Animation (Delayed for effect)
-            setTimeout(() => {
-                const segments = document.querySelectorAll('.donut-segment');
-                segments.forEach(segment => {
-                    const targetDash = segment.getAttribute('data-dash');
-                    if (targetDash) {
-                        segment.setAttribute('stroke-dasharray', targetDash);
-                    }
-                });
-            }, 150);
-
-            // Progress Bar Animation
+            // Progress Bar Animation (for Section 2)
             setTimeout(() => {
                 const progressBars = document.querySelectorAll('.next-progress-fill');
                 progressBars.forEach(bar => {
@@ -589,6 +537,59 @@ function device_dashboard()
                     }
                 });
             }, 250);
+
+            // ApexCharts Initialization
+            initApexCharts();
+        }
+
+        function initApexCharts() {
+            // Chart 1: Device Distribution
+            var optionsDist = {
+                series: <?= $js_cat_counts ?>,
+                chart: { type: 'donut', height: 320, fontFamily: 'inherit' },
+                labels: <?= $js_cat_labels ?>,
+                colors: ['#FDB840', '#15A5DA', '#6ABF57'],
+                plotOptions: {
+                    pie: {
+                        donut: { size: '75%' }
+                    }
+                },
+                dataLabels: { enabled: false },
+                legend: { position: 'bottom' },
+                stroke: { width: 0 }
+            };
+            var chartDist = new ApexCharts(document.querySelector("#chart-distribution"), optionsDist);
+            chartDist.render();
+
+            // Chart 2: Status Overview
+            var optionsStatus = {
+                series: [{ name: 'Devices', data: <?= $js_status_counts ?> }],
+                chart: { type: 'bar', height: 320, fontFamily: 'inherit', toolbar: { show: false } },
+                xaxis: { categories: <?= $js_status_labels ?> },
+                colors: ['#15A5DA'],
+                plotOptions: {
+                    bar: { borderRadius: 6, columnWidth: '45%', distributed: true }
+                },
+                legend: { show: false },
+                dataLabels: { enabled: true, style: { colors: ['#fff'] } }
+            };
+            var chartStatus = new ApexCharts(document.querySelector("#chart-status"), optionsStatus);
+            chartStatus.render();
+
+            // Chart 3: Devices by Department
+            var optionsDept = {
+                series: [{ name: 'Devices', data: <?= $js_dept_counts ?> }],
+                chart: { type: 'bar', height: 320, fontFamily: 'inherit', toolbar: { show: false } },
+                plotOptions: {
+                    bar: { borderRadius: 4, horizontal: true, distributed: true }
+                },
+                colors: ['#6ABF57', '#15A5DA', '#FDB840', '#F05353', '#8B5CF6', '#EC4899', '#14B8A6'],
+                dataLabels: { enabled: true },
+                xaxis: { categories: <?= $js_dept_labels ?> },
+                legend: { show: false }
+            };
+            var chartDept = new ApexCharts(document.querySelector("#chart-department"), optionsDept);
+            chartDept.render();
         }
 
         if (document.readyState === 'loading') {

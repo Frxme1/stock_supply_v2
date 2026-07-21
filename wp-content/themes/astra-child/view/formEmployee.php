@@ -171,12 +171,13 @@ function form_owner()
         <table class="table next-table" style="width: 100%;">
             <thead>
                 <tr>
-                    <th class="text-nowrap py-3 text-start" style="width: 15%;">NickName</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 10%;">NickName</th>
                     <th class="text-nowrap py-3 text-start" style="width: 15%;">FirstName</th>
                     <th class="text-nowrap py-3 text-start" style="width: 15%;">LastName</th>
-                    <th class="text-nowrap py-3 text-start" style="width: 25%;">Department</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 20%;">Email</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 15%;">Department</th>
                     <th class="text-nowrap py-3 text-start" style="width: 10%;">Position</th>
-                    <th class="text-nowrap py-3 text-start" style="width: 10%;">Status</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 5%;">Status</th>
                     <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
                 </tr>
             </thead>
@@ -186,7 +187,8 @@ function form_owner()
                         <td class="text-start align-middle"><?= $row->Nickname ?></td>
                         <td class="text-start align-middle"><?= $row->FirstName ?></td>
                         <td class="text-start align-middle"><?= $row->LastName ?></td>
-                        <td class="text-start align-middle" style="width: 200px;"><?= $row->Department ?></td>
+                        <td class="text-start align-middle text-muted"><?= !empty($row->Email) ? esc_html($row->Email) : '-' ?></td>
+                        <td class="text-start align-middle"><?= $row->Department ?></td>
                         <td class="text-start align-middle"><?= $row->Position ?></td>
                         <td class="text-start align-middle">
                             <?php

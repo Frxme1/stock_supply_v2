@@ -1,71 +1,112 @@
 </div><!-- #content.site-content -->
 
-<footer class="custom-footer">
-    <div class="footer-container">
-        <!-- Column 1: Stay Connected -->
-        <div class="footer-col footer-col-1">
-            <h3>The<br>Business SEO</h3>
-        </div>
+<footer class="custom-footer pb-4 pt-5 pb-lg-5 pt-lg-5 border-top bg-white">
+    <div class="px-3 px-lg-5">
+        <div class="d-md-flex align-items-start justify-content-between">
+            <!-- Logo & Brand -->
+            <a href="home" class="d-flex align-items-center text-decoration-none text-dark gap-2"
+                aria-label="The Business SEO">
+                <div class="sidebar-logo-icon">
+                    <img src="<?php echo get_stylesheet_directory_uri(); ?>/images/cropped-Icon-TBS.png" alt="Logo"
+                        width="28" height="28">
+                </div>
+                <span class="fw-bold fs-4">The Business SEO</span>
+            </a>
 
-        <!-- Column 2: Quick Links -->
-        <div class="footer-col">
-            <h3>Quick Links</h3>
-            <ul class="footer-links">
-                <li><a href="<?php echo esc_url(home_url('/home/')); ?>">Dashboard</a></li>
-                <li><a href="<?php echo esc_url(home_url('/monitor/')); ?>">Monitor</a></li>
-                <li><a href="<?php echo esc_url(home_url('/laptop/')); ?>">Laptop</a></li>
-                <li><a href="<?php echo esc_url(home_url('/accessories/')); ?>">Accessories</a></li>
-                <li><a href="<?php echo esc_url(home_url('/maintenance/')); ?>">Maintenance</a></li>
-                <li><a href="<?php echo esc_url(home_url('/history/')); ?>">History</a></li>
-                <li><a href="<?php echo esc_url(home_url('/owner/')); ?>">Employees</a></li>
-                <li><a href="<?php echo esc_url(home_url('/add-device/')); ?>">Add Device</a></li>
+            <!-- Social Links -->
+            <ul class="list-unstyled d-flex mt-4 mt-md-0 mb-0 gap-2">
+                <li>
+                    <a href="https://www.facebook.com/TBS.Marketing.Thailand/" target="_blank"
+                        class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center p-0 social-btn"
+                        style="width: 40px; height: 40px; color: #555;" aria-label="Facebook">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                        </svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.instagram.com/tbs.marketing/" target="_blank"
+                        class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center p-0 social-btn"
+                        style="width: 40px; height: 40px; color: #555;" aria-label="Instagram">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://x.com/MarketingTbs" target="_blank"
+                        class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center p-0 social-btn"
+                        style="width: 40px; height: 40px; color: #555;" aria-label="Twitter">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z">
+                            </path>
+                        </svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.linkedin.com/company/tbs-marketing" target="_blank"
+                        class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center p-0 social-btn"
+                        style="width: 40px; height: 40px; color: #555;" aria-label="LinkedIn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z">
+                            </path>
+                            <rect x="2" y="9" width="4" height="12"></rect>
+                            <circle cx="4" cy="4" r="2"></circle>
+                        </svg>
+                    </a>
+                </li>
             </ul>
         </div>
 
-        <!-- Column 3: Contact Us -->
-        <div class="footer-col">
-            <h3>Contact Us</h3>
-            <div class="footer-contact">
-                <p>1023 TPS Building, Floor 4 Phatthanakan Rd Suan Luang Bangkok 10250</p>
-                <p>Phone: +66 02178124</p>
-                <p>Email: <a href="mailto:info@tbs-marketing.com">info@tbs-marketing.com</a></p>
-            </div>
-        </div>
+        <div class="row border-top mt-4 pt-4 mt-md-4 pt-md-4 align-items-start">
+            <!-- Copyright & Contact -->
+            <div class="col-lg-4 order-lg-1 mb-4 mb-lg-0 text-muted small">
+                <div class="fw-bold text-dark mb-1">Contact Us</div>
+                <div class="mb-2">1023 TPS Building, Floor 4 Phatthanakan Rd Suan Luang Bangkok 10250</div>
+                <div class="mb-1">Phone: +66 02178124</div>
+                <div class="mb-4">Email: <a href="mailto:info@tbs-marketing.com"
+                        class="text-muted text-decoration-none hover-underline">info@tbs-marketing.com</a></div>
 
-        <!-- Column 4: Follow Us -->
-        <div class="footer-col">
-            <h3>Follow Us</h3>
-            <div class="social-icons">
-                <a href="https://www.facebook.com/TBS.Marketing.Thailand/" class="social-icon" aria-label="Facebook">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                    </svg>
-                </a>
-                <a href="https://www.instagram.com/tbs.marketing/" class="social-icon" aria-label="Twitter">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z">
-                        </path>
-                    </svg>
-                </a>
-                <a href="https://x.com/MarketingTbs" class="social-icon" aria-label="Instagram">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                    </svg>
-                </a>
-                <a href="https://www.linkedin.com/company/tbs-marketing" class="social-icon" aria-label="LinkedIn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                        <rect x="2" y="9" width="4" height="12"></rect>
-                        <circle cx="4" cy="4" r="2"></circle>
-                    </svg>
-                </a>
+                <div>&copy; <?php echo date('Y'); ?> The Business SEO.</div>
+                <div>All rights reserved.</div>
+            </div>
+
+            <!-- Main Links -->
+            <div class="col-lg-8 order-lg-2 d-flex flex-column flex-lg-row justify-content-lg-end gap-4 gap-lg-5">
+                <nav>
+                    <div class="fw-bold text-dark mb-3" style="margin-left: 45px;">Quick Links</div>
+                    <ul class="list-unstyled d-flex flex-column mb-0 gap-2">
+                        <li><a href="<?php echo esc_url(home_url('/home/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">Dashboard</a></li>
+                        <li><a href="<?php echo esc_url(home_url('/monitor/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">Monitor</a></li>
+                        <li><a href="<?php echo esc_url(home_url('/laptop/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">Laptop</a></li>
+                        <li><a href="<?php echo esc_url(home_url('/accessories/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">Accessories</a></li>
+                    </ul>
+                </nav>
+
+                <nav>
+                    <div class="fw-bold text-dark mb-3 d-none d-lg-block">&nbsp;</div>
+                    <ul class="list-unstyled d-flex flex-column mb-0 gap-2">
+                        <li><a href="<?php echo esc_url(home_url('/maintenance/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">Maintenance</a></li>
+                        <li><a href="<?php echo esc_url(home_url('/history/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">History</a></li>
+                        <li><a href="<?php echo esc_url(home_url('/owner/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">Employees</a></li>
+                        <li><a href="<?php echo esc_url(home_url('/add-device/')); ?>"
+                                class="text-muted text-decoration-none hover-underline">Add Device</a></li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
@@ -74,6 +115,17 @@
 <?php wp_footer(); ?>
 
 <style>
+    .hover-underline:hover {
+        text-decoration: underline !important;
+        text-underline-offset: 4px;
+    }
+
+    .social-btn:hover {
+        background-color: #f8f9fa !important;
+        color: #111 !important;
+        border-color: #ddd !important;
+    }
+
     /* ============================================================
            CUSTOM FOOTER STYLES
            ============================================================ */

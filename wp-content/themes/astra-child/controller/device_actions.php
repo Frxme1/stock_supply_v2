@@ -277,6 +277,11 @@ function handle_device_actions()
                         'Owner'       => $owner_nickname ?? '-'
                     ]);
 
+                    // ส่งอีเมลแจ้งเตือน
+                    if (function_exists('stock_supply_send_email') && $device_info->OwnerID) {
+                        stock_supply_send_email('Return', $device_id, $device_info->OwnerID);
+                    }
+
                     $category_slug = $wpdb->get_var($wpdb->prepare(
                         "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
                         $device_info->CategoryID
@@ -394,7 +399,89 @@ function handle_device_actions()
             echo "<p>Can't Change to Available: " . esc_html($wpdb->last_error) . "</p>";
         }
     }
+    if (isset($_GET['return_to_owner'])) {
+        $device_id = sanitize_text_field($_GET['return_to_owner']);
+        $inuse_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
 
+        if ($inuse_status_id) {
+            $device_info = $wpdb->get_row($wpdb->prepare(
+                "SELECT OwnerID, CategoryID FROM $table_devices WHERE DeviceID = %s",
+                $device_id
+            ));
+
+            if ($device_info && !empty($device_info->OwnerID)) {
+                $wpdb->delete($table_maintenance, ['DeviceID' => $device_id], ['%s']);
+                
+                $updated = $wpdb->update(
+                    $table_devices,
+                    [
+                        'StatusID'     => $inuse_status_id,
+                        'RepairDate'   => null
+                    ],
+                    ['DeviceID' => $device_id],
+                    ['%d', null],
+                    ['%s']
+                );
+
+                if ($updated !== false) {
+                    $owner_nickname = $wpdb->get_var($wpdb->prepare(
+                        "SELECT Nickname FROM Owners WHERE OwnerID = %d",
+                        $device_info->OwnerID
+                    ));
+
+                    $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : null;
+                    $safe_owner       = $owner_nickname ?? '-';
+                    $current_user = wp_get_current_user();
+                    $user_email = $current_user->user_email ?? 'unknown@domain.com';
+
+                    $wpdb->insert('History_new', [
+                        'DeviceID'    => $device_id,
+                        'Action'      => 'Return to Owner',
+                        'Date'        => current_time('mysql'),
+                        'Description' => "Device ID {$device_id} repaired and returned to owner",
+                        'user_email'  => $user_email,
+                        'CategoryID'  => $safe_category_id,
+                        'Owner'       => $safe_owner
+                    ]);
+
+                    // ส่งอีเมลแจ้งเตือน
+                    if (function_exists('stock_supply_send_email')) {
+                        stock_supply_send_email('Return_to_Owner', $device_id, $device_info->OwnerID);
+                    }
+                }
+                
+                $category_slug = $wpdb->get_var($wpdb->prepare(
+                    "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
+                    $device_info->CategoryID
+                ));
+                $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
+
+                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                echo "<script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Returned to Owner!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    window.location.href = '{$redirect_url}';
+                });
+                </script>";
+                exit;
+            } else {
+                 echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                 echo "<script>
+                 Swal.fire({
+                     icon: 'error',
+                     title: 'Failed',
+                     text: 'This device does not have an owner.',
+                     showConfirmButton: true
+                 });
+                 </script>";
+                 exit;
+            }
+        }
+    }
 
 
 

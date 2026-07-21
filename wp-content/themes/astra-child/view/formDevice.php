@@ -262,11 +262,6 @@ function device_crud()
 
 
 
-        <a href="<?= esc_url(add_query_arg('export_csv', 'device', $_SERVER['REQUEST_URI'])) ?>"
-            class="btn btn-secondary btn-sm">
-            <i class="fa-solid fa-file-export"></i> Export CSV
-        </a>
-
         <div id="device_table" class="table-responsive-xl next-table-wrapper">
             <table class="table next-table" style="width: 100%;">
                 <thead>

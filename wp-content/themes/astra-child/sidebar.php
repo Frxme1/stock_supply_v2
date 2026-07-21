@@ -72,6 +72,14 @@
             <span class="sidebar-link-text">Employees</span>
         </a>
 
+        <!-- Requests -->
+        <a href="<?php echo esc_url(home_url('/request-dashboard/')); ?>" class="sidebar-link <?php echo (is_page('request-dashboard')) ? 'active' : ''; ?>">
+            <span class="sidebar-link-icon">
+                <i class="fa-solid fa-list-check" style="font-size: 20px;"></i>
+            </span>
+            <span class="sidebar-link-text">Requests</span>
+        </a>
+
         <!-- Add Device -->
         <a href="<?php echo esc_url(home_url('/add-device/')); ?>" class="sidebar-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
             <span class="sidebar-link-icon">
@@ -147,6 +155,10 @@
         <a href="<?php echo esc_url(home_url('/owner/')); ?>" class="mobile-link <?php echo (is_page('owner')) ? 'active' : ''; ?>">
             <i class="fa-solid fa-users" style="font-size: 20px;"></i>
             Employees
+        </a>
+        <a href="<?php echo esc_url(home_url('/request-dashboard/')); ?>" class="mobile-link <?php echo (is_page('request-dashboard')) ? 'active' : ''; ?>">
+            <i class="fa-solid fa-list-check" style="font-size: 20px;"></i>
+            Requests
         </a>
         <a href="<?php echo esc_url(home_url('/add-device/')); ?>" class="mobile-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
             <i class="fa-solid fa-plus" style="font-size: 20px;"></i>

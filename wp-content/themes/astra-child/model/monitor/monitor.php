@@ -275,10 +275,7 @@ function device_crud_monitor()
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <!-- Export button uses the same GET parameters for filtering -->
-                    <a href="<?= esc_url(add_query_arg(['export_csv' => 'device', 'category' => 'Monitor'], $_SERVER['REQUEST_URI'])) ?>"
-                        class="btn btn-secondary btn-sm">
-                        <i class="fa-solid fa-file-export"></i> Export CSV
-                    </a>
+
                 </div>
             </div>
 
