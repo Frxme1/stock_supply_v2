@@ -1,14 +1,21 @@
 <?php
 // Separate endpoint for AJAX submission to avoid WordPress redirects
 ob_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+error_reporting(0);
+ini_set('display_errors', 0);
 
 define('SHORTINIT', true);
-require_once( dirname(__FILE__) . '/wp-load.php' );
+require_once(dirname(__FILE__) . '/wp-load.php');
 global $wpdb;
 
-header('Content-Type: application/json');
+function send_json_response($data) {
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $owner_id = intval($_POST['OwnerID'] ?? 0);
@@ -37,22 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 stock_supply_send_email('RequestSubmitted', $request_id, $owner_id, "Device: $requested_device_id - $reason");
             }
 
-            ob_clean();
-            echo json_encode(['success' => true, 'message' => 'Request Submitted Successfully!']);
-            exit;
+            send_json_response(['success' => true, 'message' => 'Request Submitted Successfully!']);
         } else {
             $err = $wpdb->last_error;
-            ob_clean();
-            echo json_encode(['success' => false, 'message' => 'Database Error: ' . $err]);
-            exit;
+            send_json_response(['success' => false, 'message' => 'Database Error: ' . ($err ?: 'Unable to insert record.')]);
         }
     } else {
-        ob_clean();
-        echo json_encode(['success' => false, 'message' => 'Missing Information. Please fill in all fields.']);
-        exit;
+        send_json_response(['success' => false, 'message' => 'Missing Information. Please fill in all fields.']);
     }
 } else {
-    ob_clean();
-    echo json_encode(['success' => false, 'message' => 'Invalid Request Method']);
-    exit;
+    send_json_response(['success' => false, 'message' => 'Invalid Request Method']);
 }

@@ -1,14 +1,21 @@
 <?php
 // Separate endpoint for AJAX submission to avoid WordPress redirects
 ob_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+error_reporting(0);
+ini_set('display_errors', 0);
 
 define('SHORTINIT', true);
-require_once( dirname(__FILE__) . '/wp-load.php' );
+require_once(dirname(__FILE__) . '/wp-load.php');
 global $wpdb;
 
-header('Content-Type: application/json');
+function send_json_response($data) {
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $owner_id = intval($_POST['OwnerID'] ?? 0);
@@ -18,12 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($owner_id && !empty($device_id) && !empty($reason)) {
         
         // Ensure device actually exists and belongs to this owner
-        $device_check = $wpdb->get_row($wpdb->prepare("SELECT StatusID FROM Devices WHERE DeviceID = %s AND OwnerID = %d", $device_id, $owner_id));
+        $device_check = $wpdb->get_row($wpdb->prepare("SELECT StatusID FROM Devices WHERE DeviceID = %s AND (OwnerID = %d OR OwnerID = %s)", $device_id, $owner_id, (string)$owner_id));
         
         if (!$device_check) {
-            ob_clean();
-            echo json_encode(['success' => false, 'message' => 'Invalid device or you do not own this device.']);
-            exit;
+            send_json_response(['success' => false, 'message' => 'Invalid device or you do not own this device.']);
         }
 
         // Insert as 'Pending' in Repair_Requests table
@@ -40,22 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         if ($inserted) {
-            ob_clean();
-            echo json_encode(['success' => true, 'message' => 'Repair Request Submitted Successfully! It is now Pending Approval.']);
-            exit;
+            send_json_response(['success' => true, 'message' => 'Repair Request Submitted Successfully! It is now Pending Approval.']);
         } else {
             $err = $wpdb->last_error;
-            ob_clean();
-            echo json_encode(['success' => false, 'message' => 'Database Error: ' . $err]);
-            exit;
+            send_json_response(['success' => false, 'message' => 'Database Error: ' . ($err ?: 'Unable to insert record.')]);
         }
     } else {
-        ob_clean();
-        echo json_encode(['success' => false, 'message' => 'Missing Information. Please fill in all fields.']);
-        exit;
+        send_json_response(['success' => false, 'message' => 'Missing Information. Please fill in all fields.']);
     }
 } else {
-    ob_clean();
-    echo json_encode(['success' => false, 'message' => 'Invalid Request Method']);
-    exit;
+    send_json_response(['success' => false, 'message' => 'Invalid Request Method']);
 }

@@ -586,8 +586,8 @@ function device_request_dashboard()
     </style>
 
     <div class="dashboard-container">
-        <h2 class="dashboard-title">IT Device Requests Dashboard</h2>
-
+        <h1 class="title">IT Request
+            Device</h1>
         <h3 class="section-title">📦 Borrow Requests</h3>
         <div class="table-wrapper">
             <table class="table-custom">

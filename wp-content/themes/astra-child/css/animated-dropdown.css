@@ -150,9 +150,11 @@
 .animated-dropdown-list::-webkit-scrollbar {
     width: 6px;
 }
+
 .animated-dropdown-list::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .animated-dropdown-list::-webkit-scrollbar-thumb {
     background-color: #cbd5e1;
     border-radius: 10px;

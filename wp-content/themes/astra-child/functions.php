@@ -646,7 +646,8 @@ add_action('admin_init', 'auto_create_request_pages');
 // ==========================================
 // Page Transition Loading Screen
 // ==========================================
-function stock_supply_add_page_loader() {
+function stock_supply_add_page_loader()
+{
     ?>
     <style>
         /* Loading Screen Overlay */
@@ -656,7 +657,8 @@ function stock_supply_add_page_loader() {
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #f8fafc; /* Sleek light background */
+            background-color: #f8fafc;
+            /* Sleek light background */
             z-index: 999999;
             display: flex;
             flex-direction: column;
@@ -674,8 +676,13 @@ function stock_supply_add_page_loader() {
 
         /* Conveyor Loop Animation */
         @keyframes loading-ui-conveyor-loop {
-            0% { transform: translateX(var(--loader-start-x)); }
-            100% { transform: translateX(var(--loader-end-x)); }
+            0% {
+                transform: translateX(var(--loader-start-x));
+            }
+
+            100% {
+                transform: translateX(var(--loader-end-x));
+            }
         }
 
         .conveyor-loop-container {
@@ -710,7 +717,8 @@ function stock_supply_add_page_loader() {
             align-items: center;
             justify-content: center;
             text-align: center;
-            background-color: #f8fafc; /* Matches loader background to mask track */
+            background-color: #f8fafc;
+            /* Matches loader background to mask track */
             animation: loading-ui-conveyor-loop 1.8s linear infinite;
         }
 
@@ -725,11 +733,19 @@ function stock_supply_add_page_loader() {
             text-transform: uppercase;
             animation: ss-pulse 1.5s infinite;
         }
-        
+
         @keyframes ss-pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
+            0% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.5;
+            }
         }
     </style>
 
@@ -744,10 +760,10 @@ function stock_supply_add_page_loader() {
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             var loader = document.getElementById("stock-supply-loader");
             if (!loader) return;
-            
+
             // Function to hide loader
             function hideLoader() {
                 loader.classList.add("loader-hidden");
@@ -759,7 +775,7 @@ function stock_supply_add_page_loader() {
             }
 
             // Hide loader when the page has fully loaded
-            window.addEventListener("load", function() {
+            window.addEventListener("load", function () {
                 setTimeout(hideLoader, 200); // slight delay for smooth transition
             });
 
@@ -768,16 +784,16 @@ function stock_supply_add_page_loader() {
 
             // Show loader when navigating away via normal links
             var links = document.querySelectorAll("a:not([target='_blank']):not([href^='#']):not([href^='mailto:']):not([href^='tel:']):not(.no-loader)");
-            
-            links.forEach(function(link) {
-                link.addEventListener("click", function(e) {
+
+            links.forEach(function (link) {
+                link.addEventListener("click", function (e) {
                     // Ignore clicks with modifiers (ctrl, shift, meta) or middle click
                     if (e.ctrlKey || e.shiftKey || e.metaKey || e.button === 1) return;
-                    
+
                     var href = this.getAttribute("href");
                     var isJsVoid = href && href.toLowerCase().indexOf('javascript:') === 0;
                     var isSamePageAnchor = href && href.indexOf(window.location.pathname + '#') !== -1;
-                    
+
                     if (href && !isJsVoid && !isSamePageAnchor && !this.hasAttribute("download")) {
                         showLoader();
                         // Fallback: if navigation doesn't happen within 3 seconds, hide the loader
@@ -785,9 +801,9 @@ function stock_supply_add_page_loader() {
                     }
                 });
             });
-            
+
             // Hide loader when navigating back/forward using browser cache (BFCache)
-            window.addEventListener("pageshow", function(event) {
+            window.addEventListener("pageshow", function (event) {
                 if (event.persisted) {
                     hideLoader();
                 }
@@ -797,3 +813,69 @@ function stock_supply_add_page_loader() {
     <?php
 }
 add_action('wp_footer', 'stock_supply_add_page_loader', 100);
+
+// Shining Header Text Animation (Scope: ONLY H1 headers for animation, ALL headers for font)
+function stock_supply_add_shining_header_styles()
+{
+    ?>
+    <style id="shining-header-styles">
+        @keyframes shiningText {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: 0% 0;
+            }
+        }
+
+        /* Apply modern clean font (Inter + Prompt) to ALL headings */
+        h1, h2, h3, h4, h5, h6,
+        .entry-title,
+        .section-title,
+        .next-section-title,
+        .vd-title,
+        .vd-history-title,
+        .card-title,
+        .modal-title,
+        .page-title,
+        .site-title,
+        .shining-text,
+        .shining-header {
+            font-family: 'Inter', 'Prompt', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+
+        /* Shining Gradient Animation applied ONLY to H1 headings */
+        h1,
+        h1.entry-title,
+        h1[itemprop="headline"],
+        .entry-title,
+        .shining-text,
+        .shining-header,
+        .dashboard-container h1 {
+            background-image: linear-gradient(110deg, #111827 0%, #111827 40%, #ffffff 50%, #111827 60%, #111827 100%) !important;
+            background-size: 200% 100% !important;
+            background-repeat: repeat-x !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            color: transparent !important;
+            animation: shiningText 4.5s linear infinite !important;
+        }
+
+        h1 *,
+        h1.entry-title *,
+        .entry-title *,
+        .shining-text *,
+        .shining-header *,
+        .dashboard-container h1 * {
+            -webkit-text-fill-color: inherit !important;
+            color: inherit !important;
+        }
+    </style>
+    <?php
+}
+add_action('wp_head', 'stock_supply_add_shining_header_styles', 999);
+add_action('wp_footer', 'stock_supply_add_shining_header_styles', 999);
+
+
