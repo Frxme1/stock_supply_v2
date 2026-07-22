@@ -608,8 +608,21 @@ function stock_supply_setup_db()
     ) $charset_collate;";
 
 
+    // Create Repair_Requests table
+    $table_repair = 'Repair_Requests';
+    $sql_repair = "CREATE TABLE $table_repair (
+        RequestID int(11) NOT NULL AUTO_INCREMENT,
+        OwnerID int(11) NOT NULL,
+        DeviceID varchar(100) NOT NULL,
+        Reason text NOT NULL,
+        Status varchar(50) NOT NULL DEFAULT 'Pending',
+        RequestDate datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        PRIMARY KEY  (RequestID)
+    ) $charset_collate;";
+
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
+    dbDelta($sql_repair);
 }
 add_action('after_setup_theme', 'stock_supply_setup_db');
 
