@@ -27,6 +27,7 @@ function receive_device($device_data = null)
         $device_id = $_POST['DeviceID'] ?? null;
         $owner_id = $_POST['OwnerID'] ?? null;
         $receive_date = $_POST['ReceiveDate'] ?? null;
+        $expected_return_date = !empty($_POST['ExpectedReturnDate']) ? sanitize_text_field($_POST['ExpectedReturnDate']) : null;
 
         $owner_info = $wpdb->get_row($wpdb->prepare("SELECT DepartmentID, PositionID FROM Owners WHERE OwnerID = %d", $owner_id));
         $department_id = $owner_info->DepartmentID ?? null;
@@ -39,12 +40,14 @@ function receive_device($device_data = null)
         $updated = $wpdb->update(
             $devices_table,
             [
-                'OwnerID' => $owner_id,
-                'DepartmentID' => $department_id,
-                'PositionID' => $position_id,
-                'ReceiveDate' => $receive_date,
-                'StatusID' => $status_id,
-                'ReturnDate' => null,
+                'OwnerID'            => $owner_id,
+                'DepartmentID'       => $department_id,
+                'PositionID'         => $position_id,
+                'ReceiveDate'        => $receive_date,
+                'StatusID'           => $status_id,
+                'ReturnDate'         => null,
+                'ExpectedReturnDate' => $expected_return_date,
+                'LastNotifiedDate'   => null,
             ],
             ['DeviceID' => $device_id]
         );
@@ -167,6 +170,11 @@ function receive_device($device_data = null)
                 <label>Assign Date</label>
                 <input type="date" name="ReceiveDate" value="<?= esc_attr($date_value) ?>" min="<?= date('Y-m-d') ?>"
                     required>
+            </div>
+
+            <div class="form-group">
+                <label>Expected Return Date (วันกำหนดคืน)</label>
+                <input type="date" name="ExpectedReturnDate" min="<?= date('Y-m-d') ?>" placeholder="Optional for loaners">
             </div>
         </div>
 

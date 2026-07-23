@@ -31,9 +31,9 @@ function device_dashboard()
     // Prepare Data for ApexCharts
     $js_status_labels = json_encode(array_keys($summary_map));
     $js_status_counts = json_encode(array_values($summary_map));
-    
+
     $js_cat_labels = json_encode(['Monitor', 'Laptop', 'Accessories']);
-    $js_cat_counts = json_encode([(int)$total_monitor, (int)$total_laptop, (int)$total_accessories]);
+    $js_cat_counts = json_encode([(int) $total_monitor, (int) $total_laptop, (int) $total_accessories]);
 
     $dept_summary = $wpdb->get_results("
         SELECT Department, COUNT(*) as count 
@@ -45,7 +45,7 @@ function device_dashboard()
     ");
     $dept_labels = [];
     $dept_counts = [];
-    foreach($dept_summary as $row) {
+    foreach ($dept_summary as $row) {
         $dept_labels[] = $row->Department;
         $dept_counts[] = intval($row->count);
     }
@@ -53,6 +53,16 @@ function device_dashboard()
     $js_dept_counts = json_encode($dept_counts);
 
     // Category config
+    $today = current_time('Y-m-d');
+    $total_overdue = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*) 
+        FROM Devices 
+        WHERE StatusID = (SELECT StatusID FROM Statuses WHERE StatusName = 'In Use')
+          AND ExpectedReturnDate IS NOT NULL 
+          AND ExpectedReturnDate != '0000-00-00'
+          AND ExpectedReturnDate < %s
+    ", $today));
+
     $category_config = [
         ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>'],
         ['label' => 'Monitor', 'count' => $total_monitor, 'color' => '#FDB840', 'icon' => '<i class="fa-solid fa-desktop"></i>'],
@@ -66,7 +76,7 @@ function device_dashboard()
     <!-- FontAwesome & ApexCharts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    
+
     <div class="next-dashboard">
         <!-- ===== SECTION 1: Category Summary Cards ===== -->
         <div class="next-grid">
@@ -103,6 +113,31 @@ function device_dashboard()
                     </div>
                 </div>
             <?php endforeach; ?>
+
+            <!-- Overdue Card -->
+            <a href="/stock_supply/request-dashboard/#loaner-tracking-section" style="text-decoration: none;">
+                <div class="next-card slide-up"
+                    style="animation-delay: 0.25s; border-left: 4px solid #ef4444; background: linear-gradient(135deg, rgba(254, 226, 226, 0.45) 0%, #ffffff 100%);">
+                    <div class="next-card-header">
+                        <span class="next-card-title" style="color: #991b1b; font-weight: 700;">🔴 อุปกรณ์ค้างส่ง
+                            (Overdue)</span>
+                        <div class="next-icon-wrapper" style="background: rgba(239, 68, 68, 0.15); color: #dc2626;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                    <div class="next-card-body">
+                        <div class="next-number-wrap">
+                            <span class="next-number count-up" data-count="<?= intval($total_overdue) ?>"
+                                style="color: #dc2626;">0</span>
+                        </div>
+                        <div class="next-trend">
+                            <span class="next-badge" style="background: #fee2e2; color: #dc2626; font-weight: 700;">
+                                ดูรายชื่อ ➔
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
         </div>
 
         <!-- ===== SECTION 2: Status Cards ===== -->
@@ -128,7 +163,8 @@ function device_dashboard()
                         <span class="next-number-md count-up" data-count="<?= $count ?>">0</span>
                         <div class="next-progress-wrap mt-2">
                             <div class="next-progress-bar">
-                                <div class="next-progress-fill" style="width: 0%; background: <?= $config['color'] ?>;" data-width="<?= $percent ?>%"></div>
+                                <div class="next-progress-fill" style="width: 0%; background: <?= $config['color'] ?>;"
+                                    data-width="<?= $percent ?>%"></div>
                             </div>
                             <span class="next-progress-text"><?= $percent ?>%</span>
                         </div>
@@ -137,9 +173,12 @@ function device_dashboard()
             <?php endforeach; ?>
         </div>
 
+        <!-- ===== QR Scanner Compact Bar ===== -->
+        <?php include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); ?>
+
         <!-- ===== SECTION 3: Charts ===== -->
         <div class="next-grid-3 mt-4">
-            
+
             <!-- Donut Chart -->
             <div class="next-card slide-up" style="animation-delay: 0.2s;">
                 <h3 class="next-section-title">Device Distribution</h3>
@@ -162,6 +201,67 @@ function device_dashboard()
     </div>
 
     <style>
+        /* ===== QR Scanner Compact Bar ===== */
+        .dash-qr-bar {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+        }
+
+        .dash-qr-scan-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        }
+
+        .dash-qr-scan-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+
+        .dash-qr-stop-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dash-qr-stop-btn:hover {
+            background: #dc2626;
+        }
+
+        .dash-qr-hint {
+            color: #94a3b8;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dash-scan-popup {
+            border-radius: 16px !important;
+        }
+
         /* Next.js / Vercel Inspired UI */
         .next-dashboard {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -298,7 +398,7 @@ function device_dashboard()
             align-items: center;
             gap: 0.75rem;
         }
-        
+
         .next-progress-wrap-sm {
             width: 100px;
         }
@@ -344,7 +444,7 @@ function device_dashboard()
             transform: scale(1);
             transition: transform 0.3s ease;
         }
-        
+
         .next-donut:hover {
             transform: scale(1.03);
         }
@@ -394,7 +494,7 @@ function device_dashboard()
             padding-bottom: 0.75rem;
             border-bottom: 1px solid #f3f4f6;
         }
-        
+
         .next-legend-item:last-child {
             border-bottom: none;
             padding-bottom: 0;
@@ -433,7 +533,7 @@ function device_dashboard()
             border: 1px solid transparent;
             transition: all 0.2s ease;
         }
-        
+
         .next-list-item:hover {
             background: #f9fafb;
             border-color: #f3f4f6;
@@ -466,7 +566,9 @@ function device_dashboard()
             text-align: right;
         }
 
-        .mt-4 { margin-top: 1.5rem; }
+        .mt-4 {
+            margin-top: 1.5rem;
+        }
 
         /* Animations */
         .slide-up {
@@ -484,14 +586,29 @@ function device_dashboard()
 
         /* Responsive */
         @media (max-width: 1024px) {
-            .next-grid { grid-template-columns: repeat(2, 1fr); }
-            .next-grid-2, .next-grid-3 { grid-template-columns: 1fr; }
+            .next-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .next-grid-2,
+            .next-grid-3 {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 640px) {
-            .next-grid { grid-template-columns: 1fr; }
-            .next-donut-container { flex-direction: column; gap: 1.5rem; }
-            .next-legend-wrap { width: 100%; }
+            .next-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .next-donut-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .next-legend-wrap {
+                width: 100%;
+            }
         }
     </style>
 
@@ -502,19 +619,19 @@ function device_dashboard()
             countElements.forEach(el => {
                 const target = parseInt(el.getAttribute('data-count'), 10);
                 const duration = 1800; // ms
-                
+
                 if (target > 0) {
                     const easeOutQuart = t => 1 - (--t) * t * t * t;
                     let startTime = null;
-                    
+
                     const step = (timestamp) => {
                         if (!startTime) startTime = timestamp;
                         const progress = Math.min((timestamp - startTime) / duration, 1);
                         const easeProgress = easeOutQuart(progress);
-                        
+
                         const current = Math.floor(easeProgress * target);
                         el.innerText = current.toLocaleString();
-                        
+
                         if (progress < 1) {
                             window.requestAnimationFrame(step);
                         } else {

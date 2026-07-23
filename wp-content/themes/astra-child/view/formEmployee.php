@@ -167,8 +167,8 @@ function form_owner()
         </div>
     </form>
 
-    <div class="table-responsive-xl next-table-wrapper">
-        <table class="table next-table" style="width: 100%;">
+    <div class="table-wrapper">
+        <table class="table-custom" style="width: 100%;">
             <thead>
                 <tr>
                     <th class="text-nowrap py-3 text-start" style="width: 10%;">NickName</th>
@@ -193,12 +193,12 @@ function form_owner()
                         <td class="text-start align-middle">
                             <?php
                             $status = $row->Status;
-                            $emojis = [
-                                'Active' => '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>',
-                                'Resigned' => '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>',
-                            ];
-                            echo ($emojis[$status] ?? '') . ' ' . esc_html($status);
+                            $statusClass = strcasecmp($status, 'Active') === 0 ? 'status-available' : 'status-inuse';
                             ?>
+                            <span class="status-badge <?= $statusClass ?>">
+                                <span class="status-dot"></span>
+                                <?= esc_html($status) ?>
+                            </span>
                         </td>
 
                         <td class="text-center align-middle">

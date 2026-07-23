@@ -24,7 +24,7 @@ function device_crud_maintenance()
 
 
     // section search
-    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
+    $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
     $where_sql = "WHERE Status = 'Maintenance'";
 
     if (!empty($search)) {
@@ -103,11 +103,15 @@ function device_crud_maintenance()
             </div>
         </form>
 
+        <?php 
+        $qr_status_filter = 'Maintenance';
+        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); 
+        ?>
 
         <br>
-        <div class="table-responsive-xl rounded">
-            <table class="table table-bordered table-sm">
-                <thead class="table-secondary">
+        <div class="table-wrapper">
+            <table class="table-custom">
+                <thead>
                     <tr>
                         <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
                         <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
@@ -133,18 +137,15 @@ function device_crud_maintenance()
                             <td class="align-middle text-start">
                                 <?php
                                 $status = $row->Status;
-                                $emoji = '';
-                                if (strcasecmp($status, 'Available') === 0) {
-                                    $emoji = '<i class="fa-solid fa-circle text-success" style="font-size:12px;"></i>';
-                                } elseif (strcasecmp($status, 'In Use') === 0) {
-                                    $emoji = '<i class="fa-solid fa-circle text-danger" style="font-size:12px;"></i>';
-                                } elseif (strcasecmp($status, 'Maintenance') === 0) {
-                                    $emoji = '<i class="fa-solid fa-circle text-warning" style="font-size:12px;"></i>';
-                                } elseif (strcasecmp($status, 'Retired') === 0) {
-                                    $emoji = '<i class="fa-solid fa-circle text-dark" style="font-size:12px;"></i>';
-                                }
-                                echo $emoji . ' ' . esc_html($status);
+                                $statusClass = 'status-retired';
+                                if (strcasecmp($status, 'Available') === 0) $statusClass = 'status-available';
+                                elseif (strcasecmp($status, 'In Use') === 0) $statusClass = 'status-inuse';
+                                elseif (strcasecmp($status, 'Maintenance') === 0) $statusClass = 'status-maintenance';
                                 ?>
+                                <span class="status-badge <?= $statusClass ?>">
+                                    <span class="status-dot"></span>
+                                    <?= esc_html($status) ?>
+                                </span>
                             </td>
 
                             <td class="align-middle text-center">

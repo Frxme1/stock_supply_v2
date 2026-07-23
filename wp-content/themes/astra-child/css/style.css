@@ -4,3 +4,279 @@
     -webkit-backdrop-filter: blur(5px) !important;
     background: rgba(0, 0, 0, 0.5) !important;
 }
+
+/* ============================================================
+   GLOBAL MODERN TABLE UI OVERRIDE
+   ============================================================ */
+
+/* Table Containers */
+.table-wrapper,
+.next-table-wrapper,
+.table-responsive,
+.table-responsive-xl,
+.table-responsive-lg,
+.table-responsive-md,
+.table-responsive-sm {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 12px 24px 24px 24px !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+    margin-bottom: 30px !important;
+    overflow-x: auto !important;
+    min-height: 350px !important;
+    /* Prevents action dropdowns from being clipped/sinking */
+}
+
+/* Table Element */
+.table-wrapper table,
+.next-table-wrapper table,
+.table-responsive table,
+.table-custom,
+.next-table,
+table.table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
+    /* Modern card gap between rows */
+    border-radius: 20px;
+    text-align: left !important;
+    margin-bottom: 0 !important;
+}
+
+/* Table Header */
+.table-wrapper table th,
+.next-table-wrapper table th,
+.table-responsive table th,
+.table-custom th,
+.next-table th,
+table.table th {
+    background: transparent !important;
+    padding: 14px 20px !important;
+    font-size: 0.8rem !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    border-top: none !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    white-space: nowrap !important;
+}
+
+/* Table Body Cells */
+.table-wrapper table td,
+.next-table-wrapper table td,
+.table-responsive table td,
+.table-custom td,
+.next-table td,
+table.table td {
+    padding: 16px 20px !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    font-size: 0.95rem !important;
+    vertical-align: middle !important;
+    border-top: 1px solid #f1f5f9 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Rounded Card Effect for Rows */
+.table-wrapper table td:first-child,
+.next-table-wrapper table td:first-child,
+.table-responsive table td:first-child,
+.table-custom td:first-child,
+.next-table td:first-child,
+table.table td:first-child {
+    border-left: 1px solid #f1f5f9 !important;
+    border-top-left-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+}
+
+.table-wrapper table td:last-child,
+.next-table-wrapper table td:last-child,
+.table-responsive table td:last-child,
+.table-custom td:last-child,
+.next-table td:last-child,
+table.table td:last-child {
+    border-right: 1px solid #f1f5f9 !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+}
+
+/* Table Rows Base */
+.table-wrapper table tbody tr,
+.next-table-wrapper table tbody tr,
+.table-responsive table tbody tr,
+.table-custom tbody tr,
+.next-table tbody tr,
+table.table tbody tr {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+    position: relative !important;
+    z-index: 1 !important;
+    transition: all 0.2s ease !important;
+    transform: none !important;
+    /* Removes transform scale which broke dropdown z-index */
+}
+
+/* Table Rows Hover */
+.table-wrapper table tbody tr:hover,
+.next-table-wrapper table tbody tr:hover,
+.table-responsive table tbody tr:hover,
+.table-custom tbody tr:hover,
+.next-table tbody tr:hover,
+table.table tbody tr:hover {
+    z-index: 10 !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+.table-wrapper table tbody tr:hover td,
+.next-table-wrapper table tbody tr:hover td,
+.table-responsive table tbody tr:hover td,
+.table-custom tbody tr:hover td,
+.next-table tbody tr:hover td,
+table.table tbody tr:hover td {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+/* Prevent Action Column from Sinking / Shrinking */
+.table-wrapper table td.actions,
+.table-wrapper table td .dropdown,
+.table-wrapper table td .action-menu,
+.table-wrapper table td:last-child,
+.next-table-wrapper table td.actions,
+.next-table-wrapper table td .dropdown,
+.next-table-wrapper table td .action-menu,
+.next-table-wrapper table td:last-child,
+.table-custom td:last-child,
+.next-table td:last-child {
+    white-space: nowrap !important;
+}
+
+/* ============================================================
+   UNIFIED STATUS BADGES (Pill Style with Dot)
+   ============================================================ */
+
+.status-badge,
+.vd-status-badge,
+.badge-history,
+.next-badge,
+span.badge,
+.badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 5px 14px !important;
+    border-radius: 9999px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    border: none !important;
+}
+
+/* Status Dot Child Div/Span */
+.status-dot,
+.vd-status-dot {
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+/* Status Dot Pseudo Element (for badges without child dot) */
+.badge-history::before,
+.badge::before,
+.next-badge::before {
+    content: '' !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+/* In Use / Danger / Red */
+.status-inuse,
+.vd-status-InUse,
+.badge-inuse,
+.badge-delete,
+.badge.rejected {
+    background: #fef2f2 !important;
+    color: #c53030 !important;
+}
+
+.status-inuse .status-dot,
+.vd-status-InUse .vd-status-dot,
+.badge-delete::before,
+.badge.rejected::before {
+    background: #e53e3e !important;
+}
+
+/* Retired / Default / Grey */
+.status-retired,
+.vd-status-Retired,
+.badge-retired,
+.badge-default {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+}
+
+.status-retired .status-dot,
+.vd-status-Retired .vd-status-dot,
+.badge-default::before {
+    background: #64748b !important;
+}
+
+/* Available / Active / Fulfilled / Green */
+.status-available,
+.vd-status-Available,
+.badge-available,
+.badge-receive,
+.badge-return,
+.badge.fulfilled,
+.status-active {
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+}
+
+.status-available .status-dot,
+.vd-status-Available .vd-status-dot,
+.badge-receive::before,
+.badge-return::before,
+.badge.fulfilled::before {
+    background: #10b981 !important;
+}
+
+/* Maintenance / Pending / Yellow / Amber */
+.status-maintenance,
+.vd-status-Maintenance,
+.badge-maintenance,
+.badge.pending,
+.badge-update {
+    background: #fffbeb !important;
+    color: #b45309 !important;
+}
+
+.status-maintenance .status-dot,
+.vd-status-Maintenance .vd-status-dot,
+.badge-maintenance::before,
+.badge.pending::before,
+.badge-update::before {
+    background: #f59e0b !important;
+}
+
+/* Add / Info / Blue */
+.badge-add,
+.status-info {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+}
+
+.badge-add::before,
+.status-info .status-dot {
+    background: #3b82f6 !important;
+}

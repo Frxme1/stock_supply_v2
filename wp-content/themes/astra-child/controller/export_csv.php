@@ -15,7 +15,7 @@ function handle_device_csv_export() {
     $table_device_wn = 'DevicesWithNames';
 
     // Same filter logic as formDevice.php
-    $search = isset($_GET['device_search']) ? sanitize_text_field($_GET['device_search']) : '';
+    $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
     $filter_status = isset($_GET['filter_status']) ? sanitize_text_field($_GET['filter_status']) : '';
     $filter_department = isset($_GET['filter_department']) ? sanitize_text_field($_GET['filter_department']) : '';
     $filter_brand = isset($_GET['filter_brand']) ? sanitize_text_field($_GET['filter_brand']) : '';

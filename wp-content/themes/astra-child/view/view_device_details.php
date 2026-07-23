@@ -34,7 +34,7 @@ function device_view_details($device_id = null)
     $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
     $offset = ($current_page - 1) * $page;
 
-    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
+    $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
 
     $where = "WHERE h.DeviceID = %s";
     $params = [$device_id];

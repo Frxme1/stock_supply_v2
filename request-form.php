@@ -55,16 +55,13 @@ if ($available_devices) {
 $borrow_devices_json = json_encode($devices_by_cat);
 
 // 3. Data for Repair Request Form
-$in_use_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
-if (!$in_use_status) $in_use_status = 2; // Default fallback
-
-$in_use_devices = $wpdb->get_results($wpdb->prepare("
+$in_use_devices = $wpdb->get_results("
     SELECT d.DeviceID, d.OwnerID, c.CategoryName, b.BrandName, d.Model, d.SerialNumber
     FROM Devices d
     LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
     LEFT JOIN Brands b ON d.BrandID = b.BrandID
-    WHERE d.StatusID = %d AND d.OwnerID IS NOT NULL
-", $in_use_status));
+    WHERE d.OwnerID IS NOT NULL AND d.OwnerID > 0
+");
 
 $devices_by_owner = [];
 if ($in_use_devices) {
@@ -396,6 +393,18 @@ $repair_devices_json = json_encode($devices_by_owner);
                     </select>
                 </div>
 
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="BorrowDate">Borrow Date / วันที่เริ่มยืม <span style="color:red">*</span></label>
+                        <input type="date" name="BorrowDate" id="BorrowDate" class="form-control" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>" required onchange="updateReturnDateMin()">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="ExpectedReturnDate">Expected Return Date / วันกำหนดคืน <span style="color:red">*</span></label>
+                        <input type="date" name="ExpectedReturnDate" id="ExpectedReturnDate" class="form-control" value="<?= date('Y-m-d', strtotime('+1 day')) ?>" min="<?= date('Y-m-d') ?>" required>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="BorrowReason">Reason / Justification</label>
                     <textarea name="Reason" id="BorrowReason" rows="3" class="form-control"
@@ -430,6 +439,10 @@ $repair_devices_json = json_encode($devices_by_owner);
                     </select>
                 </div>
 
+                <div id="noDeviceNotice" style="display: none; padding: 12px 16px; margin-bottom: 1.5rem; border-radius: 10px; background: #fffbebf; border: 1px solid #fef3c7; color: #b45309; font-size: 0.9rem; font-weight: 500;">
+                    ⚠️ <strong>ไม่พบอุปกรณ์ประจำตัวในระบบ:</strong> คุณยังไม่มีอุปกรณ์ที่รับมอบหมายจาก Admin จึงไม่สามารถเลือกอุปกรณ์ส่งซ่อมได้ หากมีอุปกรณ์ในครอบครองแล้ว กรุณาแจ้งฝ่าย IT เพื่ออัปเดตข้อมูลมอบหมายอุปกรณ์ครับ
+                </div>
+
                 <div class="form-group">
                     <label for="RepairDeviceID">Select Device to Repair</label>
                     <select name="DeviceID" id="RepairDeviceID" class="form-control" required disabled>
@@ -456,7 +469,10 @@ $repair_devices_json = json_encode($devices_by_owner);
 
         function syncSelect2(id) {
             if (typeof $ !== 'undefined' && $.fn.select2) {
-                $('#' + id).trigger('change.select2');
+                const domEl = document.getElementById(id);
+                if (domEl) {
+                    $('#' + id).prop('disabled', domEl.disabled).trigger('change.select2');
+                }
             }
         }
 
@@ -484,11 +500,13 @@ $repair_devices_json = json_encode($devices_by_owner);
                 repairBtn.classList.add('active');
                 borrowTab.classList.remove('active');
                 repairTab.classList.add('active');
+                filterRepairDevices();
             } else {
                 repairBtn.classList.remove('active');
                 borrowBtn.classList.add('active');
                 repairTab.classList.remove('active');
                 borrowTab.classList.add('active');
+                filterBorrowDevices();
             }
 
             if (typeof $ !== 'undefined' && $.fn.select2) {
@@ -596,15 +614,28 @@ $repair_devices_json = json_encode($devices_by_owner);
             syncSelect2('RequestedDeviceID');
         }
 
+        function updateReturnDateMin() {
+            const borrowInput = document.getElementById('BorrowDate');
+            const returnInput = document.getElementById('ExpectedReturnDate');
+            if (borrowInput && returnInput) {
+                returnInput.min = borrowInput.value;
+                if (returnInput.value < borrowInput.value) {
+                    returnInput.value = borrowInput.value;
+                }
+            }
+        }
+
         // 3. Repair Form Logic (Uses loggedOwnerId)
         function filterRepairDevices() {
             const deviceSelect = document.getElementById('RepairDeviceID');
+            const repairNotice = document.getElementById('noDeviceNotice');
             deviceSelect.innerHTML = '<option value="">-- Select Device --</option>';
 
             const userDevices = devicesByOwner[loggedOwnerId] || [];
 
             if (userDevices.length > 0) {
                 deviceSelect.disabled = false;
+                if (repairNotice) repairNotice.style.display = 'none';
                 userDevices.forEach(d => {
                     const opt = document.createElement('option');
                     opt.value = d.id;
@@ -613,6 +644,7 @@ $repair_devices_json = json_encode($devices_by_owner);
                 });
             } else {
                 deviceSelect.disabled = true;
+                if (repairNotice) repairNotice.style.display = 'block';
                 const opt = document.createElement('option');
                 opt.value = "";
                 opt.textContent = "❌ You currently have no assigned devices";
@@ -675,11 +707,16 @@ $repair_devices_json = json_encode($devices_by_owner);
         document.getElementById('repairRequestForm').addEventListener('submit', function (e) {
             e.preventDefault();
 
+            const deviceSelect = document.getElementById('RepairDeviceID');
+            const wasDisabled = deviceSelect.disabled;
+            deviceSelect.disabled = false;
+
             const submitBtn = this.querySelector('.btn-submit');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting...';
 
             const formData = new FormData(this);
+            deviceSelect.disabled = wasDisabled;
             formData.append('ajax_submit', '1');
 
             const repairSubmitUrl = '<?= site_url('/repair-submit.php') ?>';

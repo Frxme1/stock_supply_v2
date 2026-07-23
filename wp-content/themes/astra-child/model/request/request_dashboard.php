@@ -12,7 +12,7 @@ function device_request_dashboard()
         $device_id = sanitize_text_field($_POST['assign_device_id']);
 
         $req = $wpdb->get_row($wpdb->prepare("
-            SELECT r.OwnerID, r.CategoryID, c.CategoryName 
+            SELECT r.OwnerID, r.CategoryID, r.BorrowDate, r.ExpectedReturnDate, c.CategoryName 
             FROM Device_Requests r 
             LEFT JOIN Categories c ON r.CategoryID = c.CategoryID 
             WHERE r.RequestID = %d
@@ -26,12 +26,14 @@ function device_request_dashboard()
             $wpdb->update(
                 'Devices',
                 [
-                    'OwnerID' => $req->OwnerID,
-                    'DepartmentID' => $owner_info->DepartmentID ?? null,
-                    'PositionID' => $owner_info->PositionID ?? null,
-                    'ReceiveDate' => current_time('mysql'),
-                    'StatusID' => $inuse_status,
-                    'ReturnDate' => null
+                    'OwnerID'            => $req->OwnerID,
+                    'DepartmentID'       => $owner_info->DepartmentID ?? null,
+                    'PositionID'         => $owner_info->PositionID ?? null,
+                    'ReceiveDate'        => $req->BorrowDate ?: current_time('mysql'),
+                    'StatusID'           => $inuse_status,
+                    'ReturnDate'         => null,
+                    'ExpectedReturnDate' => $req->ExpectedReturnDate ?: null,
+                    'LastNotifiedDate'   => null
                 ],
                 ['DeviceID' => $device_id]
             );
@@ -56,7 +58,7 @@ function device_request_dashboard()
                 'DeviceID' => $device_id,
                 'Action' => 'Receive',
                 'Date' => current_time('mysql'),
-                'Description' => "Device assigned from Request #{$request_id}",
+                'Description' => "Device assigned from Request #{$request_id}" . ($req->ExpectedReturnDate ? " (Due: {$req->ExpectedReturnDate})" : ""),
                 'user_email' => $admin_email,
                 'CategoryID' => $req->CategoryID,
                 'Owner' => $owner_nickname
@@ -83,6 +85,190 @@ function device_request_dashboard()
                         timer: 1500
                     }).then(() => {
                         window.location.href = '" . esc_js($redirect_url) . "';
+                    });
+                });
+            </script>";
+        }
+    }
+
+    // Handle Quick Check-in (Scan Serial Number / Device ID / QR URL to return instantly)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quick_checkin_device'])) {
+        $raw_scan_code = trim(sanitize_text_field($_POST['scan_code']));
+        $scan_code = $raw_scan_code;
+
+        // Parse URL if scanned text contains a query string like ?view=LAP032 or ?View=LAP032
+        if (preg_match('/[?&]view=([^&]+)/i', $raw_scan_code, $matches)) {
+            $scan_code = trim(urldecode($matches[1]));
+        }
+
+        if (!empty($scan_code)) {
+            $dev = $wpdb->get_row($wpdb->prepare("
+                SELECT d.DeviceID, d.OwnerID, d.CategoryID, b.BrandName, d.Model, d.SerialNumber, s.StatusName
+                FROM Devices d
+                LEFT JOIN Brands b ON d.BrandID = b.BrandID
+                LEFT JOIN Statuses s ON d.StatusID = s.StatusID
+                WHERE d.DeviceID = %s OR d.SerialNumber = %s
+            ", $scan_code, $scan_code));
+
+            if ($dev) {
+                if ($dev->StatusName === 'Available') {
+                    echo "<script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Already Available',
+                                text: 'Device " . esc_js($dev->DeviceID) . " is already in stock.',
+                                confirmButtonColor: '#3b82f6'
+                            });
+                        });
+                    </script>";
+                } else {
+                    $avail_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
+                    $prev_owner_id = $dev->OwnerID;
+                    $prev_owner = $prev_owner_id ? $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $prev_owner_id)) : 'Unknown';
+
+                    // 2-step update inside transaction to satisfy MySQL Trigger (BeforeUpdateReturnDateCheck requires OwnerID != null when updating ReturnDate)
+                    $wpdb->query('START TRANSACTION');
+
+                    $step1 = $wpdb->update('Devices', [
+                        'StatusID'           => $avail_status,
+                        'ReturnDate'         => current_time('Y-m-d'),
+                        'DepartmentID'       => null,
+                        'ReceiveDate'        => null,
+                        'RepairDate'         => null,
+                        'ExpectedReturnDate' => null,
+                        'LastNotifiedDate'   => null
+                    ], ['DeviceID' => $dev->DeviceID]);
+
+                    $step2 = ($step1 !== false) ? $wpdb->update('Devices', [
+                        'OwnerID'    => null,
+                        'PositionID' => null
+                    ], ['DeviceID' => $dev->DeviceID]) : false;
+
+                    if ($step1 !== false && $step2 !== false) {
+                        $wpdb->query('COMMIT');
+
+                        $wpdb->insert('History_new', [
+                            'DeviceID'    => $dev->DeviceID,
+                            'Action'      => 'Return',
+                            'Date'        => current_time('mysql'),
+                            'Description' => "Quick Check-in via Barcode Scan (Returned by {$prev_owner})",
+                            'user_email'  => $admin_email,
+                            'CategoryID'  => $dev->CategoryID,
+                            'Owner'       => $prev_owner
+                        ]);
+
+                        if ($prev_owner_id && function_exists('stock_supply_send_email')) {
+                            stock_supply_send_email('Return', $dev->DeviceID, $prev_owner_id);
+                        }
+
+                        echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '⚡ Quick Check-in Successful!',
+                                    html: '<strong>Device ID:</strong> " . esc_js($dev->DeviceID) . "<br><strong>Serial:</strong> " . esc_js($dev->SerialNumber) . "<br>Returned from: <strong>" . esc_js($prev_owner) . "</strong>',
+                                    confirmButtonColor: '#10b981'
+                                }).then(() => {
+                                    window.location.href = window.location.href;
+                                });
+                            });
+                        </script>";
+                    } else {
+                        $wpdb->query('ROLLBACK');
+                        $err = $wpdb->last_error;
+                        echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Check-in Error',
+                                    text: 'Failed to update device status: " . esc_js($err) . "',
+                                    confirmButtonColor: '#ef4444'
+                                });
+                            });
+                        </script>";
+                    }
+                }
+            } else {
+                echo "<script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Device Not Found',
+                            text: 'No device found for Barcode/SN: " . esc_js($scan_code) . "',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    });
+                </script>";
+            }
+        }
+    }
+
+    // Handle Manual Send Email Reminder
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_overdue_reminder'])) {
+        $remind_device_id = sanitize_text_field($_POST['remind_device_id']);
+        $dev = $wpdb->get_row($wpdb->prepare("SELECT DeviceID, OwnerID, ExpectedReturnDate FROM Devices WHERE DeviceID = %s", $remind_device_id));
+
+        if ($dev && $dev->OwnerID) {
+            $today = current_time('Y-m-d');
+            $action_type = ($dev->ExpectedReturnDate < $today) ? 'Overdue' : 'DueSoon';
+            
+            if (function_exists('stock_supply_send_email')) {
+                stock_supply_send_email($action_type, $dev->DeviceID, $dev->OwnerID, $dev->ExpectedReturnDate);
+            }
+
+            $wpdb->update('Devices', ['LastNotifiedDate' => $today], ['DeviceID' => $dev->DeviceID]);
+
+            echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Reminder Email Sent!',
+                        text: 'Notification email sent to borrower of " . esc_js($dev->DeviceID) . ".',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = window.location.href;
+                    });
+                });
+            </script>";
+        }
+    }
+
+    // Handle Admin Extend Loan
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_extend_loan'])) {
+        $extend_device_id = sanitize_text_field($_POST['extend_device_id']);
+        $new_due_date = sanitize_text_field($_POST['new_due_date']);
+        $extend_reason = sanitize_textarea_field($_POST['extend_reason']);
+
+        if ($extend_device_id && $new_due_date) {
+            $wpdb->update('Devices', [
+                'ExpectedReturnDate' => $new_due_date,
+                'LastNotifiedDate'   => null
+            ], ['DeviceID' => $extend_device_id]);
+
+            $dev_owner_id = $wpdb->get_var($wpdb->prepare("SELECT OwnerID FROM Devices WHERE DeviceID = %s", $extend_device_id));
+            $dev_owner = $dev_owner_id ? $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $dev_owner_id)) : 'N/A';
+
+            $wpdb->insert('History_new', [
+                'DeviceID'    => $extend_device_id,
+                'Action'      => 'Extend Loan',
+                'Date'        => current_time('mysql'),
+                'Description' => "Admin extended return date to {$new_due_date}. Reason: {$extend_reason}",
+                'user_email'  => $admin_email,
+                'Owner'       => $dev_owner
+            ]);
+
+            echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Loan Extended',
+                        text: 'Device " . esc_js($extend_device_id) . " return date updated to " . esc_js($new_due_date) . ".',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = window.location.href;
                     });
                 });
             </script>";
@@ -269,6 +455,33 @@ function device_request_dashboard()
         ];
     }
     $devices_json = json_encode($devices_by_cat);
+
+    // Fetch Active Loaners (Devices with ExpectedReturnDate set & Status = 'In Use')
+    $inuse_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
+    $active_loaners = $wpdb->get_results($wpdb->prepare("
+        SELECT d.DeviceID, d.SerialNumber, d.Model, d.ReceiveDate, d.ExpectedReturnDate, d.LastNotifiedDate,
+               o.OwnerID, o.Nickname, o.FirstName, o.LastName, c.CategoryName, b.BrandName
+        FROM Devices d
+        LEFT JOIN Owners o ON d.OwnerID = o.OwnerID
+        LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+        LEFT JOIN Brands b ON d.BrandID = b.BrandID
+        WHERE d.StatusID = %d AND d.ExpectedReturnDate IS NOT NULL AND d.ExpectedReturnDate != '0000-00-00'
+        ORDER BY d.ExpectedReturnDate ASC
+    ", $inuse_status_id));
+
+    $today = current_time('Y-m-d');
+    $tomorrow = date('Y-m-d', strtotime('+1 day', strtotime($today)));
+    $overdue_count = 0;
+    $due_soon_count = 0;
+    if ($active_loaners) {
+        foreach ($active_loaners as $l) {
+            if ($l->ExpectedReturnDate < $today) {
+                $overdue_count++;
+            } elseif ($l->ExpectedReturnDate === $today || $l->ExpectedReturnDate === $tomorrow) {
+                $due_soon_count++;
+            }
+        }
+    }
 
     ob_start();
     ?>
@@ -586,8 +799,104 @@ function device_request_dashboard()
     </style>
 
     <div class="dashboard-container">
-        <h1 class="title">IT Request
-            Device</h1>
+        <h1 class="title">IT Request & Loaner Management</h1>
+
+        <!-- Summary Cards Grid (Hidden per user request) -->
+        <div style="display: none; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <!-- Overdue Card -->
+            <a href="#loaner-tracking-section" style="text-decoration: none;">
+                <div class="table-wrapper" style="margin-bottom: 0; padding: 20px; border-left: 5px solid #ef4444; background: linear-gradient(135deg, rgba(254, 226, 226, 0.6) 0%, rgba(255, 255, 255, 0.9) 100%); cursor: pointer; transition: transform 0.2s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #991b1b; text-transform: uppercase; letter-spacing: 0.05em;">🔴 อุปกรณ์ค้างส่ง (Overdue)</span>
+                            <div style="font-size: 2.2rem; font-weight: 800; color: #dc2626; margin-top: 5px;"><?= $overdue_count ?> <span style="font-size: 1rem; font-weight: 500;">เครื่อง</span></div>
+                        </div>
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(239, 68, 68, 0.15); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Due Soon Card -->
+            <a href="#loaner-tracking-section" style="text-decoration: none;">
+                <div class="table-wrapper" style="margin-bottom: 0; padding: 20px; border-left: 5px solid #f59e0b; background: linear-gradient(135deg, rgba(254, 243, 199, 0.6) 0%, rgba(255, 255, 255, 0.9) 100%); cursor: pointer; transition: transform 0.2s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">🟠 ใกล้ถึงกำหนดคืน (Due Soon)</span>
+                            <div style="font-size: 2.2rem; font-weight: 800; color: #d97706; margin-top: 5px;"><?= $due_soon_count ?> <span style="font-size: 1rem; font-weight: 500;">เครื่อง</span></div>
+                        </div>
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <?php include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); ?>
+
+        <!-- 📅 Section: Temporary Loaners & Overdue Tracking -->
+        <div id="loaner-tracking-section">
+            <h3 class="section-title">📅 อุปกรณ์ยืมชั่วคราว และแจ้งเตือนค้างส่ง (Temporary Loaners & Overdue Tracking)</h3>
+            <div class="table-wrapper">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Device ID</th>
+                            <th>Category / Details</th>
+                            <th>Borrower</th>
+                            <th>Receive Date</th>
+                            <th>Expected Return Date</th>
+                            <th>Status</th>
+                            <th>Last Email Sent</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($active_loaners)): ?>
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #64748b;">ไม่มีรายการอุปกรณ์ยืมชั่วคราวในขณะนี้</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($active_loaners as $l):
+                                $due_date = $l->ExpectedReturnDate;
+                                $is_overdue = ($due_date < $today);
+                                $is_due_soon = ($due_date === $today || $due_date === $tomorrow);
+                                
+                                $days_diff = (strtotime($today) - strtotime($due_date)) / 86400;
+                                ?>
+                                <tr>
+                                    <td><strong><?= esc_html($l->DeviceID) ?></strong><br><small class="text-muted">SN: <?= esc_html($l->SerialNumber ?: 'N/A') ?></small></td>
+                                    <td><?= esc_html($l->CategoryName ?: 'Device') ?><br><small><?= esc_html(($l->BrandName ?? '') . ' ' . ($l->Model ?? '')) ?></small></td>
+                                    <td><strong><?= esc_html($l->Nickname ?: $l->FirstName) ?></strong></td>
+                                    <td><?= esc_html($l->ReceiveDate ? date('Y-m-d', strtotime($l->ReceiveDate)) : '-') ?></td>
+                                    <td><strong style="color: <?= $is_overdue ? '#dc2626' : ($is_due_soon ? '#d97706' : '#166534') ?>;"><?= esc_html($due_date) ?></strong></td>
+                                    <td>
+                                        <?php if ($is_overdue): ?>
+                                            <span class="badge rejected" style="background:#fee2e2; color:#991b1b;">🔴 เลยกำหนด (<?= intval($days_diff) ?> วัน)</span>
+                                        <?php elseif ($is_due_soon): ?>
+                                            <span class="badge pending" style="background:#fef3c7; color:#b45309;">🟠 ใกล้ถึงกำหนดคืน</span>
+                                        <?php else: ?>
+                                            <span class="badge fulfilled" style="background:#dcfce7; color:#166534;">🟢 กำลังยืม</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><small><?= esc_html($l->LastNotifiedDate ?: 'ยังไม่ได้ส่ง') ?></small></td>
+                                    <td>
+                                        <form method="POST" style="display:inline;">
+                                            <input type="hidden" name="remind_device_id" value="<?= esc_attr($l->DeviceID) ?>">
+                                            <button type="submit" name="send_overdue_reminder" class="btn-action btn-fulfill" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">📧 ส่ง Email แจ้งเตือน</button>
+                                        </form>
+                                        <button type="button" class="btn-action btn-cancel" onclick="openAdminExtendModal('<?= esc_attr($l->DeviceID) ?>', '<?= esc_attr($due_date) ?>')">📅 ขยายเวลา</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <h3 class="section-title">📦 Borrow Requests</h3>
         <div class="table-wrapper">
             <table class="table-custom">
@@ -598,6 +907,8 @@ function device_request_dashboard()
                         <th>Requester</th>
                         <th>Category</th>
                         <th>Reason</th>
+                        <th>Borrow Date</th>
+                        <th>Expected Return</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -605,7 +916,7 @@ function device_request_dashboard()
                 <tbody>
                     <?php if (empty($requests)): ?>
                         <tr>
-                            <td colspan="7" style="text-align: center;">No borrow requests found.</td>
+                            <td colspan="9" style="text-align: center;">No borrow requests found.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($requests as $r): ?>
@@ -615,6 +926,8 @@ function device_request_dashboard()
                                 <td><?= esc_html($r->Nickname ?: $r->FirstName) ?></td>
                                 <td><?= esc_html($r->CategoryName) ?></td>
                                 <td><small><?= esc_html($r->Reason) ?></small></td>
+                                <td><small><?= esc_html($r->BorrowDate ?: date('Y-m-d', strtotime($r->RequestDate))) ?></small></td>
+                                <td><small><?= esc_html($r->ExpectedReturnDate ?: '-') ?></small></td>
                                 <td>
                                     <?php
                                     $s = strtolower($r->Status);
@@ -691,6 +1004,27 @@ function device_request_dashboard()
         </div>
     </div>
 
+    <!-- Admin Extend Loan Modal -->
+    <div id="adminExtendModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>📅 ขยายเวล่ายืม (Extend Loan)</h3>
+            <p>Device ID: <strong id="admin_extend_device_display"></strong></p>
+            <form method="POST">
+                <input type="hidden" name="extend_device_id" id="admin_extend_device_id">
+                <label>วันกำหนดคืนใหม่ (New Expected Return Date) <span style="color:red">*</span></label>
+                <input type="date" name="new_due_date" id="admin_new_due_date" class="form-control" required style="width: 100%; padding: 12px; margin: 10px 0 20px 0; border: 2px solid #e2e8f0; border-radius: 12px;">
+                
+                <label>เหตุผลการขยายเวลา <span style="color:red">*</span></label>
+                <textarea name="extend_reason" rows="3" required placeholder="ระบุเหตุผลการขยายเวล่ายืม..."></textarea>
+                
+                <div style="text-align: right; margin-top: 10px;">
+                    <button type="button" class="btn-action btn-cancel" onclick="closeModal('adminExtendModal')">Cancel</button>
+                    <button type="submit" name="admin_extend_loan" class="btn-action btn-fulfill">Confirm Extension</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Fulfill Modal -->
     <div id="fulfillModal" class="modal-overlay">
         <div class="modal-content">
@@ -750,6 +1084,15 @@ function device_request_dashboard()
     <script>
         const devicesByCat = <?= $devices_json ?>;
 
+        function openAdminExtendModal(deviceId, currentDueDate) {
+            document.getElementById('admin_extend_device_id').value = deviceId;
+            document.getElementById('admin_extend_device_display').textContent = deviceId;
+            if (currentDueDate) {
+                document.getElementById('admin_new_due_date').value = currentDueDate;
+            }
+            document.getElementById('adminExtendModal').style.display = 'flex';
+        }
+
         function openFulfillModal(reqId, catId, catName, requestedDeviceId) {
             document.getElementById('fulfill_request_id').value = reqId;
             document.getElementById('hidden_assign_device_id').value = requestedDeviceId;
@@ -792,6 +1135,8 @@ function device_request_dashboard()
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
+
+        // --- End of Request Dashboard Specific JS ---
     </script>
 
     <?php

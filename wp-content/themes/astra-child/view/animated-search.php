@@ -92,3 +92,18 @@ $search_list = isset($search_list) ? $search_list : '';
     border-color: #94a3b8 !important;
 }
 </style>
+
+<script>
+if (!window.hasRegisteredSearchUrlParser) {
+    window.hasRegisteredSearchUrlParser = true;
+    document.addEventListener('input', function(e) {
+        if (e.target && (e.target.name === 'device_search' || e.target.classList.contains('search-input-modern'))) {
+            const val = e.target.value;
+            const match = val.match(/[?&]view=([^&]+)/i);
+            if (match && match[1]) {
+                e.target.value = decodeURIComponent(match[1]);
+            }
+        }
+    });
+}
+</script>

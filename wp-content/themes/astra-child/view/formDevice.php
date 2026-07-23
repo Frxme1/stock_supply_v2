@@ -24,7 +24,7 @@ function device_crud()
 
     // --- ADVANCED FILTER LOGIC ---
     // Get filter parameters
-    $search = isset($_GET['device_search']) ? trim($_GET['device_search']) : '';
+    $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
     $filter_status = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
     $filter_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
     $filter_department = isset($_GET['filter_department']) ? trim($_GET['filter_department']) : '';
@@ -262,8 +262,8 @@ function device_crud()
 
 
 
-        <div id="device_table" class="table-responsive-xl next-table-wrapper">
-            <table class="table next-table" style="width: 100%;">
+        <div id="device_table" class="table-wrapper">
+            <table class="table-custom" style="width: 100%;">
                 <thead>
                     <tr>
                         <th class="py-3 text-start" style="display: none;"><input type="checkbox" id="selectAll"></th>

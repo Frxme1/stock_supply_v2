@@ -226,11 +226,13 @@ function handle_device_actions()
 
             if ($device_info) {
                 $update_data = [
-                    'StatusID'     => $return_status_id,
-                    'ReturnDate'   => $return_date,
-                    'DepartmentID' => null,
-                    'ReceiveDate'  => null,
-                    'RepairDate'   => null,
+                    'StatusID'           => $return_status_id,
+                    'ReturnDate'         => $return_date,
+                    'DepartmentID'       => null,
+                    'ReceiveDate'        => null,
+                    'RepairDate'         => null,
+                    'ExpectedReturnDate' => null,
+                    'LastNotifiedDate'   => null,
                 ];
 
                 // Keep the original owner for the ReturnDate trigger, then clear the assignment.
