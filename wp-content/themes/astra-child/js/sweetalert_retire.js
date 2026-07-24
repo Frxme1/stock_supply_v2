@@ -1,4 +1,4 @@
-function confirmRetire(id, paramName = 'retired') {
+function confirmRetire(id, paramName = 'retired', nonce = '') {
     Swal.fire({
         title: 'Are you sure?',
         text: 'Do you want to retire this item? Please provide a reason.',
@@ -17,6 +17,9 @@ function confirmRetire(id, paramName = 'retired') {
             const url = new URL(window.location.href);
             url.searchParams.set(paramName, id);
             url.searchParams.set('reason', result.value);
+            if (nonce) {
+                url.searchParams.set('_wpnonce', nonce);
+            }
             window.location.href = url.toString();
         }
     });

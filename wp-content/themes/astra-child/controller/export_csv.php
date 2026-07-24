@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 // Handle CSV Export
 add_action('init', 'handle_device_csv_export');
 
@@ -7,8 +11,12 @@ function handle_device_csv_export() {
         return;
     }
 
-    if (!is_user_logged_in()) {
-        wp_die('Unauthorized');
+    if (!is_user_logged_in() || (!current_user_can('manage_options') && !current_user_can('edit_posts'))) {
+        wp_die('Unauthorized access');
+    }
+
+    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'export_device_csv_action')) {
+        wp_die('Security check failed');
     }
 
     global $wpdb;

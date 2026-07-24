@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function receive_device($device_data = null)
 {
     global $wpdb;
@@ -24,11 +28,14 @@ function receive_device($device_data = null)
 
     // เมื่อฟอร์มถูกส่ง
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_device'])) {
-        $device_id = $_POST['DeviceID'] ?? null;
-        $owner_id = $_POST['OwnerID'] ?? null;
-        $receive_date = $_POST['ReceiveDate'] ?? null;
-        $expected_return_date = !empty($_POST['ExpectedReturnDate']) ? sanitize_text_field($_POST['ExpectedReturnDate']) : null;
+        if (!is_user_logged_in() || !isset($_POST['_rcv_nonce']) || !wp_verify_nonce($_POST['_rcv_nonce'], 'receive_device_nonce')) {
+            echo '<p style="color:red;">Security check failed.</p>';
+            return ob_get_clean();
+        }
 
+        $device_id = sanitize_text_field($_POST['DeviceID'] ?? '');
+        $owner_id = intval($_POST['OwnerID'] ?? 0);
+        $receive_date = sanitize_text_field($_POST['ReceiveDate'] ?? '');
         $owner_info = $wpdb->get_row($wpdb->prepare("SELECT DepartmentID, PositionID FROM Owners WHERE OwnerID = %d", $owner_id));
         $department_id = $owner_info->DepartmentID ?? null;
         $position_id = $owner_info->PositionID ?? null;
@@ -40,14 +47,12 @@ function receive_device($device_data = null)
         $updated = $wpdb->update(
             $devices_table,
             [
-                'OwnerID'            => $owner_id,
-                'DepartmentID'       => $department_id,
-                'PositionID'         => $position_id,
-                'ReceiveDate'        => $receive_date,
-                'StatusID'           => $status_id,
-                'ReturnDate'         => null,
-                'ExpectedReturnDate' => $expected_return_date,
-                'LastNotifiedDate'   => null,
+                'OwnerID'      => $owner_id,
+                'DepartmentID' => $department_id,
+                'PositionID'   => $position_id,
+                'ReceiveDate'  => $receive_date,
+                'StatusID'     => $status_id,
+                'ReturnDate'   => null,
             ],
             ['DeviceID' => $device_id]
         );
@@ -120,6 +125,7 @@ function receive_device($device_data = null)
     ?>
 
     <form method="POST">
+        <?php wp_nonce_field('receive_device_nonce', '_rcv_nonce'); ?>
         <h2>Assign Device</h2>
 
         <input type="hidden" name="DeviceID" value="<?= esc_attr($device_data->DeviceID ?? '') ?>">
@@ -172,10 +178,7 @@ function receive_device($device_data = null)
                     required>
             </div>
 
-            <div class="form-group">
-                <label>Expected Return Date (วันกำหนดคืน)</label>
-                <input type="date" name="ExpectedReturnDate" min="<?= date('Y-m-d') ?>" placeholder="Optional for loaners">
-            </div>
+
         </div>
 
         <div class="form-actions">

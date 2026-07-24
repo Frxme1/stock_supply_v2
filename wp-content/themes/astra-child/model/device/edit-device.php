@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function edit_device_form($editing = null)
 {
     ob_start();
@@ -21,6 +25,10 @@ function edit_device_form($editing = null)
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['DeviceID'])) {
+        if (!is_user_logged_in() || !isset($_POST['_edit_dev_nonce']) || !wp_verify_nonce($_POST['_edit_dev_nonce'], 'edit_device_nonce')) {
+            echo '<p style="color:red;">Security check failed.</p>';
+            return ob_get_clean();
+        }
         $DeviceID       = sanitize_text_field($_POST['DeviceID']);
         $Model          = sanitize_text_field($_POST['Model']);
         $SerialNumber   = sanitize_text_field($_POST['SerialNumber']);
@@ -146,6 +154,7 @@ function edit_device_form($editing = null)
 
     <!-- HTML ฟอร์ม -->
     <form method="POST" action="">
+        <?php wp_nonce_field('edit_device_nonce', '_edit_dev_nonce'); ?>
         <h2 style="text-align: center;">Edit Device</h2>
         <input type="hidden" name="DeviceID" value="<?= esc_attr($editing->DeviceID ?? '') ?>">
         <?php

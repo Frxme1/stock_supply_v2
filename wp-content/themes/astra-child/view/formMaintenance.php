@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function form_maintenance($editing = null)
 {
     global $wpdb;
@@ -27,6 +31,10 @@ function form_maintenance($editing = null)
 
     // Handle form submit
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_device'])) {
+        if (!is_user_logged_in() || !isset($_POST['_maint_nonce']) || !wp_verify_nonce($_POST['_maint_nonce'], 'update_maintenance_nonce')) {
+            show_alert('error', 'Unauthorized', 'Security check failed.');
+            return ob_get_clean();
+        }
         $DeviceID = sanitize_text_field($_POST['DeviceID']);
         $RepairDate = sanitize_text_field($_POST['RepairDate']);
         $Details = sanitize_textarea_field($_POST['Details']);
@@ -62,7 +70,7 @@ function form_maintenance($editing = null)
         );
 
         if (!$inserted || $wpdb->last_error) {
-            show_alert('error', 'Database Error', esc_html($wpdb->last_error));
+            show_alert('error', 'Database Error', 'An error occurred while creating the maintenance record.');
             return ob_get_clean();
         }
 
@@ -83,7 +91,7 @@ function form_maintenance($editing = null)
         );
 
         if ($updated === false || $wpdb->last_error) {
-            show_alert('error', 'Database Error', esc_html($wpdb->last_error));
+            show_alert('error', 'Database Error', 'An error occurred while updating the device status.');
             return ob_get_clean();
         }
 
@@ -135,6 +143,7 @@ function form_maintenance($editing = null)
     ?>
 
     <form class="form-maintenance" method="POST">
+        <?php wp_nonce_field('update_maintenance_nonce', '_maint_nonce'); ?>
         <h2>Form Maintenance</h2>
         <div class="mt-4 mb-4">
             <h5 style="font-weight: 600; color: #374151;">Device Information</h5>

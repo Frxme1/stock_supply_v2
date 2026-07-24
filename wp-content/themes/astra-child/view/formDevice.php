@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function device_crud()
 {
     global $wpdb; // Access the WordPress database object
@@ -94,7 +98,7 @@ function device_crud()
     <div class="container-fluid">
         <div class="row mb-3 align-items-end">
             <div class="col-md-9">
-                <form method="GET" action="#advanced-filter-form" id="advanced-filter-form">
+                <form method="GET" action="" id="advanced-filter-form">
                     <?php
                     foreach ($_GET as $key => $value) {
                         if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {

@@ -1,4 +1,4 @@
-function confirmDeleteHis(HistoryID) {
+function confirmDeleteHis(HistoryID, nonce) {
     Swal.fire({
         title: 'Are you sure?',
         icon: 'warning',
@@ -10,6 +10,9 @@ function confirmDeleteHis(HistoryID) {
             // แปลง URL ปัจจุบันโดยไม่ล้าง query อื่น ๆ
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('delete', HistoryID);
+            if (nonce) {
+                currentUrl.searchParams.set('_wpnonce', nonce);
+            }
             window.location.href = currentUrl.toString();
         }
     });

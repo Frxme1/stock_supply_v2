@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function device_view_details($device_id = null)
 {
     global $wpdb;
@@ -10,7 +14,10 @@ function device_view_details($device_id = null)
     $table_history = 'History_new';
 
     if (isset($_GET['delete'])) {
-        $history_id = $_GET['delete'];
+        if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'delete_history_nonce')) {
+            return '<p>Security check failed.</p>';
+        }
+        $history_id = sanitize_text_field($_GET['delete']);
         $wpdb->delete($table_history, ['HistoryID' => $history_id], ['%s']);
     }
 

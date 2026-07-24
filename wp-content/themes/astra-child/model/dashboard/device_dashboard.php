@@ -53,16 +53,6 @@ function device_dashboard()
     $js_dept_counts = json_encode($dept_counts);
 
     // Category config
-    $today = current_time('Y-m-d');
-    $total_overdue = $wpdb->get_var($wpdb->prepare("
-        SELECT COUNT(*) 
-        FROM Devices 
-        WHERE StatusID = (SELECT StatusID FROM Statuses WHERE StatusName = 'In Use')
-          AND ExpectedReturnDate IS NOT NULL 
-          AND ExpectedReturnDate != '0000-00-00'
-          AND ExpectedReturnDate < %s
-    ", $today));
-
     $category_config = [
         ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>'],
         ['label' => 'Monitor', 'count' => $total_monitor, 'color' => '#FDB840', 'icon' => '<i class="fa-solid fa-desktop"></i>'],
@@ -114,30 +104,7 @@ function device_dashboard()
                 </div>
             <?php endforeach; ?>
 
-            <!-- Overdue Card -->
-            <a href="/stock_supply/request-dashboard/#loaner-tracking-section" style="text-decoration: none;">
-                <div class="next-card slide-up"
-                    style="animation-delay: 0.25s; border-left: 4px solid #ef4444; background: linear-gradient(135deg, rgba(254, 226, 226, 0.45) 0%, #ffffff 100%);">
-                    <div class="next-card-header">
-                        <span class="next-card-title" style="color: #991b1b; font-weight: 700;">🔴 อุปกรณ์ค้างส่ง
-                            (Overdue)</span>
-                        <div class="next-icon-wrapper" style="background: rgba(239, 68, 68, 0.15); color: #dc2626;">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </div>
-                    </div>
-                    <div class="next-card-body">
-                        <div class="next-number-wrap">
-                            <span class="next-number count-up" data-count="<?= intval($total_overdue) ?>"
-                                style="color: #dc2626;">0</span>
-                        </div>
-                        <div class="next-trend">
-                            <span class="next-badge" style="background: #fee2e2; color: #dc2626; font-weight: 700;">
-                                ดูรายชื่อ ➔
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </a>
+
         </div>
 
         <!-- ===== SECTION 2: Status Cards ===== -->
@@ -174,15 +141,35 @@ function device_dashboard()
         </div>
 
         <!-- ===== QR Scanner Compact Bar ===== -->
-        <?php include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); ?>
+        <?php
+        $qr_details_only = true;
+        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php');
+        ?>
 
         <!-- ===== SECTION 3: Charts ===== -->
         <div class="next-grid-3 mt-4">
 
             <!-- Donut Chart -->
-            <div class="next-card slide-up" style="animation-delay: 0.2s;">
+            <div class="next-card slide-up" style="animation-delay: 0.4s;">
                 <h3 class="next-section-title">Device Distribution</h3>
-                <div id="chart-distribution" class="mt-4"></div>
+                <div id="chart-distribution" class="mt-4 flex justify-center items-center"
+                    style="padding-top: 65px; padding-left: 30px">
+                    <?php
+                    $pct_monitor = $total_devices > 0 ? round(($total_monitor / $total_devices) * 100, 1) : 0;
+                    $pct_laptop = $total_devices > 0 ? round(($total_laptop / $total_devices) * 100, 1) : 0;
+                    $pct_acc = $total_devices > 0 ? round(($total_accessories / $total_devices) * 100, 1) : 0;
+                    $device_sectors = [
+                        ['label' => 'Monitor', 'pct' => $pct_monitor, 'color' => '#FDB840'],
+                        ['label' => 'Laptop', 'pct' => $pct_laptop, 'color' => '#15A5DA'],
+                        ['label' => 'Accessories', 'pct' => $pct_acc, 'color' => '#6ABF57'],
+                    ];
+                    echo render_sectors_donut([
+                        'symbol' => 'DEVICES',
+                        'caption' => $total_devices . ' total units',
+                        'sectors' => $device_sectors,
+                    ]);
+                    ?>
+                </div>
             </div>
 
             <!-- Status Overview Chart -->
@@ -660,24 +647,6 @@ function device_dashboard()
         }
 
         function initApexCharts() {
-            // Chart 1: Device Distribution
-            var optionsDist = {
-                series: <?= $js_cat_counts ?>,
-                chart: { type: 'donut', height: 320, fontFamily: 'inherit' },
-                labels: <?= $js_cat_labels ?>,
-                colors: ['#FDB840', '#15A5DA', '#6ABF57'],
-                plotOptions: {
-                    pie: {
-                        donut: { size: '75%' }
-                    }
-                },
-                dataLabels: { enabled: false },
-                legend: { position: 'bottom' },
-                stroke: { width: 0 }
-            };
-            var chartDist = new ApexCharts(document.querySelector("#chart-distribution"), optionsDist);
-            chartDist.render();
-
             // Chart 2: Status Overview
             var optionsStatus = {
                 series: [{ name: 'Devices', data: <?= $js_status_counts ?> }],

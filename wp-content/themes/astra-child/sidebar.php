@@ -1,3 +1,8 @@
+<?php
+$sidebar_badges = function_exists('stock_supply_get_sidebar_badges') ? stock_supply_get_sidebar_badges() : ['requests' => 0, 'maintenance' => 0, 'total' => 0];
+$requests_count = $sidebar_badges['requests'];
+$maintenance_count = $sidebar_badges['maintenance'];
+?>
 <!-- ============================================================
    Custom Sidebar - Animated Expand/Collapse
    Replaces Astra default sidebar
@@ -52,8 +57,14 @@
         <a href="<?php echo esc_url(home_url('/maintenance/')); ?>" class="sidebar-link <?php echo (is_page('maintenance')) ? 'active' : ''; ?>">
             <span class="sidebar-link-icon">
                 <i class="fa-solid fa-screwdriver-wrench" style="font-size: 20px;"></i>
+                <?php if ($maintenance_count > 0): ?>
+                    <span class="sidebar-icon-badge warning"><?php echo $maintenance_count > 99 ? '99+' : $maintenance_count; ?></span>
+                <?php endif; ?>
             </span>
             <span class="sidebar-link-text">Maintenance</span>
+            <?php if ($maintenance_count > 0): ?>
+                <span class="sidebar-badge warning"><?php echo $maintenance_count > 99 ? '99+' : $maintenance_count; ?></span>
+            <?php endif; ?>
         </a>
 
         <!-- History -->
@@ -76,8 +87,14 @@
         <a href="<?php echo esc_url(home_url('/request-dashboard/')); ?>" class="sidebar-link <?php echo (is_page('request-dashboard')) ? 'active' : ''; ?>">
             <span class="sidebar-link-icon">
                 <i class="fa-solid fa-list-check" style="font-size: 20px;"></i>
+                <?php if ($requests_count > 0): ?>
+                    <span class="sidebar-icon-badge danger"><?php echo $requests_count > 99 ? '99+' : $requests_count; ?></span>
+                <?php endif; ?>
             </span>
             <span class="sidebar-link-text">Requests</span>
+            <?php if ($requests_count > 0): ?>
+                <span class="sidebar-badge danger"><?php echo $requests_count > 99 ? '99+' : $requests_count; ?></span>
+            <?php endif; ?>
         </a>
 
         <!-- Add Device -->
@@ -108,6 +125,9 @@
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
+        <?php if ($sidebar_badges['total'] > 0): ?>
+            <span class="mobile-btn-badge-dot"></span>
+        <?php endif; ?>
     </button>
     <span class="mobile-logo-text">Stock Supply</span>
 </div>
@@ -129,47 +149,44 @@
     </div>
     <nav class="mobile-nav-links">
         <a href="<?php echo esc_url(home_url('/home/')); ?>" class="mobile-link <?php echo (is_page('home')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-house" style="font-size: 20px;"></i>
-            Dashboard
+            <span><i class="fa-solid fa-house" style="font-size: 20px;"></i> Dashboard</span>
         </a>
         <a href="<?php echo esc_url(home_url('/monitor/')); ?>" class="mobile-link <?php echo (is_page('monitor')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-desktop" style="font-size: 20px;"></i>
-            Monitor
+            <span><i class="fa-solid fa-desktop" style="font-size: 20px;"></i> Monitor</span>
         </a>
         <a href="<?php echo esc_url(home_url('/laptop/')); ?>" class="mobile-link <?php echo (is_page('laptop')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-laptop" style="font-size: 20px;"></i>
-            Laptop
+            <span><i class="fa-solid fa-laptop" style="font-size: 20px;"></i> Laptop</span>
         </a>
         <a href="<?php echo esc_url(home_url('/accessories/')); ?>" class="mobile-link <?php echo (is_page('accessories')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-keyboard" style="font-size: 20px;"></i>
-            Accessories
+            <span><i class="fa-solid fa-keyboard" style="font-size: 20px;"></i> Accessories</span>
         </a>
         <a href="<?php echo esc_url(home_url('/maintenance/')); ?>" class="mobile-link <?php echo (is_page('maintenance')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-screwdriver-wrench" style="font-size: 20px;"></i>
-            Maintenance
+            <span><i class="fa-solid fa-screwdriver-wrench" style="font-size: 20px;"></i> Maintenance</span>
+            <?php if ($maintenance_count > 0): ?>
+                <span class="mobile-badge warning"><?php echo $maintenance_count > 99 ? '99+' : $maintenance_count; ?></span>
+            <?php endif; ?>
         </a>
         <a href="<?php echo esc_url(home_url('/history/')); ?>" class="mobile-link <?php echo (is_page('history')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-clock-rotate-left" style="font-size: 20px;"></i>
-            History
+            <span><i class="fa-solid fa-clock-rotate-left" style="font-size: 20px;"></i> History</span>
         </a>
         <a href="<?php echo esc_url(home_url('/owner/')); ?>" class="mobile-link <?php echo (is_page('owner')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-users" style="font-size: 20px;"></i>
-            Employees
+            <span><i class="fa-solid fa-users" style="font-size: 20px;"></i> Employees</span>
         </a>
         <a href="<?php echo esc_url(home_url('/request-dashboard/')); ?>" class="mobile-link <?php echo (is_page('request-dashboard')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-list-check" style="font-size: 20px;"></i>
-            Requests
+            <span><i class="fa-solid fa-list-check" style="font-size: 20px;"></i> Requests</span>
+            <?php if ($requests_count > 0): ?>
+                <span class="mobile-badge danger"><?php echo $requests_count > 99 ? '99+' : $requests_count; ?></span>
+            <?php endif; ?>
         </a>
         <a href="<?php echo esc_url(home_url('/add-device/')); ?>" class="mobile-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
-            <i class="fa-solid fa-plus" style="font-size: 20px;"></i>
-            Add Device
+            <span><i class="fa-solid fa-plus" style="font-size: 20px;"></i> Add Device</span>
         </a>
         <a href="<?php echo esc_url(home_url('/logout/')); ?>" class="mobile-link mobile-logout">
-            <i class="fa-solid fa-right-from-bracket" style="font-size: 20px;"></i>
-            Logout
+            <span><i class="fa-solid fa-right-from-bracket" style="font-size: 20px;"></i> Logout</span>
         </a>
     </nav>
 </div>
+
 
 
 <style>
@@ -289,7 +306,137 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
+
+.sidebar-icon-badge {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 999px;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.sidebar-icon-badge.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.sidebar-icon-badge.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.custom-sidebar-nav:hover .sidebar-icon-badge {
+    opacity: 0;
+    transform: scale(0.6);
+}
+
+.sidebar-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    color: #ffffff;
+    opacity: 0;
+    transform: translateX(6px);
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.sidebar-badge.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.sidebar-badge.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.custom-sidebar-nav:hover .sidebar-badge {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.mobile-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: rgba(0, 0, 0, 0.60);
+    text-decoration: none !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.mobile-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #ffffff;
+    margin-left: auto;
+}
+
+.mobile-badge.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.mobile-badge.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.mobile-menu-btn {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: rgba(0, 0, 0, 0.87);
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.mobile-btn-badge-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 9px;
+    height: 9px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    border: 2px solid #f5f5f5;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
 
 .sidebar-link-text {
     opacity: 0;
@@ -334,16 +481,6 @@
     gap: 12px;
     z-index: 9998;
     font-family: 'Roboto', sans-serif;
-}
-
-.mobile-menu-btn {
-    background: none;
-    border: none;
-    padding: 8px;
-    cursor: pointer;
-    color: rgba(0, 0, 0, 0.87);
-    border-radius: 50%;
-    transition: background-color 0.2s;
 }
 
 .mobile-menu-btn:hover {
@@ -427,19 +564,6 @@
     overflow-y: auto;
 }
 
-.mobile-link {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    color: rgba(0, 0, 0, 0.60);
-    text-decoration: none !important;
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-}
-
 .mobile-link:hover {
     background-color: rgba(25, 118, 210, 0.08);
     color: #1976D2;
@@ -454,6 +578,7 @@
     background-color: rgba(211, 47, 47, 0.08);
     color: #D32F2F;
 }
+
 
 
 /* ---- Responsive: Show mobile, hide desktop ---- */

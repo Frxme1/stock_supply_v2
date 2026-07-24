@@ -1,12 +1,23 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function handle_device_actions()
 {
+    if (!is_user_logged_in()) {
+        return;
+    }
+
     global $wpdb;
     $table_devices = 'Devices';
     $table_maintenance = 'Maintenance';
 
     // Handle Bulk Actions
     if (isset($_POST['bulk_action']) && !empty($_POST['bulk_device_ids'])) {
+        if (!isset($_POST['bulk_action_nonce']) || !wp_verify_nonce($_POST['bulk_action_nonce'], 'bulk_device_action_nonce')) {
+            return;
+        }
         $action = sanitize_text_field($_POST['bulk_action']);
         $device_ids = array_map('sanitize_text_field', $_POST['bulk_device_ids']);
         
@@ -134,6 +145,9 @@ function handle_device_actions()
 
 
     if (isset($_GET['delete'])) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'device_action_nonce')) {
+            return;
+        }
         $device_id = sanitize_text_field($_GET['delete']);
 
         // Get Device
@@ -213,6 +227,9 @@ function handle_device_actions()
 
 
     if (isset($_GET['return'])) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'device_action_nonce')) {
+            return;
+        }
         $device_id = $_GET['return'];
         $return_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
         $return_date = current_time('Y-m-d');
@@ -322,6 +339,9 @@ function handle_device_actions()
 
 
     if (isset($_GET['available'])) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'device_action_nonce')) {
+            return;
+        }
         $device_id = sanitize_text_field($_GET['available']);
         $available_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
 
@@ -398,10 +418,13 @@ function handle_device_actions()
         </script>";
             exit;
         } else {
-            echo "<p>Can't Change to Available: " . esc_html($wpdb->last_error) . "</p>";
+            echo "<p>Can't Change to Available due to database error.</p>";
         }
     }
     if (isset($_GET['return_to_owner'])) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'device_action_nonce')) {
+            return;
+        }
         $device_id = sanitize_text_field($_GET['return_to_owner']);
         $inuse_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
 
@@ -446,6 +469,12 @@ function handle_device_actions()
                         'Owner'       => $safe_owner
                     ]);
 
+                    $wpdb->update(
+                        'Repair_Requests',
+                        ['Status' => 'Completed', 'ActionDate' => current_time('mysql')],
+                        ['DeviceID' => $device_id]
+                    );
+
                     // ส่งอีเมลแจ้งเตือน
                     if (function_exists('stock_supply_send_email')) {
                         stock_supply_send_email('Return_to_Owner', $device_id, $device_info->OwnerID);
@@ -488,6 +517,9 @@ function handle_device_actions()
 
 
     if (isset($_GET['retired'])) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'device_action_nonce')) {
+            return;
+        }
         $device_id = sanitize_text_field($_GET['retired']);
         $retired_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Retired'");
 

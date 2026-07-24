@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 
 /**
  * Astra Child Theme functions and definitions
@@ -59,6 +63,9 @@ require_once get_stylesheet_directory() . '/controller/import_csv.php';
 require_once get_stylesheet_directory() . '/model/request/form_request.php';
 require_once get_stylesheet_directory() . '/model/request/request_dashboard.php';
 
+
+// require Shared Components
+require_once get_stylesheet_directory() . '/model/shared/sectors_donut.php';
 
 // require Dashboard
 require_once get_stylesheet_directory() . '/model/dashboard/device_dashboard.php';
@@ -382,6 +389,7 @@ function load_sweetalert_delete_details_script()
     }
     wp_enqueue_script('sweetalert_delete_details', get_stylesheet_directory_uri() . '/js/sweetalert_delete_details.js', array('sweetalert2'), null, true);
     wp_enqueue_script('sweetalert_retire', get_stylesheet_directory_uri() . '/js/sweetalert_retire.js', array('sweetalert2'), '1.1', true);
+    wp_enqueue_script('ajax_filter_reset', get_stylesheet_directory_uri() . '/js/ajax_filter_reset.js', array(), filemtime(get_stylesheet_directory() . '/js/ajax_filter_reset.js'), true);
 }
 add_action('wp_enqueue_scripts', 'load_sweetalert_delete_details_script');
 
@@ -540,7 +548,7 @@ function stock_supply_send_email($action, $device_id, $owner_id, $reason = '')
             $message .= '</p>';
         }
         $message .= '<p>We will notify you once the maintenance is complete.</p>';
-    } elseif ($action === 'Return_to_Owner') {
+    } elseif ($action === 'Return_to_Owner' || $action === 'ReturnToOwner') {
         $subject = 'IT Device Maintenance Completed (' . $device->DeviceID . ')';
         $message .= '<p>The maintenance for your assigned IT device has been completed and it has been returned to you:</p>';
         $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
@@ -580,24 +588,7 @@ function stock_supply_send_email($action, $device_id, $owner_id, $reason = '')
             $message .= '</p>';
         }
         $message .= '<p>If you have any questions, please contact the IT department.</p>';
-    } elseif ($action === 'DueSoon') {
-        $subject = '[Reminder] IT Device Return Due Soon (' . $device->DeviceID . ')';
-        $extend_url = home_url('/request-device-form/?extend_device=' . urlencode($device->DeviceID));
-        $message .= '<p><strong>แจ้งเตือน:</strong> อุปกรณ์ IT ที่คุณยืมใกล้ถึงกำหนดคืนแล้ว</p>';
-        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
-        $message .= '<strong>Details:</strong> ' . $device_desc . '<br>';
-        $message .= '<strong>กำหนดคืน (Due Date):</strong> <span style="color: #d97706; font-weight: bold;">' . esc_html($reason ?: ($device->ExpectedReturnDate ?? '-')) . '</span></p>';
-        $message .= '<p>หากคุณต้องการใช้อุปกรณ์ต่อ สามารถกดขอขยายเวล่ายืมได้ที่ปุ่มด้านล่างนี้:</p>';
-        $message .= '<p style="text-align: center; margin-top: 20px;"><a href="' . esc_url($extend_url) . '" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block;">📅 ขอขยายเวล่ายืม (Extend Loan)</a></p>';
-    } elseif ($action === 'Overdue') {
-        $subject = '[ALERT] Overdue IT Device Return (' . $device->DeviceID . ')';
-        $extend_url = home_url('/request-device-form/?extend_device=' . urlencode($device->DeviceID));
-        $message .= '<p style="color: #dc2626; font-weight: bold;">⚠️ แจ้งเตือนด่วน: อุปกรณ์ IT เลยกำหนดคืนแล้ว!</p>';
-        $message .= '<p><strong>Device ID:</strong> ' . esc_html($device->DeviceID) . '<br>';
-        $message .= '<strong>Details:</strong> ' . $device_desc . '<br>';
-        $message .= '<strong>กำหนดคืนเดิม:</strong> <span style="color: #dc2626; font-weight: bold;">' . esc_html($reason ?: ($device->ExpectedReturnDate ?? '-')) . '</span></p>';
-        $message .= '<p>กรุณานำอุปกรณ์มาคืนที่แผนก IT หรือส่งคำขอขยายเวล่ายืมผ่านลิงก์ด้านล่าง:</p>';
-        $message .= '<p style="text-align: center; margin-top: 20px;"><a href="' . esc_url($extend_url) . '" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block;">📅 ขอขยายเวล่ายืม (Extend Loan)</a></p>';
+
     } else {
         return false;
     }
@@ -641,12 +632,46 @@ function stock_supply_setup_db()
         Reason text NOT NULL,
         Status varchar(50) NOT NULL DEFAULT 'Pending',
         RequestDate datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        ActionDate datetime DEFAULT NULL,
         PRIMARY KEY  (RequestID)
     ) $charset_collate;";
 
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
     dbDelta($sql_repair);
+
+    // Ensure ActionDate exists in Repair_Requests
+    $repair_act = $wpdb->get_results("SHOW COLUMNS FROM Repair_Requests LIKE 'ActionDate'");
+    if (empty($repair_act)) {
+        $wpdb->query("ALTER TABLE Repair_Requests ADD COLUMN ActionDate DATETIME DEFAULT NULL AFTER RequestDate");
+    }
+
+    // Sync status for Repair_Requests that were already processed into Maintenance
+    $wpdb->query("
+        UPDATE Repair_Requests r
+        INNER JOIN Maintenance m ON r.DeviceID = m.DeviceID
+        SET r.Status = 'Approved', r.ActionDate = m.CreatedAt
+        WHERE r.Status = 'Pending'
+    ");
+
+    // Sync status for Repair_Requests where device has been repaired and returned (previously Approved and no longer in Maintenance)
+    $wpdb->query("
+        UPDATE Repair_Requests r
+        INNER JOIN Devices d ON r.DeviceID = d.DeviceID
+        INNER JOIN Statuses s ON d.StatusID = s.StatusID
+        SET r.Status = 'Completed', r.ActionDate = NOW()
+        WHERE r.Status = 'Approved' AND s.StatusName != 'Maintenance'
+    ");
+
+    // Restore any Repair_Requests that were mistakenly marked as Completed back to Pending so Admin can Approve/Reject
+    $wpdb->query("
+        UPDATE Repair_Requests r
+        INNER JOIN Devices d ON r.DeviceID = d.DeviceID
+        INNER JOIN Statuses s ON d.StatusID = s.StatusID
+        SET r.Status = 'Pending', r.ActionDate = NULL
+        WHERE r.Status = 'Completed' AND s.StatusName = 'In Use'
+          AND r.Reason NOT LIKE 'Rejected%'
+    ");
 
     // Ensure ExpectedReturnDate exists in Device_Requests
     $req_col = $wpdb->get_results("SHOW COLUMNS FROM Device_Requests LIKE 'ExpectedReturnDate'");
@@ -673,55 +698,7 @@ function stock_supply_setup_db()
 }
 add_action('after_setup_theme', 'stock_supply_setup_db');
 
-// Automated Daily Cron to Check Overdue & Due Soon Loans
-function stock_supply_check_overdue_loans()
-{
-    global $wpdb;
-    $today = current_time('Y-m-d');
-    $tomorrow = date('Y-m-d', strtotime('+1 day', strtotime($today)));
 
-    $inuse_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
-    if (!$inuse_status) return;
-
-    $loans = $wpdb->get_results($wpdb->prepare("
-        SELECT d.DeviceID, d.OwnerID, d.ExpectedReturnDate, d.LastNotifiedDate
-        FROM Devices d
-        WHERE d.StatusID = %d
-          AND d.OwnerID IS NOT NULL
-          AND d.ExpectedReturnDate IS NOT NULL
-          AND d.ExpectedReturnDate != '0000-00-00'
-    ", $inuse_status));
-
-    if (!empty($loans)) {
-        foreach ($loans as $loan) {
-            $due_date = $loan->ExpectedReturnDate;
-            $last_notified = $loan->LastNotifiedDate;
-
-            if ($due_date < $today) {
-                // Overdue
-                if ($last_notified !== $today) {
-                    stock_supply_send_email('Overdue', $loan->DeviceID, $loan->OwnerID, $due_date);
-                    $wpdb->update('Devices', ['LastNotifiedDate' => $today], ['DeviceID' => $loan->DeviceID]);
-                }
-            } elseif ($due_date === $today || $due_date === $tomorrow) {
-                // Due Soon
-                if ($last_notified !== $today) {
-                    stock_supply_send_email('DueSoon', $loan->DeviceID, $loan->OwnerID, $due_date);
-                    $wpdb->update('Devices', ['LastNotifiedDate' => $today], ['DeviceID' => $loan->DeviceID]);
-                }
-            }
-        }
-    }
-}
-add_action('stock_supply_check_overdue_loans_event', 'stock_supply_check_overdue_loans');
-
-function stock_supply_schedule_overdue_cron()
-{
-    if (!wp_next_scheduled('stock_supply_check_overdue_loans_event')) {
-        wp_schedule_event(time(), 'daily', 'stock_supply_check_overdue_loans_event');
-    }
-}
-add_action('init', 'stock_supply_schedule_overdue_cron');
 
 // Auto create pages for the Request System
 function auto_create_request_pages()
@@ -992,6 +969,11 @@ add_action('wp_footer', 'stock_supply_add_shining_header_styles', 999);
 // AJAX Endpoints for Universal QR Code Scanner & Instant Action Hub
 // =========================================================================
 function stock_supply_ajax_get_device_details() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Unauthorized access']);
+    }
+    check_ajax_referer('stock_supply_ajax_nonce', 'nonce');
+
     global $wpdb;
     $raw_code = isset($_POST['code']) ? sanitize_text_field($_POST['code']) : '';
     $code = stock_supply_parse_search_query($raw_code);
@@ -1014,8 +996,36 @@ function stock_supply_ajax_get_device_details() {
     ", $code, $code));
 
     if ($device) {
+        $owner_id = $device->OwnerID;
+        if (empty($owner_id)) {
+            // Fallback 1: Check Repair_Requests
+            $owner_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT OwnerID FROM Repair_Requests WHERE DeviceID = %s ORDER BY RequestID DESC LIMIT 1",
+                $device->DeviceID
+            ));
+        }
+        if (empty($owner_id)) {
+            // Fallback 2: Check History_new for last owner
+            $hist_owner = $wpdb->get_var($wpdb->prepare(
+                "SELECT Owner FROM History_new WHERE DeviceID = %s AND Owner IS NOT NULL AND Owner != '' AND Owner != '-' ORDER BY Date DESC LIMIT 1",
+                $device->DeviceID
+            ));
+            if ($hist_owner) {
+                $owner_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT OwnerID FROM Owners WHERE Nickname = %s OR CONCAT(FirstName, ' ', LastName) = %s LIMIT 1",
+                    $hist_owner,
+                    $hist_owner
+                ));
+            }
+        }
+
         $owner_name = '-';
-        if (!empty($device->Nickname)) {
+        if ($owner_id) {
+            $owner_info = $wpdb->get_row($wpdb->prepare("SELECT Nickname, FirstName, LastName FROM Owners WHERE OwnerID = %d", $owner_id));
+            if ($owner_info) {
+                $owner_name = !empty($owner_info->Nickname) ? $owner_info->Nickname : trim($owner_info->FirstName . ' ' . ($owner_info->LastName ?? ''));
+            }
+        } elseif (!empty($device->Nickname)) {
             $owner_name = $device->Nickname;
         } elseif (!empty($device->FirstName)) {
             $owner_name = trim($device->FirstName . ' ' . ($device->LastName ?? ''));
@@ -1037,7 +1047,7 @@ function stock_supply_ajax_get_device_details() {
             'Model'              => $device->Model ?: '-',
             'StatusName'         => $device->StatusName ?: 'Unknown',
             'OwnerName'          => $owner_name,
-            'OwnerID'            => $device->OwnerID,
+            'OwnerID'            => $owner_id ?: $device->OwnerID,
             'DepartmentName'     => $device->DepartmentName ?: '-',
             'ReceiveDate'        => $device->ReceiveDate ?: '-',
             'ExpectedReturnDate' => $device->ExpectedReturnDate ?: '-',
@@ -1049,9 +1059,13 @@ function stock_supply_ajax_get_device_details() {
     }
 }
 add_action('wp_ajax_get_scanned_device_details', 'stock_supply_ajax_get_device_details');
-add_action('wp_ajax_nopriv_get_scanned_device_details', 'stock_supply_ajax_get_device_details');
 
 function stock_supply_ajax_quick_action() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Unauthorized access']);
+    }
+    check_ajax_referer('stock_supply_ajax_nonce', 'nonce');
+
     global $wpdb;
     $device_id = isset($_POST['device_id']) ? sanitize_text_field($_POST['device_id']) : '';
     $action_type = isset($_POST['action_type']) ? sanitize_text_field($_POST['action_type']) : '';
@@ -1068,7 +1082,26 @@ function stock_supply_ajax_quick_action() {
     }
 
     $prev_owner_id = $dev->OwnerID;
-    $prev_owner = $prev_owner_id ? $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $prev_owner_id)) : 'Unknown';
+    if (empty($prev_owner_id)) {
+        $prev_owner_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT OwnerID FROM Repair_Requests WHERE DeviceID = %s ORDER BY RequestID DESC LIMIT 1",
+            $device_id
+        ));
+    }
+    if (empty($prev_owner_id)) {
+        $last_hist_owner = $wpdb->get_var($wpdb->prepare(
+            "SELECT Owner FROM History_new WHERE DeviceID = %s AND Owner IS NOT NULL AND Owner != '' AND Owner != '-' ORDER BY Date DESC LIMIT 1",
+            $device_id
+        ));
+        if ($last_hist_owner) {
+            $prev_owner_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT OwnerID FROM Owners WHERE Nickname = %s OR CONCAT(FirstName, ' ', LastName) = %s LIMIT 1",
+                $last_hist_owner,
+                $last_hist_owner
+            ));
+        }
+    }
+    $prev_owner = $prev_owner_id ? ($wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $prev_owner_id)) ?: 'Unknown') : 'Unknown';
 
     if ($action_type === 'return') {
         $avail_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
@@ -1095,10 +1128,13 @@ function stock_supply_ajax_quick_action() {
                 'CategoryID'  => $dev->CategoryID,
                 'Owner'       => $prev_owner
             ]);
+            $email_sent = false;
             if ($prev_owner_id && function_exists('stock_supply_send_email')) {
-                stock_supply_send_email('Return', $device_id, $prev_owner_id);
+                $email_sent = stock_supply_send_email('Return', $device_id, $prev_owner_id);
             }
-            wp_send_json_success(['message' => "Device {$device_id} successfully checked in!"]);
+            $msg = "Device {$device_id} successfully checked in!";
+            if ($email_sent) $msg .= " Notification email sent.";
+            wp_send_json_success(['message' => $msg]);
         } else {
             $wpdb->query('ROLLBACK');
             wp_send_json_error(['message' => 'Database error on return']);
@@ -1112,16 +1148,15 @@ function stock_supply_ajax_quick_action() {
         }
 
         $in_use_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
-        $owner_info = $wpdb->get_row($wpdb->prepare("SELECT Nickname, FirstName, LastName, DepartmentID, PositionID FROM Owners WHERE OwnerID = %d", $owner_id));
+        $owner_info = $wpdb->get_row($wpdb->prepare("SELECT Nickname, FirstName, LastName, DepartmentID, PositionID, Email FROM Owners WHERE OwnerID = %d", $owner_id));
         $owner_name = $owner_info ? ($owner_info->Nickname ?: $owner_info->FirstName) : 'Unknown';
 
         $wpdb->update('Devices', [
-            'StatusID'           => $in_use_status,
-            'OwnerID'            => $owner_id,
-            'DepartmentID'       => $owner_info ? $owner_info->DepartmentID : null,
-            'PositionID'         => $owner_info ? $owner_info->PositionID : null,
-            'ReceiveDate'        => current_time('Y-m-d'),
-            'ExpectedReturnDate' => $new_due_date ?: null
+            'StatusID'     => $in_use_status,
+            'OwnerID'      => $owner_id,
+            'DepartmentID' => $owner_info ? $owner_info->DepartmentID : null,
+            'PositionID'   => $owner_info ? $owner_info->PositionID : null,
+            'ReceiveDate'  => current_time('Y-m-d')
         ], ['DeviceID' => $device_id]);
 
         $wpdb->insert('History_new', [
@@ -1134,11 +1169,19 @@ function stock_supply_ajax_quick_action() {
             'Owner'       => $owner_name
         ]);
 
+        $email_sent = false;
         if ($owner_id && function_exists('stock_supply_send_email')) {
-            stock_supply_send_email('Assign', $device_id, $owner_id);
+            $email_sent = stock_supply_send_email('Assign', $device_id, $owner_id);
         }
 
-        wp_send_json_success(['message' => "Device {$device_id} successfully assigned to {$owner_name}! Email notification sent."]);
+        $msg = "Device {$device_id} successfully assigned to {$owner_name}!";
+        if ($email_sent) {
+            $msg .= " Notification email sent to " . esc_html($owner_info->Email) . ".";
+        } elseif ($owner_info && empty($owner_info->Email)) {
+            $msg .= " (Note: Employee has no email address configured).";
+        }
+
+        wp_send_json_success(['message' => $msg]);
     } elseif ($action_type === 'maintenance') {
         $maint_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
         $wpdb->update('Devices', ['StatusID' => $maint_status, 'RepairDate' => current_time('Y-m-d')], ['DeviceID' => $device_id]);
@@ -1152,11 +1195,14 @@ function stock_supply_ajax_quick_action() {
             'Owner'       => $prev_owner
         ]);
 
+        $email_sent = false;
         if ($prev_owner_id && function_exists('stock_supply_send_email')) {
-            stock_supply_send_email('Maintenance', $device_id, $prev_owner_id, 'Sent to Maintenance via Admin QR Hub');
+            $email_sent = stock_supply_send_email('Maintenance', $device_id, $prev_owner_id, 'Sent to Maintenance via Admin QR Hub');
         }
 
-        wp_send_json_success(['message' => "Device {$device_id} status updated to Maintenance! Email notification sent."]);
+        $msg = "Device {$device_id} status updated to Maintenance!";
+        if ($email_sent) $msg .= " Notification email sent.";
+        wp_send_json_success(['message' => $msg]);
     } elseif ($action_type === 'available') {
         $avail_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
         $wpdb->update('Devices', [
@@ -1173,34 +1219,106 @@ function stock_supply_ajax_quick_action() {
             'Owner'       => '-'
         ]);
         wp_send_json_success(['message' => "Device {$device_id} is now Available!"]);
-    } elseif ($action_type === 'extend') {
-        $new_date = isset($_POST['new_due_date']) ? sanitize_text_field($_POST['new_due_date']) : '';
-        if ($new_date) {
-            $wpdb->update('Devices', ['ExpectedReturnDate' => $new_date], ['DeviceID' => $device_id]);
-            $wpdb->update('Device_Requests', ['ExpectedReturnDate' => $new_date], ['AssignedDeviceID' => $device_id, 'Status' => 'Fulfilled']);
+    } elseif ($action_type === 'retired') {
+        $retired_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Retired'");
+        $wpdb->update('Devices', [
+            'StatusID'   => $retired_status,
+            'OwnerID'    => null,
+            'PositionID' => null
+        ], ['DeviceID' => $device_id]);
+        $wpdb->insert('History_new', [
+            'DeviceID'    => $device_id,
+            'Action'      => 'Retired',
+            'Date'        => current_time('mysql'),
+            'Description' => "Marked as Retired via QR Scan Hub",
+            'user_email'  => $admin_email,
+            'CategoryID'  => $dev->CategoryID,
+            'Owner'       => $prev_owner
+        ]);
+        wp_send_json_success(['message' => "Device {$device_id} has been Retired!"]);
+    } elseif ($action_type === 'return_to_owner') {
+        $inuse_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
+        $target_owner_id = $dev->OwnerID ?: $prev_owner_id;
+
+        if ($target_owner_id) {
+            $wpdb->delete('Maintenance', ['DeviceID' => $device_id], ['%s']);
+            $wpdb->delete('Maintenances', ['DeviceID' => $device_id], ['%s']);
+            $owner_info = $wpdb->get_row($wpdb->prepare("SELECT Nickname, FirstName, LastName, DepartmentID, PositionID, Email FROM Owners WHERE OwnerID = %d", $target_owner_id));
+            $owner_nickname = $owner_info ? ($owner_info->Nickname ?: $owner_info->FirstName) : $prev_owner;
+
+            $wpdb->update('Devices', [
+                'StatusID'     => $inuse_status,
+                'OwnerID'      => $target_owner_id,
+                'DepartmentID' => $owner_info ? $owner_info->DepartmentID : null,
+                'PositionID'   => $owner_info ? $owner_info->PositionID : null,
+                'RepairDate'   => null
+            ], ['DeviceID' => $device_id]);
+
             $wpdb->insert('History_new', [
                 'DeviceID'    => $device_id,
-                'Action'      => 'Extend Loan',
+                'Action'      => 'Return to Owner',
                 'Date'        => current_time('mysql'),
-                'Description' => "Expected return date updated to {$new_date} via QR Scan Hub",
+                'Description' => "Device repaired and returned to owner ({$owner_nickname}) via QR Scan Hub",
                 'user_email'  => $admin_email,
                 'CategoryID'  => $dev->CategoryID,
-                'Owner'       => $prev_owner
+                'Owner'       => $owner_nickname
             ]);
 
-            if ($prev_owner_id && function_exists('stock_supply_send_email')) {
-                stock_supply_send_email('DueSoon', $device_id, $prev_owner_id, $new_date);
+            $wpdb->update(
+                'Repair_Requests',
+                ['Status' => 'Completed', 'ActionDate' => current_time('mysql')],
+                ['DeviceID' => $device_id]
+            );
+
+            $email_sent = false;
+            if (function_exists('stock_supply_send_email')) {
+                $email_sent = stock_supply_send_email('Return_to_Owner', $device_id, $target_owner_id);
             }
 
-            wp_send_json_success(['message' => "Expected return date updated to {$new_date}! Email notification sent."]);
+            $msg = "Device {$device_id} repaired and returned to owner ({$owner_nickname})!";
+            if ($email_sent && $owner_info && !empty($owner_info->Email)) {
+                $msg .= " Notification email sent to " . esc_html($owner_info->Email) . ".";
+            } elseif ($owner_info && empty($owner_info->Email)) {
+                $msg .= " (Note: Employee has no email address configured).";
+            }
+
+            wp_send_json_success(['message' => $msg]);
         } else {
-            wp_send_json_error(['message' => 'Invalid due date']);
+            wp_send_json_error(['message' => 'No original owner found for this device.']);
         }
     } else {
         wp_send_json_error(['message' => 'Unknown action']);
     }
 }
 add_action('wp_ajax_quick_device_action', 'stock_supply_ajax_quick_action');
-add_action('wp_ajax_nopriv_quick_device_action', 'stock_supply_ajax_quick_action');
+
+/**
+ * Helper function to retrieve sidebar notification badge counts
+ */
+function stock_supply_get_sidebar_badges()
+{
+    global $wpdb;
+
+    // 1. Pending Requests (Device Requests + Repair Requests with Status = 'Pending')
+    $pending_device_reqs = (int) $wpdb->get_var("SELECT COUNT(*) FROM Device_Requests WHERE Status = 'Pending'");
+    $pending_repair_reqs = (int) $wpdb->get_var("SELECT COUNT(*) FROM Repair_Requests WHERE Status = 'Pending'");
+    $pending_requests_count = $pending_device_reqs + $pending_repair_reqs;
+
+    // 2. Devices under Maintenance
+    $maintenance_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
+    $maintenance_count = 0;
+    if ($maintenance_status_id) {
+        $maintenance_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM Devices WHERE StatusID = %d",
+            $maintenance_status_id
+        ));
+    }
+
+    return [
+        'requests' => $pending_requests_count,
+        'maintenance' => $maintenance_count,
+        'total' => $pending_requests_count + $maintenance_count
+    ];
+}
 
 

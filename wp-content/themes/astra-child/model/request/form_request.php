@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function device_request_form()
 {
     global $wpdb;
@@ -36,64 +40,40 @@ function device_request_form()
     }
     $devices_json = json_encode($devices_by_cat);
 
-    ob_start();
+    // Fetch currently assigned devices for Repair Request tab
+    $assigned_devices = $wpdb->get_results("
+        SELECT d.DeviceID, d.OwnerID, b.BrandName, d.Model, d.SerialNumber, c.CategoryName
+        FROM Devices d
+        LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+        LEFT JOIN Brands b ON d.BrandID = b.BrandID
+        WHERE d.OwnerID IS NOT NULL AND d.OwnerID != 0
+    ");
 
-    // Handle Extend Loan submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_extend_loan'])) {
-        $device_id = sanitize_text_field($_POST['extend_device_id']);
-        $new_return_date = sanitize_text_field($_POST['ExpectedReturnDate']);
-        $extend_reason = sanitize_textarea_field($_POST['Reason']);
-
-        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
-
-        if ($device_id && $new_return_date) {
-            $wpdb->update('Devices', [
-                'ExpectedReturnDate' => $new_return_date,
-                'LastNotifiedDate' => null
-            ], ['DeviceID' => $device_id]);
-
-            $wpdb->query($wpdb->prepare("
-                UPDATE Device_Requests 
-                SET ExpectedReturnDate = %s, Reason = CONCAT(Reason, ' | Extension: ', %s)
-                WHERE AssignedDeviceID = %s AND Status = 'Fulfilled'
-                ORDER BY RequestID DESC LIMIT 1
-            ", $new_return_date, $extend_reason, $device_id));
-
-            $dev_owner_id = $wpdb->get_var($wpdb->prepare("SELECT OwnerID FROM Devices WHERE DeviceID = %s", $device_id));
-            $dev_owner = $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $dev_owner_id));
-
-            $wpdb->insert('History_new', [
-                'DeviceID' => $device_id,
-                'Action' => 'Extend Loan',
-                'Date' => current_time('mysql'),
-                'Description' => "Loan extended until {$new_return_date}. Reason: {$extend_reason}",
-                'user_email' => wp_get_current_user()->user_email ?? '',
-                'Owner' => $dev_owner
-            ]);
-
-            echo "<script>
-                setTimeout(function() {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Loan Extended Successfully!',
-                        text: 'New Expected Return Date is " . esc_js($new_return_date) . ".',
-                        confirmButtonColor: '#4f46e5'
-                    }).then(() => {
-                        window.location.href = window.location.pathname;
-                    });
-                }, 100);
-            </script>";
+    $repair_devices_by_owner = [];
+    if ($assigned_devices) {
+        foreach ($assigned_devices as $ad) {
+            $repair_devices_by_owner[$ad->OwnerID][] = [
+                'id' => $ad->DeviceID,
+                'label' => $ad->DeviceID . ' - ' . ($ad->CategoryName ?? '') . ' ' . ($ad->BrandName ?? '') . ' ' . ($ad->Model ?? '') . ' (SN: ' . ($ad->SerialNumber ?? 'N/A') . ')'
+            ];
         }
     }
+    $repair_devices_json = json_encode($repair_devices_by_owner);
 
-    // Handle form submission
+    ob_start();
+
+    // Handle Device Request submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_request'])) {
+        $nonce_valid = isset($_POST['_req_nonce']) && wp_verify_nonce($_POST['_req_nonce'], 'submit_device_request_nonce');
+        if (!$nonce_valid && !is_user_logged_in()) {
+            echo "<script>setTimeout(function() { Swal.fire({icon: 'error', title: 'Security Check Failed', text: 'Invalid request security token.'}); }, 100);</script>";
+            return ob_get_clean();
+        }
+
         $owner_id = intval($_POST['OwnerID']);
         $category_id = intval($_POST['CategoryID']);
         $requested_device_id = sanitize_text_field($_POST['RequestedDeviceID']);
         $reason = sanitize_textarea_field($_POST['Reason']);
-        $borrow_date = !empty($_POST['BorrowDate']) ? sanitize_text_field($_POST['BorrowDate']) : current_time('Y-m-d');
-        $expected_return_date = !empty($_POST['ExpectedReturnDate']) ? sanitize_text_field($_POST['ExpectedReturnDate']) : null;
 
         echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
 
@@ -105,24 +85,15 @@ function device_request_form()
                     'CategoryID' => $category_id,
                     'Reason' => $reason,
                     'Status' => 'Pending',
-                    'AssignedDeviceID' => $requested_device_id, // Store requested device here
-                    'RequestDate' => current_time('mysql'),
-                    'BorrowDate' => $borrow_date,
-                    'ExpectedReturnDate' => $expected_return_date
+                    'AssignedDeviceID' => $requested_device_id,
+                    'RequestDate' => current_time('mysql')
                 ],
-                ['%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s']
+                ['%d', '%d', '%s', '%s', '%s', '%s']
             );
 
             if ($inserted) {
                 $request_id = $wpdb->insert_id;
-
-                $email_msg = "Device: $requested_device_id - $reason (Borrow Date: $borrow_date";
-                if ($expected_return_date) {
-                    $email_msg .= ", Expected Return: $expected_return_date";
-                }
-                $email_msg .= ")";
-
-                // Send email notification to employee
+                $email_msg = "Device: $requested_device_id - $reason";
                 if (function_exists('stock_supply_send_email')) {
                     stock_supply_send_email('RequestSubmitted', $request_id, $owner_id, $email_msg);
                 }
@@ -140,29 +111,77 @@ function device_request_form()
                     }, 100);
                 </script>";
             } else {
-                $err = $wpdb->last_error;
                 echo "<script>
                     setTimeout(function() {
                         Swal.fire({
                             icon: 'error',
                             title: 'Database Error',
-                            text: " . json_encode($err) . ",
+                            text: 'An error occurred while processing your request.',
                             confirmButtonColor: '#ef4444'
                         });
                     }, 100);
                 </script>";
             }
-        } else {
-            echo "<script>
-                setTimeout(function() {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Missing Information',
-                        text: 'Please fill in all fields and select a specific device. If no devices are available, you cannot submit.',
-                        confirmButtonColor: '#f59e0b'
-                    });
-                }, 100);
-            </script>";
+        }
+    }
+
+    // Handle Repair Request submission
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_repair_request'])) {
+        $nonce_valid = isset($_POST['_req_nonce']) && wp_verify_nonce($_POST['_req_nonce'], 'submit_device_request_nonce');
+        if (!$nonce_valid && !is_user_logged_in()) {
+            echo "<script>setTimeout(function() { Swal.fire({icon: 'error', title: 'Security Check Failed', text: 'Invalid request security token.'}); }, 100);</script>";
+            return ob_get_clean();
+        }
+
+        $repair_owner_id = intval($_POST['RepairOwnerID']);
+        $repair_device_id = sanitize_text_field($_POST['RepairDeviceID']);
+        $repair_reason = sanitize_textarea_field($_POST['RepairReason']);
+
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+
+        if ($repair_owner_id && !empty($repair_device_id) && !empty($repair_reason)) {
+            $inserted = $wpdb->insert(
+                'Repair_Requests',
+                [
+                    'OwnerID'     => $repair_owner_id,
+                    'DeviceID'    => $repair_device_id,
+                    'Reason'      => $repair_reason,
+                    'Status'      => 'Pending',
+                    'RequestDate' => current_time('mysql')
+                ],
+                ['%d', '%s', '%s', '%s', '%s']
+            );
+
+            if ($inserted) {
+                $req_id = $wpdb->insert_id;
+                if (function_exists('stock_supply_send_email')) {
+                    stock_supply_send_email('RequestSubmitted', $req_id, $repair_owner_id, "Repair Request for $repair_device_id: $repair_reason");
+                }
+
+                echo "<script>
+                    setTimeout(function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Repair Request Submitted!',
+                            text: 'Your repair request for device " . esc_js($repair_device_id) . " has been submitted to IT.',
+                            confirmButtonColor: '#4f46e5'
+                        }).then(() => {
+                            window.location.href = window.location.pathname;
+                        });
+                    }, 100);
+                </script>";
+            } else {
+                echo "<script>
+                    setTimeout(function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Database Error',
+                            text: 'An error occurred while processing your repair request.',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }, 100);
+                </script>";
+            }
         }
     }
     ?>
@@ -180,9 +199,37 @@ function device_request_form()
             font-family: 'Inter', sans-serif;
         }
 
+        .tab-switcher {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+            background: #f3f4f6;
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #6b7280;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: #4f46e5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+
         .form-header {
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 2rem;
         }
 
         .form-header h2 {
@@ -238,12 +285,6 @@ function device_request_form()
             box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
 
-        .form-control:disabled {
-            background-color: #e5e7eb;
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
-
         .btn-submit {
             width: 100%;
             padding: 1rem;
@@ -263,68 +304,22 @@ function device_request_form()
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
         }
-
-        .btn-submit:active {
-            transform: translateY(0);
-        }
-
-        .alert-message {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            font-size: 0.95rem;
-        }
-
-        .error-message {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #f87171;
-        }
-
-        .warning-message {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fbbf24;
-        }
     </style>
 
-    <?php
-    $is_extend_mode = isset($_GET['extend_device']) && !empty($_GET['extend_device']);
-    $extend_device_id = $is_extend_mode ? sanitize_text_field($_GET['extend_device']) : '';
-    ?>
-
     <div class="request-form-container">
-        <?php if ($is_extend_mode): ?>
+        <div class="tab-switcher">
+            <button type="button" class="tab-btn active" onclick="switchFormTab('device')">📦 ขอเบิกอุปกรณ์</button>
+            <button type="button" class="tab-btn" onclick="switchFormTab('repair')">🛠️ แจ้งส่งซ่อมอุปกรณ์</button>
+        </div>
+
+        <!-- Form 1: Device Request -->
+        <div id="form-device-container">
             <div class="form-header">
-                <h2>📅 ขอขยายเวลายืม (Extend Loan)</h2>
-                <p>ระบุวันกำหนดคืนใหม่สำหรับอุปกรณ์ <strong><?= esc_html($extend_device_id) ?></strong></p>
-            </div>
-            <form method="POST" action="<?php echo esc_url($_SERVER['REQUEST_URI']); ?>">
-                <input type="hidden" name="submit_extend_loan" value="1">
-                <input type="hidden" name="extend_device_id" value="<?= esc_attr($extend_device_id) ?>">
-
-                <div class="form-group">
-                    <label for="ExpectedReturnDate">New Expected Return Date / วันกำหนดคืนใหม่</label>
-                    <input type="date" name="ExpectedReturnDate" id="ExpectedReturnDate" class="form-control"
-                        min="<?= date('Y-m-d') ?>" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="Reason">Reason for Extension / เหตุผลการขอขยายเวลา</label>
-                    <textarea name="Reason" id="Reason" rows="3" class="form-control"
-                        placeholder="ระบุเหตุผลในการขอขยายเวลายืมอุปกรณ์..." required></textarea>
-                </div>
-
-                <button type="submit" class="btn-submit"
-                    style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">ยืนยันขอขยายเวลายืม (Submit
-                    Extension)</button>
-            </form>
-        <?php else: ?>
-            <div class="form-header">
-                <h2>Borrow an IT Device</h2>
+                <h2>Request an IT Device</h2>
                 <p>Select an available device from the inventory below.</p>
             </div>
             <form method="POST" action="<?php echo esc_url($_SERVER['REQUEST_URI']); ?>">
+                <?php wp_nonce_field('submit_device_request_nonce', '_req_nonce'); ?>
                 <input type="hidden" name="submit_request" value="1">
                 <div class="form-group">
                     <label for="OwnerID">Requester Name</label>
@@ -357,21 +352,6 @@ function device_request_form()
                     </select>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
-                    <div class="form-group">
-                        <label for="BorrowDate">Borrow Date / วันที่เริ่มยืม <span style="color:red">*</span></label>
-                        <input type="date" name="BorrowDate" id="BorrowDate" class="form-control" value="<?= date('Y-m-d') ?>"
-                            min="<?= date('Y-m-d') ?>" required onchange="updateReturnDateMin()">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="ExpectedReturnDate">Expected Return Date / วันกำหนดคืน <span
-                                style="color:red">*</span></label>
-                        <input type="date" name="ExpectedReturnDate" id="ExpectedReturnDate" class="form-control"
-                            value="<?= date('Y-m-d', strtotime('+1 day')) ?>" min="<?= date('Y-m-d') ?>" required>
-                    </div>
-                </div>
-
                 <div class="form-group" style="margin-top: 1rem;">
                     <label for="Reason">Reason / Justification</label>
                     <textarea name="Reason" id="Reason" rows="3" class="form-control"
@@ -380,11 +360,68 @@ function device_request_form()
 
                 <button type="submit" name="submit_request" class="btn-submit">Submit Request</button>
             </form>
-        <?php endif; ?>
+        </div>
+
+        <!-- Form 2: Repair Request -->
+        <div id="form-repair-container" style="display: none;">
+            <div class="form-header">
+                <h2>Submit a Repair Request</h2>
+                <p>Report an issue for an assigned IT device.</p>
+            </div>
+            <form method="POST" action="<?php echo esc_url($_SERVER['REQUEST_URI']); ?>">
+                <?php wp_nonce_field('submit_device_request_nonce', '_req_nonce'); ?>
+                <input type="hidden" name="submit_repair_request" value="1">
+                <div class="form-group">
+                    <label for="RepairOwnerID">Requester Name</label>
+                    <select name="RepairOwnerID" id="RepairOwnerID" class="form-control" required onchange="filterRepairDevices()">
+                        <option value="">-- Select Your Name --</option>
+                        <?php foreach ($owners as $owner): ?>
+                            <option value="<?= esc_attr($owner->OwnerID) ?>">
+                                <?= esc_html($owner->Nickname) ?> (<?= esc_html($owner->DepartmentName ?: 'No Dept') ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="RepairDeviceID">Select Your Assigned Device</label>
+                    <select name="RepairDeviceID" id="RepairDeviceID" class="form-control" required disabled>
+                        <option value="">-- Please select your name first --</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="RepairReason">Issue Description / Reason for Repair</label>
+                    <textarea name="RepairReason" id="RepairReason" rows="3" class="form-control"
+                        placeholder="E.g. Screen flickering, battery swelling, device cannot turn on..." required></textarea>
+                </div>
+
+                <button type="submit" name="submit_repair_request" class="btn-submit" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">Submit Repair Request</button>
+            </form>
+        </div>
     </div>
 
     <script>
         const devicesByCat = <?= $devices_json ?>;
+        const repairDevicesByOwner = <?= $repair_devices_json ?>;
+
+        function switchFormTab(tab) {
+            const devContainer = document.getElementById('form-device-container');
+            const repairContainer = document.getElementById('form-repair-container');
+            const btns = document.querySelectorAll('.tab-btn');
+
+            btns.forEach(b => b.classList.remove('active'));
+
+            if (tab === 'repair') {
+                devContainer.style.display = 'none';
+                repairContainer.style.display = 'block';
+                btns[1].classList.add('active');
+            } else {
+                repairContainer.style.display = 'none';
+                devContainer.style.display = 'block';
+                btns[0].classList.add('active');
+            }
+        }
 
         function filterDevices() {
             const catId = document.getElementById('CategoryID').value;
@@ -413,16 +450,36 @@ function device_request_form()
                 opt.textContent = "❌ No available devices in this category";
                 deviceSelect.appendChild(opt);
             }
-            function updateReturnDateMin() {
-                const borrowInput = document.getElementById('BorrowDate');
-                const returnInput = document.getElementById('ExpectedReturnDate');
-                if (borrowInput && returnInput) {
-                    returnInput.min = borrowInput.value;
-                    if (returnInput.value < borrowInput.value) {
-                        returnInput.value = borrowInput.value;
-                    }
-                }
+        }
+
+        function filterRepairDevices() {
+            const ownerId = document.getElementById('RepairOwnerID').value;
+            const deviceSelect = document.getElementById('RepairDeviceID');
+
+            deviceSelect.innerHTML = '<option value="">-- Select Your Assigned Device --</option>';
+
+            if (!ownerId) {
+                deviceSelect.disabled = true;
+                deviceSelect.innerHTML = '<option value="">-- Please select your name first --</option>';
+                return;
             }
+
+            if (repairDevicesByOwner[ownerId] && repairDevicesByOwner[ownerId].length > 0) {
+                deviceSelect.disabled = false;
+                repairDevicesByOwner[ownerId].forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = d.label;
+                    deviceSelect.appendChild(opt);
+                });
+            } else {
+                deviceSelect.disabled = true;
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.textContent = "❌ No assigned devices found for this employee";
+                deviceSelect.appendChild(opt);
+            }
+        }
     </script>
 
     <?php

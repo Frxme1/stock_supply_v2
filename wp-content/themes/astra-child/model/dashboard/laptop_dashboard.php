@@ -65,23 +65,18 @@ function device_dashboard_laptop()
             <div class="next-card slide-up" style="animation-delay: 0.2s;">
                 <h3 class="next-section-title">All Laptop</h3>
                 <div class="next-donut-container mt-4" style="justify-content: center; gap: 3rem;">
-                    <div class="next-donut-wrap">
-                        <?php
-                        $percent_laptop = $total_devices > 0 ? round(($total_laptop / $total_devices) * 100, 0) : 0;
-                        $circumference = 2 * 3.14159 * 60;
-                        ?>
-                        <svg class="next-donut" viewBox="0 0 150 150">
-                            <circle cx="75" cy="75" r="60" fill="none" stroke="#f3f4f6" stroke-width="12" />
-                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#15A5DA" stroke-width="12"
-                                data-dash="<?= ($percent_laptop / 100) * $circumference ?> <?= $circumference ?>"
-                                stroke-dasharray="0 <?= $circumference ?>"
-                                transform="rotate(-90 75 75)" stroke-linecap="round" />
-                        </svg>
-                        <div class="next-donut-center">
-                            <span class="next-donut-value count-up" data-count="<?= $percent_laptop ?>">0</span>
-                            <span class="next-donut-label">% of Total</span>
-                        </div>
-                    </div>
+                    <?php
+                    $percent_laptop = $total_devices > 0 ? round(($total_laptop / $total_devices) * 100, 1) : 0;
+                    $laptop_sectors = [
+                        ['label' => 'Laptop', 'pct' => $percent_laptop, 'color' => '#15A5DA'],
+                        ['label' => 'Other Devices', 'pct' => max(0, round(100 - $percent_laptop, 1)), 'color' => '#e5e7eb'],
+                    ];
+                    echo render_sectors_donut([
+                        'symbol' => 'LAPTOP',
+                        'caption' => $total_laptop . ' units',
+                        'sectors' => $laptop_sectors,
+                    ]);
+                    ?>
                     <div class="text-center">
                         <div class="next-number" style="font-size: 3.5rem; color: #15A5DA;"><span class="count-up" data-count="<?= $total_laptop ?>">0</span></div>
                         <div class="next-trend-text mt-2">Units Registered</div>

@@ -1,19 +1,27 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 // Handle CSV Import
 add_action('admin_post_import_device_csv', 'handle_device_csv_import');
-add_action('admin_post_nopriv_import_device_csv', 'handle_device_csv_import');
 
 function handle_device_csv_import() {
     if (!isset($_POST['import_csv_nonce']) || !wp_verify_nonce($_POST['import_csv_nonce'], 'import_device_csv_nonce')) {
         wp_die('Invalid nonce specified');
     }
 
-    if (!is_user_logged_in()) {
-        wp_die('Unauthorized');
+    if (!is_user_logged_in() || (!current_user_can('manage_options') && !current_user_can('edit_posts'))) {
+        wp_die('Unauthorized access');
     }
 
     if (empty($_FILES['csv_file']['tmp_name'])) {
         wp_die('No file uploaded');
+    }
+
+    $file_type = wp_check_filetype($_FILES['csv_file']['name']);
+    if (!in_array($file_type['ext'], ['csv', 'txt'], true)) {
+        wp_die('Invalid file type. Only CSV files are permitted.');
     }
 
     $file = $_FILES['csv_file']['tmp_name'];

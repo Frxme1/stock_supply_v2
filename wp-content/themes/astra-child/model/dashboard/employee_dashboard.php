@@ -75,19 +75,16 @@ function employee_dashboard()
             <div class="next-card slide-up" style="animation-delay: 0.2s;">
                 <h3 class="next-section-title">All Employees</h3>
                 <div class="next-donut-container mt-4" style="justify-content: center; gap: 3rem;">
-                    <div class="next-donut-wrap">
-                        <svg class="next-donut" viewBox="0 0 150 150">
-                            <circle cx="75" cy="75" r="60" fill="none" stroke="#f3f4f6" stroke-width="12" />
-                            <circle class="donut-segment" cx="75" cy="75" r="60" fill="none" stroke="#2196F3" stroke-width="12"
-                                data-dash="376.99 376.99"
-                                stroke-dasharray="0 376.99"
-                                transform="rotate(-90 75 75)" stroke-linecap="round" />
-                        </svg>
-                        <div class="next-donut-center">
-                            <span class="next-donut-value count-up" data-count="100">0</span>
-                            <span class="next-donut-label">%</span>
-                        </div>
-                    </div>
+                    <?php
+                    $emp_sectors = [
+                        ['label' => 'Active Employees', 'pct' => 100, 'color' => '#2196F3'],
+                    ];
+                    echo render_sectors_donut([
+                        'symbol' => 'EMP',
+                        'caption' => $total_employees . ' persons',
+                        'sectors' => $emp_sectors,
+                    ]);
+                    ?>
                     <div class="text-center">
                         <div class="next-number" style="font-size: 3.5rem; color: #2196F3;"><span class="count-up" data-count="<?= $total_employees ?>">0</span></div>
                         <div class="next-trend-text mt-2">Total Persons</div>

@@ -263,7 +263,9 @@ function form_history()
             </div>
         </form>
 
-        <?php include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); ?>
+        <?php
+        // include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); 
+        ?>
 
         <div class="table-wrapper">
             <table class="table-custom">

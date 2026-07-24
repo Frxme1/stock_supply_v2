@@ -383,35 +383,36 @@ function device_crud_laptop()
                                                 <?php else: ?>
                                                     <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
                                                 <?php endif; ?>
-                                                <a href="?view=<?= $row->DeviceID ?>"><i
+                                                <?php $dev_action_nonce = wp_create_nonce('device_action_nonce'); ?>
+                                                <a href="?view=<?= esc_attr($row->DeviceID) ?>"><i
                                                         class="fa-solid fa-magnifying-glass"></i> View Details</a>
                                                 <?php if ($row->Status == 'Available'): ?>
-                                                    <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i>
+                                                    <a href="?receive=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-box"></i>
                                                         Receive</a>
-                                                    <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                    <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                             class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                    <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                    <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                 <?php elseif ($row->Status == 'In Use'): ?>
-                                                    <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
+                                                    <a href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i class="fa-solid fa-rotate-left"></i>
                                                         Return</a>
-                                                    <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                    <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                             class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                    <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                    <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                 <?php elseif ($row->Status == 'Maintenance'): ?>
-                                                    <a href="?available=<?= $row->DeviceID ?>"><i
+                                                    <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                             class="fa-solid fa-circle text-success"></i> Available</a>
-                                                    <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                    <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                                <?php elseif ($row->Status == 'Retired'): ?>
-                                                    <a href="?available=<?= $row->DeviceID ?>"><i
+                                                <?php elseif ($status == 'Retired'): ?>
+                                                    <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                             class="fa-solid fa-circle text-success"></i> Available</a>
                                                 <?php endif; ?>
                                                 <a href="#"
                                                     onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i
                                                         class="fa-solid fa-print"></i> Print Label</a>
-                                                <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')"><i
+                                                <a href="#" onclick="confirmDelete('<?= esc_js($row->DeviceID) ?>', '<?= $dev_action_nonce ?>'); return false;"><i
                                                         class="fa-solid fa-trash-can"></i> Delete</a>
                                             </div>
                                         </div>

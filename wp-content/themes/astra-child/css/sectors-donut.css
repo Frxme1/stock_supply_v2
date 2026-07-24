@@ -1,0 +1,145 @@
+/**
+ * Sectors Donut Component Styles (Vanilla CSS)
+ * Based on Shadcn/Tailwind Framer Motion SectorsDonut Design
+ */
+
+.sectors-donut-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.75rem;
+    /* gap-7 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #111827;
+    position: relative;
+    user-select: none;
+}
+
+.sectors-donut-wrap {
+    position: relative;
+    width: 132px;
+    height: 132px;
+    flex-shrink: 0;
+}
+
+.sectors-donut-svg {
+    width: 132px;
+    height: 132px;
+    transform: rotate(-90deg);
+    display: block;
+    overflow: visible;
+}
+
+.sectors-donut-arc {
+    cursor: default;
+    transform-origin: center;
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sectors-donut-center {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 2;
+}
+
+.sectors-donut-symbol {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    color: rgba(17, 24, 39, 0.9);
+    line-height: 1.2;
+}
+
+.sectors-donut-caption {
+    margin-top: 2px;
+    font-size: 9px;
+    color: rgba(17, 24, 39, 0.40);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+.sectors-donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.sectors-donut-legend-item {
+    margin: 0 -8px;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    /* gap-2.5 */
+    border-radius: 6px;
+    padding: 5px 8px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease, background-color 0.15s ease;
+    outline: none;
+    text-decoration: none !important;
+    line-height: 1.2;
+}
+
+.sectors-donut-legend-item:hover,
+.sectors-donut-legend-item:focus-visible {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.sectors-donut-badge {
+    height: 8px;
+    width: 8px;
+    flex-shrink: 0;
+    border-radius: 3px;
+}
+
+.sectors-donut-label {
+    width: 120px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
+    color: rgba(17, 24, 39, 0.65);
+}
+
+.sectors-donut-value {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    color: rgba(17, 24, 39, 0.50);
+    margin-left: 0.75rem;
+}
+
+/* Hover / Hot dimming behavior */
+.sectors-donut-container.has-hot .sectors-donut-arc {
+    opacity: 0.22;
+}
+
+.sectors-donut-container.has-hot .sectors-donut-arc.is-hot {
+    opacity: 1 !important;
+}
+
+.sectors-donut-container.has-hot .sectors-donut-legend-item {
+    opacity: 0.35;
+}
+
+.sectors-donut-container.has-hot .sectors-donut-legend-item.is-hot {
+    opacity: 1 !important;
+}
+
+@media (max-width: 640px) {
+    .sectors-donut-container {
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+}

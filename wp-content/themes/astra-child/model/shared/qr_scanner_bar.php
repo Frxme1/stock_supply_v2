@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 /**
  * Shared QR Code Scanner Component
  * Include this file in any page to add a compact QR scan button bar.
@@ -15,8 +19,9 @@
 
 $category_filter = isset($qr_category_filter) ? esc_attr($qr_category_filter) : '';
 $status_filter = isset($qr_status_filter) ? esc_attr($qr_status_filter) : '';
+$details_only = isset($qr_details_only) && $qr_details_only ? 'true' : 'false';
 
-$hint_text = "Scan a device QR to view details & perform quick actions";
+$hint_text = ($details_only === 'true') ? "Scan a device QR to view details" : "Scan a device QR to view details & perform quick actions";
 if ($category_filter) {
     $hint_text = "Scan " . $category_filter . " QR code only";
 } elseif ($status_filter) {
@@ -26,7 +31,7 @@ if ($category_filter) {
 
 <!-- ===== QR Scanner Compact Bar ===== -->
 <div class="dash-qr-bar mt-4 slide-up" data-category-filter="<?= $category_filter ?>"
-    data-status-filter="<?= $status_filter ?>" style="animation-delay: 0.15s;">
+    data-status-filter="<?= $status_filter ?>" data-details-only="<?= $details_only ?>" style="animation-delay: 0.15s;">
     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
         <button type="button" id="dash-btn-start-qr" class="dash-qr-scan-btn">
             <i class="fa-solid fa-qrcode"></i> Scan QR Code
@@ -102,6 +107,30 @@ if ($category_filter) {
 
     .dash-scan-popup {
         border-radius: 16px !important;
+        position: relative !important;
+    }
+    .dash-scan-popup .swal2-close {
+        top: 14px !important;
+        right: 14px !important;
+        width: 32px !important;
+        height: 32px !important;
+        line-height: 32px !important;
+        font-size: 1.2rem !important;
+        color: #64748b !important;
+        background: #f1f5f9 !important;
+        border-radius: 8px !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+        z-index: 10 !important;
+    }
+    .dash-scan-popup .swal2-close:hover {
+        color: #0f172a !important;
+        background: #e2e8f0 !important;
     }
 </style>
 
@@ -113,6 +142,7 @@ if ($category_filter) {
         let dashQrScanner = null;
         let isStarting = false;
         const ajaxUrl = '<?= admin_url("admin-ajax.php") ?>';
+        const ajaxNonce = '<?= wp_create_nonce("stock_supply_ajax_nonce") ?>';
 
         // Global document event listener for Start button (Event Delegation guarantees it works even if element loads later)
         document.addEventListener('click', function (e) {
@@ -242,16 +272,21 @@ if ($category_filter) {
             dashQrScanner = new Html5Qrcode("dash-qr-reader");
 
             const config = {
-                fps: 10,
+                fps: 25, // Increased FPS from 10 to 25 for ultra-fast scanning
                 qrbox: (viewfinderWidth, viewfinderHeight) => {
                     const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
                     return {
-                        width: Math.floor(minEdge * 0.8),
-                        height: Math.floor(minEdge * 0.8)
+                        width: Math.floor(minEdge * 0.85),
+                        height: Math.floor(minEdge * 0.85)
                     };
                 },
                 experimentalFeatures: {
                     useBarCodeDetectorIfSupported: true
+                },
+                videoConstraints: {
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 }
             };
 
@@ -353,6 +388,7 @@ if ($category_filter) {
             const formData = new FormData();
             formData.append('action', 'get_scanned_device_details');
             formData.append('code', code);
+            formData.append('nonce', ajaxNonce);
 
             fetch(ajaxUrl, {
                 method: 'POST',
@@ -407,6 +443,8 @@ if ($category_filter) {
         }
 
         function renderScannedDeviceModal(dev) {
+            const qrBar = document.querySelector('.dash-qr-bar');
+            const detailsOnly = qrBar ? (qrBar.getAttribute('data-details-only') === 'true') : false;
             window.__lastScannedOwners = dev.all_owners || [];
             const statusMap = {
                 'In Use': { icon: 'fa-circle-xmark', color: '#dc2626', bg: '#fee2e2', label: 'In Use' },
@@ -419,12 +457,12 @@ if ($category_filter) {
             let htmlContent = `
         <div style="text-align:left; font-size:0.92rem;">
             <!-- Header -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding-bottom:14px; border-bottom:2px solid #f1f5f9;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding-bottom:14px; border-bottom:2px solid #f1f5f9; padding-right:40px;">
                 <div>
                     <h3 style="margin:0; color:#0f172a; font-size:1.35rem; font-weight:700;"><i class="fa-solid fa-box-archive" style="color:#6366f1; margin-right:8px;"></i>${dev.DeviceID}</h3>
                     <div style="color:#64748b; font-size:0.82rem; margin-top:2px;">${dev.CategoryName} &bull; ${dev.BrandName} ${dev.Model}</div>
                 </div>
-                <span style="background:${st.bg}; color:${st.color}; padding:6px 14px; border-radius:20px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px;">
+                <span style="background:${st.bg}; color:${st.color}; padding:6px 14px; border-radius:20px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
                     <i class="fa-solid ${st.icon}"></i> ${st.label}
                 </span>
             </div>
@@ -435,37 +473,63 @@ if ($category_filter) {
                 <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-user" style="margin-right:4px;"></i>Assigned To</span><strong style="color:#0f172a;">${dev.OwnerName}</strong></div>
                 <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-building" style="margin-right:4px;"></i>Department</span><strong style="color:#0f172a;">${dev.DepartmentName}</strong></div>
                 <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Received Date</span><strong style="color:#0f172a;">${dev.ReceiveDate}</strong></div>
-                <div style="padding:10px 14px; border-right:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Due Date</span><strong style="color:#d97706;">${dev.ExpectedReturnDate}</strong></div>
                 <div style="padding:10px 14px;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:4px;"></i>Last Repair</span><strong style="color:#0f172a;">${dev.RepairDate}</strong></div>
             </div>
+`;
 
-            <!-- Quick Actions -->
-            <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem;"><i class="fa-solid fa-bolt" style="color:#6366f1; margin-right:4px;"></i>Quick Actions</div>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-        `;
+            if (!detailsOnly) {
+                htmlContent += `
+                <!-- Quick Actions -->
+                <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem;"><i class="fa-solid fa-bolt" style="color:#6366f1; margin-right:4px;"></i>Quick Actions (เปลี่ยนสถานะทันที)</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            `;
 
-            if (dev.StatusName === 'In Use') {
+                if (dev.StatusName === 'In Use') {
+                    htmlContent += `
+                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'return')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-right-to-bracket" style="margin-right:6px;"></i>รับคืน (Return)</button>
+                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'maintenance')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>ส่งซ่อม (Repair)</button>
+                `;
+                } else if (dev.StatusName === 'Available') {
+                    htmlContent += `
+                    <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-hand-holding-hand" style="margin-right:6px;"></i>เบิกจ่าย (Assign)</button>
+                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'maintenance')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>ส่งซ่อม (Repair)</button>
+                `;
+                } else if (dev.StatusName === 'Maintenance') {
+                    if (dev.OwnerID && dev.OwnerName && dev.OwnerName !== '-') {
+                        htmlContent += `
+                        <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'return_to_owner')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#3b82f6,#2563eb); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-user-check" style="margin-right:6px;"></i>ส่งคืน ${dev.OwnerName}</button>
+                    `;
+                    }
+                    htmlContent += `
+                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'available')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>คืนเข้าคลัง (Available)</button>
+                `;
+                } else {
+                    htmlContent += `
+                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'available')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>ทำให้ใช้งานได้ (Available)</button>
+                `;
+                }
+
+                if (dev.StatusName !== 'Retired') {
+                    htmlContent += `
+                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'retired')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#475569,#334155); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-box-archive" style="margin-right:6px;"></i>ปลดระวาง (Retire)</button>
+                `;
+                }
+
                 htmlContent += `
-                <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'return')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:11px 16px; font-weight:600; border-radius:10px; font-size:0.88rem;"><i class="fa-solid fa-right-to-bracket" style="margin-right:6px;"></i>Check-in / Return Device</button>
-                <button type="button" onclick="window.__qrPromptExtend('${dev.DeviceID}', '${dev.ExpectedReturnDate}')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#6366f1,#4f46e5); width:100%; margin:0; padding:11px 16px; font-weight:600; border-radius:10px; font-size:0.88rem;"><i class="fa-solid fa-calendar-plus" style="margin-right:6px;"></i>Extend Return Date</button>
-                <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'maintenance')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); width:100%; margin:0; padding:11px 16px; font-weight:600; border-radius:10px; font-size:0.88rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>Send to Maintenance</button>
+                </div>
+                <div style="margin-top:10px;">
+                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:#f1f5f9; color:#475569; width:100%; margin:0; padding:10px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>ดูรายละเอียดและประวัติทั้งหมด</a>
+                </div>
             `;
-            } else if (dev.StatusName === 'Available') {
+            } else {
                 htmlContent += `
-                <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; margin:0; padding:11px 16px; font-weight:600; border-radius:10px; font-size:0.88rem;"><i class="fa-solid fa-hand-holding-hand" style="margin-right:6px;"></i>Check-out / Assign to User</button>
-                <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'maintenance')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; margin:0; padding:11px 16px; font-weight:600; border-radius:10px; font-size:0.88rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>Send to Maintenance</button>
-            `;
-            } else if (dev.StatusName === 'Maintenance') {
-                htmlContent += `
-                <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'available')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:11px 16px; font-weight:600; border-radius:10px; font-size:0.88rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>Mark as Available</button>
+                <div style="margin-top:12px;">
+                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; margin:0; padding:11px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>ดูรายละเอียดและประวัติทั้งหมด</a>
+                </div>
             `;
             }
 
-            htmlContent += `
-                <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:#f1f5f9; color:#475569; width:100%; margin:0; padding:11px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>View Full Details & History</a>
-            </div>
-        </div>
-        `;
+            htmlContent += `</div>`;
 
             Swal.fire({
                 html: htmlContent,
@@ -481,7 +545,7 @@ if ($category_filter) {
         window.__qrExecAction = function (deviceId, actionType, extraData = {}) {
             Swal.fire({
                 title: '<i class="fa-solid fa-spinner fa-spin" style="color:#6366f1"></i> Processing...',
-                html: '<span style="color:#64748b;">Please wait</span>',
+                html: '<span style="color:#64748b;">กำลังดำเนินการอัปเดตสถานะแบบ Real-time</span>',
                 allowOutsideClick: false,
                 showConfirmButton: false,
                 didOpen: () => { Swal.showLoading(); }
@@ -491,6 +555,7 @@ if ($category_filter) {
             formData.append('action', 'quick_device_action');
             formData.append('device_id', deviceId);
             formData.append('action_type', actionType);
+            formData.append('nonce', ajaxNonce);
             if (extraData) {
                 if (extraData.new_due_date) formData.append('new_due_date', extraData.new_due_date);
                 if (extraData.owner_id) formData.append('owner_id', extraData.owner_id);
@@ -505,11 +570,15 @@ if ($category_filter) {
                     if (data.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Success!',
+                            title: 'อัปเดตสถานะสำเร็จ!',
                             text: data.data.message,
                             confirmButtonColor: '#10b981'
                         }).then(() => {
-                            window.location.reload();
+                            if (typeof window.loadAjaxContent === 'function') {
+                                window.loadAjaxContent(window.location.href);
+                            } else {
+                                window.location.reload();
+                            }
                         });
                     } else {
                         Swal.fire({
@@ -556,9 +625,6 @@ if ($category_filter) {
                     <select id="swal_qr_owner_id" style="width:100%; box-sizing:border-box; margin:0 0 16px 0; border-radius:10px; height:44px; padding:0 12px; font-size:0.9rem; border:1px solid #cbd5e1; background:#ffffff; color:#0f172a; outline:none;">
                         ${ownerOptionsHtml}
                     </select>
-
-                    <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:6px; color:#334155;">Expected Return Date (Optional)</label>
-                    <input type="date" id="swal_qr_assign_due_date" min="${today}" style="width:100%; box-sizing:border-box; margin:0; border-radius:10px; height:44px; padding:0 12px; font-size:0.9rem; border:1px solid #cbd5e1; background:#ffffff; color:#0f172a; outline:none;">
                 </div>
             `,
                 showCancelButton: true,
@@ -569,44 +635,15 @@ if ($category_filter) {
                 customClass: { popup: 'dash-scan-popup' },
                 preConfirm: () => {
                     const ownerId = document.getElementById('swal_qr_owner_id').value;
-                    const dueDate = document.getElementById('swal_qr_assign_due_date').value;
                     if (!ownerId) {
                         Swal.showValidationMessage('Please select an employee');
                         return false;
                     }
-                    return { owner_id: ownerId, new_due_date: dueDate };
+                    return { owner_id: ownerId };
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.__qrExecAction(deviceId, 'assign', result.value);
-                }
-            });
-        };
-
-        window.__qrPromptExtend = function (deviceId, currentDueDate) {
-            const today = new Date().toISOString().split('T')[0];
-            Swal.fire({
-                title: '<i class="fa-solid fa-calendar-plus" style="color:#6366f1; margin-right:6px;"></i> Extend Return Date',
-                html: `
-                <p style="text-align:left; font-size:0.9rem; color:#475569; margin-bottom:12px;">Select a new return date for device <strong>${deviceId}</strong>:</p>
-                <input type="date" id="swal_qr_new_due_date" class="swal2-input" value="${currentDueDate !== '-' ? currentDueDate : ''}" min="${today}" style="border-radius:10px;">
-            `,
-                showCancelButton: true,
-                confirmButtonText: '<i class="fa-solid fa-check"></i> Save New Date',
-                cancelButtonText: '<i class="fa-solid fa-xmark"></i> Cancel',
-                confirmButtonColor: '#6366f1',
-                cancelButtonColor: '#94a3b8',
-                preConfirm: () => {
-                    const newDate = document.getElementById('swal_qr_new_due_date').value;
-                    if (!newDate) {
-                        Swal.showValidationMessage('Please select a new return date');
-                        return false;
-                    }
-                    return newDate;
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.__qrExecAction(deviceId, 'extend', { new_due_date: result.value });
                 }
             });
         };

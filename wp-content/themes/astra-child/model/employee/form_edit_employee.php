@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function form_edit_owner($editing = null)
 {
     global $wpdb;
@@ -14,14 +18,19 @@ function form_edit_owner($editing = null)
     echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['OwnerID'])) {
-        $owner_id     = $_POST['OwnerID'];
-        $nickname     = $_POST['Nickname'];
-        $firstname    = $_POST['FirstName'];
-        $lastname     = $_POST['LastName'];
-        $departmentID = $_POST['DepartmentID'];
-        $positionID   = $_POST['PositionID'];
-        $statusID     = $_POST['StatusID'];
-        $email        = $_POST['Email'] ?? null;
+        if (!is_user_logged_in() || !isset($_POST['_edit_emp_nonce']) || !wp_verify_nonce($_POST['_edit_emp_nonce'], 'edit_employee_nonce')) {
+            echo '<p style="color:red;">Security check failed.</p>';
+            return ob_get_clean();
+        }
+
+        $owner_id     = intval($_POST['OwnerID']);
+        $nickname     = sanitize_text_field($_POST['Nickname'] ?? '');
+        $firstname    = sanitize_text_field($_POST['FirstName'] ?? '');
+        $lastname     = sanitize_text_field($_POST['LastName'] ?? '');
+        $departmentID = !empty($_POST['DepartmentID']) ? intval($_POST['DepartmentID']) : null;
+        $positionID   = !empty($_POST['PositionID']) ? intval($_POST['PositionID']) : null;
+        $statusID     = !empty($_POST['StatusID']) ? intval($_POST['StatusID']) : null;
+        $email        = !empty($_POST['Email']) ? sanitize_email($_POST['Email']) : null;
 
         $updated = $wpdb->update(
             $table_owner,
@@ -80,6 +89,7 @@ function form_edit_owner($editing = null)
 
 ?>
     <form method="POST" style="width: 30rem;">
+        <?php wp_nonce_field('edit_employee_nonce', '_edit_emp_nonce'); ?>
         <h2 style="text-align: center;">Edit Owner</h2>
         <input type="hidden" name="OwnerID" value="<?= esc_attr($editing->OwnerID ?? '') ?>">
 

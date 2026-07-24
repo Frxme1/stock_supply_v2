@@ -157,42 +157,43 @@ function device_crud_maintenance()
                                             aria-expanded="false">
                                             ...
                                         </button>
+                                        <?php $dev_action_nonce = wp_create_nonce('device_action_nonce'); ?>
                                         <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
                                             <div class="action-dropdown-header">Actions</div>
                                             <div class="action-dropdown-separator"></div>
                                             <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i>
+                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-gear"></i>
                                                     Edit</a>
                                             <?php else: ?>
-                                                <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <a href="?edit=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-gear"></i> Edit</a>
                                             <?php endif; ?>
-                                            <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i>
+                                            <a href="?view=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-magnifying-glass"></i>
                                                 View Details</a>
                                             <?php if ($row->Status == 'Available'): ?>
-                                                <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
-                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                <a href="?receive=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                         class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                         class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($row->Status == 'In Use'): ?>
-                                                <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
+                                                <a href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i class="fa-solid fa-rotate-left"></i>
                                                     Return</a>
-                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                         class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                         class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($row->Status == 'Maintenance'): ?>
-                                                <a href="?return_to_owner=<?= $row->DeviceID ?>"><i 
+                                                <a href="?return_to_owner=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i 
                                                         class="fa-solid fa-user-check"></i> Return to Owner</a>
-                                                <a href="?available=<?= $row->DeviceID ?>"><i
+                                                <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                         class="fa-solid fa-circle text-success"></i> Available</a>
-                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                         class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($row->Status == 'Retired'): ?>
-                                                <a href="?available=<?= $row->DeviceID ?>"><i
+                                                <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                         class="fa-solid fa-circle text-success"></i> Available</a>
                                             <?php endif; ?>
-                                            <a href="#" onclick="confirmDelete('<?= $row->DeviceID ?>')"><i
+                                            <a href="#" onclick="confirmDelete('<?= esc_js($row->DeviceID) ?>', '<?= $dev_action_nonce ?>'); return false;"><i
                                                     class="fa-solid fa-trash-can"></i> Delete</a>
                                         </div>
                                     </div>

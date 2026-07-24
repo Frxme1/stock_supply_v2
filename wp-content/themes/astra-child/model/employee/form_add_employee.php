@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function form_add_owner($editing = null)
 {
 	global $wpdb;
@@ -12,17 +16,31 @@ function form_add_owner($editing = null)
 	echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-		$owner_id = $_POST['OwnerID'] ?? null;
-		$nickname = trim($_POST['Nickname'] ?? '');
+		$nonce_valid = isset($_POST['_add_emp_nonce']) && wp_verify_nonce($_POST['_add_emp_nonce'], 'add_employee_nonce');
+		if (!$nonce_valid && !is_user_logged_in()) {
+			echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Security Verification Failed',
+                        text: 'Security token expired. Please refresh the page and try submitting again.'
+                    });
+                });
+            </script>";
+			return ob_get_clean();
+		}
+
+		$owner_id = isset($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
+		$nickname = sanitize_text_field($_POST['Nickname'] ?? '');
 
 		$data = [
 			'Nickname' => $nickname,
-			'FirstName' => $_POST['FirstName'] ?? '',
-			'LastName' => $_POST['LastName'] ?? '',
-			'DepartmentID' => !empty($_POST['DepartmentID']) ? $_POST['DepartmentID'] : null,
-			'PositionID' => !empty($_POST['PositionID']) ? $_POST['PositionID'] : null,
-			'StatusID' => !empty($_POST['StatusID']) ? $_POST['StatusID'] : null,
-			'Email' => $_POST['Email'] ?? null,
+			'FirstName' => sanitize_text_field($_POST['FirstName'] ?? ''),
+			'LastName' => sanitize_text_field($_POST['LastName'] ?? ''),
+			'DepartmentID' => !empty($_POST['DepartmentID']) ? intval($_POST['DepartmentID']) : null,
+			'PositionID' => !empty($_POST['PositionID']) ? intval($_POST['PositionID']) : null,
+			'StatusID' => !empty($_POST['StatusID']) ? intval($_POST['StatusID']) : 1,
+			'Email' => !empty($_POST['Email']) ? sanitize_email($_POST['Email']) : null,
 		];
 
 
@@ -49,18 +67,28 @@ function form_add_owner($editing = null)
 					'Owner' => $nickname
 				]);
 				echo "<script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Add Employee Success',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    window.location.href = '" . esc_url(home_url('/Owner/')) . "';
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Add Employee Success',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = '" . esc_url(home_url('/Owner/')) . "';
+                    });
                 });
             </script>";
-				exit;
 			} else {
-				echo '<p style="color:red;">Insert failed: ' . $wpdb->last_error . '</p>';
+				$db_err = esc_js($wpdb->last_error ?: 'Database insert error');
+				echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Insert Failed',
+                        text: 'Error: " . $db_err . "'
+                    });
+                });
+            </script>";
 			}
 		}
 	}
@@ -69,6 +97,7 @@ function form_add_owner($editing = null)
 	?>
 
 	<form method="POST" action="">
+		<?php wp_nonce_field('add_employee_nonce', '_add_emp_nonce'); ?>
 		<?php if ($editing): ?>
 			<input type="hidden" name="OwnerID" value="<?= esc_attr($editing->OwnerID) ?>">
 		<?php endif; ?>

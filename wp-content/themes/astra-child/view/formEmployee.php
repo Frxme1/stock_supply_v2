@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 function form_owner()
 {
     global $wpdb;
@@ -13,6 +17,9 @@ function form_owner()
 
 
     if (isset($_GET['delete'])) {
+        if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'delete_owner_nonce')) {
+            return;
+        }
         $owner_id = intval($_GET['delete']);
 
         // get Owner data
@@ -231,7 +238,7 @@ function form_owner()
                                         <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i>
                                             Available</a>
                                     <?php endif; ?>
-                                    <a href="#" onclick="confirmDelete('<?= $row->OwnerID ?>')"><i
+                                    <a href="#" onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"><i
                                             class="fa-solid fa-trash-can"></i> Delete</a>
                                 </div>
                             </div>
