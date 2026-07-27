@@ -42,11 +42,33 @@ function device_crud_maintenance()
     }
 
 
+    // Sort logic for Device Info
+    $current_sort = $_GET['sort'] ?? '';
+    $current_order = strtolower($_GET['order'] ?? '');
+
+    if ($current_sort === 'device_info') {
+        if ($current_order === 'asc') {
+            $order_sql = "ORDER BY Brand ASC, Model ASC, DeviceID ASC";
+            $next_order = 'desc';
+            $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-a-z" style="font-size:0.85rem;"></i> A-Z</span>';
+        } else {
+            $order_sql = "ORDER BY Brand DESC, Model DESC, DeviceID DESC";
+            $next_order = 'asc';
+            $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-z-a" style="font-size:0.85rem;"></i> Z-A</span>';
+        }
+    } else {
+        $order_sql = "ORDER BY RepairDate DESC, DeviceID DESC";
+        $next_order = 'asc';
+        $sort_icon = '<span style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; border-radius:6px; padding:2px 7px; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-left:6px;"><i class="fa-solid fa-arrow-down-up-across-line" style="font-size:0.75rem;"></i> Sort</span>';
+    }
+
+    $sort_url = add_query_arg(['sort' => 'device_info', 'order' => $next_order]);
+
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_mainten $where_sql");
     $total_pages = ceil($total_items / $page);
 
     $rows = $wpdb->get_results("SELECT * FROM $table_mainten $where_sql 
-    ORDER BY RepairDate DESC 
+    $order_sql 
     LIMIT $page OFFSET $offset");
 
     $suggestions = $wpdb->get_col("SELECT DISTINCT Brand FROM $table_mainten ORDER BY Category LIMIT 50");
@@ -67,7 +89,7 @@ function device_crud_maintenance()
         <form method="GET" action="">
             <?php
             foreach ($_GET as $key => $value) {
-                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'sort', 'order'])) {
                     if (is_array($value)) {
                         foreach ($value as $v) {
                             echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -97,16 +119,12 @@ function device_crud_maintenance()
                 <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
                     <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
                         Filter</button>
-                    <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
+                    <?php $reset_url = remove_query_arg(['device_search', 'paged', 'sort', 'order']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
             </div>
         </form>
 
-        <?php 
-        $qr_status_filter = 'Maintenance';
-        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); 
-        ?>
 
         <br>
         <div class="table-wrapper">
@@ -114,7 +132,11 @@ function device_crud_maintenance()
                 <thead>
                     <tr>
                         <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 40%;">Device Info</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 40%;">
+                            <a href="<?= esc_url($sort_url) ?>" style="color:inherit; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;" title="Click to toggle Device Info sort (A-Z / Z-A)">
+                                Device Info <?= $sort_icon ?>
+                            </a>
+                        </th>
                         <th class="text-nowrap py-3 text-start" style="width: 25%;">Owner</th>
                         <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
                         <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
@@ -138,9 +160,12 @@ function device_crud_maintenance()
                                 <?php
                                 $status = $row->Status;
                                 $statusClass = 'status-retired';
-                                if (strcasecmp($status, 'Available') === 0) $statusClass = 'status-available';
-                                elseif (strcasecmp($status, 'In Use') === 0) $statusClass = 'status-inuse';
-                                elseif (strcasecmp($status, 'Maintenance') === 0) $statusClass = 'status-maintenance';
+                                if (strcasecmp($status, 'Available') === 0)
+                                    $statusClass = 'status-available';
+                                elseif (strcasecmp($status, 'In Use') === 0)
+                                    $statusClass = 'status-inuse';
+                                elseif (strcasecmp($status, 'Maintenance') === 0)
+                                    $statusClass = 'status-maintenance';
                                 ?>
                                 <span class="status-badge <?= $statusClass ?>">
                                     <span class="status-dot"></span>
@@ -162,38 +187,50 @@ function device_crud_maintenance()
                                             <div class="action-dropdown-header">Actions</div>
                                             <div class="action-dropdown-separator"></div>
                                             <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-gear"></i>
+                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
+                                                        class="fa-solid fa-gear"></i>
                                                     Edit</a>
                                             <?php else: ?>
-                                                <a href="?edit=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                                <a href="?edit=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-gear"></i>
+                                                    Edit</a>
                                             <?php endif; ?>
-                                            <a href="?view=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-magnifying-glass"></i>
+                                            <a href="?view=<?= esc_attr($row->DeviceID) ?>"><i
+                                                    class="fa-solid fa-magnifying-glass"></i>
                                                 View Details</a>
                                             <?php if ($row->Status == 'Available'): ?>
-                                                <a href="?receive=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                                <a href="?receive=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-box"></i>
+                                                    Receive</a>
                                                 <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                         class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                <a href="#"
+                                                    onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                         class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($row->Status == 'In Use'): ?>
-                                                <a href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i class="fa-solid fa-rotate-left"></i>
+                                                <a href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
+                                                        class="fa-solid fa-rotate-left"></i>
                                                     Return</a>
                                                 <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                         class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                <a href="#"
+                                                    onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                         class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($row->Status == 'Maintenance'): ?>
-                                                <a href="?return_to_owner=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i 
+                                                <a
+                                                    href="?return_to_owner=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                         class="fa-solid fa-user-check"></i> Return to Owner</a>
-                                                <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
+                                                <a
+                                                    href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                         class="fa-solid fa-circle text-success"></i> Available</a>
-                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                <a href="#"
+                                                    onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                         class="fa-solid fa-circle text-dark"></i> Retired</a>
                                             <?php elseif ($row->Status == 'Retired'): ?>
-                                                <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
+                                                <a
+                                                    href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                         class="fa-solid fa-circle text-success"></i> Available</a>
                                             <?php endif; ?>
-                                            <a href="#" onclick="confirmDelete('<?= esc_js($row->DeviceID) ?>', '<?= $dev_action_nonce ?>'); return false;"><i
+                                            <a href="#"
+                                                onclick="confirmDelete('<?= esc_js($row->DeviceID) ?>', '<?= $dev_action_nonce ?>'); return false;"><i
                                                     class="fa-solid fa-trash-can"></i> Delete</a>
                                         </div>
                                     </div>

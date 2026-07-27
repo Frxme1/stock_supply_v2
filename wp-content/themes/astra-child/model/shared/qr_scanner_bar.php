@@ -109,6 +109,7 @@ if ($category_filter) {
         border-radius: 16px !important;
         position: relative !important;
     }
+
     .dash-scan-popup .swal2-close {
         top: 14px !important;
         right: 14px !important;
@@ -128,6 +129,7 @@ if ($category_filter) {
         transition: all 0.2s ease !important;
         z-index: 10 !important;
     }
+
     .dash-scan-popup .swal2-close:hover {
         color: #0f172a !important;
         background: #e2e8f0 !important;
@@ -195,7 +197,7 @@ if ($category_filter) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Camera Access Error',
-                            text: 'ไม่สามารถเปิดใช้งานกล้องได้ โปรดอนุญาตสิทธิ์การใช้กล้องในเบราว์เซอร์',
+                            text: 'Unable to access camera. Please grant camera permissions in your browser.',
                             confirmButtonColor: '#ef4444'
                         });
                     }
@@ -404,7 +406,7 @@ if ($category_filter) {
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'Wrong Device Category',
-                                html: `หน้านี้สำหรับสแกนอุปกรณ์ประเภท <strong>${categoryFilter}</strong> เท่านั้น<br><br><small style="color:#64748b;">(อุปกรณ์ที่สแกนเป็นประเภท <strong>${dev.CategoryName}</strong> - รหัส: ${dev.DeviceID})</small>`,
+                                html: `This page is for scanning <strong>${categoryFilter}</strong> category devices only.<br><br><small style="color:#64748b;">(Scanned device category: <strong>${dev.CategoryName}</strong> - ID: ${dev.DeviceID})</small>`,
                                 confirmButtonColor: '#f59e0b'
                             });
                             return;
@@ -415,7 +417,7 @@ if ($category_filter) {
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'Wrong Device Status',
-                                html: `หน้านี้สำหรับสแกนอุปกรณ์ที่มีสถานะ <strong>${statusFilter}</strong> เท่านั้น<br><br><small style="color:#64748b;">(อุปกรณ์ที่สแกนมีสถานะ <strong>${dev.StatusName}</strong> - รหัส: ${dev.DeviceID})</small>`,
+                                html: `This page is for scanning devices with status <strong>${statusFilter}</strong> only.<br><br><small style="color:#64748b;">(Scanned device status: <strong>${dev.StatusName}</strong> - ID: ${dev.DeviceID})</small>`,
                                 confirmButtonColor: '#f59e0b'
                             });
                             return;
@@ -443,6 +445,7 @@ if ($category_filter) {
         }
 
         function renderScannedDeviceModal(dev) {
+            window.__lastScannedDevice = dev;
             const qrBar = document.querySelector('.dash-qr-bar');
             const detailsOnly = qrBar ? (qrBar.getAttribute('data-details-only') === 'true') : false;
             window.__lastScannedOwners = dev.all_owners || [];
@@ -480,45 +483,45 @@ if ($category_filter) {
             if (!detailsOnly) {
                 htmlContent += `
                 <!-- Quick Actions -->
-                <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem;"><i class="fa-solid fa-bolt" style="color:#6366f1; margin-right:4px;"></i>Quick Actions (เปลี่ยนสถานะทันที)</div>
+                <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem;"><i class="fa-solid fa-bolt" style="color:#6366f1; margin-right:4px;"></i>Quick Actions (Instant Status Change)</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             `;
 
                 if (dev.StatusName === 'In Use') {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'return')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-right-to-bracket" style="margin-right:6px;"></i>รับคืน (Return)</button>
-                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'maintenance')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>ส่งซ่อม (Repair)</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return', '<i class=\\'fa-solid fa-right-to-bracket\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return Device', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-right-to-bracket" style="margin-right:6px;"></i>Return</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>Repair</button>
                 `;
                 } else if (dev.StatusName === 'Available') {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-hand-holding-hand" style="margin-right:6px;"></i>เบิกจ่าย (Assign)</button>
-                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'maintenance')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>ส่งซ่อม (Repair)</button>
+                    <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-hand-holding-hand" style="margin-right:6px;"></i>Assign</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>Repair</button>
                 `;
                 } else if (dev.StatusName === 'Maintenance') {
                     if (dev.OwnerID && dev.OwnerName && dev.OwnerName !== '-') {
                         htmlContent += `
-                        <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'return_to_owner')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#3b82f6,#2563eb); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-user-check" style="margin-right:6px;"></i>ส่งคืน ${dev.OwnerName}</button>
+                        <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return_to_owner', '<i class=\\'fa-solid fa-user-check\\' style=\\'color:#3b82f6; margin-right:6px;\\'></i> Return to Owner', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#3b82f6')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#3b82f6,#2563eb); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-user-check" style="margin-right:6px;"></i>Return to ${dev.OwnerName}</button>
                     `;
                     }
                     htmlContent += `
-                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'available')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>คืนเข้าคลัง (Available)</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return to Stock', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>Return to Stock</button>
                 `;
                 } else {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'available')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>ทำให้ใช้งานได้ (Available)</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Mark Available', '<i class=\\'fa-solid fa-check\\'></i> Confirm', '#10b981')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>Mark Available</button>
                 `;
                 }
 
                 if (dev.StatusName !== 'Retired') {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrExecAction('${dev.DeviceID}', 'retired')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#475569,#334155); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-box-archive" style="margin-right:6px;"></i>ปลดระวาง (Retire)</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'retired', '<i class=\\'fa-solid fa-box-archive\\' style=\\'color:#475569; margin-right:6px;\\'></i> Retire Device', '<i class=\\'fa-solid fa-box-archive\\'></i> Confirm Retire', '#475569')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#475569,#334155); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-box-archive" style="margin-right:6px;"></i>Retire</button>
                 `;
                 }
 
                 htmlContent += `
                 </div>
                 <div style="margin-top:10px;">
-                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:#f1f5f9; color:#475569; width:100%; margin:0; padding:10px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>ดูรายละเอียดและประวัติทั้งหมด</a>
+                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:#f1f5f9; color:#475569; width:100%; margin:0; padding:10px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>View Details & History</a>
                 </div>
             `;
             } else {
@@ -541,11 +544,67 @@ if ($category_filter) {
             });
         }
 
+        window.__qrPreviewImage = function (input) {
+            const previewWrap = document.getElementById('swal_qr_img_preview_wrap');
+            const previewImg = document.getElementById('swal_qr_preview_img');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    if (previewImg) previewImg.src = e.target.result;
+                    if (previewWrap) previewWrap.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                if (previewWrap) previewWrap.style.display = 'none';
+            }
+        };
+
+        window.__qrPromptActionWithPhoto = function (deviceId, actionType, titleText, confirmText, confirmColor) {
+            Swal.fire({
+                title: titleText,
+                html: `
+                <div style="text-align:left; font-size:0.9rem; color:#475569;">
+                    <p style="margin-bottom:14px; color:#64748b;">Device <strong>${deviceId}</strong> - You may attach an optional condition photo:</p>
+                    
+                    <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:6px; color:#334155;">
+                        <i class="fa-solid fa-camera" style="color:#6366f1; margin-right:4px;"></i> Equipment Condition Photo (Camera / Upload)
+                    </label>
+                    <input type="file" id="swal_qr_action_photo" accept="image/*" capture="environment" onchange="window.__qrPreviewImage(this)" style="width:100%; box-sizing:border-box; padding:8px; border:1px dashed #cbd5e1; border-radius:10px; font-size:0.85rem; background:#ffffff;">
+                    <div id="swal_qr_img_preview_wrap" style="display:none; margin-top:10px; text-align:center;">
+                        <img id="swal_qr_preview_img" src="" style="max-height:150px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    </div>
+                </div>
+                `,
+                showConfirmButton: true,
+                confirmButtonText: confirmText || '<i class="fa-solid fa-check"></i> Confirm Action',
+                confirmButtonColor: confirmColor || '#6366f1',
+                showDenyButton: true,
+                denyButtonText: '<i class="fa-solid fa-arrow-left"></i> Back',
+                denyButtonColor: '#64748b',
+                showCancelButton: false,
+                showCloseButton: false,
+                customClass: { popup: 'dash-scan-popup' },
+                preConfirm: () => {
+                    const photoInput = document.getElementById('swal_qr_action_photo');
+                    const photoFile = (photoInput && photoInput.files && photoInput.files[0]) ? photoInput.files[0] : null;
+                    return { photo: photoFile };
+                }
+            }).then((result) => {
+                if (result.isDenied) {
+                    if (window.__lastScannedDevice) {
+                        renderScannedDeviceModal(window.__lastScannedDevice);
+                    }
+                } else if (result.isConfirmed) {
+                    window.__qrExecAction(deviceId, actionType, result.value);
+                }
+            });
+        };
+
         // Expose action functions globally for SweetAlert button onclick
         window.__qrExecAction = function (deviceId, actionType, extraData = {}) {
             Swal.fire({
                 title: '<i class="fa-solid fa-spinner fa-spin" style="color:#6366f1"></i> Processing...',
-                html: '<span style="color:#64748b;">กำลังดำเนินการอัปเดตสถานะแบบ Real-time</span>',
+                html: '<span style="color:#64748b;">Updating status in real-time...</span>',
                 allowOutsideClick: false,
                 showConfirmButton: false,
                 didOpen: () => { Swal.showLoading(); }
@@ -559,6 +618,7 @@ if ($category_filter) {
             if (extraData) {
                 if (extraData.new_due_date) formData.append('new_due_date', extraData.new_due_date);
                 if (extraData.owner_id) formData.append('owner_id', extraData.owner_id);
+                if (extraData.photo) formData.append('photo', extraData.photo);
             }
 
             fetch(ajaxUrl, {
@@ -570,7 +630,7 @@ if ($category_filter) {
                     if (data.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'อัปเดตสถานะสำเร็จ!',
+                            title: 'Status Updated Successfully!',
                             text: data.data.message,
                             confirmButtonColor: '#10b981'
                         }).then(() => {
@@ -608,12 +668,10 @@ if ($category_filter) {
                 let fullName = [o.FirstName, o.LastName].filter(Boolean).map(s => s.trim()).filter(Boolean).join(' ');
                 let namePart = nickname || fullName || `Owner #${o.OwnerID}`;
                 let dept = (o.DepartmentName || '').trim();
-                
+
                 let displayName = dept ? `${namePart} (${dept})` : namePart;
                 ownerOptionsHtml += `<option value="${o.OwnerID}">${displayName}</option>`;
             });
-
-            const today = new Date().toISOString().split('T')[0];
 
             Swal.fire({
                 title: '<i class="fa-solid fa-hand-holding-hand" style="color:#6366f1; margin-right:6px;"></i> Check-out / Assign Device',
@@ -625,24 +683,57 @@ if ($category_filter) {
                     <select id="swal_qr_owner_id" style="width:100%; box-sizing:border-box; margin:0 0 16px 0; border-radius:10px; height:44px; padding:0 12px; font-size:0.9rem; border:1px solid #cbd5e1; background:#ffffff; color:#0f172a; outline:none;">
                         ${ownerOptionsHtml}
                     </select>
+
+                    <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:6px; color:#334155;">
+                        <i class="fa-solid fa-camera" style="color:#6366f1; margin-right:4px;"></i> Equipment Condition Photo (Camera / Upload)
+                    </label>
+                    <input type="file" id="swal_qr_assign_photo" accept="image/*" capture="environment" onchange="window.__qrPreviewAssignImage(this)" style="width:100%; box-sizing:border-box; padding:8px; border:1px dashed #cbd5e1; border-radius:10px; font-size:0.85rem; background:#ffffff;">
+                    <div id="swal_qr_assign_preview_wrap" style="display:none; margin-top:10px; text-align:center;">
+                        <img id="swal_qr_assign_preview_img" src="" style="max-height:150px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    </div>
                 </div>
             `,
-                showCancelButton: true,
+                showConfirmButton: true,
                 confirmButtonText: '<i class="fa-solid fa-check"></i> Confirm Check-out',
-                cancelButtonText: '<i class="fa-solid fa-xmark"></i> Cancel',
                 confirmButtonColor: '#6366f1',
-                cancelButtonColor: '#94a3b8',
+                showDenyButton: true,
+                denyButtonText: '<i class="fa-solid fa-arrow-left"></i> Back',
+                denyButtonColor: '#64748b',
+                showCancelButton: false,
+                showCloseButton: false,
                 customClass: { popup: 'dash-scan-popup' },
+                didOpen: () => {
+                    window.__qrPreviewAssignImage = function (input) {
+                        const previewWrap = document.getElementById('swal_qr_assign_preview_wrap');
+                        const previewImg = document.getElementById('swal_qr_assign_preview_img');
+                        if (input.files && input.files[0]) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                if (previewImg) previewImg.src = e.target.result;
+                                if (previewWrap) previewWrap.style.display = 'block';
+                            };
+                            reader.readAsDataURL(input.files[0]);
+                        } else {
+                            if (previewWrap) previewWrap.style.display = 'none';
+                        }
+                    };
+                },
                 preConfirm: () => {
                     const ownerId = document.getElementById('swal_qr_owner_id').value;
                     if (!ownerId) {
                         Swal.showValidationMessage('Please select an employee');
                         return false;
                     }
-                    return { owner_id: ownerId };
+                    const photoInput = document.getElementById('swal_qr_assign_photo');
+                    const photoFile = (photoInput && photoInput.files && photoInput.files[0]) ? photoInput.files[0] : null;
+                    return { owner_id: ownerId, photo: photoFile };
                 }
             }).then((result) => {
-                if (result.isConfirmed) {
+                if (result.isDenied) {
+                    if (window.__lastScannedDevice) {
+                        renderScannedDeviceModal(window.__lastScannedDevice);
+                    }
+                } else if (result.isConfirmed) {
                     window.__qrExecAction(deviceId, 'assign', result.value);
                 }
             });

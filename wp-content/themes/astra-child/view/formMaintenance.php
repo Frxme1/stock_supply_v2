@@ -55,6 +55,18 @@ function form_maintenance($editing = null)
         $current_user = wp_get_current_user();
         $user_email = $current_user->user_email ?: $device_info->user_email;
 
+        // Process photo upload if provided
+        $photo_url = null;
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            if (!function_exists('wp_handle_upload')) {
+                require_once(ABSPATH . 'wp-admin/includes/file.php');
+            }
+            $uploaded = wp_handle_upload($_FILES['photo'], array('test_form' => false));
+            if ($uploaded && !isset($uploaded['error'])) {
+                $photo_url = $uploaded['url'];
+            }
+        }
+
         // Insert into Maintenance
         $inserted = $wpdb->insert(
             $table_maintenance,
@@ -63,10 +75,11 @@ function form_maintenance($editing = null)
                 'RepairDate' => $RepairDate,
                 'Details' => $Details,
                 'user_email' => $user_email,
+                'Photo' => $photo_url,
                 'CreatedAt' => current_time('mysql'),
                 'UpdatedAt' => current_time('mysql'),
             ],
-            ['%s', '%s', '%s', '%s', '%s', '%s']
+            ['%s', '%s', '%s', '%s', '%s', '%s', '%s']
         );
 
         if (!$inserted || $wpdb->last_error) {
@@ -115,7 +128,8 @@ function form_maintenance($editing = null)
             'Description' => "Device ID {$DeviceID} set to Maintenance.",
             'user_email' => $user_email,
             'CategoryID' => $device_info->CategoryID ?? null,
-            'Owner' => $owner_nickname
+            'Owner' => $owner_nickname,
+            'Photo' => $photo_url
         ]);
 
         // ส่งอีเมลแจ้งเตือน
@@ -142,7 +156,7 @@ function form_maintenance($editing = null)
     $dateValue = !empty($editing->RepairDate) ? date('Y-m-d', strtotime($editing->RepairDate)) : '';
     ?>
 
-    <form class="form-maintenance" method="POST">
+    <form class="form-maintenance" method="POST" enctype="multipart/form-data">
         <?php wp_nonce_field('update_maintenance_nonce', '_maint_nonce'); ?>
         <h2>Form Maintenance</h2>
         <div class="mt-4 mb-4">
@@ -231,6 +245,16 @@ function form_maintenance($editing = null)
             <label>Additional Details <span class="text-danger">*</span></label>
             <input type="text" name="OtherDetails" id="OtherDetails" placeholder="Please specify reason..."
                 value="<?= esc_attr($other_text) ?>" <?= $is_other ? 'required' : '' ?>>
+        </div>
+
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 6px;">
+                <i class="fa-solid fa-camera" style="color: #6366f1; margin-right: 4px;"></i> Condition Photo (Camera / Upload)
+            </label>
+            <input type="file" name="photo" accept="image/*" capture="environment" onchange="if(this.files && this.files[0]){ const r=new FileReader(); r.onload=e=>{ document.getElementById('maint_photo_img').src=e.target.result; document.getElementById('maint_photo_wrap').style.display='block'; }; r.readAsDataURL(this.files[0]); }" style="width:100%; padding:10px; border:1px dashed #cbd5e1; border-radius:10px; background:#ffffff;">
+            <div id="maint_photo_wrap" style="display:none; margin-top:10px;">
+                <img id="maint_photo_img" src="" style="max-height:140px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            </div>
         </div>
 
         <div class="form-actions">

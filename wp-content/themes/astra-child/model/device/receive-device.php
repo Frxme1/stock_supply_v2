@@ -40,6 +40,18 @@ function receive_device($device_data = null)
         $department_id = $owner_info->DepartmentID ?? null;
         $position_id = $owner_info->PositionID ?? null;
 
+        // Process photo upload if provided
+        $photo_url = null;
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            if (!function_exists('wp_handle_upload')) {
+                require_once(ABSPATH . 'wp-admin/includes/file.php');
+            }
+            $uploaded = wp_handle_upload($_FILES['photo'], array('test_form' => false));
+            if ($uploaded && !isset($uploaded['error'])) {
+                $photo_url = $uploaded['url'];
+            }
+        }
+
         // ดึงสถานะ "In Use"
         $status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
 
@@ -89,7 +101,8 @@ function receive_device($device_data = null)
                 'Description' => "Device ID {$device_id} received and assigned to owner",
                 'user_email' => $user_email,
                 'CategoryID' => $category_id,
-                'Owner' => $owner_nickname
+                'Owner' => $owner_nickname,
+                'Photo' => $photo_url
             ]);
 
             // ส่งอีเมลแจ้งเตือน
@@ -124,7 +137,7 @@ function receive_device($device_data = null)
     $date_value = !empty($device_data->ReceiveDate) ? date('Y-m-d', strtotime($device_data->ReceiveDate)) : '';
     ?>
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <?php wp_nonce_field('receive_device_nonce', '_rcv_nonce'); ?>
         <h2>Assign Device</h2>
 
@@ -178,6 +191,15 @@ function receive_device($device_data = null)
                     required>
             </div>
 
+            <div class="form-group" style="grid-column: span 2; margin-top: 10px;">
+                <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 6px;">
+                    <i class="fa-solid fa-camera" style="color: #6366f1; margin-right: 4px;"></i> Condition Photo (Camera / Upload)
+                </label>
+                <input type="file" name="photo" accept="image/*" capture="environment" onchange="if(this.files && this.files[0]){ const r=new FileReader(); r.onload=e=>{ document.getElementById('rcv_photo_img').src=e.target.result; document.getElementById('rcv_photo_wrap').style.display='block'; }; r.readAsDataURL(this.files[0]); }" style="width:100%; padding:10px; border:1px dashed #cbd5e1; border-radius:10px; background:#ffffff;">
+                <div id="rcv_photo_wrap" style="display:none; margin-top:10px;">
+                    <img id="rcv_photo_img" src="" style="max-height:140px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                </div>
+            </div>
 
         </div>
 

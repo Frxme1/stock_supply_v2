@@ -695,6 +695,17 @@ function stock_supply_setup_db()
     if (empty($dev_notif)) {
         $wpdb->query("ALTER TABLE Devices ADD COLUMN LastNotifiedDate DATE DEFAULT NULL");
     }
+
+    // Ensure Photo column exists in History_new and Maintenance
+    $hist_photo = $wpdb->get_results("SHOW COLUMNS FROM History_new LIKE 'Photo'");
+    if (empty($hist_photo)) {
+        $wpdb->query("ALTER TABLE History_new ADD COLUMN Photo VARCHAR(255) DEFAULT NULL");
+    }
+
+    $maint_photo = $wpdb->get_results("SHOW COLUMNS FROM Maintenance LIKE 'Photo'");
+    if (empty($maint_photo)) {
+        $wpdb->query("ALTER TABLE Maintenance ADD COLUMN Photo VARCHAR(255) DEFAULT NULL");
+    }
 }
 add_action('after_setup_theme', 'stock_supply_setup_db');
 
@@ -1081,6 +1092,20 @@ function stock_supply_ajax_quick_action() {
         wp_send_json_error(['message' => 'Device not found']);
     }
 
+    // Process photo upload if provided
+    $photo_url = null;
+    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+        if (!function_exists('wp_handle_upload')) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+        }
+        $uploaded_file = $_FILES['photo'];
+        $upload_overrides = ['test_form' => false];
+        $movefile = wp_handle_upload($uploaded_file, $upload_overrides);
+        if ($movefile && !isset($movefile['error'])) {
+            $photo_url = $movefile['url'];
+        }
+    }
+
     $prev_owner_id = $dev->OwnerID;
     if (empty($prev_owner_id)) {
         $prev_owner_id = $wpdb->get_var($wpdb->prepare(
@@ -1126,7 +1151,8 @@ function stock_supply_ajax_quick_action() {
                 'Description' => "Quick Return via QR Scan (Returned by {$prev_owner})",
                 'user_email'  => $admin_email,
                 'CategoryID'  => $dev->CategoryID,
-                'Owner'       => $prev_owner
+                'Owner'       => $prev_owner,
+                'Photo'       => $photo_url
             ]);
             $email_sent = false;
             if ($prev_owner_id && function_exists('stock_supply_send_email')) {
@@ -1166,7 +1192,8 @@ function stock_supply_ajax_quick_action() {
             'Description' => "Assigned to {$owner_name} via QR Scan Hub",
             'user_email'  => $admin_email,
             'CategoryID'  => $dev->CategoryID,
-            'Owner'       => $owner_name
+            'Owner'       => $owner_name,
+            'Photo'       => $photo_url
         ]);
 
         $email_sent = false;
@@ -1185,6 +1212,17 @@ function stock_supply_ajax_quick_action() {
     } elseif ($action_type === 'maintenance') {
         $maint_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
         $wpdb->update('Devices', ['StatusID' => $maint_status, 'RepairDate' => current_time('Y-m-d')], ['DeviceID' => $device_id]);
+        
+        $wpdb->insert('Maintenance', [
+            'DeviceID'   => $device_id,
+            'RepairDate' => current_time('Y-m-d'),
+            'Details'    => "Sent to Maintenance via QR Scan Hub",
+            'user_email' => $admin_email,
+            'Photo'      => $photo_url,
+            'CreatedAt'  => current_time('mysql'),
+            'UpdatedAt'  => current_time('mysql'),
+        ]);
+
         $wpdb->insert('History_new', [
             'DeviceID'    => $device_id,
             'Action'      => 'Maintenance',
@@ -1192,7 +1230,8 @@ function stock_supply_ajax_quick_action() {
             'Description' => "Sent to Maintenance via QR Scan Hub",
             'user_email'  => $admin_email,
             'CategoryID'  => $dev->CategoryID,
-            'Owner'       => $prev_owner
+            'Owner'       => $prev_owner,
+            'Photo'       => $photo_url
         ]);
 
         $email_sent = false;
@@ -1216,7 +1255,8 @@ function stock_supply_ajax_quick_action() {
             'Description' => "Marked Available via QR Scan Hub",
             'user_email'  => $admin_email,
             'CategoryID'  => $dev->CategoryID,
-            'Owner'       => '-'
+            'Owner'       => '-',
+            'Photo'       => $photo_url
         ]);
         wp_send_json_success(['message' => "Device {$device_id} is now Available!"]);
     } elseif ($action_type === 'retired') {
@@ -1233,7 +1273,8 @@ function stock_supply_ajax_quick_action() {
             'Description' => "Marked as Retired via QR Scan Hub",
             'user_email'  => $admin_email,
             'CategoryID'  => $dev->CategoryID,
-            'Owner'       => $prev_owner
+            'Owner'       => $prev_owner,
+            'Photo'       => $photo_url
         ]);
         wp_send_json_success(['message' => "Device {$device_id} has been Retired!"]);
     } elseif ($action_type === 'return_to_owner') {
@@ -1261,7 +1302,8 @@ function stock_supply_ajax_quick_action() {
                 'Description' => "Device repaired and returned to owner ({$owner_nickname}) via QR Scan Hub",
                 'user_email'  => $admin_email,
                 'CategoryID'  => $dev->CategoryID,
-                'Owner'       => $owner_nickname
+                'Owner'       => $owner_nickname,
+                'Photo'       => $photo_url
             ]);
 
             $wpdb->update(

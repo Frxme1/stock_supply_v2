@@ -7,10 +7,10 @@ function device_view_details($device_id = null)
 {
     global $wpdb;
 
-    $table_device  = 'Devices';
-    $table_brand   = 'Brands';
-    $table_cat     = 'Categories';
-    $table_status  = 'Statuses';
+    $table_device = 'Devices';
+    $table_brand = 'Brands';
+    $table_cat = 'Categories';
+    $table_status = 'Statuses';
     $table_history = 'History_new';
 
     if (isset($_GET['delete'])) {
@@ -22,7 +22,8 @@ function device_view_details($device_id = null)
     }
 
     $device_id = $device_id ?: ($_GET['view'] ?? '');
-    if (empty($device_id)) return '<p>No Device ID provided.</p>';
+    if (empty($device_id))
+        return '<p>No Device ID provided.</p>';
 
     $device = $wpdb->get_row($wpdb->prepare("
         SELECT d.*, b.BrandName, c.CategoryName, s.StatusName
@@ -83,7 +84,7 @@ function device_view_details($device_id = null)
     $suggestions = $wpdb->get_col("SELECT DISTINCT StatusName FROM {$table_status} ORDER BY StatusName LIMIT 50");
 
     ob_start();
-?>
+    ?>
     <style>
         /* Base modern styling */
         .view-details-container {
@@ -102,12 +103,14 @@ function device_view_details($device_id = null)
             gap: 1rem;
             animation: fadeDown 0.4s ease-out;
         }
+
         .vd-title {
             font-size: 1.5rem;
             font-weight: 700;
             margin: 0;
             color: #111827;
         }
+
         .vd-subtitle {
             font-size: 0.9rem;
             color: #6b7280;
@@ -123,6 +126,7 @@ function device_view_details($device_id = null)
             margin-bottom: 2.5rem;
             animation: fadeIn 0.5s ease-out;
         }
+
         .vd-info-card {
             background: #ffffff;
             border: 1px solid #e5e7eb;
@@ -131,10 +135,12 @@ function device_view_details($device_id = null)
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
             transition: transform 0.2s, box-shadow 0.2s;
         }
+
         .vd-info-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         }
+
         .vd-info-label {
             font-size: 0.75rem;
             text-transform: uppercase;
@@ -146,6 +152,7 @@ function device_view_details($device_id = null)
             align-items: center;
             gap: 0.5rem;
         }
+
         .vd-info-value {
             font-size: 1.1rem;
             font-weight: 600;
@@ -163,24 +170,54 @@ function device_view_details($device_id = null)
             font-size: 0.85rem;
             font-weight: 600;
         }
+
         .vd-status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
         }
-        .vd-status-Available { background: #ecfdf5; color: #059669; }
-        .vd-status-Available .vd-status-dot { background: #10b981; }
-        .vd-status-InUse { background: #fef2f2; color: #dc2626; }
-        .vd-status-InUse .vd-status-dot { background: #ef4444; }
-        .vd-status-Maintenance { background: #fffbeb; color: #d97706; }
-        .vd-status-Maintenance .vd-status-dot { background: #f59e0b; }
-        .vd-status-Retired { background: #f3f4f6; color: #374151; }
-        .vd-status-Retired .vd-status-dot { background: #6b7280; }
+
+        .vd-status-Available {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .vd-status-Available .vd-status-dot {
+            background: #10b981;
+        }
+
+        .vd-status-InUse {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .vd-status-InUse .vd-status-dot {
+            background: #ef4444;
+        }
+
+        .vd-status-Maintenance {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .vd-status-Maintenance .vd-status-dot {
+            background: #f59e0b;
+        }
+
+        .vd-status-Retired {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .vd-status-Retired .vd-status-dot {
+            background: #6b7280;
+        }
 
         /* History Table */
         .vd-history-section {
             animation: slideUp 0.5s ease-out;
         }
+
         .vd-history-header {
             display: flex;
             justify-content: space-between;
@@ -189,6 +226,7 @@ function device_view_details($device_id = null)
             flex-wrap: wrap;
             gap: 1rem;
         }
+
         .vd-history-title {
             font-size: 1.25rem;
             font-weight: 700;
@@ -198,7 +236,7 @@ function device_view_details($device_id = null)
             gap: 0.5rem;
             color: #111827;
         }
-        
+
         .next-table-wrapper {
             background: #ffffff;
             border-radius: 20px;
@@ -206,15 +244,18 @@ function device_view_details($device_id = null)
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             overflow: hidden;
         }
+
         .next-table {
             margin: 0;
             border-collapse: collapse;
             width: 100%;
         }
+
         .next-table thead {
             background: #f9fafb;
             border-bottom: 1px solid #e5e7eb;
         }
+
         .next-table th {
             color: #6b7280;
             font-size: 0.75rem;
@@ -224,6 +265,7 @@ function device_view_details($device_id = null)
             padding: 1rem 1.5rem;
             border: none;
         }
+
         .next-table td {
             padding: 1rem 1.5rem;
             border: none;
@@ -231,21 +273,24 @@ function device_view_details($device_id = null)
             color: #374151;
             vertical-align: middle;
         }
+
         .next-table tbody tr {
             transition: background-color 0.2s ease;
         }
+
         .next-table tbody tr:hover {
             background-color: #f8fafc;
         }
+
         .next-table tbody tr:last-child td {
             border-bottom: none;
         }
-        
+
         .vd-desc-text {
             color: #4b5563;
             font-size: 0.95rem;
         }
-        
+
         .vd-date-text {
             font-size: 0.9rem;
             color: #6b7280;
@@ -266,9 +311,9 @@ function device_view_details($device_id = null)
             border-radius: 9999px;
             padding-left: 1rem;
             border: 1px solid #d1d5db;
-            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        
+
         .vd-btn {
             display: inline-flex;
             align-items: center;
@@ -279,10 +324,11 @@ function device_view_details($device_id = null)
             padding: 0.5rem 1.25rem;
             transition: all 0.2s;
         }
+
         .vd-btn-icon {
             padding: 0.4rem 1rem;
         }
-        
+
         /* Pagination */
         .pagination .page-link {
             color: #4b5563;
@@ -291,24 +337,57 @@ function device_view_details($device_id = null)
             border-radius: 8px;
             transition: all 0.2s;
         }
+
         .pagination .page-item.active .page-link {
             background-color: #111827;
             color: #ffffff;
             font-weight: 600;
         }
+
         .pagination .page-link:hover:not(.active) {
             background-color: #f3f4f6;
             color: #111827;
         }
+
         .pagination .page-item.disabled .page-link {
             background-color: transparent;
             color: #9ca3af;
         }
-        
+
         /* Animations */
-        @keyframes fadeDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 
     <div class="view-details-container px-3 mt-4">
@@ -316,13 +395,17 @@ function device_view_details($device_id = null)
         <div class="vd-header">
             <div>
                 <h2 class="vd-title">Device Details</h2>
-                <div class="vd-subtitle">ID: <?= esc_html($device->DeviceID) ?> &nbsp;&bull;&nbsp; <?= esc_html($device->Model) ?></div>
+                <div class="vd-subtitle">ID: <?= esc_html($device->DeviceID) ?> &nbsp;&bull;&nbsp;
+                    <?= esc_html($device->Model) ?>
+                </div>
             </div>
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-secondary vd-btn" onclick="if(document.referrer && document.referrer.includes(window.location.host)) { history.back(); } else { window.location.href = '<?= esc_url(home_url('/home/')) ?>'; }">
+                <button type="button" class="btn btn-outline-secondary vd-btn"
+                    onclick="if(document.referrer && document.referrer.includes(window.location.host)) { history.back(); } else { window.location.href = '<?= esc_url(home_url('/home/')) ?>'; }">
                     <i class="fa-solid fa-arrow-left"></i> Back
                 </button>
-                <button type="button" class="btn btn-dark vd-btn" onclick="printDeviceLabels([{ id: '<?= esc_js($device->DeviceID) ?>', sn: '<?= esc_js($device->SerialNumber) ?>' }])">
+                <button type="button" class="btn btn-dark vd-btn"
+                    onclick="printDeviceLabels([{ id: '<?= esc_js($device->DeviceID) ?>', sn: '<?= esc_js($device->SerialNumber) ?>' }])">
                     <i class="fa-solid fa-print"></i> Print Label
                 </button>
             </div>
@@ -348,7 +431,9 @@ function device_view_details($device_id = null)
             </div>
             <div class="vd-info-card">
                 <div class="vd-info-label"><i class="fa-solid fa-barcode"></i> Serial Number</div>
-                <div class="vd-info-value"><?= !empty($device->SerialNumber) ? esc_html($device->SerialNumber) : '<span class="text-muted">-</span>' ?></div>
+                <div class="vd-info-value">
+                    <?= !empty($device->SerialNumber) ? esc_html($device->SerialNumber) : '<span class="text-muted">-</span>' ?>
+                </div>
             </div>
             <div class="vd-info-card">
                 <div class="vd-info-label"><i class="fa-solid fa-circle-info"></i> Status</div>
@@ -356,9 +441,12 @@ function device_view_details($device_id = null)
                     <?php
                     $statusClass = 'vd-status-Retired';
                     $statusName = $device->StatusName ?? 'Unknown';
-                    if (strcasecmp($statusName, 'Available') === 0) $statusClass = 'vd-status-Available';
-                    elseif (strcasecmp($statusName, 'In Use') === 0) $statusClass = 'vd-status-InUse';
-                    elseif (strcasecmp($statusName, 'Maintenance') === 0) $statusClass = 'vd-status-Maintenance';
+                    if (strcasecmp($statusName, 'Available') === 0)
+                        $statusClass = 'vd-status-Available';
+                    elseif (strcasecmp($statusName, 'In Use') === 0)
+                        $statusClass = 'vd-status-InUse';
+                    elseif (strcasecmp($statusName, 'Maintenance') === 0)
+                        $statusClass = 'vd-status-Maintenance';
                     ?>
                     <div class="vd-status-badge <?= $statusClass ?>">
                         <div class="vd-status-dot"></div>
@@ -372,14 +460,16 @@ function device_view_details($device_id = null)
         <div class="vd-history-section">
             <div class="vd-history-header">
                 <h3 class="vd-history-title"><i class="fa-solid fa-clock-rotate-left text-muted"></i> History Log</h3>
-                
+
                 <form method="GET" action="" class="d-flex align-items-center gap-2">
                     <input type="hidden" name="view" value="<?= esc_attr($device->DeviceID) ?>">
                     <?php
                     foreach ($_GET as $key => $value) {
                         if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'view'])) {
                             if (is_array($value)) {
-                                foreach ($value as $v) { echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">'; }
+                                foreach ($value as $v) {
+                                    echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
+                                }
                             } else {
                                 echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
                             }
@@ -387,10 +477,10 @@ function device_view_details($device_id = null)
                     }
                     ?>
                     <div style="max-width: 250px;">
-                        <?php 
+                        <?php
                         $search_placeholder = 'Search History...';
                         $search_list = 'search_suggestions';
-                        include get_stylesheet_directory() . '/view/animated-search.php'; 
+                        include get_stylesheet_directory() . '/view/animated-search.php';
                         ?>
                     </div>
                     <button type="submit" class="btn-filter-modern">
@@ -398,7 +488,7 @@ function device_view_details($device_id = null)
                     </button>
                     <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
-                    
+
                     <datalist id="search_suggestions">
                         <?php foreach ($suggestions as $suggest): ?>
                             <option value="<?= esc_attr($suggest) ?>"></option>
@@ -413,16 +503,17 @@ function device_view_details($device_id = null)
                         <tr>
                             <th class="text-start">Action</th>
                             <th class="text-start">Date</th>
-                            <th class="text-start">Description</th>
+                            <th class="text-start">Reason / Details</th>
+                            <th class="text-start">Photo</th>
                             <th class="text-start">User</th>
                             <th class="text-start">Owner</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($rows)): ?>
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">No history logs found.</td>
-                        </tr>
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No history logs found.</td>
+                            </tr>
                         <?php else: ?>
                             <?php foreach ($rows as $row): ?>
                                 <?php
@@ -432,13 +523,38 @@ function device_view_details($device_id = null)
                                 <tr>
                                     <td class="text-start"><span class="vd-action-pill"><?= esc_html($row->Action) ?></span></td>
                                     <td class="text-start vd-date-text"><?= esc_html($date->format("d/m/Y H:i")) ?></td>
-                                    <td class="text-start vd-desc-text">
-                                        <?php 
-                                            $desc = $row->Description;
-                                            $desc = preg_replace('/^Device ID [A-Za-z0-9_-]+\s*/i', '', $desc);
-                                            $desc = ucfirst($desc);
-                                            echo esc_html($desc);
-                                        ?>
+                                     <td class="text-start vd-desc-text">
+                                         <?php
+                                         $desc = $row->Description ?: '-';
+                                         // Clean redundant Device ID prefix
+                                         $desc = preg_replace('/^Device ID [A-Za-z0-9_-]+\s*/i', '', $desc);
+                                         $desc = ucfirst(trim($desc));
+
+                                         // If action is Maintenance, fetch specific repair reason from Maintenance table if available
+                                         if (strcasecmp($row->Action, 'Maintenance') === 0) {
+                                             $maint_reason = $wpdb->get_var($wpdb->prepare(
+                                                 "SELECT Details FROM Maintenance WHERE DeviceID = %s ORDER BY MaintenanceID DESC LIMIT 1",
+                                                 $device->DeviceID
+                                             ));
+                                             if (!empty($maint_reason) && strpos($maint_reason, 'via QR') === false) {
+                                                 $desc = $maint_reason;
+                                             }
+                                         }
+
+                                         echo esc_html($desc);
+                                         ?>
+                                     </td>
+                                    <td class="text-start">
+                                        <?php if (!empty($row->Photo)): ?>
+                                            <img src="<?= esc_url($row->Photo) ?>" 
+                                                 onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')" 
+                                                 style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor:pointer; transition:transform 0.15s ease;" 
+                                                 onmouseover="this.style.transform='scale(1.1)'" 
+                                                 onmouseout="this.style.transform='scale(1)'" 
+                                                 title="Click to view full photo">
+                                        <?php else: ?>
+                                            <span style="color:#cbd5e1; font-size:0.85rem;">-</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="text-start font-medium"><?= esc_html($row->user_email) ?></td>
                                     <td class="text-start font-medium"><?= esc_html($row->Owner ?: '-') ?></td>
@@ -448,6 +564,46 @@ function device_view_details($device_id = null)
                     </tbody>
                 </table>
             </div>
+
+            <script>
+                window.openPhotoModal = function(imgUrl) {
+                    if (!imgUrl) return;
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:6px;"></i> Equipment Condition Photo',
+                            imageUrl: imgUrl,
+                            imageAlt: 'Device Condition Photo',
+                            showCloseButton: true,
+                            confirmButtonColor: '#6366f1',
+                            confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
+                            customClass: { popup: 'dash-scan-popup' }
+                        });
+                    } else {
+                        let overlay = document.getElementById('photo_lightbox_overlay');
+                        if (!overlay) {
+                            overlay = document.createElement('div');
+                            overlay.id = 'photo_lightbox_overlay';
+                            overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.75); backdrop-filter:blur(4px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.2s ease;';
+                            overlay.innerHTML = `
+                                <div style="position:relative; max-width:90vw; max-height:90vh; background:#fff; border-radius:16px; padding:16px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
+                                    <button onclick="document.getElementById('photo_lightbox_overlay').style.opacity='0'; setTimeout(() => document.getElementById('photo_lightbox_overlay').style.display='none', 200);" style="position:absolute; top:-12px; right:-12px; background:#ef4444; color:#fff; border:none; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);">&times;</button>
+                                    <img id="photo_lightbox_img" src="" style="max-width:85vw; max-height:80vh; border-radius:12px; display:block; object-fit:contain;">
+                                </div>
+                            `;
+                            overlay.onclick = function(e) {
+                                if (e.target === overlay) {
+                                    overlay.style.opacity = '0';
+                                    setTimeout(() => overlay.style.display = 'none', 200);
+                                }
+                            };
+                            document.body.appendChild(overlay);
+                        }
+                        document.getElementById('photo_lightbox_img').src = imgUrl;
+                        overlay.style.display = 'flex';
+                        setTimeout(() => overlay.style.opacity = '1', 10);
+                    }
+                };
+            </script>
 
             <!-- Pagination -->
             <div class="d-flex justify-content-center mt-4 mb-2">
@@ -466,7 +622,8 @@ function device_view_details($device_id = null)
 
                         if ($start > 1) {
                             echo '<li class="page-item"><a class="page-link" href="?' . $query_str . '&paged=1">1</a></li>';
-                            if ($start > 2) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                            if ($start > 2)
+                                echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
                         }
 
                         for ($i = $start; $i <= $end; $i++) {
@@ -477,7 +634,8 @@ function device_view_details($device_id = null)
                         }
 
                         if ($end < $total_pages) {
-                            if ($end < $total_pages - 1) echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                            if ($end < $total_pages - 1)
+                                echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
                             echo '<li class="page-item"><a class="page-link" href="?' . $query_str . '&paged=' . $total_pages . '">' . $total_pages . '</a></li>';
                         }
 
@@ -493,7 +651,7 @@ function device_view_details($device_id = null)
     </div>
 
     <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
-<?php
+    <?php
     return ob_get_clean();
 }
 

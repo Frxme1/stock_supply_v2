@@ -124,6 +124,35 @@ table.table tbody tr:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
+/* Table Rows Open Dropdown / Active / Focus (Keep above table when unhovered) */
+.table-wrapper table tbody tr:focus-within,
+.table-wrapper table tbody tr:has(.show),
+.table-wrapper table tbody tr:has([aria-expanded="true"]),
+.table-wrapper table tbody tr.show,
+.next-table-wrapper table tbody tr:focus-within,
+.next-table-wrapper table tbody tr:has(.show),
+.next-table-wrapper table tbody tr:has([aria-expanded="true"]),
+.next-table-wrapper table tbody tr.show,
+.table-responsive table tbody tr:focus-within,
+.table-responsive table tbody tr:has(.show),
+.table-responsive table tbody tr:has([aria-expanded="true"]),
+.table-responsive table tbody tr.show,
+.table-custom tbody tr:focus-within,
+.table-custom tbody tr:has(.show),
+.table-custom tbody tr:has([aria-expanded="true"]),
+.table-custom tbody tr.show,
+.next-table tbody tr:focus-within,
+.next-table tbody tr:has(.show),
+.next-table tbody tr:has([aria-expanded="true"]),
+.next-table tbody tr.show,
+table.table tbody tr:focus-within,
+table.table tbody tr:has(.show),
+table.table tbody tr:has([aria-expanded="true"]),
+table.table tbody tr.show {
+    z-index: 100 !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
 .table-wrapper table tbody tr:hover td,
 .next-table-wrapper table tbody tr:hover td,
 .table-responsive table tbody tr:hover td,

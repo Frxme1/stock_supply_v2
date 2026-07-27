@@ -57,6 +57,12 @@ function edit_device_form($editing = null)
             return ob_get_clean(); // แก้ตรงนี้: return ผลลัพธ์ ไม่ใช่หยุดด้วย return ธรรมดา
         }
 
+        // Security & Integrity check for Status
+        $selected_status_name = strtolower($wpdb->get_var($wpdb->prepare("SELECT StatusName FROM Statuses WHERE StatusID = %d", $StatusID)) ?? '');
+        if ($selected_status_name === 'available' || $selected_status_name === 'retired') {
+            $OwnerID = null; // Auto-clear owner to prevent ghost assignment on Available/Retired
+        }
+
         $data = [
             'Model'         => $Model,
             'SerialNumber'  => $SerialNumber,
@@ -120,14 +126,20 @@ function edit_device_form($editing = null)
             $current_user = wp_get_current_user();
             $user_email = $current_user->user_email ?? '';
 
+            $old_status_name = isset($device_info->StatusID) ? $wpdb->get_var($wpdb->prepare("SELECT StatusName FROM Statuses WHERE StatusID = %d", $device_info->StatusID)) : '';
+            $new_status_name = $wpdb->get_var($wpdb->prepare("SELECT StatusName FROM Statuses WHERE StatusID = %d", $StatusID)) ?? '';
+
             $history_description = "Device ID {$DeviceID} information updated";
+            if ($old_status_name && $new_status_name && $old_status_name !== $new_status_name) {
+                $history_description .= " (Status: {$old_status_name} -> {$new_status_name})";
+            }
             if ($Reason !== '') {
-                $history_description .= " | Reason: " . $Reason;
+                $history_description .= " | Reason/Note: " . $Reason;
             }
 
             $wpdb->insert('History_new', [
                 'DeviceID'    => $DeviceID,
-                'Action'      => 'Update Device',
+                'Action'      => ($old_status_name !== $new_status_name ? 'Update Status' : 'Update Device'),
                 'Date'        => current_time('mysql'),
                 'Description' => $history_description,
                 'user_email'  => $user_email,
@@ -207,7 +219,6 @@ function edit_device_form($editing = null)
                 <select name="StatusID" id="StatusID" required>
                     <option value="">-- Select Status --</option>
                     <?php foreach ($statuses as $s): ?>
-                        <?php if (in_array($s->StatusName, ['Maintenance', 'Retired']) && (!isset($editing->StatusID) || $editing->StatusID != $s->StatusID)) continue; ?>
                         <option value="<?= esc_attr($s->StatusID) ?>" data-name="<?= esc_attr(strtolower($s->StatusName)) ?>" <?= selected($editing->StatusID ?? '', $s->StatusID, false) ?>>
                             <?=
                             ($s->StatusName === 'Available' ? '<i class="fa-solid fa-circle text-success"></i> Available' : ($s->StatusName === 'In Use' ? '<i class="fa-solid fa-circle text-danger"></i> In Use' : ($s->StatusName === 'Maintenance' ? '<i class="fa-solid fa-circle text-warning"></i> Maintenance' : ($s->StatusName === 'Retired' ? '<i class="fa-solid fa-circle text-dark"></i> Retired' : '❔'))))
@@ -435,7 +446,16 @@ function edit_device_form($editing = null)
 
                 if (statusName === 'retired') {
                     if (reasonGroup) reasonGroup.style.display = 'flex';
-                    if (reasonInput) reasonInput.required = true;
+                    if (reasonInput) {
+                        reasonInput.required = true;
+                        reasonInput.placeholder = 'Please enter reason (Required for Retired)';
+                    }
+                } else if (statusName === 'maintenance') {
+                    if (reasonGroup) reasonGroup.style.display = 'flex';
+                    if (reasonInput) {
+                        reasonInput.required = false;
+                        reasonInput.placeholder = 'Please enter maintenance details / reason (Optional)';
+                    }
                 } else {
                     if (reasonGroup) reasonGroup.style.display = 'none';
                     if (reasonInput) {

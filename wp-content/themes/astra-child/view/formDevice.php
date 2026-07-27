@@ -483,8 +483,9 @@ function device_crud()
             }
 
             .next-table tbody tr.next-table-row:focus-within,
-            .next-table tbody tr.next-table-row:has(.show) {
-                z-index: 50;
+            .next-table tbody tr.next-table-row:has(.show),
+            .next-table tbody tr.next-table-row:has([aria-expanded="true"]) {
+                z-index: 100 !important;
             }
 
             .next-table td {
