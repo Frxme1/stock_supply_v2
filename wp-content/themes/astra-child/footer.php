@@ -1,7 +1,7 @@
 </div><!-- #content.site-content -->
 
 <footer class="custom-footer pb-4 pt-5 pb-lg-5 pt-lg-5 border-top bg-white">
-    <div class="px-3 px-lg-5">
+    <div class="footer-inner-container">
         <div class="d-md-flex align-items-start justify-content-between">
             <!-- Logo & Brand -->
             <a href="home" class="d-flex align-items-center text-decoration-none text-dark gap-2"
@@ -132,35 +132,44 @@
     .custom-footer {
         background-color: #ffffff;
         color: #333333;
-        padding: 60px 40px;
+        padding: 40px 0;
         font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         border-top: 1px solid #f0f0f0;
         transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .footer-container {
-        width: 110%;
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 1fr 1fr;
-        gap: 40px;
-
+    @media (min-width: 769px) {
+        .custom-footer {
+            margin-left: 64px;
+        }
     }
 
-    @media (max-width: 992px) {
-        .footer-container {
-            grid-template-columns: 1fr 1fr;
+    .footer-inner-container {
+        width: 100%;
+        max-width: 1380px;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 48px;
+        padding-right: 48px;
+        box-sizing: border-box;
+    }
+
+    @media (min-width: 1200px) {
+        .footer-inner-container {
+            padding-left: 56px;
+            padding-right: 56px;
         }
     }
 
     @media (max-width: 768px) {
         .custom-footer {
             margin-left: 0;
-            padding: 40px 20px;
+            padding: 30px 0;
         }
 
-        .footer-container {
-            grid-template-columns: 1fr;
-            gap: 30px;
+        .footer-inner-container {
+            padding-left: 16px;
+            padding-right: 16px;
         }
     }
 

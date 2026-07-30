@@ -60,6 +60,18 @@ function device_dashboard()
         ['label' => 'Accessories', 'count' => $total_accessories, 'color' => '#6ABF57', 'icon' => '<i class="fa-solid fa-plug"></i>'],
     ];
 
+    // Query recently added devices (within 1 day)
+    $new_devices_days = 1;
+    $new_devices = $wpdb->get_results($wpdb->prepare(
+        "SELECT DeviceID, Brand, Model, Category, CreatedAt 
+         FROM $table_device_wn 
+         WHERE CreatedAt >= DATE_SUB(NOW(), INTERVAL %d DAY) 
+         ORDER BY CreatedAt DESC 
+         LIMIT 10",
+        $new_devices_days
+    ));
+    $new_devices_count = count($new_devices);
+
     ob_start();
     ?>
 
@@ -68,6 +80,58 @@ function device_dashboard()
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <div class="next-dashboard">
+
+        <?php if ($new_devices_count > 0): ?>
+            <!-- ===== NEW DEVICES NOTIFICATION CARD ===== -->
+            <div class="new-devices-alert slide-up" id="new-devices-alert">
+                <div class="new-devices-alert-header" onclick="toggleNewDevices()">
+                    <div class="new-devices-alert-left">
+                        <div class="new-devices-alert-icon">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                            <div class="new-devices-alert-title">
+                                Recently Added Devices
+                                <span class="new-devices-count-badge"><?= $new_devices_count ?></span>
+                            </div>
+                            <div class="new-devices-alert-subtitle">
+                                <?= $new_devices_count ?> new device<?= $new_devices_count > 1 ? 's' : '' ?> added in the last
+                                <?= $new_devices_days ?> days
+                            </div>
+                        </div>
+                    </div>
+                    <button class="new-devices-toggle-btn" id="new-devices-toggle-btn" type="button">
+                        <i class="fa-solid fa-chevron-down" id="new-devices-chevron"></i>
+                    </button>
+                </div>
+                <div class="new-devices-alert-body" id="new-devices-body">
+                    <table class="new-devices-table">
+                        <thead>
+                            <tr>
+                                <th>Device ID</th>
+                                <th>Device Info</th>
+                                <th>Category</th>
+                                <th>Added Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($new_devices as $nd): ?>
+                                <tr>
+                                    <td>
+                                        <span class="new-device-badge-sm">NEW</span>
+                                        <?= esc_html($nd->DeviceID) ?>
+                                    </td>
+                                    <td><strong><?= esc_html($nd->Brand) ?></strong> <?= esc_html($nd->Model) ?></td>
+                                    <td><?= esc_html($nd->Category) ?></td>
+                                    <td><?= date('d M Y, H:i', strtotime($nd->CreatedAt)) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- ===== SECTION 1: Category Summary Cards ===== -->
         <div class="next-grid">
             <?php
@@ -186,6 +250,7 @@ function device_dashboard()
         $qr_details_only = true;
         include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php');
         ?>
+
     </div>
 
     <style>
@@ -597,10 +662,197 @@ function device_dashboard()
             .next-legend-wrap {
                 width: 100%;
             }
+
+            .new-devices-alert {
+                flex-direction: column;
+            }
+        }
+
+        /* ===== New Devices Notification Card ===== */
+        .new-devices-alert {
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+            border: 1px solid #bbf7d0;
+            border-radius: 14px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .new-devices-alert:hover {
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.12);
+        }
+
+        .new-devices-alert-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .new-devices-alert-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .new-devices-alert-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            animation: bellPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes bellPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        .new-devices-alert-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .new-devices-count-badge {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .new-devices-alert-subtitle {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .new-devices-toggle-btn {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #16a34a;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .new-devices-toggle-btn:hover {
+            background: #dcfce7;
+        }
+
+        .new-devices-toggle-btn.expanded i {
+            transform: rotate(180deg);
+        }
+
+        .new-devices-toggle-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .new-devices-alert-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border-top: 0 solid transparent;
+        }
+
+        .new-devices-alert-body.expanded {
+            max-height: 500px;
+            border-top: 1px solid #bbf7d0;
+        }
+
+        .new-devices-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .new-devices-table thead {
+            background: #f0fdf4;
+        }
+
+        .new-devices-table th {
+            padding: 0.6rem 1.25rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border: none;
+        }
+
+        .new-devices-table td {
+            padding: 0.65rem 1.25rem;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .new-devices-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .new-devices-table tbody tr:hover {
+            background: #f0fdf4;
+        }
+
+        .new-device-badge-sm {
+            display: inline-block;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            font-size: 0.6rem;
+            font-weight: 800;
+            padding: 1px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.06em;
+            margin-right: 6px;
+            vertical-align: middle;
+            line-height: 1.5;
         }
     </style>
 
     <script>
+        // Toggle New Devices Notification Card
+        function toggleNewDevices() {
+            const body = document.getElementById('new-devices-body');
+            const btn = document.getElementById('new-devices-toggle-btn');
+            if (body && btn) {
+                body.classList.toggle('expanded');
+                btn.classList.toggle('expanded');
+            }
+        }
+
         function initNextDashboard() {
             // Smooth Count Up Animation (Spring-like)
             const countElements = document.querySelectorAll('.count-up');

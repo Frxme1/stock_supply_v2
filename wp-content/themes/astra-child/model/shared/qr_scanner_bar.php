@@ -51,46 +51,59 @@ if ($category_filter) {
     /* ===== QR Scanner Compact Bar ===== */
     .dash-qr-bar {
         background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 14px 20px;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 16px 22px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        position: relative;
     }
 
     .dash-qr-scan-btn {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 22px;
+        gap: 10px;
+        padding: 12px 26px;
         background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         color: #fff;
         border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 0.88rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
         cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dash-qr-scan-btn i {
+        font-size: 1.15rem;
     }
 
     .dash-qr-scan-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    }
+
+    .dash-qr-scan-btn:active {
+        transform: translateY(0);
     }
 
     .dash-qr-stop-btn {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 10px 22px;
+        padding: 12px 24px;
         background: #ef4444;
         color: #fff;
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         font-weight: 600;
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         cursor: pointer;
         transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
     }
 
     .dash-qr-stop-btn:hover {
@@ -98,11 +111,30 @@ if ($category_filter) {
     }
 
     .dash-qr-hint {
-        color: #94a3b8;
-        font-size: 0.82rem;
+        color: #64748b;
+        font-size: 0.85rem;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
+        font-weight: 500;
+    }
+
+    @media (max-width: 640px) {
+        .dash-qr-bar {
+            padding: 12px 14px;
+        }
+
+        .dash-qr-scan-btn,
+        .dash-qr-stop-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 14px 20px;
+            font-size: 1rem;
+        }
+
+        .dash-qr-hint {
+            display: none;
+        }
     }
 
     .dash-scan-popup {
@@ -145,6 +177,19 @@ if ($category_filter) {
         let isStarting = false;
         const ajaxUrl = '<?= admin_url("admin-ajax.php") ?>';
         const ajaxNonce = '<?= wp_create_nonce("stock_supply_ajax_nonce") ?>';
+
+        // Auto trigger scan if URL contains ?scan=1
+        if (window.location.search.indexOf('scan=1') !== -1) {
+            window.addEventListener('load', function () {
+                setTimeout(function () {
+                    const startBtn = document.getElementById('dash-btn-start-qr');
+                    if (startBtn && !isStarting) {
+                        startBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        startBtn.click();
+                    }
+                }, 400);
+            });
+        }
 
         // Global document event listener for Start button (Event Delegation guarantees it works even if element loads later)
         document.addEventListener('click', function (e) {
@@ -634,7 +679,9 @@ if ($category_filter) {
                             text: data.data.message,
                             confirmButtonColor: '#10b981'
                         }).then(() => {
-                            if (typeof window.loadAjaxContent === 'function') {
+                            if (data.data && data.data.redirect_url) {
+                                window.location.href = data.data.redirect_url;
+                            } else if (typeof window.loadAjaxContent === 'function') {
                                 window.loadAjaxContent(window.location.href);
                             } else {
                                 window.location.reload();

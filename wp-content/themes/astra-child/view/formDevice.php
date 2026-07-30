@@ -75,8 +75,24 @@ function device_crud()
     $total_pages = ceil($total_items / $page);
 
 
+    // Sort logic for Device ID
+    $current_sort = $_GET['sort'] ?? 'device_id';
+    $current_order = strtolower($_GET['order'] ?? 'desc');
+
+    if ($current_order === 'asc') {
+        $order_sql = "ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ASC, DeviceID ASC";
+        $next_order = 'desc';
+        $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-1-9" style="font-size:0.85rem;"></i> 1-9</span>';
+    } else {
+        $order_sql = "ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) DESC, DeviceID DESC";
+        $next_order = 'asc';
+        $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-9-1" style="font-size:0.85rem;"></i> 9-1</span>';
+    }
+
+    $sort_url = add_query_arg(['sort' => 'device_id', 'order' => $next_order]);
+
     // Fetch current page of device records
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY DeviceID DESC LIMIT $page OFFSET $offset");
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql $order_sql LIMIT $page OFFSET $offset");
 
 
 
@@ -271,7 +287,11 @@ function device_crud()
                 <thead>
                     <tr>
                         <th class="py-3 text-start" style="display: none;"><input type="checkbox" id="selectAll"></th>
-                        <th class="py-3 text-start">ID</th>
+                        <th class="py-3 text-start">
+                            <a href="<?= esc_url($sort_url) ?>" style="color:inherit; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;" title="Click to toggle ID sort (9-1 / 1-9)">
+                                ID <?= $sort_icon ?>
+                            </a>
+                        </th>
                         <th class="py-3 text-start">Device Info</th>
                         <th class="py-3 text-start">Owner</th>
                         <th class="py-3 text-start">Status</th>
@@ -285,7 +305,14 @@ function device_crud()
                             <td class="align-middle" style="display: none;"><input type="checkbox" name="bulk_device_ids[]"
                                     value="<?= $row->DeviceID ?>" class="device-checkbox"
                                     data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
-                            <td class="align-middle text-start font-medium text-gray-900"><?= $row->DeviceID ?></td>
+                            <td class="align-middle text-start font-medium text-gray-900">
+                                <?php
+                                $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-1 day');
+                                if ($is_new_device): ?>
+                                    <span class="new-device-badge">NEW</span>
+                                <?php endif; ?>
+                                <?= $row->DeviceID ?>
+                            </td>
                             <td class="text-start align-middle">
                                 <div class="device-title"><?= $row->Brand ?>         <?= !empty($row->Model) ? $row->Model : '' ?>
                                 </div>
@@ -357,10 +384,40 @@ function device_crud()
                                         <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
                                             <div class="action-dropdown-header">Actions</div>
                                             <div class="action-dropdown-separator"></div>
-                                            <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i>
-                                                View Details</a>
-                                            <a href="<?= home_url('/history/?device_search=') ?><?= $row->DeviceID ?>"><i
+                                            <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i>
+                                                    Edit</a>
+                                            <?php else: ?>
+                                                <a href="?edit=<?= $row->DeviceID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
+                                            <?php endif; ?>
+                                            <?php $dev_action_nonce = wp_create_nonce('device_action_nonce'); ?>
+                                            <a href="?view=<?= esc_attr($row->DeviceID) ?>"><i
+                                                    class="fa-solid fa-magnifying-glass"></i> View Details</a>
+                                            <a href="<?= home_url('/history/?device_search=') ?><?= esc_attr($row->DeviceID) ?>"><i
                                                     class="fa-solid fa-clock-rotate-left"></i> History</a>
+                                            <?php if ($status == 'Available'): ?>
+                                                <a href="?receive=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-box"></i>
+                                                    Receive</a>
+                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
+                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($status == 'In Use'): ?>
+                                                <a href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i class="fa-solid fa-rotate-left"></i>
+                                                    Return</a>
+                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
+                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($status == 'Maintenance'): ?>
+                                                <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
+                                                        class="fa-solid fa-circle text-success"></i> Available</a>
+                                                <a href="#" onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($status == 'Retired'): ?>
+                                                <a href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
+                                                        class="fa-solid fa-circle text-success"></i> Available</a>
+                                            <?php endif; ?>
                                             <a href="#"
                                                 onclick="printDeviceLabels([{ id: '<?= esc_js($row->DeviceID) ?>', sn: '<?= esc_js($row->SerialNumber ?? "") ?>' }]); return false;"><i
                                                     class="fa-solid fa-print"></i> Print Label</a>

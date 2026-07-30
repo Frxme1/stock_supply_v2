@@ -53,7 +53,7 @@ function handle_device_csv_export() {
         $search_sql .= $wpdb->prepare(" AND Department = %s", $filter_department);
     }
 
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY DeviceID DESC");
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) DESC, DeviceID DESC");
 
     // Output CSV
     $filename = 'devices_export_' . date('Y-m-d_H-i') . '.csv';

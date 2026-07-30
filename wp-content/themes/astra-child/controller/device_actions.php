@@ -485,7 +485,7 @@ function handle_device_actions()
                     "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
                     $device_info->CategoryID
                 ));
-                $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
+                $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/?view=' . urlencode($device_id)) : home_url('/?view=' . urlencode($device_id));
 
                 echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
                 echo "<script>

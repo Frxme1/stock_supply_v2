@@ -79,10 +79,10 @@ function device_request_dashboard()
             }
 
             // Determine Redirect URL
-            $redirect_url = '/stock_supply/home/';
+            $redirect_url = '/stock_supply/home/?view=' . urlencode($device_id);
             if (!empty($req->CategoryName)) {
                 $slug = strtolower(str_replace(' ', '-', $req->CategoryName));
-                $redirect_url = '/stock_supply/' . $slug . '/';
+                $redirect_url = '/stock_supply/' . $slug . '/?view=' . urlencode($device_id);
             }
 
             echo "<script>

@@ -111,7 +111,7 @@ function receive_device($device_data = null)
             }
 
             // แสดงแจ้งเตือนสำเร็จ
-            $redirect_url = home_url('/' . sanitize_title($category_name) . '/');
+            $redirect_url = home_url('/' . sanitize_title($category_name) . '/?view=' . urlencode($device_id));
             echo "<script>
         Swal.fire({
             icon: 'success',

@@ -132,6 +132,39 @@ $maintenance_count = $sidebar_badges['maintenance'];
     <span class="mobile-logo-text">Stock Supply</span>
 </div>
 
+<!-- ========== MOBILE BOTTOM NAVIGATION BAR (Web Application Style) ========== -->
+<nav id="mobile-bottom-nav" class="mobile-bottom-nav">
+    <a href="<?php echo esc_url(home_url('/home/')); ?>" class="bottom-nav-item <?php echo (is_page('home')) ? 'active' : ''; ?>">
+        <i class="fa-solid fa-house"></i>
+        <span>Home</span>
+    </a>
+    <a href="<?php echo esc_url(home_url('/monitor/')); ?>" class="bottom-nav-item <?php echo (is_page('monitor')) ? 'active' : ''; ?>">
+        <i class="fa-solid fa-desktop"></i>
+        <span>Monitor</span>
+    </a>
+    
+    <!-- Prominent Central QR Scan Floating Action Button (FAB) -->
+    <div class="bottom-nav-fab-wrapper">
+        <button type="button" id="mobile-qr-fab-btn" class="bottom-nav-fab" aria-label="Scan QR Code" title="Scan QR Code">
+            <i class="fa-solid fa-qrcode"></i>
+            <span class="fab-pulse-ring"></span>
+        </button>
+        <span class="fab-label">Scan QR</span>
+    </div>
+
+    <a href="<?php echo esc_url(home_url('/laptop/')); ?>" class="bottom-nav-item <?php echo (is_page('laptop')) ? 'active' : ''; ?>">
+        <i class="fa-solid fa-laptop"></i>
+        <span>Laptop</span>
+    </a>
+    <button type="button" id="mobile-bottom-more-btn" class="bottom-nav-item">
+        <i class="fa-solid fa-bars"></i>
+        <span>More</span>
+        <?php if ($sidebar_badges['total'] > 0): ?>
+            <span class="mobile-btn-badge-dot" style="top: 8px; right: 18px;"></span>
+        <?php endif; ?>
+    </button>
+</nav>
+
 <!-- ========== MOBILE OVERLAY ========== -->
 <div id="mobile-sidebar-overlay" class="mobile-sidebar-overlay"></div>
 
@@ -582,11 +615,141 @@ $maintenance_count = $sidebar_badges['maintenance'];
 
 
 /* ---- Responsive: Show mobile, hide desktop ---- */
+/* ---- Mobile Bottom Navigation Bar ---- */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    z-index: 9997;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    color: #64748b;
+    text-decoration: none !important;
+    font-size: 0.7rem;
+    font-weight: 500;
+    gap: 3px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.bottom-nav-item i {
+    font-size: 1.15rem;
+    transition: transform 0.2s ease;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+    color: #6366f1;
+}
+
+.bottom-nav-item.active i {
+    transform: translateY(-2px);
+    color: #6366f1;
+}
+
+/* FAB Wrapper & Button */
+.bottom-nav-fab-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    top: -14px;
+    z-index: 9998;
+}
+
+.bottom-nav-fab {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: 3px solid #ffffff;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.bottom-nav-fab i {
+    font-size: 1.4rem;
+}
+
+.bottom-nav-fab:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.55);
+}
+
+.bottom-nav-fab:active {
+    transform: scale(0.96);
+}
+
+.fab-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #4f46e5;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+}
+
+.fab-pulse-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(99, 102, 241, 0.6);
+    animation: fab-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    pointer-events: none;
+}
+
+@keyframes fab-pulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    70% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
+}
+
 @media (max-width: 768px) {
     .custom-sidebar-nav {
         display: none !important;
     }
     .mobile-sidebar-bar {
+        display: flex !important;
+    }
+    .mobile-bottom-nav {
         display: flex !important;
     }
     /* Push content down on mobile to avoid top-bar overlap */
@@ -599,6 +762,9 @@ $maintenance_count = $sidebar_badges['maintenance'];
 /* ---- Desktop: Push main content to account for sidebar ---- */
 @media (min-width: 769px) {
     .mobile-sidebar-bar {
+        display: none !important;
+    }
+    .mobile-bottom-nav {
         display: none !important;
     }
     #content.site-content {
@@ -616,6 +782,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var closeBtn = document.getElementById("mobile-close-btn");
     var overlay = document.getElementById("mobile-sidebar-overlay");
     var panel = document.getElementById("mobile-sidebar-panel");
+    var moreBtn = document.getElementById("mobile-bottom-more-btn");
 
     function openMobile() {
         panel.classList.add("show");
@@ -632,9 +799,26 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (menuBtn) menuBtn.addEventListener("click", openMobile);
+    if (moreBtn) moreBtn.addEventListener("click", openMobile);
     if (closeBtn) closeBtn.addEventListener("click", closeMobile);
     if (overlay) overlay.addEventListener("click", closeMobile);
 
+    // ========== Mobile Bottom FAB QR Scanner trigger ==========
+    var qrFabBtn = document.getElementById("mobile-qr-fab-btn");
+    if (qrFabBtn) {
+        qrFabBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            var pageQrBtn = document.getElementById("dash-btn-start-qr");
+            if (pageQrBtn) {
+                pageQrBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(function() {
+                    pageQrBtn.click();
+                }, 300);
+            } else {
+                window.location.href = "<?php echo esc_url(home_url('/home/?scan=1')); ?>";
+            }
+        });
+    }
 
     // ========== Text Scramble Animation ==========
     var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

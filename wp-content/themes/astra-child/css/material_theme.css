@@ -79,11 +79,13 @@ h1[itemprop="headline"],
 .dashboard-container h1,
 h1.title,
 .title {
-    font-size: 36px !important;
+    font-size: 40px !important;
     font-weight: 700 !important;
     color: #1e293b !important;
-    margin-bottom: 20px !important;
-    margin-left: -10px !important;
+    margin-top: -55px !important;
+    margin-bottom: -30px !important;
+    margin-left: 20px !important;
+    margin-right: 0 !important;
     font-family: 'Inter', 'Prompt', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
@@ -103,7 +105,7 @@ body,
 html {
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     color: var(--md-text-primary);
-    background-color: var(--md-background);
+    background-color: transparent !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     line-height: 1.5;
@@ -111,45 +113,72 @@ html {
 }
 
 
-.ast-container {
+/* Complete Override for Astra Theme Containers & Wrappers */
+html body #page,
+html body #content,
+html body .site-content,
+html body .ast-container,
+html body .site-content>.ast-container,
+html body.ast-separate-container .site-content>.ast-container,
+html body.ast-plain-container .site-content>.ast-container,
+html body.ast-page-builder-template .site-content>.ast-container,
+html body #primary,
+html body .content-area,
+html body #main,
+html body .site-main,
+html body article,
+html body .entry-content,
+html body .ast-article-single,
+html body .ast-article-post,
+html body .ast-article-page,
+html body .ast-single-post {
+    width: 100% !important;
+    max-width: 1380px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    float: none !important;
+    box-sizing: border-box !important;
+}
+
+html body .ast-container,
+html body .site-content>.ast-container {
+    padding-left: 48px !important;
+    padding-right: 48px !important;
     background-color: transparent !important;
-    margin-left: -1000px !important;
-    width: 2500px;
 }
 
-.site-content>.ast-container,
-.ast-separate-container .site-content>.ast-container {
-    margin-left: 100px !important;
-    margin-right: 100px !important;
+@media (min-width: 1200px) {
+    html body .ast-container,
+    html body .site-content>.ast-container {
+        padding-left: 56px !important;
+        padding-right: 56px !important;
+    }
 }
 
-.fl-row-default-height.fl-row-align-center .fl-row-content-wrap,
-.fl-row-full-height.fl-row-align-center .fl-row-content-wrap,
-.fl-row-custom-height.fl-row-align-center .fl-row-content-wrap {
-    -webkit-align-items: center;
-    -webkit-box-align: center;
-    -webkit-box-pack: center;
-    -webkit-justify-content: center;
-    -ms-flex-align: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    align-items: center;
-    margin-top: -50px;
+@media (max-width: 768px) {
+
+    html body .ast-container,
+    html body .site-content>.ast-container {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
 }
 
-/* Remove Astra Theme white content wrappers */
-.ast-separate-container .ast-article-single,
-.ast-separate-container .ast-article-post,
-.ast-separate-container .ast-article-page,
-.ast-separate-container .comment-respond,
-.ast-separate-container .ast-comment-list li,
-.ast-separate-container .ast-woocommerce-container,
-.ast-separate-container .ast-single-post,
-.ast-separate-container .bs-container {
+/* Remove Astra Theme white content box borders and padding */
+html body .ast-separate-container .ast-article-single,
+html body .ast-separate-container .ast-article-post,
+html body .ast-separate-container .ast-article-page,
+html body .ast-separate-container #primary,
+html body .ast-plain-container #primary,
+html body .ast-separate-container .site-main,
+html body .ast-plain-container .site-main,
+html body article[id^="post-"] {
     background-color: transparent !important;
+    background-image: none !important;
     box-shadow: none !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    border: none !important;
+    padding: 20px !important;
+    margin: 20px !important;
 }
 
 .ast-separate-container .site-content>.ast-container {
@@ -197,9 +226,8 @@ h6,
 }
 
 h1 {
-    font-size: 2.125rem;
-    font-weight: 300;
-    margin-top: -70px;
+    font-size: 40px;
+    font-weight: 700;
 }
 
 h2 {
@@ -491,7 +519,7 @@ input[type="checkbox"] {
    6. DASHBOARD CARDS — Material Elevation
    ============================================================ */
 .device-dashboard {
-    background-color: var(--md-background) !important;
+    background-color: transparent !important;
 }
 
 .card-status {
@@ -841,12 +869,57 @@ hr,
     border: 1px solid var(--md-divider);
 }
 
-/* Responsive adjustments */
+/* Responsive Web Application Adjustments */
+@media (max-width: 1024px) {
+    .app-content {
+        padding: 20px;
+    }
+}
+
 @media (max-width: 768px) {
-    .row.align-items-center.g-2 {
-        padding: 12px 14px;
+
+    /* Push content down for Mobile Top Bar & leave space at bottom for Mobile Bottom Nav */
+    #content.site-content {
+        margin-left: 0 !important;
+        margin-top: 56px !important;
+        padding-bottom: 84px !important;
     }
 
+    .app-content {
+        padding: 14px 10px 84px !important;
+    }
+
+    /* Page Header Adjustment */
+    h1,
+    h1.entry-title,
+    h1[itemprop="headline"],
+    .entry-title,
+    .title {
+        font-size: 24px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 14px !important;
+    }
+
+    /* Search Bar & Filter Row Stack */
+    .row.align-items-center.g-2 {
+        padding: 12px;
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .row.align-items-center.g-2>[class*="col"] {
+        width: 100% !important;
+    }
+
+    .row.align-items-center.g-2 .btn,
+    .row.align-items-center.g-2 .form-control,
+    .row.align-items-center.g-2 .form-select {
+        width: 100% !important;
+    }
+
+    /* Tables & Cards Responsive */
     .table .table-secondary th,
     .table tr.table-secondary th {
         font-size: 0.75rem;
@@ -859,7 +932,29 @@ hr,
     }
 
     .all-device-summary {
-        padding: 20px 16px !important;
+        padding: 16px 14px !important;
+    }
+
+    /* Bulk actions toolbar */
+    #bulk-action-form>.d-flex {
+        flex-wrap: wrap;
+        gap: 8px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-status {
+        padding: 14px !important;
+    }
+
+    .card-icon {
+        font-size: 1.8rem !important;
+    }
+
+    .pagination .page-item .page-link {
+        width: 30px;
+        height: 30px;
+        font-size: 0.75rem;
     }
 }
 
@@ -907,7 +1002,7 @@ hr,
 .app-container {
     display: flex;
     min-height: 100vh;
-    background-color: var(--md-background);
+    background-color: transparent !important;
 }
 
 .custom-sidebar {
@@ -1188,4 +1283,31 @@ hr,
 /* Placeholder color */
 .form-control::placeholder {
     color: hsl(240 3.8% 46.1%);
+}
+
+/* ============================================================
+   19. GLOBAL TEXT TRANSFORM RESET (Prevent forced Capitalize / Uppercase)
+   ============================================================ */
+input,
+textarea,
+select,
+option,
+button,
+.form-control,
+.form-select,
+.table-custom td,
+.table-custom th,
+.table-wrapper table td,
+.table-wrapper table th,
+.next-table td,
+.next-table th,
+.next-table-wrapper table td,
+.next-table-wrapper table th,
+.table-responsive table td,
+.table-responsive table th,
+.swal2-input,
+.swal2-select,
+.swal2-textarea,
+.search-input-modern {
+    text-transform: none !important;
 }

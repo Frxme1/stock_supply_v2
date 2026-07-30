@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+date_default_timezone_set('Asia/Bangkok');
+
 
 /**
  * Astra Child Theme functions and definitions
@@ -1047,6 +1049,7 @@ function stock_supply_ajax_get_device_details() {
             FROM Owners o
             LEFT JOIN Positions p ON o.PositionID = p.PositionID
             LEFT JOIN Departments dep ON o.DepartmentID = dep.DepartmentID
+            WHERE o.StatusID = 1
             ORDER BY o.Nickname ASC
         ");
 
@@ -1208,7 +1211,11 @@ function stock_supply_ajax_quick_action() {
             $msg .= " (Note: Employee has no email address configured).";
         }
 
-        wp_send_json_success(['message' => $msg]);
+        $dev_cat = $wpdb->get_var($wpdb->prepare("SELECT CategoryName FROM Categories WHERE CategoryID = %d", $dev->CategoryID));
+        $category_slug = $dev_cat ? strtolower(str_replace(' ', '-', $dev_cat)) : 'laptop';
+        $redirect_url = home_url('/' . sanitize_title($category_slug) . '/?view=' . urlencode($device_id));
+
+        wp_send_json_success(['message' => $msg, 'redirect_url' => $redirect_url]);
     } elseif ($action_type === 'maintenance') {
         $maint_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
         $wpdb->update('Devices', ['StatusID' => $maint_status, 'RepairDate' => current_time('Y-m-d')], ['DeviceID' => $device_id]);
@@ -1362,5 +1369,37 @@ function stock_supply_get_sidebar_badges()
         'total' => $pending_requests_count + $maintenance_count
     ];
 }
+
+// Disable soft-keyboard auto-capitalization on text inputs and textareas
+add_action('wp_footer', function() {
+    ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function disableAutocapitalize(container) {
+            const root = container || document;
+            root.querySelectorAll('input[type="text"], input[type="search"], textarea, .form-control').forEach(function(el) {
+                if (!el.hasAttribute('autocapitalize')) {
+                    el.setAttribute('autocapitalize', 'off');
+                }
+                if (!el.hasAttribute('autocorrect')) {
+                    el.setAttribute('autocorrect', 'off');
+                }
+            });
+        }
+        disableAutocapitalize();
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        disableAutocapitalize(node);
+                    }
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+    </script>
+    <?php
+});
 
 

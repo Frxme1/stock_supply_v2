@@ -65,27 +65,21 @@ function device_crud_monitor()
     // -------------------------------------------
 
 
-    // Sort logic for Device Info
-    $current_sort = $_GET['sort'] ?? '';
-    $current_order = strtolower($_GET['order'] ?? '');
+    // Sort logic for Device ID
+    $current_sort = $_GET['sort'] ?? 'device_id';
+    $current_order = strtolower($_GET['order'] ?? 'desc');
 
-    if ($current_sort === 'device_info') {
-        if ($current_order === 'asc') {
-            $order_sql = "ORDER BY Brand ASC, Model ASC, DeviceID ASC";
-            $next_order = 'desc';
-            $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-a-z" style="font-size:0.85rem;"></i> A-Z</span>';
-        } else {
-            $order_sql = "ORDER BY Brand DESC, Model DESC, DeviceID DESC";
-            $next_order = 'asc';
-            $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-z-a" style="font-size:0.85rem;"></i> Z-A</span>';
-        }
+    if ($current_order === 'asc') {
+        $order_sql = "ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ASC, DeviceID ASC";
+        $next_order = 'desc';
+        $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-1-9" style="font-size:0.85rem;"></i> 1-9</span>';
     } else {
-        $order_sql = "ORDER BY DeviceID DESC";
+        $order_sql = "ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) DESC, DeviceID DESC";
         $next_order = 'asc';
-        $sort_icon = '<span style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; border-radius:6px; padding:2px 7px; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-left:6px;"><i class="fa-solid fa-arrow-down-up-across-line" style="font-size:0.75rem;"></i> Sort</span>';
+        $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-9-1" style="font-size:0.85rem;"></i> 9-1</span>';
     }
 
-    $sort_url = add_query_arg(['sort' => 'device_info', 'order' => $next_order]);
+    $sort_url = add_query_arg(['sort' => 'device_id', 'order' => $next_order]);
 
     //  Fetch Device Data 
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_device_wn $where_sql"); // Total filtered rows
@@ -313,12 +307,12 @@ function device_crud_monitor()
                         <tr>
                             <th class="py-3" style="width: 50px; display: none;"><input type="checkbox"
                                     id="selectAll-monitor"></th>
-                            <th class="text-nowrap py-3 text-start" style="width: 10%;">ID</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 40%;">
-                                <a href="<?= esc_url($sort_url) ?>" style="color:inherit; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;" title="Click to toggle Device Info sort (A-Z / Z-A)">
-                                    Device Info <?= $sort_icon ?>
+                            <th class="text-nowrap py-3 text-start" style="width: 15%;">
+                                <a href="<?= esc_url($sort_url) ?>" style="color:inherit; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;" title="Click to toggle ID sort (9-1 / 1-9)">
+                                    ID <?= $sort_icon ?>
                                 </a>
                             </th>
+                            <th class="text-nowrap py-3 text-start" style="width: 35%;">Device Info</th>
                             <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
                             <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
                             <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
@@ -330,7 +324,14 @@ function device_crud_monitor()
                                 <td class="align-middle" style="display: none;"><input type="checkbox" name="bulk_device_ids[]"
                                         value="<?= $row->DeviceID ?>" class="device-checkbox-monitor"
                                         data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
-                                <td class="align-middle text-start"><?= $row->DeviceID ?></td>
+                                <td class="align-middle text-start">
+                                    <?php
+                                    $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-1 day');
+                                    if ($is_new_device): ?>
+                                        <span class="new-device-badge">NEW</span>
+                                    <?php endif; ?>
+                                    <?= $row->DeviceID ?>
+                                </td>
                                 <td class="text-start align-middle">
                                     <strong><?= $row->Brand ?>         <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
                                     <small class="text-muted"><?= $row->Category ?> | SN:
