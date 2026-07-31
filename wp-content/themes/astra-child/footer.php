@@ -136,17 +136,20 @@
         font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         border-top: 1px solid #f0f0f0;
         transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 100% !important;
+        box-sizing: border-box;
     }
 
     @media (min-width: 769px) {
         .custom-footer {
             margin-left: 64px;
+            width: calc(100% - 64px) !important;
         }
     }
 
     .footer-inner-container {
         width: 100%;
-        max-width: 1380px;
+        max-width: 1380px !important;
         margin-left: auto;
         margin-right: auto;
         padding-left: 48px;
@@ -164,6 +167,7 @@
     @media (max-width: 768px) {
         .custom-footer {
             margin-left: 0;
+            width: 100% !important;
             padding: 30px 0;
         }
 

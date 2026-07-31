@@ -47,16 +47,16 @@ function device_crud_maintenance()
     $current_order = strtolower($_GET['order'] ?? 'desc');
 
     if ($current_order === 'asc') {
-        $order_sql = "ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ASC, DeviceID ASC";
+        $order_sql = "ORDER BY CASE WHEN DeviceID LIKE '%-%' THEN CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ELSE CAST(DeviceID AS UNSIGNED) END ASC, DeviceID ASC";
         $next_order = 'desc';
         $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-1-9" style="font-size:0.85rem;"></i> 1-9</span>';
     } else {
-        $order_sql = "ORDER BY RepairDate DESC, CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) DESC, DeviceID DESC";
+        $order_sql = "ORDER BY RepairDate DESC, CASE WHEN DeviceID LIKE '%-%' THEN CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ELSE CAST(DeviceID AS UNSIGNED) END DESC, DeviceID DESC";
         $next_order = 'asc';
         $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-9-1" style="font-size:0.85rem;"></i> 9-1</span>';
     }
 
-    $sort_url = add_query_arg(['sort' => 'device_id', 'order' => $next_order]);
+    $sort_url = add_query_arg(['sort' => 'device_id', 'order' => $next_order, 'paged' => 1]);
 
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_mainten $where_sql");
     $total_pages = ceil($total_items / $page);

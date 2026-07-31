@@ -6,10 +6,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['CategoryID'])
 	$table_history    = 'History_new';
 	$table_categories = 'Categories';
 
+	$raw_brand_id   = $_POST['BrandID'] ?? '';
+	$new_brand_name = trim($_POST['new_brand_name'] ?? '');
+
+	if (!empty($new_brand_name)) {
+		$existing_brand_id = $wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $new_brand_name));
+		if ($existing_brand_id) {
+			$brand_id = intval($existing_brand_id);
+		} else {
+			// Insert new brand into database
+			$inserted = $wpdb->insert('Brands', ['BrandName' => ucfirst($new_brand_name)]);
+			if (!$inserted) {
+				$next_brand_id = intval($wpdb->get_var("SELECT MAX(BrandID) FROM Brands")) + 1;
+				$wpdb->query($wpdb->prepare("INSERT INTO Brands (BrandID, BrandName) VALUES (%d, %s)", $next_brand_id, ucfirst($new_brand_name)));
+			}
+			$brand_id = intval($wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $new_brand_name)));
+		}
+	} else {
+		$brand_id = intval($raw_brand_id);
+	}
+
 	$data = [
 		'DeviceID'      => sanitize_text_field($_POST['DeviceID']),
 		'CategoryID'    => sanitize_text_field($_POST['CategoryID']),
-		'BrandID'       => sanitize_text_field($_POST['BrandID']),
+		'BrandID'       => $brand_id,
 		'Model'         => sanitize_text_field($_POST['Model']),
 		'SerialNumber'  => sanitize_text_field($_POST['SerialNumber']),
 		'KeywordID'     => sanitize_text_field($_POST['KeywordID']),

@@ -49,6 +49,11 @@
         // Attach listeners to SVG arcs
         arcs.forEach(arc => {
             const idx = parseInt(arc.getAttribute('data-index'), 10);
+            const url = arc.getAttribute('data-url');
+            if (url) {
+                arc.style.cursor = 'pointer';
+                arc.addEventListener('click', () => { window.location.href = url; });
+            }
             arc.addEventListener('mouseenter', () => setHot(idx));
             arc.addEventListener('mouseleave', () => setHot(null));
         });
@@ -56,6 +61,11 @@
         // Attach listeners to legend items
         legendItems.forEach(item => {
             const idx = parseInt(item.getAttribute('data-index'), 10);
+            const url = item.getAttribute('data-url');
+            if (url) {
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', () => { window.location.href = url; });
+            }
             item.addEventListener('mouseenter', () => setHot(idx));
             item.addEventListener('mouseleave', () => setHot(null));
             item.addEventListener('focus', () => setHot(idx));

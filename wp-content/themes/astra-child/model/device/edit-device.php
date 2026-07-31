@@ -10,10 +10,10 @@ function edit_device_form($editing = null)
 
     $table_devices = 'Devices';
 
-    $brands = $wpdb->get_results("SELECT BrandID, BrandName FROM Brands");
+    $brands = $wpdb->get_results("SELECT BrandID, BrandName FROM Brands WHERE LOWER(BrandName) != 'other' ORDER BY BrandName ASC");
     $statuses = $wpdb->get_results("SELECT StatusID, StatusName FROM Statuses");
     $keywords = $wpdb->get_results("SELECT KeywordID, KeywordName FROM Keywords");
-    $categories = $wpdb->get_results("SELECT CategoryID, CategoryName FROM Categories");
+    $categories = $wpdb->get_results("SELECT CategoryID, CategoryName FROM Categories WHERE LOWER(CategoryName) != 'other' ORDER BY CategoryName ASC");
     $owners = $wpdb->get_results("SELECT OwnerID, Nickname, FirstName, LastName FROM Owners ORDER BY Nickname ASC");
 
 
@@ -32,7 +32,26 @@ function edit_device_form($editing = null)
         $DeviceID       = sanitize_text_field($_POST['DeviceID']);
         $Model          = sanitize_text_field($_POST['Model']);
         $SerialNumber   = sanitize_text_field($_POST['SerialNumber']);
-        $BrandID        = intval($_POST['BrandID']);
+
+        $raw_brand_id   = $_POST['BrandID'] ?? '';
+        $new_brand_name = trim($_POST['new_brand_name'] ?? '');
+
+        if (!empty($new_brand_name)) {
+            $existing_brand_id = $wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $new_brand_name));
+            if ($existing_brand_id) {
+                $BrandID = intval($existing_brand_id);
+            } else {
+                $inserted = $wpdb->insert('Brands', ['BrandName' => ucfirst($new_brand_name)]);
+                if (!$inserted) {
+                    $next_brand_id = intval($wpdb->get_var("SELECT MAX(BrandID) FROM Brands")) + 1;
+                    $wpdb->query($wpdb->prepare("INSERT INTO Brands (BrandID, BrandName) VALUES (%d, %s)", $next_brand_id, ucfirst($new_brand_name)));
+                }
+                $BrandID = intval($wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $new_brand_name)));
+            }
+        } else {
+            $BrandID = intval($raw_brand_id);
+        }
+
         $StatusID       = intval($_POST['StatusID']);
         $KeywordID      = intval($_POST['KeywordID']);
         $OwnerID        = !empty($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
@@ -94,7 +113,7 @@ function edit_device_form($editing = null)
                 $category_slug = sanitize_title($category_name);
             }
         }
-        $redirect_url = $category_slug ? home_url('/' . $category_slug . '/') : home_url('/');
+        $redirect_url = $category_slug ? home_url('/' . $category_slug . '/?view=' . urlencode($DeviceID)) : home_url('/?view=' . urlencode($DeviceID));
 
         $owner_nickname = '-';
         if (!empty($device_info->OwnerID)) {
@@ -204,15 +223,33 @@ function edit_device_form($editing = null)
 
             <div class="form-group">
                 <label>Brand</label>
-                <select name="BrandID" required>
+                <select name="BrandID" required onchange="toggleEditNewBrandInput(this)">
                     <option value="">-- Select Brand --</option>
                     <?php foreach ($brands as $b): ?>
                         <option value="<?= esc_attr($b->BrandID) ?>" <?= selected($editing->BrandID ?? '', $b->BrandID, false) ?>>
                             <?= esc_html($b->BrandName) ?>
                         </option>
                     <?php endforeach; ?>
+                    <option value="add_new">+ Add New Brand</option>
                 </select>
+                <div id="edit_new_brand_wrapper" style="display: none; margin-top: 8px;">
+                    <input type="text" name="new_brand_name" id="edit_new_brand_name" placeholder="Type new brand name (e.g. Razer, Anker)..." class="form-control form-control-sm" style="border-radius: 6px; padding: 6px 12px; border: 1px solid #15A5DA;">
+                </div>
             </div>
+            <script>
+                function toggleEditNewBrandInput(selectElem) {
+                    var wrapper = document.getElementById('edit_new_brand_wrapper');
+                    var input = document.getElementById('edit_new_brand_name');
+                    if (!wrapper || !input) return;
+                    if (selectElem.value === 'add_new') {
+                        wrapper.style.display = 'block';
+                        input.focus();
+                    } else {
+                        wrapper.style.display = 'none';
+                        input.value = '';
+                    }
+                }
+            </script>
 
             <div class="form-group">
                 <label>Status</label>

@@ -42,10 +42,10 @@ function device_view_details($device_id = null)
     $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
     $offset = ($current_page - 1) * $page;
 
-    $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
+    $search = isset($_GET['history_search']) ? stock_supply_parse_search_query($_GET['history_search']) : '';
 
-    $where = "WHERE h.DeviceID = %s";
-    $params = [$device_id];
+    $where = "WHERE CAST(h.DeviceID AS CHAR) = %s AND h.DeviceID IS NOT NULL AND h.DeviceID != '' AND h.DeviceID != '0'";
+    $params = [(string)$device_id];
 
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
@@ -465,7 +465,7 @@ function device_view_details($device_id = null)
                     <input type="hidden" name="view" value="<?= esc_attr($device->DeviceID) ?>">
                     <?php
                     foreach ($_GET as $key => $value) {
-                        if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'view'])) {
+                        if (!in_array($key, ['history_search', 'device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'view'])) {
                             if (is_array($value)) {
                                 foreach ($value as $v) {
                                     echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -478,6 +478,7 @@ function device_view_details($device_id = null)
                     ?>
                     <div style="max-width: 250px;">
                         <?php
+                        $search_name = 'history_search';
                         $search_placeholder = 'Search History...';
                         $search_list = 'search_suggestions';
                         include get_stylesheet_directory() . '/view/animated-search.php';
@@ -486,7 +487,7 @@ function device_view_details($device_id = null)
                     <button type="submit" class="btn-filter-modern">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
-                    <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
+                    <?php $reset_url = remove_query_arg(['history_search', 'device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
 
                     <datalist id="search_suggestions">
@@ -524,25 +525,7 @@ function device_view_details($device_id = null)
                                     <td class="text-start"><span class="vd-action-pill"><?= esc_html($row->Action) ?></span></td>
                                     <td class="text-start vd-date-text"><?= esc_html($date->format("d/m/Y H:i")) ?></td>
                                      <td class="text-start vd-desc-text">
-                                         <?php
-                                         $desc = $row->Description ?: '-';
-                                         // Clean redundant Device ID prefix
-                                         $desc = preg_replace('/^Device ID [A-Za-z0-9_-]+\s*/i', '', $desc);
-                                         $desc = ucfirst(trim($desc));
-
-                                         // If action is Maintenance, fetch specific repair reason from Maintenance table if available
-                                         if (strcasecmp($row->Action, 'Maintenance') === 0) {
-                                             $maint_reason = $wpdb->get_var($wpdb->prepare(
-                                                 "SELECT Details FROM Maintenance WHERE DeviceID = %s ORDER BY MaintenanceID DESC LIMIT 1",
-                                                 $device->DeviceID
-                                             ));
-                                             if (!empty($maint_reason) && strpos($maint_reason, 'via QR') === false) {
-                                                 $desc = $maint_reason;
-                                             }
-                                         }
-
-                                         echo esc_html($desc);
-                                         ?>
+                                         <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $device->DeviceID)) ?>
                                      </td>
                                     <td class="text-start">
                                         <?php if (!empty($row->Photo)): ?>

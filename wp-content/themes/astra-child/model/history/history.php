@@ -63,7 +63,7 @@ function form_history()
         $sort_icon = '<span style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; border-radius:6px; padding:2px 7px; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-left:6px;"><i class="fa-solid fa-arrow-down-up-across-line" style="font-size:0.75rem;"></i> Sort</span>';
     }
 
-    $sort_url = add_query_arg(['sort' => 'action', 'order' => $next_order]);
+    $sort_url = add_query_arg(['sort' => 'action', 'order' => $next_order, 'paged' => 1]);
 
     $rows = $wpdb->get_results(
         $wpdb->prepare("
@@ -335,7 +335,7 @@ function form_history()
                                 <span class="badge-history <?= $badge_class ?>"><?= esc_html($row->Action) ?></span>
                             </td>
                             <td class="align-middle fw-medium"><?= $date->format("d/m/Y H:i:s") ?></td>
-                            <td class="align-middle text-muted"><?= esc_html($row->Description) ?></td>
+                            <td class="align-middle text-muted"><?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?></td>
                             <td class="align-middle">
                                 <?php if (!empty($row->Photo)): ?>
                                     <img src="<?= esc_url($row->Photo) ?>" 

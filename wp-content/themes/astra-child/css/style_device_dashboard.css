@@ -186,3 +186,29 @@
                 flex: 0 1 100%;
             }
         }
+
+        /* Clickable Dashboard Card & Chart Styles */
+        .clickable-card {
+            cursor: pointer !important;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease !important;
+        }
+        .clickable-card:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04) !important;
+            border-color: #cbd5e1 !important;
+        }
+        #chart-status .apexcharts-bar-area,
+        #chart-department .apexcharts-bar-area {
+            cursor: pointer !important;
+            transition: opacity 0.2s ease;
+        }
+        #chart-status .apexcharts-bar-area:hover,
+        #chart-department .apexcharts-bar-area:hover {
+            opacity: 0.82;
+        }
+        .new-devices-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        .new-devices-table tbody tr:hover {
+            background-color: #f8fafc !important;
+        }

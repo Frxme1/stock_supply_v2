@@ -22,10 +22,11 @@ define('CHILD_THEME_ASTRA_CHILD_VERSION', '1.0.0');
 
 
 // Enqueue styles
-function child_enqueue_styles() {
-	wp_enqueue_style( 'astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css'), filemtime(get_stylesheet_directory() . '/style.css'), 'all' );
+function child_enqueue_styles()
+{
+    wp_enqueue_style('astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css'), filemtime(get_stylesheet_directory() . '/style.css'), 'all');
 }
-add_action( 'wp_enqueue_scripts', 'child_enqueue_styles', 15 );
+add_action('wp_enqueue_scripts', 'child_enqueue_styles', 15);
 if (has_post_thumbnail()) {
     the_post_thumbnail('full'); // หรือขนาดอื่น ๆ เช่น 'medium', 'large'
 }
@@ -33,14 +34,60 @@ if (has_post_thumbnail()) {
 
 
 // Helper to parse search query string (extract Device ID from URL if full URL is scanned/pasted)
-function stock_supply_parse_search_query($search) {
-    if (!is_string($search)) return '';
+function stock_supply_parse_search_query($search)
+{
+    if (!is_string($search))
+        return '';
     $search = trim($search);
-    if (empty($search)) return '';
+    if (empty($search))
+        return '';
     if (preg_match('/[?&]view=([^&]+)/i', $search, $matches)) {
         return trim(urldecode($matches[1]));
     }
     return $search;
+}
+
+// Helper to format Reason/Details in History Log nicely
+function stock_supply_format_history_description($desc, $action = '', $device_id = '')
+{
+    global $wpdb;
+
+    if (empty($desc) || $desc === '-') {
+        return '-';
+    }
+
+    $desc = trim($desc);
+
+    // If Action is Maintenance, check if specific repair details exist in Maintenance table
+    if (strcasecmp($action, 'Maintenance') === 0 && !empty($device_id)) {
+        $maint_details = $wpdb->get_var($wpdb->prepare(
+            "SELECT Details FROM Maintenance WHERE DeviceID = %s ORDER BY MaintenanceID DESC LIMIT 1",
+            $device_id
+        ));
+        if (!empty($maint_details) && strpos($maint_details, 'via QR') === false) {
+            $desc = $maint_details;
+        }
+    }
+
+    // Strip redundant Device ID prefixes
+    if (!empty($device_id)) {
+        $desc = preg_replace('/^Device ID ' . preg_quote($device_id, '/') . '\s*/i', '', $desc);
+    }
+    $desc = preg_replace('/^Device ID [A-Za-z0-9_-]+\s*/i', '', $desc);
+    $desc = ucfirst(trim($desc));
+
+    // Convert status arrows
+    $desc = str_replace(' -> ', ' &rarr; ', $desc);
+
+    // Style Status badge
+    $desc = preg_replace_callback('/\(Status:\s*([^\)]+)\)/i', function ($matches) {
+        return '<span class="badge bg-light text-dark border ms-1" style="font-weight: 500; font-size: 0.8rem;">Status: ' . esc_html($matches[1]) . '</span>';
+    }, $desc);
+
+    // Style Reason / Note labels
+    $desc = preg_replace('/(Reason\/Note|Reason|Note):/i', '<strong style="color: #475569;">$1:</strong>', $desc);
+
+    return $desc;
 }
 
 // require Controller
@@ -58,12 +105,8 @@ require_once get_stylesheet_directory() . '/model/device/edit-device.php';
 require_once get_stylesheet_directory() . '/model/device/device-form-handler.php';
 require_once get_stylesheet_directory() . '/model/device/device_form_add.php';
 require_once get_stylesheet_directory() . '/model/employee/form_edit_employee.php';
-require_once get_stylesheet_directory() . '/controller/export_csv.php';
-require_once get_stylesheet_directory() . '/controller/import_csv.php';
 
-// require Request System
-require_once get_stylesheet_directory() . '/model/request/form_request.php';
-require_once get_stylesheet_directory() . '/model/request/request_dashboard.php';
+
 
 
 // require Shared Components
@@ -708,40 +751,15 @@ function stock_supply_setup_db()
     if (empty($maint_photo)) {
         $wpdb->query("ALTER TABLE Maintenance ADD COLUMN Photo VARCHAR(255) DEFAULT NULL");
     }
+
+    // Clean up 'Other' category from Categories table
+    $wpdb->query("DELETE FROM Categories WHERE LOWER(CategoryName) = 'other'");
 }
 add_action('after_setup_theme', 'stock_supply_setup_db');
 
 
 
-// Auto create pages for the Request System
-function auto_create_request_pages()
-{
-    // Create Employee Request Form Page
-    $form_page = get_page_by_title('แบบฟอร์มขอยืมอุปกรณ์');
-    if (!$form_page) {
-        wp_insert_post([
-            'post_title' => 'แบบฟอร์มขอยืมอุปกรณ์',
-            'post_name' => 'request-device-form',
-            'post_content' => '[device_request_form]',
-            'post_status' => 'publish',
-            'post_type' => 'page',
-            'page_template' => 'template-blank-form.php'
-        ]);
-    }
 
-    // Create IT Dashboard Page
-    $dashboard_page = get_page_by_title('จัดการคำขอยืมอุปกรณ์');
-    if (!$dashboard_page) {
-        wp_insert_post([
-            'post_title' => 'จัดการคำขอยืมอุปกรณ์',
-            'post_name' => 'request-dashboard',
-            'post_content' => '[device_request_dashboard]',
-            'post_status' => 'publish',
-            'post_type' => 'page'
-        ]);
-    }
-}
-add_action('admin_init', 'auto_create_request_pages');
 
 // ==========================================
 // Page Transition Loading Screen
@@ -930,7 +948,12 @@ function stock_supply_add_shining_header_styles()
         }
 
         /* Apply modern clean font (Inter + Prompt) to ALL headings */
-        h1, h2, h3, h4, h5, h6,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
         .entry-title,
         .section-title,
         .next-section-title,
@@ -981,7 +1004,8 @@ add_action('wp_footer', 'stock_supply_add_shining_header_styles', 999);
 // =========================================================================
 // AJAX Endpoints for Universal QR Code Scanner & Instant Action Hub
 // =========================================================================
-function stock_supply_ajax_get_device_details() {
+function stock_supply_ajax_get_device_details()
+{
     if (!is_user_logged_in()) {
         wp_send_json_error(['message' => 'Unauthorized access']);
     }
@@ -1054,19 +1078,19 @@ function stock_supply_ajax_get_device_details() {
         ");
 
         wp_send_json_success([
-            'DeviceID'           => $device->DeviceID,
-            'SerialNumber'       => $device->SerialNumber ?: '-',
-            'CategoryName'       => $device->CategoryName ?: 'Device',
-            'BrandName'          => $device->BrandName ?: '-',
-            'Model'              => $device->Model ?: '-',
-            'StatusName'         => $device->StatusName ?: 'Unknown',
-            'OwnerName'          => $owner_name,
-            'OwnerID'            => $owner_id ?: $device->OwnerID,
-            'DepartmentName'     => $device->DepartmentName ?: '-',
-            'ReceiveDate'        => $device->ReceiveDate ?: '-',
+            'DeviceID' => $device->DeviceID,
+            'SerialNumber' => $device->SerialNumber ?: '-',
+            'CategoryName' => $device->CategoryName ?: 'Device',
+            'BrandName' => $device->BrandName ?: '-',
+            'Model' => $device->Model ?: '-',
+            'StatusName' => $device->StatusName ?: 'Unknown',
+            'OwnerName' => $owner_name,
+            'OwnerID' => $owner_id ?: $device->OwnerID,
+            'DepartmentName' => $device->DepartmentName ?: '-',
+            'ReceiveDate' => $device->ReceiveDate ?: '-',
             'ExpectedReturnDate' => $device->ExpectedReturnDate ?: '-',
-            'RepairDate'         => $device->RepairDate ?: '-',
-            'all_owners'         => $owners
+            'RepairDate' => $device->RepairDate ?: '-',
+            'all_owners' => $owners
         ]);
     } else {
         wp_send_json_error(['message' => "Device Not Found for code: {$code}"]);
@@ -1074,7 +1098,8 @@ function stock_supply_ajax_get_device_details() {
 }
 add_action('wp_ajax_get_scanned_device_details', 'stock_supply_ajax_get_device_details');
 
-function stock_supply_ajax_quick_action() {
+function stock_supply_ajax_quick_action()
+{
     if (!is_user_logged_in()) {
         wp_send_json_error(['message' => 'Unauthorized access']);
     }
@@ -1135,34 +1160,35 @@ function stock_supply_ajax_quick_action() {
         $avail_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
         $wpdb->query('START TRANSACTION');
         $step1 = $wpdb->update('Devices', [
-            'StatusID'           => $avail_status,
-            'ReturnDate'         => current_time('Y-m-d'),
-            'DepartmentID'       => null,
-            'ReceiveDate'        => null,
-            'RepairDate'         => null,
+            'StatusID' => $avail_status,
+            'ReturnDate' => current_time('Y-m-d'),
+            'DepartmentID' => null,
+            'ReceiveDate' => null,
+            'RepairDate' => null,
             'ExpectedReturnDate' => null,
-            'LastNotifiedDate'   => null
+            'LastNotifiedDate' => null
         ], ['DeviceID' => $device_id]);
         $step2 = ($step1 !== false) ? $wpdb->update('Devices', ['OwnerID' => null, 'PositionID' => null], ['DeviceID' => $device_id]) : false;
 
         if ($step1 !== false && $step2 !== false) {
             $wpdb->query('COMMIT');
             $wpdb->insert('History_new', [
-                'DeviceID'    => $device_id,
-                'Action'      => 'Return',
-                'Date'        => current_time('mysql'),
+                'DeviceID' => $device_id,
+                'Action' => 'Return',
+                'Date' => current_time('mysql'),
                 'Description' => "Quick Return via QR Scan (Returned by {$prev_owner})",
-                'user_email'  => $admin_email,
-                'CategoryID'  => $dev->CategoryID,
-                'Owner'       => $prev_owner,
-                'Photo'       => $photo_url
+                'user_email' => $admin_email,
+                'CategoryID' => $dev->CategoryID,
+                'Owner' => $prev_owner,
+                'Photo' => $photo_url
             ]);
             $email_sent = false;
             if ($prev_owner_id && function_exists('stock_supply_send_email')) {
                 $email_sent = stock_supply_send_email('Return', $device_id, $prev_owner_id);
             }
             $msg = "Device {$device_id} successfully checked in!";
-            if ($email_sent) $msg .= " Notification email sent.";
+            if ($email_sent)
+                $msg .= " Notification email sent.";
             wp_send_json_success(['message' => $msg]);
         } else {
             $wpdb->query('ROLLBACK');
@@ -1181,22 +1207,22 @@ function stock_supply_ajax_quick_action() {
         $owner_name = $owner_info ? ($owner_info->Nickname ?: $owner_info->FirstName) : 'Unknown';
 
         $wpdb->update('Devices', [
-            'StatusID'     => $in_use_status,
-            'OwnerID'      => $owner_id,
+            'StatusID' => $in_use_status,
+            'OwnerID' => $owner_id,
             'DepartmentID' => $owner_info ? $owner_info->DepartmentID : null,
-            'PositionID'   => $owner_info ? $owner_info->PositionID : null,
-            'ReceiveDate'  => current_time('Y-m-d')
+            'PositionID' => $owner_info ? $owner_info->PositionID : null,
+            'ReceiveDate' => current_time('Y-m-d')
         ], ['DeviceID' => $device_id]);
 
         $wpdb->insert('History_new', [
-            'DeviceID'    => $device_id,
-            'Action'      => 'Assign Device',
-            'Date'        => current_time('mysql'),
+            'DeviceID' => $device_id,
+            'Action' => 'Assign Device',
+            'Date' => current_time('mysql'),
             'Description' => "Assigned to {$owner_name} via QR Scan Hub",
-            'user_email'  => $admin_email,
-            'CategoryID'  => $dev->CategoryID,
-            'Owner'       => $owner_name,
-            'Photo'       => $photo_url
+            'user_email' => $admin_email,
+            'CategoryID' => $dev->CategoryID,
+            'Owner' => $owner_name,
+            'Photo' => $photo_url
         ]);
 
         $email_sent = false;
@@ -1219,26 +1245,26 @@ function stock_supply_ajax_quick_action() {
     } elseif ($action_type === 'maintenance') {
         $maint_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
         $wpdb->update('Devices', ['StatusID' => $maint_status, 'RepairDate' => current_time('Y-m-d')], ['DeviceID' => $device_id]);
-        
+
         $wpdb->insert('Maintenance', [
-            'DeviceID'   => $device_id,
+            'DeviceID' => $device_id,
             'RepairDate' => current_time('Y-m-d'),
-            'Details'    => "Sent to Maintenance via QR Scan Hub",
+            'Details' => "Sent to Maintenance via QR Scan Hub",
             'user_email' => $admin_email,
-            'Photo'      => $photo_url,
-            'CreatedAt'  => current_time('mysql'),
-            'UpdatedAt'  => current_time('mysql'),
+            'Photo' => $photo_url,
+            'CreatedAt' => current_time('mysql'),
+            'UpdatedAt' => current_time('mysql'),
         ]);
 
         $wpdb->insert('History_new', [
-            'DeviceID'    => $device_id,
-            'Action'      => 'Maintenance',
-            'Date'        => current_time('mysql'),
+            'DeviceID' => $device_id,
+            'Action' => 'Maintenance',
+            'Date' => current_time('mysql'),
             'Description' => "Sent to Maintenance via QR Scan Hub",
-            'user_email'  => $admin_email,
-            'CategoryID'  => $dev->CategoryID,
-            'Owner'       => $prev_owner,
-            'Photo'       => $photo_url
+            'user_email' => $admin_email,
+            'CategoryID' => $dev->CategoryID,
+            'Owner' => $prev_owner,
+            'Photo' => $photo_url
         ]);
 
         $email_sent = false;
@@ -1247,41 +1273,42 @@ function stock_supply_ajax_quick_action() {
         }
 
         $msg = "Device {$device_id} status updated to Maintenance!";
-        if ($email_sent) $msg .= " Notification email sent.";
+        if ($email_sent)
+            $msg .= " Notification email sent.";
         wp_send_json_success(['message' => $msg]);
     } elseif ($action_type === 'available') {
         $avail_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
         $wpdb->update('Devices', [
-            'StatusID'   => $avail_status,
+            'StatusID' => $avail_status,
             'RepairDate' => null
         ], ['DeviceID' => $device_id]);
         $wpdb->insert('History_new', [
-            'DeviceID'    => $device_id,
-            'Action'      => 'Available',
-            'Date'        => current_time('mysql'),
+            'DeviceID' => $device_id,
+            'Action' => 'Available',
+            'Date' => current_time('mysql'),
             'Description' => "Marked Available via QR Scan Hub",
-            'user_email'  => $admin_email,
-            'CategoryID'  => $dev->CategoryID,
-            'Owner'       => '-',
-            'Photo'       => $photo_url
+            'user_email' => $admin_email,
+            'CategoryID' => $dev->CategoryID,
+            'Owner' => '-',
+            'Photo' => $photo_url
         ]);
         wp_send_json_success(['message' => "Device {$device_id} is now Available!"]);
     } elseif ($action_type === 'retired') {
         $retired_status = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Retired'");
         $wpdb->update('Devices', [
-            'StatusID'   => $retired_status,
-            'OwnerID'    => null,
+            'StatusID' => $retired_status,
+            'OwnerID' => null,
             'PositionID' => null
         ], ['DeviceID' => $device_id]);
         $wpdb->insert('History_new', [
-            'DeviceID'    => $device_id,
-            'Action'      => 'Retired',
-            'Date'        => current_time('mysql'),
+            'DeviceID' => $device_id,
+            'Action' => 'Retired',
+            'Date' => current_time('mysql'),
             'Description' => "Marked as Retired via QR Scan Hub",
-            'user_email'  => $admin_email,
-            'CategoryID'  => $dev->CategoryID,
-            'Owner'       => $prev_owner,
-            'Photo'       => $photo_url
+            'user_email' => $admin_email,
+            'CategoryID' => $dev->CategoryID,
+            'Owner' => $prev_owner,
+            'Photo' => $photo_url
         ]);
         wp_send_json_success(['message' => "Device {$device_id} has been Retired!"]);
     } elseif ($action_type === 'return_to_owner') {
@@ -1295,22 +1322,22 @@ function stock_supply_ajax_quick_action() {
             $owner_nickname = $owner_info ? ($owner_info->Nickname ?: $owner_info->FirstName) : $prev_owner;
 
             $wpdb->update('Devices', [
-                'StatusID'     => $inuse_status,
-                'OwnerID'      => $target_owner_id,
+                'StatusID' => $inuse_status,
+                'OwnerID' => $target_owner_id,
                 'DepartmentID' => $owner_info ? $owner_info->DepartmentID : null,
-                'PositionID'   => $owner_info ? $owner_info->PositionID : null,
-                'RepairDate'   => null
+                'PositionID' => $owner_info ? $owner_info->PositionID : null,
+                'RepairDate' => null
             ], ['DeviceID' => $device_id]);
 
             $wpdb->insert('History_new', [
-                'DeviceID'    => $device_id,
-                'Action'      => 'Return to Owner',
-                'Date'        => current_time('mysql'),
+                'DeviceID' => $device_id,
+                'Action' => 'Return to Owner',
+                'Date' => current_time('mysql'),
                 'Description' => "Device repaired and returned to owner ({$owner_nickname}) via QR Scan Hub",
-                'user_email'  => $admin_email,
-                'CategoryID'  => $dev->CategoryID,
-                'Owner'       => $owner_nickname,
-                'Photo'       => $photo_url
+                'user_email' => $admin_email,
+                'CategoryID' => $dev->CategoryID,
+                'Owner' => $owner_nickname,
+                'Photo' => $photo_url
             ]);
 
             $wpdb->update(
@@ -1348,10 +1375,8 @@ function stock_supply_get_sidebar_badges()
 {
     global $wpdb;
 
-    // 1. Pending Requests (Device Requests + Repair Requests with Status = 'Pending')
-    $pending_device_reqs = (int) $wpdb->get_var("SELECT COUNT(*) FROM Device_Requests WHERE Status = 'Pending'");
-    $pending_repair_reqs = (int) $wpdb->get_var("SELECT COUNT(*) FROM Repair_Requests WHERE Status = 'Pending'");
-    $pending_requests_count = $pending_device_reqs + $pending_repair_reqs;
+    // 1. Pending Requests (Disabled)
+    $pending_requests_count = 0;
 
     // 2. Devices under Maintenance
     $maintenance_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
@@ -1371,35 +1396,33 @@ function stock_supply_get_sidebar_badges()
 }
 
 // Disable soft-keyboard auto-capitalization on text inputs and textareas
-add_action('wp_footer', function() {
+add_action('wp_footer', function () {
     ?>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function disableAutocapitalize(container) {
-            const root = container || document;
-            root.querySelectorAll('input[type="text"], input[type="search"], textarea, .form-control').forEach(function(el) {
-                if (!el.hasAttribute('autocapitalize')) {
-                    el.setAttribute('autocapitalize', 'off');
-                }
-                if (!el.hasAttribute('autocorrect')) {
-                    el.setAttribute('autocorrect', 'off');
-                }
-            });
-        }
-        disableAutocapitalize();
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                mutation.addedNodes.forEach(function(node) {
-                    if (node.nodeType === 1) {
-                        disableAutocapitalize(node);
+        document.addEventListener('DOMContentLoaded', function () {
+            function disableAutocapitalize(container) {
+                const root = container || document;
+                root.querySelectorAll('input[type="text"], input[type="search"], textarea, .form-control').forEach(function (el) {
+                    if (!el.hasAttribute('autocapitalize')) {
+                        el.setAttribute('autocapitalize', 'off');
+                    }
+                    if (!el.hasAttribute('autocorrect')) {
+                        el.setAttribute('autocorrect', 'off');
                     }
                 });
+            }
+            disableAutocapitalize();
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    mutation.addedNodes.forEach(function (node) {
+                        if (node.nodeType === 1) {
+                            disableAutocapitalize(node);
+                        }
+                    });
+                });
             });
+            observer.observe(document.body, { childList: true, subtree: true });
         });
-        observer.observe(document.body, { childList: true, subtree: true });
-    });
     </script>
     <?php
 });
-
-

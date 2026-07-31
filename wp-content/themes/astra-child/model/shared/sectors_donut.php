@@ -56,6 +56,7 @@ function render_sectors_donut($args = []) {
             'label' => $s['label'],
             'pct' => $pct,
             'color' => $color,
+            'url' => isset($s['url']) ? $s['url'] : (isset($s['link']) ? $s['link'] : ''),
             'start' => $start,
             'dash_array' => sprintf('%.4f %.4f', $dash_len, $C),
             'dash_offset' => sprintf('%.4f', $dash_offset)
@@ -79,7 +80,12 @@ function render_sectors_donut($args = []) {
                             stroke-dasharray="0 <?= sprintf('%.4f', $C) ?>"
                             data-target-dash="<?= esc_attr($a['dash_array']) ?>"
                             stroke-dashoffset="<?= esc_attr($a['dash_offset']) ?>"
-                            data-index="<?= $i ?>" />
+                            data-index="<?= $i ?>"
+                            <?php if (!empty($a['url'])): ?>
+                                data-url="<?= esc_url($a['url']) ?>"
+                                onclick="window.location.href='<?= esc_url($a['url']) ?>';"
+                                style="cursor: pointer;"
+                            <?php endif; ?> />
                 <?php endforeach; ?>
             </svg>
             <div class="sectors-donut-center">
@@ -90,7 +96,13 @@ function render_sectors_donut($args = []) {
 
         <div class="sectors-donut-legend">
             <?php foreach ($arcs as $i => $a): ?>
-                <button type="button" class="sectors-donut-legend-item" data-index="<?= $i ?>" title="<?= esc_attr($a['label']) ?> (<?= sprintf('%.1f', $a['pct']) ?>%)">
+                <button type="button" class="sectors-donut-legend-item" data-index="<?= $i ?>" 
+                        <?php if (!empty($a['url'])): ?>
+                            data-url="<?= esc_url($a['url']) ?>"
+                            onclick="window.location.href='<?= esc_url($a['url']) ?>';"
+                            style="cursor: pointer;"
+                        <?php endif; ?>
+                        title="<?= esc_attr($a['label']) ?> (<?= sprintf('%.1f', $a['pct']) ?>%)">
                     <span class="sectors-donut-badge" style="background-color: <?= esc_attr($a['color']) ?>;"></span>
                     <span class="sectors-donut-label"><?= esc_html($a['label']) ?></span>
                     <span class="sectors-donut-value"><?= sprintf('%.1f', $a['pct']) ?>%</span>

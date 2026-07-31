@@ -10,8 +10,8 @@ function device_form($editing = null)
 	global $wpdb;
 	$table_device = 'Devices';
 
-	$brands = $wpdb->get_results("SELECT BrandID, BrandName FROM Brands");
-	$categories = $wpdb->get_results("SELECT CategoryID, CategoryName FROM Categories");
+	$brands = $wpdb->get_results("SELECT BrandID, BrandName FROM Brands WHERE LOWER(BrandName) != 'other' ORDER BY BrandName ASC");
+	$categories = $wpdb->get_results("SELECT CategoryID, CategoryName FROM Categories WHERE LOWER(CategoryName) != 'other' ORDER BY CategoryName ASC");
 	$keywords = $wpdb->get_results("SELECT KeywordID, KeywordName FROM Keywords");
 	$statuses = $wpdb->get_results("SELECT StatusID, StatusName FROM Statuses");
 
@@ -115,11 +115,6 @@ function device_form($editing = null)
 
 		<div class="d-flex justify-content-between align-items-center mb-4" style="max-width: 600px; margin: 0 auto;">
 			<h2 style="text-align: center; margin: 0; flex-grow: 1;"><?= $editing ? 'Edit Device' : 'Add Device' ?></h2>
-			<?php if (!$editing): ?>
-				<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importCsvModal">
-					<i class="fa-solid fa-file-import"></i> Import CSV
-				</button>
-			<?php endif; ?>
 		</div>
 
 		<div class="form-grid">
@@ -143,15 +138,33 @@ function device_form($editing = null)
 
 			<div class="form-group">
 				<label>Brand</label>
-				<select name="BrandID" id="brand-select" required>
+				<select name="BrandID" id="brand-select" required onchange="toggleNewBrandInput(this)">
 					<option value="" style="text-align: center;">-- Select --</option>
 					<?php foreach ($brands as $brand): ?>
 						<option value="<?= $brand->BrandID ?>" <?= selected($editing->BrandID ?? '', $brand->BrandID, false) ?>>
 							<?= esc_html($brand->BrandName) ?>
 						</option>
 					<?php endforeach; ?>
+					<option value="add_new">+ Add New Brand</option>
 				</select>
+				<div id="new_brand_wrapper" style="display: none; margin-top: 8px;">
+					<input type="text" name="new_brand_name" id="new_brand_name" placeholder="Type new brand name (e.g. Razer, Anker)..." class="form-control form-control-sm" style="border-radius: 6px; padding: 6px 12px; border: 1px solid #15A5DA;">
+				</div>
 			</div>
+			<script>
+				function toggleNewBrandInput(selectElem) {
+					var wrapper = document.getElementById('new_brand_wrapper');
+					var input = document.getElementById('new_brand_name');
+					if (!wrapper || !input) return;
+					if (selectElem.value === 'add_new') {
+						wrapper.style.display = 'block';
+						input.focus();
+					} else {
+						wrapper.style.display = 'none';
+						input.value = '';
+					}
+				}
+			</script>
 
 
 			<div class="form-group">
@@ -217,119 +230,6 @@ function device_form($editing = null)
 	<script src="<?= get_stylesheet_directory_uri(); ?>/js/sweetalert_check_serial.js"></script>
 
 
-
-	<!-- Import CSV Modal -->
-	<div class="modal fade" id="importCsvModal" tabindex="-1" aria-labelledby="importCsvModalLabel" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 class="modal-title" id="importCsvModalLabel"><i class="fa-solid fa-file-import"></i> Import Devices
-						(CSV)</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-				</div>
-				<div class="modal-body text-start">
-					<form action="<?= esc_url(admin_url('admin-post.php')) ?>" method="POST" enctype="multipart/form-data"
-						style="max-width: 100%; margin: 0; padding: 0; background: none; border-radius: 0;">
-						<input type="hidden" name="action" value="import_device_csv">
-						<?php wp_nonce_field('import_device_csv_nonce', 'import_csv_nonce'); ?>
-
-						<div class="mb-3">
-							<label for="csv_file" class="form-label"
-								style="font-weight: 600; margin-bottom: 5px; display: block;">Select CSV File</label>
-							<input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required
-								style="padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;">
-						</div>
-
-						<div class="alert alert-info" style="font-size: 0.85em;">
-							<strong>Format Requirements:</strong>
-							<ul class="mb-0 ps-3">
-								<li>Columns: <code>Brand, Category, Model, SerialNumber, AddDeviceDate, Keyword</code></li>
-								<li>If Brand or Category does not exist, the row will be skipped (Error).</li>
-								<li>Device IDs will be generated automatically.</li>
-							</ul>
-						</div>
-						<div class="text-end" style="margin-top: 15px;">
-							<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-							<button type="submit" class="btn btn-success btn-sm">Import</button>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- CSV Preview Script -->
-	<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			const csvFileInput = document.getElementById('csv_file');
-			if (csvFileInput) {
-				csvFileInput.addEventListener('change', function (e) {
-					const file = e.target.files[0];
-					if (!file) return;
-
-					const reader = new FileReader();
-					reader.onload = function (e) {
-						const text = e.target.result;
-						const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
-
-						if (rows.length <= 1) {
-							Swal.fire({
-								icon: 'error',
-								title: 'Invalid File',
-								text: 'The CSV file is empty or contains no data rows.',
-								confirmButtonColor: '#6ABF57'
-							});
-							csvFileInput.value = '';
-							return;
-						}
-
-						const headers = rows[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-						let tableHtml = `
-						<div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;">
-							<table class="table table-bordered table-striped table-hover table-sm text-start mb-0" style="font-size: 13px;">
-								<thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
-									<tr>
-										${headers.map(h => `<th class="py-2 px-3 text-nowrap">${h}</th>`).join('')}
-									</tr>
-								</thead>
-								<tbody>`;
-
-						let previewRows = rows.slice(1);
-						previewRows.forEach(row => {
-							const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
-							tableHtml += `<tr>`;
-							for (let i = 0; i < headers.length; i++) {
-								tableHtml += `<td class="py-2 px-3 text-nowrap">${cols[i] || '-'}</td>`;
-							}
-							tableHtml += `</tr>`;
-						});
-
-						tableHtml += `</tbody></table></div>`;
-						tableHtml += `<div class="text-start mt-2 text-muted fw-bold" style="font-size: 13px;"><i class="fa-solid fa-list"></i> Total Rows to Import: <span class="text-success">${previewRows.length}</span> devices</div>`;
-
-						Swal.fire({
-							title: '<i class="fa-solid fa-file-csv" style="color: #6ABF57;"></i> CSV Preview',
-							html: tableHtml,
-							width: '80%',
-							confirmButtonText: '<i class="fa-solid fa-check"></i> Looks Good',
-							confirmButtonColor: '#6ABF57',
-							showCancelButton: true,
-							cancelButtonText: '<i class="fa-solid fa-rotate-left"></i> Change File',
-							cancelButtonColor: '#6c757d',
-							customClass: {
-								popup: 'rounded-4 shadow-sm'
-							}
-						}).then((result) => {
-							if (!result.isConfirmed) {
-								csvFileInput.value = '';
-							}
-						});
-					};
-					reader.readAsText(file);
-				});
-			}
-		});
-	</script>
 
 	<style>
 		/* Next.js Inspired Form UI */
@@ -477,24 +377,7 @@ function device_form($editing = null)
 			transform: translateY(0);
 		}
 
-		/* Import CSV Button */
-		.btn-success.btn-sm[data-bs-target="#importCsvModal"] {
-			background-color: #ffffff;
-			color: #4b5563;
-			border: 1px solid #d1d5db;
-			border-radius: 8px;
-			padding: 0.4rem 0.8rem;
-			font-weight: 600;
-			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-			transition: all 0.2s;
-		}
 
-		.btn-success.btn-sm[data-bs-target="#importCsvModal"]:hover {
-			background-color: #f9fafb;
-			border-color: #9ca3af;
-			color: #111827;
-			transform: translateY(-1px);
-		}
 
 		@media (max-width: 640px) {
 			.form-grid {

@@ -74,16 +74,16 @@ function device_crud_laptop()
     $current_order = strtolower($_GET['order'] ?? 'desc');
 
     if ($current_order === 'asc') {
-        $order_sql = "ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ASC, DeviceID ASC";
+        $order_sql = "ORDER BY CASE WHEN DeviceID LIKE '%-%' THEN CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ELSE CAST(DeviceID AS UNSIGNED) END ASC, DeviceID ASC";
         $next_order = 'desc';
         $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-1-9" style="font-size:0.85rem;"></i> 1-9</span>';
     } else {
-        $order_sql = "ORDER BY CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) DESC, DeviceID DESC";
+        $order_sql = "ORDER BY CASE WHEN DeviceID LIKE '%-%' THEN CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ELSE CAST(DeviceID AS UNSIGNED) END DESC, DeviceID DESC";
         $next_order = 'asc';
         $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-9-1" style="font-size:0.85rem;"></i> 9-1</span>';
     }
 
-    $sort_url = add_query_arg(['sort' => 'device_id', 'order' => $next_order]);
+    $sort_url = add_query_arg(['sort' => 'device_id', 'order' => $next_order, 'paged' => 1]);
 
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_device_wn $where_sql");
     $total_pages = ceil($total_items / $page);
@@ -248,73 +248,24 @@ function device_crud_laptop()
         </script>
 
 
-        <!-- Import CSV Modal -->
-        <div class="modal fade" id="importCsvModal" tabindex="-1" aria-labelledby="importCsvModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="importCsvModalLabel"><i class="fa-solid fa-file-import"></i> Import
-                            Laptops (CSV)</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-start">
-                        <form action="<?= esc_url(admin_url('admin-post.php')) ?>" method="POST"
-                            enctype="multipart/form-data">
-                            <input type="hidden" name="action" value="import_device_csv">
-                            <?php wp_nonce_field('import_device_csv_nonce', 'import_csv_nonce'); ?>
 
-                            <div class="mb-3">
-                                <label for="csv_file" class="form-label">Select CSV File</label>
-                                <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv"
-                                    required>
-                            </div>
-
-                            <div class="alert alert-info" style="font-size: 0.85em;">
-                                <strong>Format Requirements:</strong>
-                                <ul class="mb-0 ps-3">
-                                    <li>Columns: <code>Brand, Category, Model, SerialNumber, AddDeviceDate, Keyword</code>
-                                    </li>
-                                    <li>Make sure <code>Category</code> is set to <code>Laptop</code> for laptops.</li>
-                                    <li>If Brand or Category does not exist, the row will be skipped (Error).</li>
-                                    <li>Device IDs will be generated automatically.</li>
-                                </ul>
-                            </div>
-                            <div class="text-end">
-                                <button type="button" class="btn btn-secondary btn-sm"
-                                    data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-success btn-sm">Import</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <form method="POST" action="" id="bulk-action-form-laptop">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <div class="d-flex align-items-center" style="display: none !important;">
-                    <select name="bulk_action" class="form-select me-2" style="width: auto;">
-                        <option value="">-- Bulk Actions --</option>
-                        <option value="available">Set Available (<i class="fa-solid fa-circle text-success"></i>)</option>
-                        <option value="retired">Set Retired (<i class="fa-solid fa-circle text-dark"></i>)</option>
-                        <option value="print_labels">Print Labels (<i class="fa-solid fa-print"></i>)</option>
-
-                    </select>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="handleBulkAction('laptop')">Apply</button>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <!-- Export button uses the same GET parameters for filtering -->
-
-                </div>
+            <?php wp_nonce_field('bulk_device_action_nonce', 'bulk_action_nonce'); ?>
+            <div class="d-flex align-items-center mb-3">
+                <select name="bulk_action" class="form-select form-select-sm me-2" style="width: auto; min-width: 150px; border-radius: 8px; font-weight: 500;">
+                    <option value="print_labels">Print Labels</option>
+                </select>
+                <button type="button" class="btn btn-primary btn-sm" style="border-radius: 8px; font-weight: 600; padding: 6px 16px;" onclick="handleBulkAction('laptop')">
+                    <i class="fa-solid fa-print"></i> Print Labels
+                </button>
             </div>
-
 
             <div class="table-wrapper">
                 <table class="table-custom">
                     <thead>
                         <tr>
-                            <th class="py-3" style="width: 50px; display: none;"><input type="checkbox"
-                                    id="selectAll-laptop"></th>
+                            <th class="py-3 text-center" style="width: 45px;"><input type="checkbox" id="selectAll-laptop"></th>
                             <th class="text-nowrap py-3 text-start" style="width: 15%;">
                                 <a href="<?= esc_url($sort_url) ?>" style="color:inherit; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;" title="Click to toggle ID sort (9-1 / 1-9)">
                                     ID <?= $sort_icon ?>
@@ -329,9 +280,9 @@ function device_crud_laptop()
                     <tbody>
                         <?php foreach ($rows as $index => $row): ?>
                             <tr class="text-nowrap py-2" style="white-space: nowrap;">
-                                <td class="align-middle" style="display: none;"><input type="checkbox" name="bulk_device_ids[]"
-                                        value="<?= $row->DeviceID ?>" class="device-checkbox-laptop"
-                                        data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>"></td>
+                                <td class="align-middle text-center" style="width: 45px;">
+                                    <input type="checkbox" name="bulk_device_ids[]" value="<?= $row->DeviceID ?>" class="device-checkbox-laptop" data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>">
+                                </td>
                                 <td class="align-middle text-start">
                                     <?php
                                     $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-1 day');

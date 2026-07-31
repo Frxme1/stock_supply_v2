@@ -52,12 +52,19 @@ function device_dashboard()
     $js_dept_labels = json_encode($dept_labels);
     $js_dept_counts = json_encode($dept_counts);
 
-    // Category config
+    // Category config (Links to respective category pages for Monitor/Laptop/Accessories, and clears filters on current page for All Devices)
     $category_config = [
-        ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>'],
-        ['label' => 'Monitor', 'count' => $total_monitor, 'color' => '#FDB840', 'icon' => '<i class="fa-solid fa-desktop"></i>'],
-        ['label' => 'Laptop', 'count' => $total_laptop, 'color' => '#15A5DA', 'icon' => '<i class="fa-solid fa-laptop"></i>'],
-        ['label' => 'Accessories', 'count' => $total_accessories, 'color' => '#6ABF57', 'icon' => '<i class="fa-solid fa-plug"></i>'],
+        ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>', 'url' => '?'],
+        ['label' => 'Monitor', 'count' => $total_monitor, 'color' => '#FDB840', 'icon' => '<i class="fa-solid fa-desktop"></i>', 'url' => home_url('/monitor/')],
+        ['label' => 'Laptop', 'count' => $total_laptop, 'color' => '#15A5DA', 'icon' => '<i class="fa-solid fa-laptop"></i>', 'url' => home_url('/laptop/')],
+        ['label' => 'Accessories', 'count' => $total_accessories, 'color' => '#6ABF57', 'icon' => '<i class="fa-solid fa-plug"></i>', 'url' => home_url('/accessories/')],
+    ];
+
+    $status_urls = [
+        'Available' => '?filter_status=Available',
+        'In Use' => '?filter_status=In+Use',
+        'Maintenance' => home_url('/maintenance/'),
+        'Retired' => '?filter_status=Retired',
     ];
 
     // Query recently added devices (within 1 day)
@@ -116,7 +123,8 @@ function device_dashboard()
                         </thead>
                         <tbody>
                             <?php foreach ($new_devices as $nd): ?>
-                                <tr>
+                                <tr onclick="window.location.href='<?= home_url('/' . strtolower(esc_attr($nd->Category)) . '/?view=' . urlencode($nd->DeviceID)) ?>'"
+                                    style="cursor: pointer;" title="Click to view details of <?= esc_attr($nd->DeviceID) ?>">
                                     <td>
                                         <span class="new-device-badge-sm">NEW</span>
                                         <?= esc_html($nd->DeviceID) ?>
@@ -140,7 +148,8 @@ function device_dashboard()
                 $percent = $total_devices > 0 ? round(($cat['count'] / $total_devices) * 100, 1) : 0;
                 $is_total = ($cat['label'] === 'All Devices');
                 ?>
-                <div class="next-card slide-up" style="animation-delay: <?= $delay ?>s;">
+                <div class="next-card slide-up clickable-card" onclick="window.location.href='<?= esc_url($cat['url']) ?>'"
+                    style="animation-delay: <?= $delay ?>s; cursor: pointer;" title="View <?= esc_attr($cat['label']) ?>">
                     <?php $delay += 0.05; ?>
                     <div class="next-card-header">
                         <span class="next-card-title"><?= esc_html($cat['label']) ?></span>
@@ -179,7 +188,9 @@ function device_dashboard()
                 $count = $summary_map[$status] ?? 0;
                 $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
                 ?>
-                <div class="next-card slide-up" style="animation-delay: <?= $delay2 ?>s;">
+                <div class="next-card slide-up clickable-card"
+                    onclick="window.location.href='<?= esc_url($status_urls[$status] ?? home_url('/laptop/')) ?>'"
+                    style="animation-delay: <?= $delay2 ?>s; cursor: pointer;" title="View <?= esc_attr($status) ?> devices">
                     <?php $delay2 += 0.05; ?>
                     <div class="next-card-header">
                         <div class="d-flex align-items-center gap-2">
@@ -219,9 +230,9 @@ function device_dashboard()
                     $pct_laptop = $total_devices > 0 ? round(($total_laptop / $total_devices) * 100, 1) : 0;
                     $pct_acc = $total_devices > 0 ? round(($total_accessories / $total_devices) * 100, 1) : 0;
                     $device_sectors = [
-                        ['label' => 'Monitor', 'pct' => $pct_monitor, 'color' => '#FDB840'],
-                        ['label' => 'Laptop', 'pct' => $pct_laptop, 'color' => '#15A5DA'],
-                        ['label' => 'Accessories', 'pct' => $pct_acc, 'color' => '#6ABF57'],
+                        ['label' => 'Monitor', 'pct' => $pct_monitor, 'color' => '#FDB840', 'url' => home_url('/monitor/')],
+                        ['label' => 'Laptop', 'pct' => $pct_laptop, 'color' => '#15A5DA', 'url' => home_url('/laptop/')],
+                        ['label' => 'Accessories', 'pct' => $pct_acc, 'color' => '#6ABF57', 'url' => home_url('/accessories/')],
                     ];
                     echo render_sectors_donut([
                         'symbol' => 'DEVICES',
@@ -903,9 +914,31 @@ function device_dashboard()
             // Chart 2: Status Overview
             var optionsStatus = {
                 series: [{ name: 'Devices', data: <?= $js_status_counts ?> }],
-                chart: { type: 'bar', height: 320, fontFamily: 'inherit', toolbar: { show: false } },
+                chart: {
+                    type: 'bar',
+                    height: 320,
+                    fontFamily: 'inherit',
+                    toolbar: { show: false },
+                    events: {
+                        dataPointSelection: function (event, chartContext, config) {
+                            var categories = <?= $js_status_labels ?>;
+                            var selected = categories[config.dataPointIndex];
+                            if (selected === 'Available') {
+                                window.location.href = '?filter_status=Available';
+                            } else if (selected === 'In Use') {
+                                window.location.href = '?filter_status=In+Use';
+                            } else if (selected === 'Maintenance') {
+                                window.location.href = '<?= esc_url(home_url('/maintenance/')) ?>';
+                            } else if (selected === 'Retired') {
+                                window.location.href = '?filter_status=Retired';
+                            } else if (selected) {
+                                window.location.href = '?filter_status=' + encodeURIComponent(selected);
+                            }
+                        }
+                    }
+                },
                 xaxis: { categories: <?= $js_status_labels ?> },
-                colors: ['#15A5DA'],
+                colors: ['#6ABF57', '#F05353', '#FDB840', '#919191'],
                 plotOptions: {
                     bar: { borderRadius: 6, columnWidth: '45%', distributed: true }
                 },
@@ -918,7 +951,21 @@ function device_dashboard()
             // Chart 3: Devices by Department
             var optionsDept = {
                 series: [{ name: 'Devices', data: <?= $js_dept_counts ?> }],
-                chart: { type: 'bar', height: 320, fontFamily: 'inherit', toolbar: { show: false } },
+                chart: {
+                    type: 'bar',
+                    height: 320,
+                    fontFamily: 'inherit',
+                    toolbar: { show: false },
+                    events: {
+                        dataPointSelection: function (event, chartContext, config) {
+                            var categories = <?= $js_dept_labels ?>;
+                            var selected = categories[config.dataPointIndex];
+                            if (selected) {
+                                window.location.href = '?filter_department=' + encodeURIComponent(selected);
+                            }
+                        }
+                    }
+                },
                 plotOptions: {
                     bar: { borderRadius: 4, horizontal: true, distributed: true }
                 },

@@ -113,10 +113,19 @@ html {
 }
 
 
-/* Complete Override for Astra Theme Containers & Wrappers */
 html body #page,
 html body #content,
 html body .site-content,
+html body footer,
+html body .custom-footer {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    float: none !important;
+    box-sizing: border-box !important;
+}
+
 html body .ast-container,
 html body .site-content>.ast-container,
 html body.ast-separate-container .site-content>.ast-container,
@@ -133,7 +142,7 @@ html body .ast-article-post,
 html body .ast-article-page,
 html body .ast-single-post {
     width: 100% !important;
-    max-width: 1380px !important;
+    max-width: 1580px !important;
     margin-left: auto !important;
     margin-right: auto !important;
     float: none !important;
@@ -148,6 +157,7 @@ html body .site-content>.ast-container {
 }
 
 @media (min-width: 1200px) {
+
     html body .ast-container,
     html body .site-content>.ast-container {
         padding-left: 56px !important;
@@ -689,14 +699,7 @@ input[type="checkbox"] {
     border: 1px solid var(--md-divider);
 }
 
-/* Bulk Action Toolbar */
-#bulk-action-form>.d-flex.align-items-center.mb-3 {
-    background: transparent;
-    padding: 10px 16px;
-    border-radius: var(--md-radius-md);
-    box-shadow: var(--md-shadow-1);
-    border: 1px solid var(--md-divider);
-}
+
 
 /* Form Card */
 form {

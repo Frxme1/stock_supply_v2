@@ -83,19 +83,7 @@ $maintenance_count = $sidebar_badges['maintenance'];
             <span class="sidebar-link-text">Employees</span>
         </a>
 
-        <!-- Requests -->
-        <a href="<?php echo esc_url(home_url('/request-dashboard/')); ?>" class="sidebar-link <?php echo (is_page('request-dashboard')) ? 'active' : ''; ?>">
-            <span class="sidebar-link-icon">
-                <i class="fa-solid fa-list-check" style="font-size: 20px;"></i>
-                <?php if ($requests_count > 0): ?>
-                    <span class="sidebar-icon-badge danger"><?php echo $requests_count > 99 ? '99+' : $requests_count; ?></span>
-                <?php endif; ?>
-            </span>
-            <span class="sidebar-link-text">Requests</span>
-            <?php if ($requests_count > 0): ?>
-                <span class="sidebar-badge danger"><?php echo $requests_count > 99 ? '99+' : $requests_count; ?></span>
-            <?php endif; ?>
-        </a>
+
 
         <!-- Add Device -->
         <a href="<?php echo esc_url(home_url('/add-device/')); ?>" class="sidebar-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
@@ -205,12 +193,7 @@ $maintenance_count = $sidebar_badges['maintenance'];
         <a href="<?php echo esc_url(home_url('/owner/')); ?>" class="mobile-link <?php echo (is_page('owner')) ? 'active' : ''; ?>">
             <span><i class="fa-solid fa-users" style="font-size: 20px;"></i> Employees</span>
         </a>
-        <a href="<?php echo esc_url(home_url('/request-dashboard/')); ?>" class="mobile-link <?php echo (is_page('request-dashboard')) ? 'active' : ''; ?>">
-            <span><i class="fa-solid fa-list-check" style="font-size: 20px;"></i> Requests</span>
-            <?php if ($requests_count > 0): ?>
-                <span class="mobile-badge danger"><?php echo $requests_count > 99 ? '99+' : $requests_count; ?></span>
-            <?php endif; ?>
-        </a>
+
         <a href="<?php echo esc_url(home_url('/add-device/')); ?>" class="mobile-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
             <span><i class="fa-solid fa-plus" style="font-size: 20px;"></i> Add Device</span>
         </a>
