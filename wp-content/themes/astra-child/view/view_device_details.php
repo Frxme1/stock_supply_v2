@@ -45,7 +45,7 @@ function device_view_details($device_id = null)
     $search = isset($_GET['history_search']) ? stock_supply_parse_search_query($_GET['history_search']) : '';
 
     $where = "WHERE CAST(h.DeviceID AS CHAR) = %s AND h.DeviceID IS NOT NULL AND h.DeviceID != '' AND h.DeviceID != '0'";
-    $params = [(string)$device_id];
+    $params = [(string) $device_id];
 
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
@@ -237,55 +237,6 @@ function device_view_details($device_id = null)
             color: #111827;
         }
 
-        .next-table-wrapper {
-            background: #ffffff;
-            border-radius: 20px;
-            border: 1.5px solid #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        .next-table {
-            margin: 0;
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        .next-table thead {
-            background: #f9fafb;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .next-table th {
-            color: #6b7280;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            padding: 1rem 1.5rem;
-            border: none;
-        }
-
-        .next-table td {
-            padding: 1rem 1.5rem;
-            border: none;
-            border-bottom: 1px solid #e5e7eb;
-            color: #374151;
-            vertical-align: middle;
-        }
-
-        .next-table tbody tr {
-            transition: background-color 0.2s ease;
-        }
-
-        .next-table tbody tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .next-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
         .vd-desc-text {
             color: #4b5563;
             font-size: 0.95rem;
@@ -390,6 +341,14 @@ function device_view_details($device_id = null)
         }
     </style>
 
+    <?php
+    $cat_slug = !empty($device->CategoryName) ? sanitize_title($device->CategoryName) : 'formdevice';
+    if (!in_array($cat_slug, ['laptop', 'monitor', 'accessories', 'formdevice'])) {
+        $cat_slug = 'formdevice';
+    }
+    $category_table_url = home_url('/' . $cat_slug . '/');
+    ?>
+
     <div class="view-details-container px-3 mt-4">
         <!-- Header -->
         <div class="vd-header">
@@ -401,7 +360,14 @@ function device_view_details($device_id = null)
             </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-outline-secondary vd-btn"
-                    onclick="if(document.referrer && document.referrer.includes(window.location.host)) { history.back(); } else { window.location.href = '<?= esc_url(home_url('/home/')) ?>'; }">
+                    onclick="
+                        const ref = document.referrer;
+                        if (ref && ref.includes(window.location.host) && !ref.includes('receive=') && !ref.includes('edit=') && !ref.includes('action=') && !ref.includes('add=') && !ref.includes('delete=')) {
+                            window.location.href = ref;
+                        } else {
+                            window.location.href = '<?= esc_url($category_table_url) ?>';
+                        }
+                    ">
                     <i class="fa-solid fa-arrow-left"></i> Back
                 </button>
                 <button type="button" class="btn btn-dark vd-btn"
@@ -498,16 +464,16 @@ function device_view_details($device_id = null)
                 </form>
             </div>
 
-            <div class="table-responsive-xl next-table-wrapper">
-                <table class="table next-table">
+            <div class="table-wrapper table-wrapper-details">
+                <table class="table-custom" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th class="text-start">Action</th>
-                            <th class="text-start">Date</th>
-                            <th class="text-start">Reason / Details</th>
-                            <th class="text-start">Photo</th>
-                            <th class="text-start">User</th>
-                            <th class="text-start">Owner</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 15%;">Action</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 30%;">Reason / Details</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 10%;">Photo</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 15%;">User</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 15%;">Owner</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -516,31 +482,29 @@ function device_view_details($device_id = null)
                                 <td colspan="6" class="text-center py-4 text-muted">No history logs found.</td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($rows as $row): ?>
+                            <?php foreach ($rows as $index => $row): ?>
                                 <?php
-                                $date = new DateTime($row->Date, new DateTimeZone('UTC'));
-                                $date->setTimezone(new DateTimeZone('Asia/Bangkok'));
+                                $date = new DateTime($row->Date);
                                 ?>
-                                <tr>
-                                    <td class="text-start"><span class="vd-action-pill"><?= esc_html($row->Action) ?></span></td>
-                                    <td class="text-start vd-date-text"><?= esc_html($date->format("d/m/Y H:i")) ?></td>
-                                     <td class="text-start vd-desc-text">
-                                         <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $device->DeviceID)) ?>
-                                     </td>
-                                    <td class="text-start">
+                                <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
+                                    <td class="text-start align-middle" data-label="Action"><span class="vd-action-pill"><?= esc_html($row->Action) ?></span></td>
+                                    <td class="text-start align-middle vd-date-text" data-label="Date"><?= esc_html($date->format("d/m/Y H:i")) ?></td>
+                                    <td class="text-start align-middle vd-desc-text" data-label="Reason / Details">
+                                        <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $device->DeviceID)) ?>
+                                    </td>
+                                    <td class="text-start align-middle" data-label="Photo">
                                         <?php if (!empty($row->Photo)): ?>
-                                            <img src="<?= esc_url($row->Photo) ?>" 
-                                                 onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')" 
-                                                 style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor:pointer; transition:transform 0.15s ease;" 
-                                                 onmouseover="this.style.transform='scale(1.1)'" 
-                                                 onmouseout="this.style.transform='scale(1)'" 
-                                                 title="Click to view full photo">
+                                            <img src="<?= esc_url($row->Photo) ?>"
+                                                onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
+                                                style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor:pointer; transition:transform 0.15s ease;"
+                                                onmouseover="this.style.transform='scale(1.1)'"
+                                                onmouseout="this.style.transform='scale(1)'" title="Click to view full photo">
                                         <?php else: ?>
                                             <span style="color:#cbd5e1; font-size:0.85rem;">-</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-start font-medium"><?= esc_html($row->user_email) ?></td>
-                                    <td class="text-start font-medium"><?= esc_html($row->Owner ?: '-') ?></td>
+                                    <td class="text-start align-middle font-medium" data-label="User"><?= esc_html($row->user_email) ?></td>
+                                    <td class="text-start align-middle font-medium" data-label="Owner"><?= esc_html($row->Owner ?: '-') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -549,7 +513,7 @@ function device_view_details($device_id = null)
             </div>
 
             <script>
-                window.openPhotoModal = function(imgUrl) {
+                window.openPhotoModal = function (imgUrl) {
                     if (!imgUrl) return;
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -573,7 +537,7 @@ function device_view_details($device_id = null)
                                     <img id="photo_lightbox_img" src="" style="max-width:85vw; max-height:80vh; border-radius:12px; display:block; object-fit:contain;">
                                 </div>
                             `;
-                            overlay.onclick = function(e) {
+                            overlay.onclick = function (e) {
                                 if (e.target === overlay) {
                                     overlay.style.opacity = '0';
                                     setTimeout(() => overlay.style.display = 'none', 200);

@@ -66,9 +66,7 @@ function handle_device_actions()
                             'RepairDate'   => null,
                             'PositionID'   => null
                         ],
-                        ['DeviceID' => $device_id],
-                        ['%d', null, null, null, null, null, null],
-                        ['%s']
+                        ['DeviceID' => $device_id]
                     );
                     if ($updated !== false) {
                         $wpdb->insert('History_new', [
@@ -318,7 +316,7 @@ function handle_device_actions()
                         showConfirmButton: false,
                         timer: 1500
                     }).then(() => {
-                        window.location.href = '{$redirect_url}';
+                        window.location.replace('{$redirect_url}');
                     });
                 </script>";
                     exit;
@@ -364,9 +362,7 @@ function handle_device_actions()
                     'RepairDate'   => null,
                     'PositionID'   => null
                 ],
-                ['DeviceID' => $device_id],
-                ['%d', null, null, null, null, null, null],
-                ['%s']
+                ['DeviceID' => $device_id]
             );
 
             // เพิ่มข้อมูลลง History_new ถ้าอัปเดตผ่าน
@@ -413,7 +409,7 @@ function handle_device_actions()
                 showConfirmButton: false,
                 timer: 1500
             }).then(() => {
-                window.location.href = '{$redirect_url}';
+                window.location.replace('{$redirect_url}');
             });
         </script>";
             exit;
@@ -443,9 +439,7 @@ function handle_device_actions()
                         'StatusID'     => $inuse_status_id,
                         'RepairDate'   => null
                     ],
-                    ['DeviceID' => $device_id],
-                    ['%d', null],
-                    ['%s']
+                    ['DeviceID' => $device_id]
                 );
 
                 if ($updated !== false) {
@@ -495,7 +489,7 @@ function handle_device_actions()
                     showConfirmButton: false,
                     timer: 1500
                 }).then(() => {
-                    window.location.href = '{$redirect_url}';
+                    window.location.replace('{$redirect_url}');
                 });
                 </script>";
                 exit;
@@ -608,7 +602,7 @@ function handle_device_actions()
                     showConfirmButton: false,
                     timer: 1500
                 }).then(() => {
-                    window.location.href = '{$redirect_url}';
+                    window.location.replace('{$redirect_url}');
                 });
             </script>";
                 exit;
@@ -701,7 +695,7 @@ function handle_device_actions()
                     showConfirmButton: false,
                     timer: 1500
                 }).then(() => {
-                    window.location.href = '{$redirect_url}';
+                    window.location.replace('{$redirect_url}');
                 });
             </script>";
                 exit;

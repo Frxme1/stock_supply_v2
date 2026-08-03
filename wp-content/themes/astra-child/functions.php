@@ -84,8 +84,11 @@ function stock_supply_format_history_description($desc, $action = '', $device_id
         return '<span class="badge bg-light text-dark border ms-1" style="font-weight: 500; font-size: 0.8rem;">Status: ' . esc_html($matches[1]) . '</span>';
     }, $desc);
 
-    // Style Reason / Note labels
-    $desc = preg_replace('/(Reason\/Note|Reason|Note):/i', '<strong style="color: #475569;">$1:</strong>', $desc);
+    // Style Reason / Note labels with a line break for cleaner reading
+    $desc = preg_replace('/(Reason\/Note|Reason|Note):/i', '<br><strong style="color: #475569; display: inline-block; margin-top: 4px;">$1:</strong>', $desc);
+    
+    // Clean up if the string started with <br>
+    $desc = preg_replace('/^<br>/i', '', trim($desc));
 
     return $desc;
 }
@@ -216,8 +219,11 @@ add_filter('auth_cookie_expiration', 'cookie_login', 99, 3);
 // section logout
 function logout_redirect()
 {
-    // check page Logout
-    if (isset($_SERVER['REQUEST_URI']) && untrailingslashit($_SERVER['REQUEST_URI']) === '/logout') {
+    $req_uri = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
+    $path_slug = trim(untrailingslashit($req_uri), '/');
+
+    // check page Logout (matches /logout, /stock_supply/logout, or page slug 'logout')
+    if (is_page('logout') || $path_slug === 'logout' || str_ends_with($path_slug, '/logout')) {
         if (is_user_logged_in()) {
             wp_logout(); // logout user
         }
@@ -225,7 +231,7 @@ function logout_redirect()
         exit;
     }
 }
-add_action('template_redirect', 'logout_redirect');
+add_action('template_redirect', 'logout_redirect', 5);
 
 
 // style css
@@ -400,6 +406,18 @@ function enqueue_animated_dropdown()
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_animated_dropdown');
+
+// Shadcn Filters Component
+function enqueue_shadcn_filters()
+{
+    wp_enqueue_style(
+        'shadcn-filters-style',
+        get_stylesheet_directory_uri() . '/css/shadcn_filters.css',
+        [],
+        filemtime(get_stylesheet_directory() . '/css/shadcn_filters.css')
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_shadcn_filters');
 
 // Material Design Theme (loads last to override all styles)
 function enqueue_material_theme()
@@ -1426,3 +1444,490 @@ add_action('wp_footer', function () {
     </script>
     <?php
 });
+
+// ============================================================
+// Offboard Employee — AJAX Endpoints
+// ============================================================
+
+/**
+ * AJAX: Get all devices currently assigned to an employee (OwnerID).
+ */
+function stock_supply_ajax_get_employee_devices()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Unauthorized']);
+    }
+    check_ajax_referer('stock_supply_ajax_nonce', 'nonce');
+
+    global $wpdb;
+    $owner_id = isset($_POST['owner_id']) ? intval($_POST['owner_id']) : 0;
+
+    if ($owner_id <= 0) {
+        wp_send_json_error(['message' => 'Invalid Owner ID']);
+    }
+
+    $devices = $wpdb->get_results($wpdb->prepare("
+        SELECT d.DeviceID, d.Model, d.SerialNumber,
+               c.CategoryName,
+               s.StatusName
+        FROM Devices d
+        LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+        LEFT JOIN Statuses s   ON d.StatusID   = s.StatusID
+        WHERE d.OwnerID = %d
+        ORDER BY c.CategoryName ASC, d.DeviceID ASC
+    ", $owner_id));
+
+    // Also get owner info
+    $owner = $wpdb->get_row($wpdb->prepare(
+        "SELECT Nickname, FirstName, LastName FROM Owners WHERE OwnerID = %d",
+        $owner_id
+    ));
+
+    wp_send_json_success([
+        'devices' => $devices ?: [],
+        'owner'   => $owner ? [
+            'nickname'  => $owner->Nickname,
+            'full_name' => trim($owner->FirstName . ' ' . $owner->LastName),
+        ] : null,
+        'count'   => count($devices ?: []),
+    ]);
+}
+add_action('wp_ajax_get_employee_devices', 'stock_supply_ajax_get_employee_devices');
+
+/**
+ * AJAX: Offboard employee — unassign ALL devices and return to stock.
+ */
+function stock_supply_ajax_offboard_employee()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Unauthorized']);
+    }
+    check_ajax_referer('stock_supply_ajax_nonce', 'nonce');
+
+    global $wpdb;
+    $owner_id = isset($_POST['owner_id']) ? intval($_POST['owner_id']) : 0;
+
+    if ($owner_id <= 0) {
+        wp_send_json_error(['message' => 'Invalid Owner ID']);
+    }
+
+    // Get available status
+    $available_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
+    if (!$available_status_id) {
+        wp_send_json_error(['message' => 'Available status not found in database']);
+    }
+
+    // Get owner info for history
+    $owner_nickname = $wpdb->get_var($wpdb->prepare(
+        "SELECT Nickname FROM Owners WHERE OwnerID = %d",
+        $owner_id
+    ));
+    $safe_owner = $owner_nickname ?: '-';
+
+    // Get all devices assigned to this owner
+    $devices = $wpdb->get_results($wpdb->prepare(
+        "SELECT DeviceID, Model, SerialNumber, CategoryID FROM Devices WHERE OwnerID = %d",
+        $owner_id
+    ));
+
+    if (empty($devices)) {
+        wp_send_json_error(['message' => 'No devices found for this employee']);
+    }
+
+    $current_user  = wp_get_current_user();
+    $user_email    = $current_user->user_email ?? 'unknown@domain.com';
+    $return_date   = current_time('Y-m-d');
+    $success_count = 0;
+    $errors        = [];
+
+    $wpdb->query('START TRANSACTION');
+
+    foreach ($devices as $dev) {
+        $updated = $wpdb->update(
+            'Devices',
+            [
+                'StatusID'           => $available_status_id,
+                'OwnerID'            => null,
+                'DepartmentID'       => null,
+                'ReceiveDate'        => null,
+                'ReturnDate'         => null,
+                'RepairDate'         => null,
+                'PositionID'         => null,
+                'ExpectedReturnDate' => null,
+                'LastNotifiedDate'   => null,
+            ],
+            ['DeviceID' => $dev->DeviceID]
+        );
+
+        if ($updated !== false) {
+            $safe_category_id = !empty($dev->CategoryID) ? $dev->CategoryID : null;
+
+            $wpdb->insert('History_new', [
+                'DeviceID'    => $dev->DeviceID,
+                'Action'      => 'Offboard Return',
+                'Date'        => current_time('mysql'),
+                'Description' => "Offboard: Device {$dev->DeviceID} ({$dev->Model}) returned to stock from {$safe_owner}",
+                'user_email'  => $user_email,
+                'CategoryID'  => $safe_category_id,
+                'Owner'       => $safe_owner,
+            ]);
+            $success_count++;
+        } else {
+            $errors[] = $dev->DeviceID;
+        }
+    }
+
+    if ($success_count > 0 && empty($errors)) {
+        $wpdb->query('COMMIT');
+    } elseif ($success_count > 0) {
+        // Partial success — still commit what worked
+        $wpdb->query('COMMIT');
+    } else {
+        $wpdb->query('ROLLBACK');
+        wp_send_json_error(['message' => 'Failed to update any devices']);
+    }
+
+    wp_send_json_success([
+        'message'       => "Successfully returned {$success_count} device(s) to stock.",
+        'success_count' => $success_count,
+        'error_count'   => count($errors),
+        'error_ids'     => $errors,
+    ]);
+}
+add_action('wp_ajax_offboard_employee', 'stock_supply_ajax_offboard_employee');
+
+// ============================================================
+// Quick Swap Device — AJAX Endpoints
+// ============================================================
+
+/**
+ * AJAX: Get options for Quick Swap (Old device info + list of Available replacement devices)
+ */
+function stock_supply_ajax_get_quick_swap_options()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Unauthorized']);
+    }
+    check_ajax_referer('stock_supply_ajax_nonce', 'nonce');
+
+    global $wpdb;
+    $old_device_id = isset($_POST['old_device_id']) ? sanitize_text_field($_POST['old_device_id']) : '';
+
+    if (empty($old_device_id)) {
+        wp_send_json_error(['message' => 'Invalid Device ID']);
+    }
+
+    // Get old device info
+    $old_device = $wpdb->get_row($wpdb->prepare("
+        SELECT d.DeviceID, d.Model, d.SerialNumber, d.CategoryID, d.OwnerID, d.DepartmentID, d.PositionID,
+               c.CategoryName, b.BrandName,
+               s.StatusName,
+               o.Nickname as OwnerNickname, CONCAT(o.FirstName, ' ', o.LastName) as OwnerFullName,
+               dep.DepartmentName
+        FROM Devices d
+        LEFT JOIN Categories c   ON d.CategoryID   = c.CategoryID
+        LEFT JOIN Brands b       ON d.BrandID      = b.BrandID
+        LEFT JOIN Statuses s     ON d.StatusID     = s.StatusID
+        LEFT JOIN Owners o       ON d.OwnerID      = o.OwnerID
+        LEFT JOIN Departments dep ON d.DepartmentID = dep.DepartmentID
+        WHERE d.DeviceID = %s
+    ", $old_device_id));
+
+    if (!$old_device) {
+        wp_send_json_error(['message' => 'Old device not found']);
+    }
+
+    // Get available replacement devices ONLY in the same category
+    $available_devices = $wpdb->get_results($wpdb->prepare("
+        SELECT d.DeviceID, d.Model, d.SerialNumber, d.CategoryID,
+               c.CategoryName, b.BrandName
+        FROM Devices d
+        LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+        LEFT JOIN Brands b     ON d.BrandID    = b.BrandID
+        INNER JOIN Statuses s  ON d.StatusID   = s.StatusID
+        WHERE s.StatusName = 'Available' AND d.DeviceID != %s AND d.CategoryID = %d
+        ORDER BY d.DeviceID ASC
+    ", $old_device_id, $old_device->CategoryID));
+
+    wp_send_json_success([
+        'old_device'        => $old_device,
+        'available_devices' => $available_devices ?: [],
+    ]);
+}
+add_action('wp_ajax_get_quick_swap_options', 'stock_supply_ajax_get_quick_swap_options');
+
+/**
+ * AJAX: Perform Quick Swap Device
+ * Send old device to Maintenance + Reassign new available device to old owner
+ */
+function stock_supply_ajax_quick_swap_device()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Unauthorized']);
+    }
+    check_ajax_referer('stock_supply_ajax_nonce', 'nonce');
+
+    global $wpdb;
+    $old_device_id = isset($_POST['old_device_id']) ? sanitize_text_field($_POST['old_device_id']) : '';
+    $new_device_id = isset($_POST['new_device_id']) ? sanitize_text_field($_POST['new_device_id']) : '';
+    $repair_reason = isset($_POST['repair_reason']) ? sanitize_textarea_field($_POST['repair_reason']) : '';
+
+    if (empty($old_device_id) || empty($new_device_id)) {
+        wp_send_json_error(['message' => 'Please select both old faulty device and new replacement device']);
+    }
+
+    if (empty($repair_reason)) {
+        wp_send_json_error(['message' => 'Please specify the maintenance / fault reason for the old device']);
+    }
+
+    // Fetch Status IDs
+    $maint_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
+    $inuse_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
+
+    if (!$maint_status_id || !$inuse_status_id) {
+        wp_send_json_error(['message' => 'Required statuses not found in database']);
+    }
+
+    // Fetch Old Device
+    $old_dev = $wpdb->get_row($wpdb->prepare("SELECT * FROM Devices WHERE DeviceID = %s", $old_device_id));
+    if (!$old_dev) {
+        wp_send_json_error(['message' => 'Old device not found']);
+    }
+
+    // Fetch New Replacement Device
+    $new_dev = $wpdb->get_row($wpdb->prepare("SELECT * FROM Devices WHERE DeviceID = %s", $new_device_id));
+    if (!$new_dev) {
+        wp_send_json_error(['message' => 'New replacement device not found']);
+    }
+
+    $current_user = wp_get_current_user();
+    $user_email   = $current_user->user_email ?? 'unknown@domain.com';
+    $today_date   = current_time('Y-m-d');
+    $now_mysql    = current_time('mysql');
+
+    // Get owner nickname for history
+    $owner_nickname = '-';
+    if (!empty($old_dev->OwnerID)) {
+        $owner_nickname = $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM Owners WHERE OwnerID = %d", $old_dev->OwnerID)) ?: '-';
+    }
+
+    $wpdb->query('START TRANSACTION');
+
+    // ----------------------------------------------------
+    // 1. Old Device -> Send to Maintenance
+    // ----------------------------------------------------
+    $inserted_maint = $wpdb->insert('Maintenance', [
+        'DeviceID'   => $old_device_id,
+        'RepairDate' => $today_date,
+        'Details'    => $repair_reason,
+        'user_email' => $user_email,
+        'Photo'      => null,
+        'CreatedAt'  => $now_mysql,
+        'UpdatedAt'  => $now_mysql,
+    ]);
+
+    $updated_old = $wpdb->update('Devices', [
+        'StatusID'     => $maint_status_id,
+        'OwnerID'      => null,
+        'DepartmentID' => null,
+        'ReceiveDate'  => null,
+        'RepairDate'   => $today_date,
+        'ReturnDate'   => null,
+        'PositionID'   => null,
+    ], ['DeviceID' => $old_device_id]);
+
+    // History for Old Device
+    $wpdb->insert('History_new', [
+        'DeviceID'    => $old_device_id,
+        'Action'      => 'Quick Swap Maintenance',
+        'Date'        => $now_mysql,
+        'Description' => "Quick Swap: Device {$old_device_id} ({$old_dev->Model}) sent to Maintenance from {$owner_nickname}. Reason: {$repair_reason}",
+        'user_email'  => $user_email,
+        'CategoryID'  => $old_dev->CategoryID,
+        'Owner'       => $owner_nickname,
+    ]);
+
+    // ----------------------------------------------------
+    // 2. New Device -> Reassign to Employee
+    // ----------------------------------------------------
+    $updated_new = $wpdb->update('Devices', [
+        'StatusID'     => $inuse_status_id,
+        'OwnerID'      => $old_dev->OwnerID,
+        'DepartmentID' => $old_dev->DepartmentID,
+        'PositionID'   => $old_dev->PositionID,
+        'ReceiveDate'  => $today_date,
+        'ReturnDate'   => null,
+    ], ['DeviceID' => $new_device_id]);
+
+    // History for New Device
+    $wpdb->insert('History_new', [
+        'DeviceID'    => $new_device_id,
+        'Action'      => 'Quick Swap Reassign',
+        'Date'        => $now_mysql,
+        'Description' => "Quick Swap: Replacement Device {$new_device_id} ({$new_dev->Model}) assigned to {$owner_nickname} (Replaced {$old_device_id})",
+        'user_email'  => $user_email,
+        'CategoryID'  => $new_dev->CategoryID,
+        'Owner'       => $owner_nickname,
+    ]);
+
+    if ($inserted_maint !== false && $updated_old !== false && $updated_new !== false) {
+        $wpdb->query('COMMIT');
+        wp_send_json_success([
+            'message' => "Quick Swap completed! Device {$old_device_id} sent to Maintenance. Device {$new_device_id} assigned to {$owner_nickname}.",
+        ]);
+    } else {
+        $wpdb->query('ROLLBACK');
+        wp_send_json_error(['message' => 'Failed to complete Quick Swap operation. Database error.']);
+    }
+}
+add_action('wp_ajax_quick_swap_device', 'stock_supply_ajax_quick_swap_device');
+
+/**
+ * Global JavaScript for Quick Swap Device Modal
+ */
+add_action('wp_footer', function () {
+    if (!is_user_logged_in()) return;
+    ?>
+    <script>
+        window.quickSwapDevice = function(oldDeviceID) {
+            if (!oldDeviceID) return;
+
+            const ajaxUrl = '<?= admin_url('admin-ajax.php') ?>';
+            const ajaxNonce = '<?= wp_create_nonce("stock_supply_ajax_nonce") ?>';
+
+            if (typeof Swal === 'undefined') {
+                alert('SweetAlert2 library is missing.');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Loading device details...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const formData = new FormData();
+            formData.append('action', 'get_quick_swap_options');
+            formData.append('nonce', ajaxNonce);
+            formData.append('old_device_id', oldDeviceID);
+
+            fetch(ajaxUrl, { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        Swal.fire('Error', data.data ? data.data.message : 'Could not load device details.', 'error');
+                        return;
+                    }
+
+                    const oldDev = data.data.old_device;
+                    const availables = data.data.available_devices;
+
+                    let availableOptionsHtml = `<option value="">-- Select replacement ${oldDev.CategoryName || 'device'} --</option>`;
+                    if (availables.length === 0) {
+                        availableOptionsHtml = `<option value="">❌ No available replacement devices in ${oldDev.CategoryName || 'this category'}</option>`;
+                    } else {
+                        availables.forEach(dev => {
+                            const brandModel = (dev.BrandName || '') + ' ' + (dev.Model || '');
+                            availableOptionsHtml += `<option value="${dev.DeviceID}">[${dev.DeviceID}] ${brandModel} - SN: ${dev.SerialNumber || '-'}</option>`;
+                        });
+                    }
+
+                    const modalHtml = `
+                        <div style="text-align: left; font-size: 0.92rem; font-family: sans-serif;">
+                            <div style="background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;">
+                                <div style="font-weight: 700; color: #c2410c; margin-bottom: 4px; font-size: 0.95rem;">
+                                    <i class="fa-solid fa-laptop-medical"></i> Faulty Device (to Maintenance):
+                                </div>
+                                <div style="color: #431407;">
+                                    <strong>${oldDev.DeviceID}</strong> - ${oldDev.BrandName || ''} ${oldDev.Model || ''} (${oldDev.CategoryName || ''})<br>
+                                    <small style="color: #7c2d12;">Held by: <strong>${oldDev.OwnerNickname || '-'}</strong> ${oldDev.OwnerFullName ? '(' + oldDev.OwnerFullName + ')' : ''} | Dept: ${oldDev.DepartmentName || '-'}</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 14px;">
+                                <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 6px;">
+                                    1. Fault / Maintenance Reason <span style="color: #ef4444;">*</span>
+                                </label>
+                                <textarea id="swap-repair-reason" class="swal2-textarea" placeholder="Describe the issue (e.g. Screen broken, Won't power on, Battery failure)" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 8px 12px; height: 75px;"></textarea>
+                            </div>
+
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 6px;">
+                                    2. Select Replacement Device <span style="color: #ef4444;">*</span>
+                                </label>
+                                <select id="swap-new-device-id" class="swal2-select" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 8px 12px; height: 42px;">
+                                    ${availableOptionsHtml}
+                                </select>
+                            </div>
+                        </div>
+                    `;
+
+                    Swal.fire({
+                        title: '⚡ Quick Swap Device',
+                        html: modalHtml,
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fa-solid fa-arrows-rotate"></i> Confirm Quick Swap',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#f59e0b',
+                        cancelButtonColor: '#6b7280',
+                        customClass: { popup: 'quick-swap-popup' },
+                        preConfirm: () => {
+                            const reason = document.getElementById('swap-repair-reason').value.trim();
+                            const newDevId = document.getElementById('swap-new-device-id').value;
+
+                            if (!reason) {
+                                Swal.showValidationMessage('Please enter the fault or maintenance reason.');
+                                return false;
+                            }
+                            if (!newDevId) {
+                                Swal.showValidationMessage('Please pick a replacement device.');
+                                return false;
+                            }
+                            return { newDevId: newDevId, reason: reason };
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                title: 'Swapping devices...',
+                                allowOutsideClick: false,
+                                didOpen: () => { Swal.showLoading(); }
+                            });
+
+                            const swapData = new FormData();
+                            swapData.append('action', 'quick_swap_device');
+                            swapData.append('nonce', ajaxNonce);
+                            swapData.append('old_device_id', oldDeviceID);
+                            swapData.append('new_device_id', result.value.newDevId);
+                            swapData.append('repair_reason', result.value.reason);
+
+                            fetch(ajaxUrl, { method: 'POST', body: swapData })
+                                .then(res => res.json())
+                                .then(resp => {
+                                    if (resp.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Quick Swap Complete!',
+                                            text: resp.data.message,
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                        }).then(() => {
+                                            window.location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire('Error', resp.data ? resp.data.message : 'Could not swap devices.', 'error');
+                                    }
+                                })
+                                .catch(err => {
+                                    Swal.fire('Error', 'Connection error: ' + err.message, 'error');
+                                });
+                        }
+                    });
+                })
+                .catch(err => {
+                    Swal.fire('Error', 'Failed to fetch options: ' + err.message, 'error');
+                });
+        };
+    </script>
+    <?php
+});
+

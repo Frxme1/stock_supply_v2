@@ -199,8 +199,8 @@ function handleBulkAction(type) {
         const form = document.getElementById(formId);
         if (!form) return;
 
-        const selectEl = form.querySelector('select[name="bulk_action"]');
-        const action = selectEl ? selectEl.value : '';
+        const selectEl = form.querySelector('[name="bulk_action"]');
+        const action = selectEl ? selectEl.value : 'print_labels';
         const checked = form.querySelectorAll(checkboxClass + ':checked');
 
         if (!action) {

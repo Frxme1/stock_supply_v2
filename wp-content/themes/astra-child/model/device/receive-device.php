@@ -119,7 +119,7 @@ function receive_device($device_data = null)
             showConfirmButton: false,
             timer: 1500
         }).then(() => {
-            window.location.href = '{$redirect_url}';
+            window.location.replace('{$redirect_url}');
         });
     </script>";
             return ob_get_clean();
@@ -204,7 +204,14 @@ function receive_device($device_data = null)
         </div>
 
         <div class="form-actions">
-            <button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
+            <button type="button" onclick="
+                const ref = document.referrer;
+                if (ref && ref.includes(window.location.host) && !ref.includes('receive=') && !ref.includes('edit=')) {
+                    window.location.href = ref;
+                } else {
+                    window.location.href = '<?= esc_url(home_url('/formDevice/')) ?>';
+                }
+            " class="btn btn-danger border rounded-pill">Cancel</button>
             <button type="submit" name="update_device" class="btn btn-success border rounded-pill"
                 style="background-color: #6ABF57">Assign</button>
         </div>

@@ -38,8 +38,8 @@ function form_maintenance($editing = null)
         $DeviceID = sanitize_text_field($_POST['DeviceID']);
         $RepairDate = sanitize_text_field($_POST['RepairDate']);
         $Details = sanitize_textarea_field($_POST['Details']);
-        if ($Details === 'อื่นๆ / Others' && !empty($_POST['OtherDetails'])) {
-            $Details = 'อื่นๆ / Others - ' . sanitize_text_field($_POST['OtherDetails']);
+        if (($Details === 'Others' || $Details === 'อื่นๆ / Others') && !empty($_POST['OtherDetails'])) {
+            $Details = 'Others - ' . sanitize_text_field($_POST['OtherDetails']);
         }
 
         $device_info = $wpdb->get_row($wpdb->prepare(
@@ -208,19 +208,21 @@ function form_maintenance($editing = null)
         $is_other = false;
         $other_text = '';
         $known_options = [
-            'จอแสดงผลมีปัญหา / Screen Issue',
-            'แบตเตอรี่เสื่อม / Battery Issue',
-            'เครื่องเปิดไม่ติด / Power Issue',
-            'คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue',
-            'อัปเกรดอุปกรณ์ / Hardware Upgrade',
-            'ซอฟต์แวร์มีปัญหา / Software Issue'
+            'Screen Issue',
+            'Battery Issue',
+            'Power Issue',
+            'Keyboard / Mouse Issue',
+            'Hardware Upgrade',
+            'Software Issue'
         ];
 
         if (!empty($details_val) && !in_array($details_val, $known_options)) {
             $is_other = true;
-            if (strpos($details_val, 'อื่นๆ / Others - ') === 0) {
+            if (strpos($details_val, 'Others - ') === 0) {
+                $other_text = substr($details_val, strlen('Others - '));
+            } elseif (strpos($details_val, 'อื่นๆ / Others - ') === 0) {
                 $other_text = substr($details_val, strlen('อื่นๆ / Others - '));
-            } elseif ($details_val !== 'อื่นๆ / Others') {
+            } elseif ($details_val !== 'Others' && $details_val !== 'อื่นๆ / Others') {
                 $other_text = $details_val;
             }
         }
@@ -230,13 +232,13 @@ function form_maintenance($editing = null)
             <label>Details</label>
             <select name="Details" required>
                 <option value="" disabled selected>-- Select Maintenance Reason --</option>
-                <option value="จอแสดงผลมีปัญหา / Screen Issue" <?= $details_val === 'จอแสดงผลมีปัญหา / Screen Issue' ? 'selected' : '' ?>>จอแสดงผลมีปัญหา / Screen Issue</option>
-                <option value="แบตเตอรี่เสื่อม / Battery Issue" <?= $details_val === 'แบตเตอรี่เสื่อม / Battery Issue' ? 'selected' : '' ?>>แบตเตอรี่เสื่อม / Battery Issue</option>
-                <option value="เครื่องเปิดไม่ติด / Power Issue" <?= $details_val === 'เครื่องเปิดไม่ติด / Power Issue' ? 'selected' : '' ?>>เครื่องเปิดไม่ติด / Power Issue</option>
-                <option value="คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue" <?= $details_val === 'คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue' ? 'selected' : '' ?>>คีย์บอร์ด/เมาส์มีปัญหา / Input Device Issue</option>
-                <option value="อัปเกรดอุปกรณ์ / Hardware Upgrade" <?= $details_val === 'อัปเกรดอุปกรณ์ / Hardware Upgrade' ? 'selected' : '' ?>>อัปเกรดอุปกรณ์ / Hardware Upgrade</option>
-                <option value="ซอฟต์แวร์มีปัญหา / Software Issue" <?= $details_val === 'ซอฟต์แวร์มีปัญหา / Software Issue' ? 'selected' : '' ?>>ซอฟต์แวร์มีปัญหา / Software Issue</option>
-                <option value="อื่นๆ / Others" <?= $is_other ? 'selected' : '' ?>>อื่นๆ / Others</option>
+                <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false || $details_val === 'Screen Issue') ? 'selected' : '' ?>>Screen Issue</option>
+                <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false || $details_val === 'Battery Issue') ? 'selected' : '' ?>>Battery Issue</option>
+                <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false || $details_val === 'Power Issue') ? 'selected' : '' ?>>Power Issue</option>
+                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Input Device Issue') !== false || $details_val === 'Keyboard / Mouse Issue') ? 'selected' : '' ?>>Keyboard / Mouse Issue</option>
+                <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false || $details_val === 'Hardware Upgrade') ? 'selected' : '' ?>>Hardware Upgrade</option>
+                <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false || $details_val === 'Software Issue') ? 'selected' : '' ?>>Software Issue</option>
+                <option value="Others" <?= $is_other ? 'selected' : '' ?>>Others</option>
             </select>
         </div>
 
@@ -431,7 +433,7 @@ function form_maintenance($editing = null)
 
             if (detailsSelect) {
                 detailsSelect.addEventListener('change', function () {
-                    if (this.value === 'อื่นๆ / Others') {
+                    if (this.value === 'Others' || this.value === 'อื่นๆ / Others') {
                         otherGroup.style.display = 'flex';
                         otherInput.required = true;
                     } else {

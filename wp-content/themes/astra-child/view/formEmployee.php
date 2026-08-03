@@ -53,9 +53,7 @@ function form_owner()
                     'ReturnDate' => null,
                     'RepairDate' => null
                 ],
-                ['OwnerID' => $owner_id],
-                ['%d', null, null, null, null, null],
-                ['%d']
+                ['OwnerID' => $owner_id]
             );
 
             // delete Owner
@@ -95,13 +93,18 @@ function form_owner()
 
 
 
-    // section search
-    $search = isset($_GET['device_search']) ? $_GET['device_search'] : '';
-    $search_sql = '';
+    // section search & filter
+    $search = isset($_GET['device_search']) ? sanitize_text_field($_GET['device_search']) : '';
+    $filter_dept = isset($_GET['filter_department']) ? sanitize_text_field($_GET['filter_department']) : '';
+    $filter_pos = isset($_GET['filter_position']) ? sanitize_text_field($_GET['filter_position']) : '';
+    $filter_st = isset($_GET['filter_status']) ? sanitize_text_field($_GET['filter_status']) : '';
+
+    $where_clauses = ["1=1"];
+
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
-        $search_sql = $wpdb->prepare(
-            "WHERE Nickname LIKE %s OR FirstName LIKE %s OR LastName LIKE %s OR Department LIKE %s OR Position LIKE %s OR Status LIKE %s",
+        $where_clauses[] = $wpdb->prepare(
+            "(Nickname LIKE %s OR FirstName LIKE %s OR LastName LIKE %s OR Department LIKE %s OR Position LIKE %s OR Status LIKE %s)",
             $like,
             $like,
             $like,
@@ -110,6 +113,17 @@ function form_owner()
             $like
         );
     }
+    if (!empty($filter_dept)) {
+        $where_clauses[] = $wpdb->prepare("Department = %s", $filter_dept);
+    }
+    if (!empty($filter_pos)) {
+        $where_clauses[] = $wpdb->prepare("Position = %s", $filter_pos);
+    }
+    if (!empty($filter_st)) {
+        $where_clauses[] = $wpdb->prepare("Status = %s", $filter_st);
+    }
+
+    $search_sql = "WHERE " . implode(" AND ", $where_clauses);
 
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_owner_wn $search_sql");
     $total_pages = ceil($total_items / $page);
@@ -124,11 +138,11 @@ function form_owner()
 
     ?>
 
-    <!-- form search -->
-    <form method="GET" action="">
+    <!-- Advanced Filter & Action Bar -->
+    <form method="GET" action="" id="advanced-filter-form" style="margin-bottom: 24px;">
         <?php
         foreach ($_GET as $key => $value) {
-            if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+            if (!in_array($key, ['device_search', 'filter_status', 'filter_department', 'filter_position', 'paged'])) {
                 if (is_array($value)) {
                     foreach ($value as $v) {
                         echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -138,12 +152,147 @@ function form_owner()
                 }
             }
         }
+        $filter_status = isset($_GET['filter_status']) ? sanitize_text_field($_GET['filter_status']) : '';
+        $filter_dept = isset($_GET['filter_department']) ? sanitize_text_field($_GET['filter_department']) : '';
+        $filter_pos = isset($_GET['filter_position']) ? sanitize_text_field($_GET['filter_position']) : '';
+
+        $departments = $wpdb->get_col("SELECT DISTINCT Department FROM $table_owner_wn WHERE Department IS NOT NULL AND Department != '' AND Department != '-' ORDER BY Department ASC");
+        $positions = $wpdb->get_col("SELECT DISTINCT Position FROM $table_owner_wn WHERE Position IS NOT NULL AND Position != '' ORDER BY Position ASC");
+        $statuses = $wpdb->get_col("SELECT DISTINCT Status FROM $table_owner_wn WHERE Status IS NOT NULL AND Status != '' ORDER BY Status ASC");
         ?>
-        <div class="row align-items-center g-2">
-            <label class="col-auto col-form-label">Employee</label>
-            <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+
+        <style>
+            .filter-select-custom {
+                height: 38px !important;
+                border-radius: 8px !important;
+                border: 1px solid #d1d5db !important;
+                font-size: 0.875rem !important;
+                color: #374151 !important;
+                background-color: #ffffff !important;
+                width: 100% !important;
+            }
+
+            .btn-filter-cyan {
+                height: 38px;
+                background: #00a8ff !important;
+                color: #ffffff !important;
+                font-weight: 700;
+                font-size: 0.875rem;
+                border: none;
+                border-radius: 8px;
+                padding: 0 18px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                box-shadow: 0 2px 6px rgba(0, 168, 255, 0.25);
+                transition: all 0.2s ease;
+                cursor: pointer;
+                text-decoration: none !important;
+            }
+
+            .btn-filter-cyan:hover {
+                background: #0097e6 !important;
+                color: #ffffff !important;
+                transform: translateY(-1px);
+            }
+
+            .btn-reset-underline {
+                height: 38px;
+                background: #ffffff;
+                color: #475569 !important;
+                font-weight: 700;
+                font-size: 0.875rem;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                padding: 0 16px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                text-decoration: underline !important;
+                text-underline-offset: 2px;
+                transition: all 0.2s ease;
+            }
+
+            .btn-reset-underline:hover {
+                background: #f8fafc;
+                color: #1e293b !important;
+            }
+
+            .btn-add-black {
+                width: 38px;
+                height: 38px;
+                background: #0f172a;
+                color: #ffffff !important;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.9rem;
+                border: none;
+                box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+                transition: all 0.2s ease;
+                text-decoration: none !important;
+                flex-shrink: 0;
+            }
+
+            .btn-add-black:hover {
+                background: #1e293b;
+                transform: scale(1.05);
+                color: #ffffff !important;
+            }
+
+            .filter-actions-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            @media (max-width: 768px) {
+                #advanced-filter-form .filter-bar-container {
+                    flex-direction: column !important;
+                    align-items: stretch !important;
+                    gap: 10px !important;
+                    margin-top: -20px !important;
+                }
+
+                #advanced-filter-form .filter-field-item {
+                    width: 100% !important;
+                    min-width: 100% !important;
+                    max-width: 100% !important;
+                }
+
+                #advanced-filter-form .filter-actions-item {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    width: 100% !important;
+
+                }
+
+                #advanced-filter-form .btn-filter-cyan {
+                    flex: 1 !important;
+                    height: 42px !important;
+                }
+
+                #advanced-filter-form .btn-reset-underline {
+                    flex: 1 !important;
+                    height: 42px !important;
+                }
+
+                #advanced-filter-form .btn-add-black {
+                    width: 42px !important;
+                    height: 42px !important;
+                }
+            }
+        </style>
+
+        <div class="d-flex align-items-end flex-wrap gap-2 w-100 filter-bar-container">
+            <!-- Search Employee -->
+            <div class="flex-grow-1 filter-field-item" style="min-width: 220px; max-width: 320px;">
+                <label class="form-label text-secondary small mb-1 fw-bold">Search Employee</label>
                 <?php
-                $search_placeholder = 'Search Employee...';
+                $search_placeholder = 'Search by name, nickname, dept...';
                 $search_list = 'search_suggestions';
                 include get_stylesheet_directory() . '/view/animated-search.php';
                 ?>
@@ -153,51 +302,92 @@ function form_owner()
                     <?php endforeach; ?>
                 </datalist>
             </div>
-            <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
-                <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
-                    Filter</button>
-                <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
-                <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
+
+            <!-- Department Filter -->
+            <div class="filter-field-item" style="min-width: 140px; flex: 1;">
+                <label class="form-label text-secondary small mb-1 fw-bold">Department</label>
+                <select name="filter_department" class="form-select form-select-sm filter-select-custom staggered-dropdown">
+                    <option value="">All Depts</option>
+                    <?php foreach ($departments as $dept): ?>
+                        <option value="<?= esc_attr($dept) ?>" <?= $filter_dept === $dept ? 'selected' : '' ?>>
+                            <?= esc_html($dept) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Position Filter -->
+            <div class="filter-field-item" style="min-width: 140px; flex: 1;">
+                <label class="form-label text-secondary small mb-1 fw-bold">Position</label>
+                <select name="filter_position" class="form-select form-select-sm filter-select-custom staggered-dropdown">
+                    <option value="">All Positions</option>
+                    <?php foreach ($positions as $pos): ?>
+                        <option value="<?= esc_attr($pos) ?>" <?= $filter_pos === $pos ? 'selected' : '' ?>><?= esc_html($pos) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="filter-field-item" style="min-width: 140px; flex: 1;">
+                <label class="form-label text-secondary small mb-1 fw-bold">Status</label>
+                <select name="filter_status" class="form-select form-select-sm filter-select-custom staggered-dropdown">
+                    <option value="">All Statuses</option>
+                    <?php foreach ($statuses as $st): ?>
+                        <option value="<?= esc_attr($st) ?>" <?= $filter_status === $st ? 'selected' : '' ?>><?= esc_html($st) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Filter Buttons Container -->
+            <div class="filter-actions-item">
+                <button type="submit" class="btn-filter-cyan">
+                    <i class="fa-solid fa-filter"></i> Filter
+                </button>
+                <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_department', 'filter_position', 'paged']); ?>
+                <a href="<?= esc_url($reset_url) ?>" class="btn-reset-underline">Reset</a>
+                <a href="<?= esc_url(home_url('/add-owner/')) ?>" class="btn-add-black" title="Add Employee">
+                    <i class="fa-solid fa-user-plus"></i>
+                </a>
             </div>
         </div>
-
-
     </form>
 
-
-    <!-- form add-owner -->
-    <form action="<?= esc_url(home_url('/add-owner/')) ?>" method="post" style="margin-top: 10px;">
-        <div class="section-search" style="margin-bottom: 20px;">
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <button class="rounded-pill" style="width: 6rem; background-color: #6ABF57;" type="submit">Add</button>
-            </div>
-        </div>
-    </form>
-
-    <div class="table-wrapper">
+    <div class="table-wrapper table-wrapper-employee">
         <table class="table-custom" style="width: 100%;">
             <thead>
                 <tr>
-                    <th class="text-nowrap py-3 text-start" style="width: 10%;">NickName</th>
-                    <th class="text-nowrap py-3 text-start" style="width: 15%;">FirstName</th>
-                    <th class="text-nowrap py-3 text-start" style="width: 15%;">LastName</th>
-                    <th class="text-nowrap py-3 text-start" style="width: 20%;">Email</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 12%;">Nickname</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 18%;">Full Name</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 22%;">Email</th>
                     <th class="text-nowrap py-3 text-start" style="width: 15%;">Department</th>
-                    <th class="text-nowrap py-3 text-start" style="width: 10%;">Position</th>
-                    <th class="text-nowrap py-3 text-start" style="width: 5%;">Status</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 13%;">Position</th>
+                    <th class="text-nowrap py-3 text-start" style="width: 10%;">Status</th>
                     <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($rows as $index => $row): ?>
                     <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
-                        <td class="text-start align-middle"><?= $row->Nickname ?></td>
-                        <td class="text-start align-middle"><?= $row->FirstName ?></td>
-                        <td class="text-start align-middle"><?= $row->LastName ?></td>
-                        <td class="text-start align-middle text-muted"><?= !empty($row->Email) ? esc_html($row->Email) : '-' ?></td>
-                        <td class="text-start align-middle"><?= $row->Department ?></td>
-                        <td class="text-start align-middle"><?= $row->Position ?></td>
-                        <td class="text-start align-middle">
+                        <td class="text-start align-middle" data-label="ID">
+                            <strong><?= esc_html($row->Nickname) ?></strong>
+                            <small class="text-muted d-block font-monospace">#<?= $row->OwnerID ?></small>
+                        </td>
+                        <td class="text-start align-middle" data-label="Employee">
+                            <?= !empty(trim($row->FirstName . ' ' . $row->LastName)) ? esc_html($row->FirstName . ' ' . $row->LastName) : '-' ?>
+                        </td>
+                        <td class="text-start align-middle text-muted" data-label="Email">
+                            <?= !empty($row->Email) ? esc_html($row->Email) : '-' ?>
+                        </td>
+                        <td class="text-start align-middle" data-label="Department">
+                            <?= !empty($row->Department) ? esc_html($row->Department) : '-' ?>
+                        </td>
+                        <td class="text-start align-middle" data-label="Position">
+                            <span
+                                class="badge bg-light text-dark border"><?= !empty($row->Position) ? esc_html($row->Position) : '-' ?></span>
+                        </td>
+                        <td class="text-start align-middle" data-label="Status">
                             <?php
                             $status = $row->Status;
                             $statusClass = strcasecmp($status, 'Active') === 0 ? 'status-available' : 'status-inuse';
@@ -208,7 +398,7 @@ function form_owner()
                             </span>
                         </td>
 
-                        <td class="text-center align-middle">
+                        <td class="text-center align-middle" data-label="Action">
                             <div class="dropdown action-menu text-center">
                                 <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
                                     ...
@@ -217,29 +407,15 @@ function form_owner()
                                     <div class="action-dropdown-header">Actions</div>
                                     <div class="action-dropdown-separator"></div>
                                     <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                    <?php if ($row->Status == 'Available'): ?>
-                                        <a href="?receive=<?= $row->OwnerID ?>"><i class="fa-solid fa-box"></i> Receive</a>
-                                        <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i>
-                                            Maintenance</a>
-                                        <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i
-                                                class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                    <?php elseif ($row->Status == 'In Use'): ?>
-                                        <a href="?return=<?= $row->OwnerID ?>"><i class="fa-solid fa-rotate-left"></i> Return</a>
-                                        <a href="?maintenance=<?= $row->OwnerID ?>"><i class="fa-solid fa-screwdriver-wrench"></i>
-                                            Maintenance</a>
-                                        <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i
-                                                class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                    <?php elseif ($row->Status == 'Maintenance'): ?>
-                                        <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i>
-                                            Available</a>
-                                        <a href="#" onclick="confirmRetire('<?= $row->OwnerID ?>', 'retire'); return false;"><i
-                                                class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                    <?php elseif ($row->Status == 'Retired'): ?>
-                                        <a href="?available=<?= $row->OwnerID ?>"><i class="fa-solid fa-circle text-success"></i>
-                                            Available</a>
+                                    <?php if (strcasecmp($row->Status, 'Active') !== 0 || in_array(strtolower(trim($row->Status)), ['resigned', 'resign', 'registered'])): ?>
+                                        <a href="#"
+                                            onclick="offboardEmployee(<?= $row->OwnerID ?>, '<?= esc_js($row->Nickname) ?>'); return false;"
+                                            class="offboard-action-link text-warning"><i class="fa-solid fa-user-xmark"></i>
+                                            Offboard</a>
                                     <?php endif; ?>
-                                    <a href="#" onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"><i
-                                            class="fa-solid fa-trash-can"></i> Delete</a>
+                                    <a href="#"
+                                        onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"><i
+                                            class="fa-solid fa-trash-can text-danger"></i> Delete</a>
                                 </div>
                             </div>
                         </td>
@@ -384,12 +560,182 @@ function form_owner()
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
     </style>
+
+    <!-- Offboard Employee JavaScript -->
+    <script>
+        function offboardEmployee(ownerID, nickname) {
+            const ajaxUrl = '<?= admin_url("admin-ajax.php") ?>';
+            const ajaxNonce = '<?= wp_create_nonce("stock_supply_ajax_nonce") ?>';
+
+            // Step 1: Show loading
+            Swal.fire({
+                title: 'Loading devices...',
+                text: 'Fetching equipment assigned to ' + nickname,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            // Step 2: AJAX — get devices
+            const formData = new FormData();
+            formData.append('action', 'get_employee_devices');
+            formData.append('nonce', ajaxNonce);
+            formData.append('owner_id', ownerID);
+
+            fetch(ajaxUrl, { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(result => {
+                    if (!result.success) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'No Devices Found',
+                            html: '<p style="color:#64748b;">"<strong>' + nickname + '</strong>" does not have any assigned devices.</p>',
+                            confirmButtonColor: '#1976D2'
+                        });
+                        return;
+                    }
+
+                    const devices = result.data.devices;
+                    const owner = result.data.owner;
+                    const count = result.data.count;
+
+                    if (count === 0) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'No Devices Found',
+                            html: '<p style="color:#64748b;">"<strong>' + nickname + '</strong>" does not have any assigned devices.</p>',
+                            confirmButtonColor: '#1976D2'
+                        });
+                        return;
+                    }
+
+                    // Step 3: Build device table HTML
+                    let tableRows = '';
+                    devices.forEach((d, i) => {
+                        tableRows += `
+                        <tr class="offboard-row">
+                            <td class="offboard-td-num">${i + 1}</td>
+                            <td class="offboard-td-id">${d.DeviceID}</td>
+                            <td class="offboard-td-model">${d.Model || '-'}</td>
+                            <td class="offboard-td-cat">
+                                <span class="offboard-cat-badge">${d.CategoryName || '-'}</span>
+                            </td>
+                            <td class="offboard-td-status">
+                                <span class="offboard-status-badge">${d.StatusName || '-'}</span>
+                            </td>
+                        </tr>`;
+                    });
+
+                    const modalHtml = `
+                    <div class="offboard-modal-container">
+                        <div class="offboard-employee-info">
+                            <div class="offboard-avatar">
+                                <i class="fa-solid fa-user-large"></i>
+                            </div>
+                            <div class="offboard-emp-details">
+                                <div class="offboard-emp-name">${owner ? owner.full_name : nickname}</div>
+                                <div class="offboard-emp-nick">${owner ? owner.nickname : ''}</div>
+                            </div>
+                            <div class="offboard-device-count">
+                                <span class="offboard-count-num">${count}</span>
+                                <span class="offboard-count-label">device${count > 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+                        <div class="offboard-table-wrap">
+                            <table class="offboard-device-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Device ID</th>
+                                        <th>Model</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tableRows}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+
+                    // Step 4: Show confirmation modal
+                    Swal.fire({
+                        title: 'Offboard Employee',
+                        html: modalHtml,
+                        width: 700,
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fa-solid fa-rotate-left"></i> Unassign All & Return to Stock',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#D32F2F',
+                        cancelButtonColor: '#6b7280',
+                        customClass: {
+                            popup: 'offboard-swal-popup',
+                            confirmButton: 'offboard-confirm-btn',
+                        },
+                        reverseButtons: true
+                    }).then((confirmResult) => {
+                        if (!confirmResult.isConfirmed) return;
+
+                        // Step 5: Execute offboard
+                        Swal.fire({
+                            title: 'Processing...',
+                            text: 'Returning ' + count + ' device(s) to stock',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        const offboardData = new FormData();
+                        offboardData.append('action', 'offboard_employee');
+                        offboardData.append('nonce', ajaxNonce);
+                        offboardData.append('owner_id', ownerID);
+
+                        fetch(ajaxUrl, { method: 'POST', body: offboardData })
+                            .then(res => res.json())
+                            .then(offResult => {
+                                if (offResult.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Offboard Complete!',
+                                        html: '<p>' + offResult.data.message + '</p>',
+                                        showConfirmButton: false,
+                                        timer: 2000
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Offboard Failed',
+                                        text: offResult.data ? offResult.data.message : 'An error occurred.',
+                                        confirmButtonColor: '#1976D2'
+                                    });
+                                }
+                            })
+                            .catch(err => {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Network Error',
+                                    text: 'Could not connect to the server.',
+                                    confirmButtonColor: '#1976D2'
+                                });
+                            });
+                    });
+                })
+                .catch(err => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Network Error',
+                        text: 'Could not connect to the server.',
+                        confirmButtonColor: '#1976D2'
+                    });
+                });
+        }
+    </script>
 
     <?php
 

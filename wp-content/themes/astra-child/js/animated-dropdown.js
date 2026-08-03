@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-square"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`;
 
     function initStaggeredDropdowns() {
-        const selects = document.querySelectorAll('select.staggered-dropdown');
+        // Target all selects except sweetalert, multiple-choice, and initially disabled ones
+        const selects = document.querySelectorAll('select:not(.swal2-select):not([multiple]):not(:disabled)');
 
         selects.forEach(select => {
             // Check if already initialized
@@ -13,8 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Hide original
-            select.style.display = 'none';
+            // Visually hide original to preserve HTML5 form validation focus
+            select.style.position = 'absolute';
+            select.style.opacity = '0';
+            select.style.height = '0';
+            select.style.width = '0';
+            select.style.pointerEvents = 'none';
+            select.style.zIndex = '-1';
 
             // Create wrapper
             const wrapper = document.createElement('div');
@@ -121,6 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize immediately
     initStaggeredDropdowns();
+
+    // Fix for Action Dropdowns sinking in animated tables
+    document.addEventListener('show.bs.dropdown', function (e) {
+        const tr = e.target.closest('tr');
+        if (tr) tr.classList.add('dropdown-open');
+    });
+    
+    document.addEventListener('hide.bs.dropdown', function (e) {
+        const tr = e.target.closest('tr');
+        if (tr) tr.classList.remove('dropdown-open');
+    });
 
     // Export function if needs to be called dynamically (e.g. after AJAX)
     window.initStaggeredDropdowns = initStaggeredDropdowns;

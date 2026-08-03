@@ -43,33 +43,13 @@ function form_history()
     $total_pages = ceil($total_items / $page);
 
     // get results
-    // Sort logic for History Action
-    $current_sort = $_GET['sort'] ?? '';
-    $current_order = strtolower($_GET['order'] ?? '');
-
-    if ($current_sort === 'action') {
-        if ($current_order === 'asc') {
-            $order_sql = "ORDER BY H.Action ASC, H.HistoryID ASC";
-            $next_order = 'desc';
-            $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-a-z" style="font-size:0.85rem;"></i> A-Z</span>';
-        } else {
-            $order_sql = "ORDER BY H.Action DESC, H.HistoryID DESC";
-            $next_order = 'asc';
-            $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-z-a" style="font-size:0.85rem;"></i> Z-A</span>';
-        }
-    } else {
-        $order_sql = "ORDER BY H.HistoryID DESC";
-        $next_order = 'asc';
-        $sort_icon = '<span style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; border-radius:6px; padding:2px 7px; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-left:6px;"><i class="fa-solid fa-arrow-down-up-across-line" style="font-size:0.75rem;"></i> Sort</span>';
-    }
-
-    $sort_url = add_query_arg(['sort' => 'action', 'order' => $next_order, 'paged' => 1]);
+    $order_sql = "ORDER BY H.HistoryID DESC";
 
     $rows = $wpdb->get_results(
         $wpdb->prepare("
         SELECT 
             H.HistoryID, H.DeviceID, H.Action, H.Date, H.Description, H.user_email, H.Owner, H.Photo,
-            C.CategoryName
+            C.CategoryName, S.StatusName AS Status
         FROM $table_history AS H
         LEFT JOIN $table_category AS C ON H.CategoryID = C.CategoryID
         LEFT JOIN Devices AS D ON H.DeviceID = D.DeviceID
@@ -253,7 +233,7 @@ function form_history()
         <form method="GET" action="">
             <?php
             foreach ($_GET as $key => $value) {
-                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'sort', 'order'])) {
+                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
                     if (is_array($value)) {
                         foreach ($value as $v) {
                             echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -281,39 +261,32 @@ function form_history()
                 <div class="col-12 col-sm-6 col-md-auto d-flex gap-2">
                     <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
                         Filter</button>
-                    <?php $reset_url = remove_query_arg(['device_search', 'paged', 'sort', 'order']); ?>
+                    <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
             </div>
         </form>
 
-        <?php
-        // include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); 
-        ?>
+        
 
         <div class="table-wrapper">
             <table class="table-custom">
                 <thead>
                     <tr>
-                        <th style="width: 14%;">
-                            <a href="<?= esc_url($sort_url) ?>" style="color:inherit; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;" title="Click to toggle Action sort (A-Z / Z-A)">
-                                Action <?= $sort_icon ?>
-                            </a>
-                        </th>
-                        <th style="width: 13%;">Date</th>
-                        <th style="width: 25%;">Description</th>
-                        <th style="width: 8%;">Photo</th>
-                        <th style="width: 14%;">User</th>
-                        <th style="width: 10%;">Category</th>
-                        <th style="width: 10%;">Owner</th>
-                        <th class="text-center" style="width: 10%;">Action</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 10%;">Action</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 12%;">Date</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 35%;">Description</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 8%;">Photo</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 8%;">User</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 8%;">Category</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 8%;">Owner</th>
+                        <th class="text-nowrap py-3 text-center" style="width: 7%;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($rows as $index => $row): ?>
                         <?php
-                        $date = new DateTime($row->Date, new DateTimeZone('UTC'));
-                        $date->setTimezone(new DateTimeZone('Asia/Bangkok'));
+                        $date = new DateTime($row->Date);
 
                         $action_lower = strtolower($row->Action);
                         $badge_class = 'badge-default';
@@ -335,15 +308,16 @@ function form_history()
                                 <span class="badge-history <?= $badge_class ?>"><?= esc_html($row->Action) ?></span>
                             </td>
                             <td class="align-middle fw-medium"><?= $date->format("d/m/Y H:i:s") ?></td>
-                            <td class="align-middle text-muted"><?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?></td>
+                            <td class="align-middle text-muted">
+                                <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
+                            </td>
                             <td class="align-middle">
                                 <?php if (!empty($row->Photo)): ?>
-                                    <img src="<?= esc_url($row->Photo) ?>" 
-                                         onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')" 
-                                         style="width:36px; height:36px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer; transition:transform 0.15s ease;" 
-                                         onmouseover="this.style.transform='scale(1.1)'" 
-                                         onmouseout="this.style.transform='scale(1)'" 
-                                         title="Click to view photo">
+                                    <img src="<?= esc_url($row->Photo) ?>"
+                                        onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
+                                        style="width:36px; height:36px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer; transition:transform 0.15s ease;"
+                                        onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
+                                        title="Click to view photo">
                                 <?php else: ?>
                                     <span class="text-muted" style="font-size:0.85rem;">-</span>
                                 <?php endif; ?>
@@ -363,25 +337,26 @@ function form_history()
                                         <div class="action-dropdown-separator"></div>
                                         <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View
                                             Details</a>
-                                        <?php if ($row->Status == 'Available'): ?>
+                                        <?php $status = $row->Status ?? ''; ?>
+                                        <?php if ($status == 'Available'): ?>
                                             <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
                                             <a href="?maintenance=<?= $row->DeviceID ?>"><i
                                                     class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
                                             <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
                                                     class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($row->Status == 'In Use'): ?>
+                                        <?php elseif ($status == 'In Use'): ?>
                                             <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
                                                 Return</a>
                                             <a href="?maintenance=<?= $row->DeviceID ?>"><i
                                                     class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
                                             <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
                                                     class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($row->Status == 'Maintenance'): ?>
+                                        <?php elseif ($status == 'Maintenance'): ?>
                                             <a href="?available=<?= $row->DeviceID ?>"><i
                                                     class="fa-solid fa-circle text-success"></i> Available</a>
                                             <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
                                                     class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($row->Status == 'Retired'): ?>
+                                        <?php elseif ($status == 'Retired'): ?>
                                             <a href="?available=<?= $row->DeviceID ?>"><i
                                                     class="fa-solid fa-circle text-success"></i> Available</a>
                                         <?php endif; ?>
@@ -394,43 +369,43 @@ function form_history()
             </table>
         </div>
         <script>
-        window.openPhotoModal = function(imgUrl) {
-            if (!imgUrl) return;
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:6px;"></i> Equipment Condition Photo',
-                    imageUrl: imgUrl,
-                    imageAlt: 'Device Condition Photo',
-                    showCloseButton: true,
-                    confirmButtonColor: '#6366f1',
-                    confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
-                    customClass: { popup: 'dash-scan-popup' }
-                });
-            } else {
-                let overlay = document.getElementById('photo_lightbox_overlay');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'photo_lightbox_overlay';
-                    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.75); backdrop-filter:blur(4px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.2s ease;';
-                    overlay.innerHTML = `
+            window.openPhotoModal = function (imgUrl) {
+                if (!imgUrl) return;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:6px;"></i> Equipment Condition Photo',
+                        imageUrl: imgUrl,
+                        imageAlt: 'Device Condition Photo',
+                        showCloseButton: true,
+                        confirmButtonColor: '#6366f1',
+                        confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
+                        customClass: { popup: 'dash-scan-popup' }
+                    });
+                } else {
+                    let overlay = document.getElementById('photo_lightbox_overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.id = 'photo_lightbox_overlay';
+                        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.75); backdrop-filter:blur(4px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.2s ease;';
+                        overlay.innerHTML = `
                         <div style="position:relative; max-width:90vw; max-height:90vh; background:#fff; border-radius:16px; padding:16px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
                             <button onclick="document.getElementById('photo_lightbox_overlay').style.opacity='0'; setTimeout(() => document.getElementById('photo_lightbox_overlay').style.display='none', 200);" style="position:absolute; top:-12px; right:-12px; background:#ef4444; color:#fff; border:none; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);">&times;</button>
                             <img id="photo_lightbox_img" src="" style="max-width:85vw; max-height:80vh; border-radius:12px; display:block; object-fit:contain;">
                         </div>
                     `;
-                    overlay.onclick = function(e) {
-                        if (e.target === overlay) {
-                            overlay.style.opacity = '0';
-                            setTimeout(() => overlay.style.display = 'none', 200);
-                        }
-                    };
-                    document.body.appendChild(overlay);
+                        overlay.onclick = function (e) {
+                            if (e.target === overlay) {
+                                overlay.style.opacity = '0';
+                                setTimeout(() => overlay.style.display = 'none', 200);
+                            }
+                        };
+                        document.body.appendChild(overlay);
+                    }
+                    document.getElementById('photo_lightbox_img').src = imgUrl;
+                    overlay.style.display = 'flex';
+                    setTimeout(() => overlay.style.opacity = '1', 10);
                 }
-                document.getElementById('photo_lightbox_img').src = imgUrl;
-                overlay.style.display = 'flex';
-                setTimeout(() => overlay.style.opacity = '1', 10);
-            }
-        };
+            };
         </script>
         <!-- Pagination -->
         <div class="d-flex justify-content-center mt-4">

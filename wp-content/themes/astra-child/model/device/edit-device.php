@@ -173,7 +173,7 @@ function edit_device_form($editing = null)
                     showConfirmButton: false,
                     timer: 1500
                 }).then(() => {
-                    window.location.href = '{$redirect_url}';
+                    window.location.replace('{$redirect_url}');
                 });
             </script>";
         }

@@ -54,30 +54,18 @@ function device_dashboard()
 
     // Category config (Links to respective category pages for Monitor/Laptop/Accessories, and clears filters on current page for All Devices)
     $category_config = [
-        ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>', 'url' => '?'],
+        ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>', 'url' => home_url('/formDevice/')],
         ['label' => 'Monitor', 'count' => $total_monitor, 'color' => '#FDB840', 'icon' => '<i class="fa-solid fa-desktop"></i>', 'url' => home_url('/monitor/')],
         ['label' => 'Laptop', 'count' => $total_laptop, 'color' => '#15A5DA', 'icon' => '<i class="fa-solid fa-laptop"></i>', 'url' => home_url('/laptop/')],
         ['label' => 'Accessories', 'count' => $total_accessories, 'color' => '#6ABF57', 'icon' => '<i class="fa-solid fa-plug"></i>', 'url' => home_url('/accessories/')],
     ];
 
     $status_urls = [
-        'Available' => '?filter_status=Available',
-        'In Use' => '?filter_status=In+Use',
+        'Available' => home_url('/formDevice/?filter_status=Available'),
+        'In Use' => home_url('/formDevice/?filter_status=In+Use'),
         'Maintenance' => home_url('/maintenance/'),
-        'Retired' => '?filter_status=Retired',
+        'Retired' => home_url('/formDevice/?filter_status=Retired'),
     ];
-
-    // Query recently added devices (within 1 day)
-    $new_devices_days = 1;
-    $new_devices = $wpdb->get_results($wpdb->prepare(
-        "SELECT DeviceID, Brand, Model, Category, CreatedAt 
-         FROM $table_device_wn 
-         WHERE CreatedAt >= DATE_SUB(NOW(), INTERVAL %d DAY) 
-         ORDER BY CreatedAt DESC 
-         LIMIT 10",
-        $new_devices_days
-    ));
-    $new_devices_count = count($new_devices);
 
     ob_start();
     ?>
@@ -87,58 +75,6 @@ function device_dashboard()
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <div class="next-dashboard">
-
-        <?php if ($new_devices_count > 0): ?>
-            <!-- ===== NEW DEVICES NOTIFICATION CARD ===== -->
-            <div class="new-devices-alert slide-up" id="new-devices-alert">
-                <div class="new-devices-alert-header" onclick="toggleNewDevices()">
-                    <div class="new-devices-alert-left">
-                        <div class="new-devices-alert-icon">
-                            <i class="fa-solid fa-bell"></i>
-                        </div>
-                        <div>
-                            <div class="new-devices-alert-title">
-                                Recently Added Devices
-                                <span class="new-devices-count-badge"><?= $new_devices_count ?></span>
-                            </div>
-                            <div class="new-devices-alert-subtitle">
-                                <?= $new_devices_count ?> new device<?= $new_devices_count > 1 ? 's' : '' ?> added in the last
-                                <?= $new_devices_days ?> days
-                            </div>
-                        </div>
-                    </div>
-                    <button class="new-devices-toggle-btn" id="new-devices-toggle-btn" type="button">
-                        <i class="fa-solid fa-chevron-down" id="new-devices-chevron"></i>
-                    </button>
-                </div>
-                <div class="new-devices-alert-body" id="new-devices-body">
-                    <table class="new-devices-table">
-                        <thead>
-                            <tr>
-                                <th>Device ID</th>
-                                <th>Device Info</th>
-                                <th>Category</th>
-                                <th>Added Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($new_devices as $nd): ?>
-                                <tr onclick="window.location.href='<?= home_url('/' . strtolower(esc_attr($nd->Category)) . '/?view=' . urlencode($nd->DeviceID)) ?>'"
-                                    style="cursor: pointer;" title="Click to view details of <?= esc_attr($nd->DeviceID) ?>">
-                                    <td>
-                                        <span class="new-device-badge-sm">NEW</span>
-                                        <?= esc_html($nd->DeviceID) ?>
-                                    </td>
-                                    <td><strong><?= esc_html($nd->Brand) ?></strong> <?= esc_html($nd->Model) ?></td>
-                                    <td><?= esc_html($nd->Category) ?></td>
-                                    <td><?= date('d M Y, H:i', strtotime($nd->CreatedAt)) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        <?php endif; ?>
 
         <!-- ===== SECTION 1: Category Summary Cards ===== -->
         <div class="next-grid">
@@ -189,7 +125,7 @@ function device_dashboard()
                 $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
                 ?>
                 <div class="next-card slide-up clickable-card"
-                    onclick="window.location.href='<?= esc_url($status_urls[$status] ?? home_url('/laptop/')) ?>'"
+                    onclick="window.location.href='<?= esc_url($status_urls[$status] ?? home_url('/formDevice/')) ?>'"
                     style="animation-delay: <?= $delay2 ?>s; cursor: pointer;" title="View <?= esc_attr($status) ?> devices">
                     <?php $delay2 += 0.05; ?>
                     <div class="next-card-header">
@@ -924,15 +860,15 @@ function device_dashboard()
                             var categories = <?= $js_status_labels ?>;
                             var selected = categories[config.dataPointIndex];
                             if (selected === 'Available') {
-                                window.location.href = '?filter_status=Available';
+                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=Available')) ?>';
                             } else if (selected === 'In Use') {
-                                window.location.href = '?filter_status=In+Use';
+                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=In+Use')) ?>';
                             } else if (selected === 'Maintenance') {
                                 window.location.href = '<?= esc_url(home_url('/maintenance/')) ?>';
                             } else if (selected === 'Retired') {
-                                window.location.href = '?filter_status=Retired';
+                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=Retired')) ?>';
                             } else if (selected) {
-                                window.location.href = '?filter_status=' + encodeURIComponent(selected);
+                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=')) ?>' + encodeURIComponent(selected);
                             }
                         }
                     }
@@ -961,7 +897,7 @@ function device_dashboard()
                             var categories = <?= $js_dept_labels ?>;
                             var selected = categories[config.dataPointIndex];
                             if (selected) {
-                                window.location.href = '?filter_department=' + encodeURIComponent(selected);
+                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_department=')) ?>' + encodeURIComponent(selected);
                             }
                         }
                     }

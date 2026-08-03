@@ -65,26 +65,10 @@ function device_crud_acc_sories()
     $all_keywords = $wpdb->get_col("SELECT DISTINCT Keyword FROM $table_device_wn WHERE Category = 'Accessories' AND Keyword != '' ORDER BY Keyword");
     $all_departments = $wpdb->get_col("SELECT DISTINCT Department FROM $table_device_wn WHERE Category = 'Accessories' AND Department != '' ORDER BY Department");
 
-    // Sort logic for Device ID
-    $current_sort = $_GET['sort'] ?? 'device_id';
-    $current_order = strtolower($_GET['order'] ?? 'desc');
-
-    if ($current_order === 'asc') {
-        $order_sql = "ORDER BY CASE WHEN DeviceID LIKE '%-%' THEN CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ELSE CAST(DeviceID AS UNSIGNED) END ASC, DeviceID ASC";
-        $next_order = 'desc';
-        $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-up-1-9" style="font-size:0.85rem;"></i> 1-9</span>';
-    } else {
-        $order_sql = "ORDER BY CASE WHEN DeviceID LIKE '%-%' THEN CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ELSE CAST(DeviceID AS UNSIGNED) END DESC, DeviceID DESC";
-        $next_order = 'asc';
-        $sort_icon = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #a5b4fc; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><i class="fa-solid fa-arrow-down-9-1" style="font-size:0.85rem;"></i> 9-1</span>';
-    }
-
-    $sort_url = add_query_arg(['sort' => 'device_id', 'order' => $next_order, 'paged' => 1]);
-
     // Fetch Device Data
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_device_wn $search_sql");
     $total_pages = ceil($total_items / $page);
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql $order_sql LIMIT $page OFFSET $offset");
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY UpdatedAt DESC LIMIT $page OFFSET $offset");
     // -------------------------------------------
 
     if (!function_exists('formatName')) {
@@ -100,11 +84,11 @@ function device_crud_acc_sories()
 
     <div class="container-fluid">
         <div class="row mb-3 align-items-end">
-            <div class="col-md-9">
+            <div class="col-md-12">
                 <form method="GET" action="" id="advanced-filter-form">
                     <?php
                     foreach ($_GET as $key => $value) {
-                        if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'sort', 'order'])) {
+                        if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_keyword', 'filter_department', 'paged'])) {
                             if (is_array($value)) {
                                 foreach ($value as $v) {
                                     echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -235,10 +219,9 @@ function device_crud_acc_sories()
         <form method="POST" action="" id="bulk-action-form-acc">
             <?php wp_nonce_field('bulk_device_action_nonce', 'bulk_action_nonce'); ?>
             <div class="d-flex align-items-center mb-3">
-                <select name="bulk_action" class="form-select form-select-sm me-2" style="width: auto; min-width: 150px; border-radius: 8px; font-weight: 500;">
-                    <option value="print_labels">Print Labels</option>
-                </select>
-                <button type="button" class="btn btn-primary btn-sm" style="border-radius: 8px; font-weight: 600; padding: 6px 16px;" onclick="handleBulkAction('acc')">
+                <!-- Dropdown removed as per user request -->
+                <button type="button" class="btn btn-primary btn-sm"
+                    style="border-radius: 8px; font-weight: 600; padding: 6px 16px;" onclick="handleBulkAction('acc')">
                     <i class="fa-solid fa-print"></i> Print Labels
                 </button>
             </div>
@@ -247,14 +230,9 @@ function device_crud_acc_sories()
                 <table class="table-custom">
                     <thead>
                         <tr>
-                            <th class="py-3 text-center" style="width: 45px;"><input type="checkbox" id="selectAll-acc"></th>
-                            <th class="text-nowrap py-3 text-start" style="width: 15%;">
-                                <a href="<?= esc_url($sort_url) ?>"
-                                    style="color:inherit; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer;"
-                                    title="Click to toggle ID sort (9-1 / 1-9)">
-                                    ID <?= $sort_icon ?>
-                                </a>
+                            <th class="py-3 text-center" style="width: 45px;"><input type="checkbox" id="selectAll-acc">
                             </th>
+                            <th class="text-nowrap py-3 text-start" style="width: 15%;">ID</th>
                             <th class="text-nowrap py-3 text-start" style="width: 35%;">Device Info</th>
                             <th class="text-nowrap py-3 text-start" style="width: 20%;">Owner</th>
                             <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
@@ -264,10 +242,11 @@ function device_crud_acc_sories()
                     <tbody>
                         <?php foreach ($rows as $index => $row): ?>
                             <tr class="text-nowrap py-2" style="white-space: nowrap;">
-                                <td class="align-middle text-center" style="width: 45px;">
-                                    <input type="checkbox" name="bulk_device_ids[]" value="<?= $row->DeviceID ?>" class="device-checkbox-acc" data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>">
+                                <td class="align-middle text-center mobile-card-checkbox" style="width: 45px;">
+                                    <input type="checkbox" name="bulk_device_ids[]" value="<?= $row->DeviceID ?>"
+                                        class="device-checkbox-acc" data-sn="<?= esc_attr($row->SerialNumber ?? '') ?>">
                                 </td>
-                                <td class="align-middle text-start">
+                                <td class="align-middle text-start" data-label="ID">
                                     <?php
                                     $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-1 day');
                                     if ($is_new_device): ?>
@@ -275,12 +254,12 @@ function device_crud_acc_sories()
                                     <?php endif; ?>
                                     <?= $row->DeviceID ?>
                                 </td>
-                                <td class="text-start align-middle">
+                                <td class="text-start align-middle" data-label="Device Info">
                                     <strong><?= $row->Brand ?>         <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
                                     <small class="text-muted"><?= $row->Keyword ?> | SN:
                                         <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
                                 </td>
-                                <td class="text-start align-middle" style="min-width: 100px;">
+                                <td class="text-start align-middle" data-label="Owner" style="min-width: 100px;">
                                     <?php
                                     $owner = trim($row->Owner ?? '');
                                     $nickname = trim($row->Nickname ?? '');
@@ -313,7 +292,7 @@ function device_crud_acc_sories()
                                     }
                                     ?>
                                 </td>
-                                <td class="text-start align-middle" style="min-width: 135px;">
+                                <td class="text-start align-middle" data-label="Status" style="min-width: 135px;">
                                     <?php
                                     $status = $row->Status;
                                     $statusClass = 'status-retired';
@@ -329,7 +308,7 @@ function device_crud_acc_sories()
                                         <?= esc_html($status) ?>
                                     </span>
                                 </td>
-                                <td class="align-middle text-center">
+                                <td class="align-middle text-center" data-label="Action">
                                     <div class="d-flex justify-content-center align-items-center gap-2">
                                         <button type="button" class="btn btn-sm btn-outline-secondary"
                                             id="btn-<?= $row->DeviceID ?>"
@@ -361,6 +340,10 @@ function device_crud_acc_sories()
                                                         onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                 <?php elseif ($status == 'In Use'): ?>
+                                                    <a href="#"
+                                                        onclick="quickSwapDevice('<?= esc_js($row->DeviceID) ?>'); return false;"
+                                                        class="text-warning"><i class="fa-solid fa-arrows-rotate"></i> Quick
+                                                        Swap</a>
                                                     <a
                                                         href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                             class="fa-solid fa-rotate-left"></i>
@@ -530,7 +513,6 @@ function device_crud_acc_sories()
     </div>
 
     <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
-    <script>function handleBulkAction(t) { try { let e = "bulk-action-form", n = ".device-checkbox"; t && "device" !== t && (e = "bulk-action-form-" + t, n = ".device-checkbox-" + t); const o = document.getElementById(e); if (!o) return; const c = o.querySelector('select[name="bulk_action"]'), l = c ? c.value : "", r = o.querySelectorAll(n + ":checked"); if (!l) return void alert("Please select a bulk action."); if (0 === r.length) return void alert("Please select at least one device."); if ("print_labels" !== l) confirm("Are you sure you want to apply this action to the selected devices?") && o.submit(); else { const t = []; for (let e = 0; e < r.length; e++)t.push({ id: r[e].value, sn: r[e].getAttribute("data-sn") || "-" }); "function" == typeof printDeviceLabels ? printDeviceLabels(t) : alert("Print function not loaded. Please try hard refreshing (Ctrl+F5).") } } catch (t) { console.error("Error in bulk action:", t), alert("An error occurred: " + t.message) } } document.addEventListener("change", function (t) { if (t.target && t.target.id && t.target.id.startsWith("selectAll")) { let e = t.target.id.replace("selectAll-", ""); "selectAll" === t.target.id && (e = "device"); let n = "device" === e ? ".device-checkbox" : ".device-checkbox-" + e; const o = document.querySelectorAll(n); for (let t = 0; t < o.length; t++)o[t].checked = t.target.checked } });</script>
 
     <?php
 

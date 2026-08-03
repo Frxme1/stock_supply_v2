@@ -47,29 +47,31 @@
 }
 
 /* Dropdown popover */
-/* We override Bootstrap's .dropdown-menu using .action-dropdown */
 .dropdown-menu.action-dropdown {
-    /* Using Bootstrap's native show behavior, so we just style the box */
-    background-color: hsl(0 0% 100%); /* popover */
-    min-width: 160px;
-    border-radius: 6px; /* rounded-md */
-    border: 1px solid hsl(240 5.9% 90%); /* border */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* shadow-md */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    min-width: 180px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 0 20px rgba(0, 0, 0, 0.03);
     z-index: 10000;
-    padding: 4px;
+    padding: 8px;
     text-align: left;
     white-space: nowrap;
-    margin-top: 4px;
-    /* Optional: custom enter animation for bootstrap show */
-    animation: shadcnFadeIn 0.15s ease-out;
+    margin-top: 8px !important;
+    right: 0 !important;
+    left: auto !important;
+    transform-origin: top right;
+    animation: premiumDropdownScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes shadcnFadeIn {
-    from {
+@keyframes premiumDropdownScale {
+    0% {
         opacity: 0;
-        transform: translateY(-4px) scale(0.96);
+        transform: translateY(-10px) scale(0.95);
     }
-    to {
+    100% {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
@@ -77,45 +79,74 @@
 
 /* Header */
 .action-dropdown-header {
-    padding: 6px 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: hsl(240 5.9% 10%);
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     cursor: default;
 }
 
 /* Separator */
 .action-dropdown-separator {
     height: 1px;
-    background-color: hsl(240 5.9% 90%);
-    margin: 4px -4px;
+    background: linear-gradient(to right, transparent, rgba(226, 232, 240, 0.8), transparent);
+    margin: 6px 0;
 }
 
 /* Menu items */
+.dropdown-menu.action-dropdown-item i.text-danger {
+    color: #ef4444;
+}
+
+/* Fix for dropdown sinking behind table rows */
+tr.dropdown-open {
+    position: relative;
+    z-index: 9999 !important;
+}
 .dropdown-menu.action-dropdown a {
-    color: hsl(240 5.9% 10%); /* popover-foreground */
-    padding: 6px 8px;
+    color: #475569;
+    padding: 10px 14px;
     text-decoration: none !important;
     display: flex;
     align-items: center;
-    gap: 8px;
-    border-radius: 4px; /* rounded-sm */
-    font-size: 14px;
-    line-height: 1.4;
-    font-weight: 400;
-    cursor: default;
-    transition: background-color 0.1s ease, color 0.1s ease;
+    gap: 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
     margin-bottom: 2px;
+    position: relative;
+    overflow: hidden;
 }
 
 .dropdown-menu.action-dropdown a:last-child {
     margin-bottom: 0;
 }
 
+/* Hover Effects */
 .dropdown-menu.action-dropdown a:hover,
 .dropdown-menu.action-dropdown a:focus {
-    background-color: hsl(240 4.8% 95.9%); /* accent */
-    color: hsl(240 5.9% 10%); /* accent-foreground */
+    background-color: #f8fafc;
+    color: #0f172a;
+    transform: translateX(4px);
+    box-shadow: -4px 0 0 #3b82f6;
+}
+
+/* Icon animations */
+.dropdown-menu.action-dropdown a i {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    width: 20px;
+    text-align: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-menu.action-dropdown a:hover i {
+    color: #3b82f6;
+    transform: scale(1.15);
 }
 

@@ -120,15 +120,19 @@ $maintenance_count = $sidebar_badges['maintenance'];
     <span class="mobile-logo-text">Stock Supply</span>
 </div>
 
-<!-- ========== MOBILE BOTTOM NAVIGATION BAR (Web Application Style) ========== -->
-<nav id="mobile-bottom-nav" class="mobile-bottom-nav">
-    <a href="<?php echo esc_url(home_url('/home/')); ?>" class="bottom-nav-item <?php echo (is_page('home')) ? 'active' : ''; ?>">
-        <i class="fa-solid fa-house"></i>
-        <span>Home</span>
+<!-- ========== MOBILE BOTTOM NAVIGATION BAR (Modern Floating Interactive Menu) ========== -->
+<nav id="mobile-bottom-nav" class="mobile-bottom-nav menu" role="navigation">
+    <a href="<?php echo esc_url(home_url('/home/')); ?>" class="bottom-nav-item menu__item <?php echo (is_page('home')) ? 'active' : ''; ?>">
+        <div class="menu__icon">
+            <i class="fa-solid fa-house icon"></i>
+        </div>
+        <strong class="menu__text <?php echo (is_page('home')) ? 'active' : ''; ?>">Home</strong>
     </a>
-    <a href="<?php echo esc_url(home_url('/monitor/')); ?>" class="bottom-nav-item <?php echo (is_page('monitor')) ? 'active' : ''; ?>">
-        <i class="fa-solid fa-desktop"></i>
-        <span>Monitor</span>
+    <a href="<?php echo esc_url(home_url('/monitor/')); ?>" class="bottom-nav-item menu__item <?php echo (is_page('monitor')) ? 'active' : ''; ?>">
+        <div class="menu__icon">
+            <i class="fa-solid fa-desktop icon"></i>
+        </div>
+        <strong class="menu__text <?php echo (is_page('monitor')) ? 'active' : ''; ?>">Monitor</strong>
     </a>
     
     <!-- Prominent Central QR Scan Floating Action Button (FAB) -->
@@ -140,15 +144,19 @@ $maintenance_count = $sidebar_badges['maintenance'];
         <span class="fab-label">Scan QR</span>
     </div>
 
-    <a href="<?php echo esc_url(home_url('/laptop/')); ?>" class="bottom-nav-item <?php echo (is_page('laptop')) ? 'active' : ''; ?>">
-        <i class="fa-solid fa-laptop"></i>
-        <span>Laptop</span>
+    <a href="<?php echo esc_url(home_url('/laptop/')); ?>" class="bottom-nav-item menu__item <?php echo (is_page('laptop')) ? 'active' : ''; ?>">
+        <div class="menu__icon">
+            <i class="fa-solid fa-laptop icon"></i>
+        </div>
+        <strong class="menu__text <?php echo (is_page('laptop')) ? 'active' : ''; ?>">Laptop</strong>
     </a>
-    <button type="button" id="mobile-bottom-more-btn" class="bottom-nav-item">
-        <i class="fa-solid fa-bars"></i>
-        <span>More</span>
+    <button type="button" id="mobile-bottom-more-btn" class="bottom-nav-item menu__item">
+        <div class="menu__icon">
+            <i class="fa-solid fa-bars icon"></i>
+        </div>
+        <strong class="menu__text">More</strong>
         <?php if ($sidebar_badges['total'] > 0): ?>
-            <span class="mobile-btn-badge-dot" style="top: 8px; right: 18px;"></span>
+            <span class="mobile-btn-badge-dot" style="top: 6px; right: 12px;"></span>
         <?php endif; ?>
     </button>
 </nav>
@@ -597,59 +605,144 @@ $maintenance_count = $sidebar_badges['maintenance'];
 
 
 
-/* ---- Responsive: Show mobile, hide desktop ---- */
-/* ---- Mobile Bottom Navigation Bar ---- */
-.mobile-bottom-nav {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 64px;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-    z-index: 9997;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 4px;
+:root {
+  --component-inactive-color: #64748b;
+  --component-bg: rgba(255, 255, 255, 0.94);
+  --component-shadow: 0 12px 32px -4px rgba(99, 102, 241, 0.25), 0 4px 16px rgba(0, 0, 0, 0.08);
+  --component-active-bg: rgba(99, 102, 241, 0.12);
+  --component-line-inactive-color: rgba(226, 232, 240, 0.9);
+  --component-active-color-default: #6366f1;
 }
 
-.bottom-nav-item {
+.dark {
+  --component-inactive-color: #94a3b8;
+  --component-bg: rgba(15, 23, 42, 0.94);
+  --component-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.5);
+  --component-active-bg: rgba(99, 102, 241, 0.2);
+  --component-line-inactive-color: rgba(51, 65, 85, 0.8);
+  --component-active-color-default: #818cf8;
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(-0.35em);
+  }
+  40% {
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateY(-0.12em);
+  }
+  80% {
+    transform: translateY(0);
+  }
+}
+
+/* ---- Mobile Bottom Floating Pill Navigation Bar ---- */
+.mobile-bottom-nav,
+.menu {
+    display: none;
+    position: fixed !important;
+    bottom: 12px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100% - 24px) !important;
+    max-width: 480px !important;
+    margin: 0 auto !important;
+    height: 64px !important;
+    background: var(--component-bg) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1.5px solid var(--component-line-inactive-color) !important;
+    box-shadow: var(--component-shadow) !important;
+    border-radius: 9999px !important;
+    z-index: 9997 !important;
+    align-items: center !important;
+    justify-content: space-evenly !important;
+    padding: 0 8px !important;
+    box-sizing: border-box !important;
+}
+
+.bottom-nav-item,
+.menu__item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 !important;
+    height: 50px !important;
+    color: var(--component-inactive-color) !important;
+    text-decoration: none !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    gap: 2px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 4px 6px !important;
+    cursor: pointer !important;
+    border-radius: 9999px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+.menu__icon {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex: 1;
-    height: 100%;
-    color: #64748b;
-    text-decoration: none !important;
-    font-size: 0.7rem;
-    font-weight: 500;
-    gap: 3px;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
 }
 
-.bottom-nav-item i {
-    font-size: 1.15rem;
-    transition: transform 0.2s ease;
+.bottom-nav-item i,
+.menu__icon .icon {
+    font-size: 1.25rem !important;
+    transition: transform 0.25s ease, color 0.25s ease !important;
+}
+
+.menu__text {
+    font-size: 0.68rem !important;
+    font-weight: 500 !important;
+    color: var(--component-inactive-color) !important;
+    transition: color 0.25s ease, font-weight 0.25s ease !important;
 }
 
 .bottom-nav-item:hover,
-.bottom-nav-item.active {
-    color: #6366f1;
+.menu__item:hover,
+.bottom-nav-item.active,
+.menu__item.active {
+    color: var(--component-active-color-default) !important;
+    background-color: var(--component-active-bg) !important;
 }
 
-.bottom-nav-item.active i {
-    transform: translateY(-2px);
-    color: #6366f1;
+.bottom-nav-item:hover i,
+.bottom-nav-item:hover .icon,
+.bottom-nav-item.active i,
+.bottom-nav-item.active .icon {
+    animation: iconBounce 0.6s ease !important;
+    color: var(--component-active-color-default) !important;
+}
+
+.bottom-nav-item.active .menu__text,
+.menu__text.active {
+    color: var(--component-active-color-default) !important;
+    font-weight: 700 !important;
+}
+
+.bottom-nav-item.active::after,
+.menu__item.active::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 3px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 18px !important;
+    height: 3px !important;
+    background-color: var(--component-active-color-default) !important;
+    border-radius: 99px !important;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.7) !important;
+    transition: all 0.3s ease !important;
 }
 
 /* FAB Wrapper & Button */

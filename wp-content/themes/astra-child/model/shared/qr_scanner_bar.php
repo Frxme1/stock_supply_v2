@@ -214,9 +214,14 @@ if ($category_filter) {
         function handleStartScan(btn) {
             const dashReaderDiv = document.getElementById('dash-qr-reader');
             const dashStopBtn = document.getElementById('dash-btn-stop-qr');
+            const dashQrBar = btn.closest('.dash-qr-bar') || document.querySelector('.dash-qr-bar');
             if (!dashReaderDiv) {
                 console.error("QR reader container #dash-qr-reader not found");
                 return;
+            }
+
+            if (dashQrBar) {
+                dashQrBar.classList.add('active-scan');
             }
 
             const originalText = btn.innerHTML;
@@ -237,6 +242,7 @@ if ($category_filter) {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                     dashReaderDiv.style.display = 'none';
+                    if (dashQrBar) dashQrBar.classList.remove('active-scan');
                     console.error("Camera Launch Error:", err);
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -257,6 +263,7 @@ if ($category_filter) {
                     isStarting = false;
                     btn.disabled = false;
                     btn.innerHTML = originalText;
+                    if (dashQrBar) dashQrBar.classList.remove('active-scan');
                     alert("Failed to load QR scanner library. Please check your internet connection.");
                 };
                 document.head.appendChild(script);
@@ -268,8 +275,13 @@ if ($category_filter) {
         function handleStopScan(stopBtn) {
             const dashReaderDiv = document.getElementById('dash-qr-reader');
             const dashStartBtn = document.getElementById('dash-btn-start-qr');
+            const dashQrBar = stopBtn.closest('.dash-qr-bar') || document.querySelector('.dash-qr-bar');
 
             isStarting = false;
+
+            if (dashQrBar) {
+                dashQrBar.classList.remove('active-scan');
+            }
 
             if (dashQrScanner) {
                 dashQrScanner.stop().then(() => {
@@ -572,7 +584,7 @@ if ($category_filter) {
             } else {
                 htmlContent += `
                 <div style="margin-top:12px;">
-                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; margin:0; padding:11px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>ดูรายละเอียดและประวัติทั้งหมด</a>
+                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; margin:0; padding:11px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>View Full Details & History</a>
                 </div>
             `;
             }
