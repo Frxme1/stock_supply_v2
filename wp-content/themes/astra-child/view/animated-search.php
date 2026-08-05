@@ -8,6 +8,8 @@ $search_list = isset($search_list) ? $search_list : '';
     <i class="fa-solid fa-search search-icon-modern"></i>
     <input type="text" 
            name="<?= esc_attr($search_name) ?>" 
+           id="<?= esc_attr($search_name) ?>"
+           autocomplete="off"
            <?php if($search_list) echo 'list="'.esc_attr($search_list).'"'; ?>
            class="search-input-modern form-control form-control-sm"
            placeholder="<?= esc_attr($search_placeholder) ?>" 

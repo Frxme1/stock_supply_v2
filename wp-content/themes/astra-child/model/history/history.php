@@ -230,7 +230,7 @@ function form_history()
             <i class="fa-solid fa-clock-rotate-left"></i>
             <h2>System History</h2>
         </div>
-        <form method="GET" action="">
+        <form method="GET" action="" id="advanced-filter-form">
             <?php
             foreach ($_GET as $key => $value) {
                 if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {

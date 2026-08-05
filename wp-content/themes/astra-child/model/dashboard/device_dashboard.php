@@ -67,6 +67,18 @@ function device_dashboard()
         'Retired' => home_url('/formDevice/?filter_status=Retired'),
     ];
 
+    // Query recently added devices (within 1 day)
+    $new_devices_days = 1;
+    $new_devices = $wpdb->get_results($wpdb->prepare(
+        "SELECT DeviceID, Brand, Model, Category, CreatedAt 
+         FROM $table_device_wn 
+         WHERE CreatedAt >= DATE_SUB(NOW(), INTERVAL %d DAY) 
+         ORDER BY CreatedAt DESC 
+         LIMIT 10",
+        $new_devices_days
+    ));
+    $new_devices_count = count($new_devices);
+
     ob_start();
     ?>
 
@@ -75,6 +87,58 @@ function device_dashboard()
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <div class="next-dashboard">
+
+        <?php if ($new_devices_count > 0): ?>
+            <!-- ===== NEW DEVICES NOTIFICATION CARD ===== -->
+            <div class="new-devices-alert slide-up" id="new-devices-alert">
+                <div class="new-devices-alert-header" onclick="toggleNewDevices()">
+                    <div class="new-devices-alert-left">
+                        <div class="new-devices-alert-icon">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                            <div class="new-devices-alert-title">
+                                Recently Added Devices
+                                <span class="new-devices-count-badge"><?= $new_devices_count ?></span>
+                            </div>
+                            <div class="new-devices-alert-subtitle">
+                                <?= $new_devices_count ?> new device<?= $new_devices_count > 1 ? 's' : '' ?> added in the last
+                                <?= $new_devices_days ?> days
+                            </div>
+                        </div>
+                    </div>
+                    <button class="new-devices-toggle-btn" id="new-devices-toggle-btn" type="button">
+                        <i class="fa-solid fa-chevron-down" id="new-devices-chevron"></i>
+                    </button>
+                </div>
+                <div class="new-devices-alert-body" id="new-devices-body">
+                    <table class="new-devices-table">
+                        <thead>
+                            <tr>
+                                <th>Device ID</th>
+                                <th>Device Info</th>
+                                <th>Category</th>
+                                <th>Added Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($new_devices as $nd): ?>
+                                <tr onclick="window.location.href='<?= home_url('/' . strtolower(esc_attr($nd->Category)) . '/?view=' . urlencode($nd->DeviceID)) ?>'"
+                                    style="cursor: pointer;" title="Click to view details of <?= esc_attr($nd->DeviceID) ?>">
+                                    <td>
+                                        <span class="new-device-badge-sm">NEW</span>
+                                        <?= esc_html($nd->DeviceID) ?>
+                                    </td>
+                                    <td><strong><?= esc_html($nd->Brand) ?></strong> <?= esc_html($nd->Model) ?></td>
+                                    <td><?= esc_html($nd->Category) ?></td>
+                                    <td><?= date('d M Y, H:i', strtotime($nd->CreatedAt)) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- ===== SECTION 1: Category Summary Cards ===== -->
         <div class="next-grid">

@@ -108,6 +108,7 @@ require_once get_stylesheet_directory() . '/model/device/edit-device.php';
 require_once get_stylesheet_directory() . '/model/device/device-form-handler.php';
 require_once get_stylesheet_directory() . '/model/device/device_form_add.php';
 require_once get_stylesheet_directory() . '/model/employee/form_edit_employee.php';
+require_once get_stylesheet_directory() . '/controller/audit_actions.php';
 
 
 
@@ -128,6 +129,7 @@ require_once get_stylesheet_directory() . '/view/formDevice.php';
 require_once get_stylesheet_directory() . '/view/formEmployee.php';
 require_once get_stylesheet_directory() . '/view/formMaintenance.php';
 require_once get_stylesheet_directory() . '/view/view_device_details.php';
+require_once get_stylesheet_directory() . '/view/audit_mode.php';
 
 // Keep the history retention policy out of the History page request.
 function astra_child_cleanup_expired_history()
@@ -406,6 +408,60 @@ function enqueue_animated_dropdown()
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_animated_dropdown');
+
+// Auto-Suggest Models (AJAX)
+function get_suggested_models_ajax()
+{
+    global $wpdb;
+
+    $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+    $brand_id = isset($_POST['brand_id']) ? intval($_POST['brand_id']) : 0;
+
+    if (!$category_id || !$brand_id) {
+        wp_send_json_error('Invalid parameters');
+    }
+
+    $models = $wpdb->get_col($wpdb->prepare(
+        "SELECT DISTINCT Model FROM Devices WHERE CategoryID = %d AND BrandID = %d AND Model != '' ORDER BY Model ASC",
+        $category_id,
+        $brand_id
+    ));
+
+    wp_send_json_success($models);
+}
+add_action('wp_ajax_get_suggested_models', 'get_suggested_models_ajax');
+add_action('wp_ajax_nopriv_get_suggested_models', 'get_suggested_models_ajax');
+
+
+// Smart Search (Fuzzy Search) Component
+function enqueue_smart_search_scripts()
+{
+    wp_enqueue_script(
+        'fuse-js',
+        'https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js',
+        [],
+        null,
+        true
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_smart_search_scripts');
+
+function get_all_devices_for_search_ajax()
+{
+    global $wpdb;
+    $table_device_wn = 'DevicesWithNames';
+    
+    // Select only needed fields to keep payload small
+    $devices = $wpdb->get_results("
+        SELECT DeviceID, Brand, Model, SerialNumber, Category, Status, Owner, Nickname, Department, CreatedAt 
+        FROM $table_device_wn
+    ");
+
+    wp_send_json_success($devices);
+}
+add_action('wp_ajax_get_all_devices_for_search', 'get_all_devices_for_search_ajax');
+add_action('wp_ajax_nopriv_get_all_devices_for_search', 'get_all_devices_for_search_ajax');
+
 
 // Shadcn Filters Component
 function enqueue_shadcn_filters()
@@ -770,6 +826,17 @@ function stock_supply_setup_db()
         $wpdb->query("ALTER TABLE Maintenance ADD COLUMN Photo VARCHAR(255) DEFAULT NULL");
     }
 
+    // Ensure LastAuditDate and LastAuditStatus exist in Devices
+    $dev_audit_date = $wpdb->get_results("SHOW COLUMNS FROM Devices LIKE 'LastAuditDate'");
+    if (empty($dev_audit_date)) {
+        $wpdb->query("ALTER TABLE Devices ADD COLUMN LastAuditDate DATETIME DEFAULT NULL");
+    }
+
+    $dev_audit_status = $wpdb->get_results("SHOW COLUMNS FROM Devices LIKE 'LastAuditStatus'");
+    if (empty($dev_audit_status)) {
+        $wpdb->query("ALTER TABLE Devices ADD COLUMN LastAuditStatus VARCHAR(100) DEFAULT NULL");
+    }
+
     // Clean up 'Other' category from Categories table
     $wpdb->query("DELETE FROM Categories WHERE LOWER(CategoryName) = 'other'");
 }
@@ -810,88 +877,74 @@ function stock_supply_add_page_loader()
             pointer-events: none;
         }
 
-        /* Conveyor Loop Animation */
-        @keyframes loading-ui-conveyor-loop {
-            0% {
-                transform: translateX(var(--loader-start-x));
-            }
-
-            100% {
-                transform: translateX(var(--loader-end-x));
-            }
-        }
-
-        .conveyor-loop-container {
+        /* Morphing Spinner Animation */
+        .morphing-spinner {
             position: relative;
-            display: inline-flex;
-            height: 1em;
-            width: var(--loader-width);
-            align-items: center;
-            overflow: hidden;
-            font-family: monospace;
-            font-size: 2.5rem;
-            line-height: 1;
-            color: #1e293b;
-            user-select: none;
+            width: 52px;
+            height: 52px;
         }
 
-        .conveyor-track {
-            pointer-events: none;
+        .morphing-spinner-inner {
             position: absolute;
             inset: 0;
-            white-space: nowrap;
+            background: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #06b6d4 100%);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+            animation: smoothMorph 3s ease-in-out infinite;
         }
 
-        .conveyor-glyph {
-            pointer-events: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: flex;
-            height: 100%;
-            width: 1ch;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            background-color: #f8fafc;
-            /* Matches loader background to mask track */
-            animation: loading-ui-conveyor-loop 1.8s linear infinite;
+        @keyframes smoothMorph {
+            0% { 
+                transform: scale(1) rotate(0deg);
+                border-radius: 50%;
+            }
+            20% { 
+                transform: scale(0.9) rotate(72deg);
+                border-radius: 35%;
+            }
+            40% { 
+                transform: scale(1.1) rotate(144deg);
+                border-radius: 15%;
+            }
+            60% { 
+                transform: scale(0.85) rotate(216deg);
+                border-radius: 8%;
+            }
+            80% { 
+                transform: scale(1.05) rotate(288deg);
+                border-radius: 25%;
+            }
+            100% { 
+                transform: scale(1) rotate(360deg);
+                border-radius: 50%;
+            }
         }
 
         /* Optional loading text */
         .ss-loading-text {
             margin-top: 24px;
-            font-family: 'Inter', 'Prompt', sans-serif;
+            font-family: 'Inter', 'Prompt', system-ui, sans-serif;
             color: #475569;
             font-size: 15px;
-            font-weight: 500;
-            letter-spacing: 2px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
             animation: ss-pulse 1.5s infinite;
         }
 
         @keyframes ss-pulse {
-            0% {
-                opacity: 0.5;
+            0%, 100% {
+                opacity: 0.4;
             }
-
             50% {
                 opacity: 1;
-            }
-
-            100% {
-                opacity: 0.5;
             }
         }
     </style>
 
     <div id="stock-supply-loader">
-        <span class="conveyor-loop-container" style="--loader-width: 10ch; --loader-start-x: -2ch; --loader-end-x: 12ch;">
-            <span class="conveyor-track">░░░░░░░░░░</span>
-            <span class="conveyor-glyph" style="z-index: 30; animation-delay: 0s;">█</span>
-            <span class="conveyor-glyph" style="z-index: 20; animation-delay: 0.05s;">▓</span>
-            <span class="conveyor-glyph" style="z-index: 10; animation-delay: 0.1s;">▒</span>
-        </span>
+        <div class="morphing-spinner">
+            <div class="morphing-spinner-inner"></div>
+        </div>
         <div class="ss-loading-text">Loading</div>
     </div>
 

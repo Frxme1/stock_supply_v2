@@ -1,0 +1,201 @@
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <?php
+    global $wpdb;
+    $all_devices_for_spa = $wpdb->get_results("SELECT DeviceID, Brand, Model, SerialNumber, Category, Status, Owner, Nickname, Department, CreatedAt FROM $table_device_wn ORDER BY CreatedAt DESC");
+    ?>
+    <script>
+    const devActionNonce = '<?= wp_create_nonce('device_action') ?>';
+    const historyUrlBase = '<?= home_url('/history/?device_search=') ?>';
+    const allDevices = <?= json_encode($all_devices_for_spa) ?>;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('device_search');
+        const st = document.getElementById('filter_status');
+        const br = document.querySelector('select[name="filter_brand"]');
+        const dp = document.getElementById('filter_department');
+        const originalTbody = document.querySelector('#device_table tbody');
+        const pagination = document.querySelector('.pagination')?.parentNode;
+        
+        if (!searchInput || !originalTbody || !allDevices) return;
+        
+        // Disable original form submit on change
+        if(st) st.onchange = triggerFilter;
+        if(br) br.onchange = triggerFilter;
+        if(dp) dp.onchange = triggerFilter;
+        if(searchInput) searchInput.addEventListener('input', triggerFilter);
+        
+        let fuseTbody = document.createElement('tbody');
+        fuseTbody.id = 'fuse_results';
+        fuseTbody.style.display = 'none';
+        originalTbody.parentNode.insertBefore(fuseTbody, originalTbody.nextSibling);
+        
+        let fusePagination = document.createElement('div');
+        fusePagination.className = 'd-flex justify-content-center mt-4';
+        if (pagination) pagination.parentNode.insertBefore(fusePagination, pagination.nextSibling);
+        
+        const fuse = new Fuse(allDevices, {
+            keys: ['DeviceID', 'Brand', 'Model', 'SerialNumber', 'Nickname', 'Owner', 'Department'],
+            threshold: 0.3,
+            ignoreLocation: true
+        });
+        
+        let currentFilteredResults = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        
+        function triggerFilter() {
+            const query = searchInput.value.trim();
+            const statusVal = st ? st.value : '';
+            const brandVal = br ? br.value : '';
+            const deptVal = dp ? dp.value : '';
+            
+            // Check if all filters are empty, if so, show original table (for fast initial load)
+            // Wait, actually if they type anything, take over.
+            if (query === '' && statusVal === '' && brandVal === '' && deptVal === '') {
+                originalTbody.style.display = '';
+                fuseTbody.style.display = 'none';
+                if (pagination) pagination.style.display = '';
+                fusePagination.style.display = 'none';
+                return;
+            }
+            
+            originalTbody.style.display = 'none';
+            fuseTbody.style.display = '';
+            if (pagination) pagination.style.display = 'none';
+            fusePagination.style.display = '';
+            
+            let results = [];
+            if (query !== '') {
+                results = fuse.search(query).map(r => r.item);
+            } else {
+                results = allDevices;
+            }
+            
+            if (statusVal) results = results.filter(d => d.Status && String(d.Status).toLowerCase() === String(statusVal).toLowerCase());
+            if (brandVal) results = results.filter(d => d.Brand === brandVal);
+            if (deptVal && statusVal !== 'Available') results = results.filter(d => d.Department === deptVal);
+            
+            currentFilteredResults = results;
+            currentPage = 1;
+            renderCurrentPage();
+        }
+        
+        function getStatusBadge(status) {
+            let statusClass = '';
+            let icon = '';
+            const stStr = status ? String(status).toLowerCase() : '';
+            if (stStr === 'available') { statusClass = 'status-available'; icon = '<span class="status-dot"></span>'; }
+            else if (stStr === 'in use') { statusClass = 'status-inuse'; icon = '<span class="status-dot"></span>'; }
+            else if (stStr === 'maintenance') { statusClass = 'status-maintenance'; icon = '<span class="status-dot"></span>'; }
+            else if (stStr === 'retired') { statusClass = 'status-retired'; icon = '<span class="status-dot"></span>'; }
+            else return '<div class="status-badge text-muted">-</div>';
+            return <div class="status-badge +statusClass+">+icon+ +status+</div>;
+        }
+        
+        function getActionHtml(row) {
+            let html = 
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <div class="dropdown action-menu mb-0 text-center">
+                    <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">...</button>
+                    <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
+                        <div class="action-dropdown-header">Actions</div>
+                        <div class="action-dropdown-separator"></div>;
+                        
+            const stStr = row.Status ? String(row.Status).toLowerCase() : '';
+            html += <a href="?="><i class="fa-solid fa-gear"></i> Edit</a>;
+            html += <a href="?view="><i class="fa-solid fa-magnifying-glass"></i> View Details</a>;
+            html += <a href=""><i class="fa-solid fa-clock-rotate-left"></i> History</a>;
+            
+            if (stStr === 'available') {
+                html += <a href="?receive="><i class="fa-solid fa-box"></i> Receive</a>
+                         <a href="?maintenance="><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                         <a href="#" onclick="confirmRetire('', 'retired', ''); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>;
+            } else if (stStr === 'in use') {
+                html += <a href="#" onclick="quickSwapDevice(''); return false;" class="text-warning"><i class="fa-solid fa-arrows-rotate"></i> Quick Swap</a>
+                         <a href="?return=&_wpnonce="><i class="fa-solid fa-rotate-left"></i> Return</a>
+                         <a href="?maintenance="><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                         <a href="#" onclick="confirmRetire('', 'retired', ''); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>;
+            } else if (stStr === 'maintenance' || stStr === 'retired') {
+                html += <a href="?available=&_wpnonce="><i class="fa-solid fa-circle text-success"></i> Available</a>;
+                if (stStr === 'maintenance') html += <a href="#" onclick="confirmRetire('', 'retired', ''); return false;"><i class="fa-solid fa-circle text-dark"></i> Retired</a>;
+            }
+            
+            html += <a href="#" onclick="printDeviceLabels([{ id: '', sn: '' }]); return false;"><i class="fa-solid fa-print"></i> Print Label</a>;
+            html += </div></div></div>;
+            return html;
+        }
+        
+        function renderCurrentPage() {
+            fuseTbody.innerHTML = '';
+            if (currentFilteredResults.length === 0) {
+                fuseTbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">???????????? (No devices found)</td></tr>';
+                fusePagination.innerHTML = '';
+                return;
+            }
+            
+            const totalItems = currentFilteredResults.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const pageData = currentFilteredResults.slice(startIdx, startIdx + itemsPerPage);
+            
+            pageData.forEach(row => {
+                let ownerDisplay = '<span class="text-muted">-</span>';
+                if (row.Owner || row.Nickname) {
+                    let parts = [];
+                    if (row.Nickname) parts.push(<span class="owner-name"></span>);
+                    if (row.Owner) {
+                        const m = String(row.Owner).match(/^[^\(]+/);
+                        if(m) parts.push(<span class="owner-name"></span>);
+                    }
+                    if(parts.length > 0) ownerDisplay = parts.join('<span class="mx-1 text-muted">|</span>');
+                }
+                
+                let tr = document.createElement('tr');
+                tr.className = 'next-table-row';
+                tr.innerHTML = 
+                    <td class="fw-semibold text-dark"></td>
+                    <td>
+                        <div class="fw-bold text-dark"> </div>
+                        <div class="text-muted small">SN: </div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                ;
+                fuseTbody.appendChild(tr);
+            });
+            
+            renderPaginationControls(totalPages);
+        }
+        
+        function renderPaginationControls(totalPages) {
+            if (totalPages <= 1) { fusePagination.innerHTML = ''; return; }
+            let html = '<ul class="pagination pagination-sm mb-0 shadow-sm" style="border-radius: 8px; overflow: hidden;">';
+            html += <li class="page-item "><a class="page-link" href="#" onclick="event.preventDefault(); window.goToPage()"><i class="fa-solid fa-chevron-left"></i></a></li>;
+            
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            if (startPage > 1) { html += <li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); window.goToPage(1)">1</a></li>; if (startPage > 2) html += <li class="page-item disabled"><span class="page-link">...</span></li>; }
+            for (let i = startPage; i <= endPage; i++) html += <li class="page-item "><a class="page-link" href="#" onclick="event.preventDefault(); window.goToPage()"></a></li>;
+            if (endPage < totalPages) { if (endPage < totalPages - 1) html += <li class="page-item disabled"><span class="page-link">...</span></li>; html += <li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault(); window.goToPage()"></a></li>; }
+            
+            html += <li class="page-item "><a class="page-link" href="#" onclick="event.preventDefault(); window.goToPage()"><i class="fa-solid fa-chevron-right"></i></a></li>;
+            html += '</ul>';
+            fusePagination.innerHTML = html;
+        }
+        
+        window.goToPage = function(page) {
+            const totalPages = Math.ceil(currentFilteredResults.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderCurrentPage();
+            }
+        };
+        
+        // Trigger initial filter just in case there are URL parameters
+        triggerFilter();
+    });
+    </script>

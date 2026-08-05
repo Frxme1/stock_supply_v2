@@ -135,7 +135,7 @@ function device_crud()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Brand</label>
-                            <select name="filter_brand" class="form-select form-select-sm staggered-dropdown">
+                            <select name="filter_brand" id="filter_brand" class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Brands</option>
                                 <?php foreach ($all_brands as $brand): ?>
                                     <option value="<?= esc_attr($brand) ?>" <?= $filter_brand == $brand ? 'selected' : '' ?>>
@@ -146,8 +146,7 @@ function device_crud()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2" id="department_wrapper">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Department</label>
-                            <select name="filter_department" id="filter_department"
-                                class="form-select form-select-sm staggered-dropdown">
+                            <select name="filter_department" id="filter_department" class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Depts</option>
                                 <?php foreach ($all_departments as $dept): ?>
                                     <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>>
@@ -725,7 +724,8 @@ function device_crud()
 
     <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
 
-    <?php
+        <?php
+    
     return ob_get_clean();
 }
 
@@ -733,3 +733,6 @@ function device_crud()
 
 add_shortcode('device_crud', 'device_crud');
 ?>
+
+
+

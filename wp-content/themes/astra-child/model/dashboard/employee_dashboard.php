@@ -133,8 +133,8 @@ function employee_dashboard()
         </div>
 
         <!-- ===== SECTION 3: Employees by Department Chart ===== -->
-        <div class="mt-4">
-            <div class="next-card slide-up" style="animation-delay: 0.25s;">
+        <div class="mt-4 bottom-chart-wrapper">
+            <div class="next-card slide-up" style="animation-delay: 0.7s;">
                 <h3 class="next-section-title">Employees by Department</h3>
                 <div id="chart-department" class="mt-3"></div>
             </div>
@@ -316,25 +316,31 @@ function employee_dashboard()
 
         /* Responsive */
         @media (max-width: 1024px) {
+            .next-grid, .bottom-chart-wrapper {
+                margin-left: -45px;
+            }
             .next-grid {
                 grid-template-columns: repeat(3, 1fr) !important;
                 gap: 0.75rem !important;
-                margin-left: -30px;
             }
         }
 
         @media (max-width: 640px) {
+            .next-grid, .bottom-chart-wrapper {
+                margin-left: -45px;
+            }
             .next-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 0.5rem !important;
-                margin-left: -30px;
             }
         }
 
         @media (max-width: 400px) {
+            .next-grid, .bottom-chart-wrapper {
+                margin-left: -45px;
+            }
             .next-grid {
                 grid-template-columns: 1fr !important;
-                margin-left: -30px;
             }
         }
     </style>

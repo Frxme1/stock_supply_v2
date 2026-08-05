@@ -167,10 +167,56 @@ function device_form($editing = null)
 			</script>
 
 
-			<div class="form-group">
+			<div class="form-group" style="position: relative;">
 				<label>Model</label>
-				<input type="text" name="Model" value="<?= esc_attr($editing->Model ?? '') ?>" required>
+				<input type="text" name="Model" id="model_input" value="<?= esc_attr($editing->Model ?? '') ?>" list="suggested_models" autocomplete="off" required>
+				<datalist id="suggested_models"></datalist>
 			</div>
+
+			<script>
+				document.addEventListener('DOMContentLoaded', function() {
+					const categorySelect = document.getElementById('category_select');
+					const brandSelect = document.getElementById('brand-select');
+					const modelList = document.getElementById('suggested_models');
+
+					function fetchSuggestedModels() {
+						const catId = categorySelect.value;
+						const brandId = brandSelect.value;
+
+						// clear current datalist
+						modelList.innerHTML = '';
+
+						if (!catId || !brandId || brandId === 'add_new') return;
+
+						const formData = new FormData();
+						formData.append('action', 'get_suggested_models');
+						formData.append('category_id', catId);
+						formData.append('brand_id', brandId);
+
+						fetch("<?= admin_url('admin-ajax.php') ?>", {
+							method: 'POST',
+							body: formData
+						})
+						.then(res => res.json())
+						.then(res => {
+							if (res.success && res.data.length > 0) {
+								res.data.forEach(modelName => {
+									const option = document.createElement('option');
+									option.value = modelName;
+									modelList.appendChild(option);
+								});
+							}
+						})
+						.catch(err => console.error('Error fetching models:', err));
+					}
+
+					if (categorySelect) categorySelect.addEventListener('change', fetchSuggestedModels);
+					if (brandSelect) brandSelect.addEventListener('change', fetchSuggestedModels);
+
+					// Fetch once on page load if editing
+					fetchSuggestedModels();
+				});
+			</script>
 
 			<div class="form-group">
 				<label>Serial No</label>

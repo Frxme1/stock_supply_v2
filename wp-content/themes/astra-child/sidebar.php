@@ -83,6 +83,14 @@ $maintenance_count = $sidebar_badges['maintenance'];
             <span class="sidebar-link-text">Employees</span>
         </a>
 
+        <!-- Audit Mode -->
+        <a href="<?php echo esc_url(home_url('/audit/')); ?>" class="sidebar-link <?php echo (is_page('audit') || strpos($_SERVER['REQUEST_URI'], '/audit') !== false) ? 'active' : ''; ?>">
+            <span class="sidebar-link-icon">
+                <i class="fa-solid fa-clipboard-check" style="font-size: 20px;"></i>
+            </span>
+            <span class="sidebar-link-text">Audit Mode</span>
+        </a>
+
 
 
         <!-- Add Device -->
