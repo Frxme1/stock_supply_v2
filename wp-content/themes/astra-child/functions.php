@@ -25,6 +25,7 @@ define('CHILD_THEME_ASTRA_CHILD_VERSION', '1.0.0');
 function child_enqueue_styles()
 {
     wp_enqueue_style('astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css'), filemtime(get_stylesheet_directory() . '/style.css'), 'all');
+    wp_enqueue_script('aos-global', get_stylesheet_directory_uri() . '/js/aos_global.js', [], filemtime(get_stylesheet_directory() . '/js/aos_global.js'), true);
 }
 add_action('wp_enqueue_scripts', 'child_enqueue_styles', 15);
 if (has_post_thumbnail()) {
@@ -79,14 +80,14 @@ function stock_supply_format_history_description($desc, $action = '', $device_id
     // Convert status arrows
     $desc = str_replace(' -> ', ' &rarr; ', $desc);
 
-    // Style Status badge
-    $desc = preg_replace_callback('/\(Status:\s*([^\)]+)\)/i', function ($matches) {
+    // Style Status badge (Handle trailing dots correctly)
+    $desc = preg_replace_callback('/\(Status:\s*([^\)]+)\)\.?/i', function ($matches) {
         return '<span class="badge bg-light text-dark border ms-1" style="font-weight: 500; font-size: 0.8rem;">Status: ' . esc_html($matches[1]) . '</span>';
     }, $desc);
 
     // Style Reason / Note labels with a line break for cleaner reading
     $desc = preg_replace('/(Reason\/Note|Reason|Note):/i', '<br><strong style="color: #475569; display: inline-block; margin-top: 4px;">$1:</strong>', $desc);
-    
+
     // Clean up if the string started with <br>
     $desc = preg_replace('/^<br>/i', '', trim($desc));
 
@@ -108,7 +109,7 @@ require_once get_stylesheet_directory() . '/model/device/edit-device.php';
 require_once get_stylesheet_directory() . '/model/device/device-form-handler.php';
 require_once get_stylesheet_directory() . '/model/device/device_form_add.php';
 require_once get_stylesheet_directory() . '/model/employee/form_edit_employee.php';
-require_once get_stylesheet_directory() . '/controller/audit_actions.php';
+require_once get_stylesheet_directory() . '/controller/transfer_actions.php';
 
 
 
@@ -129,7 +130,51 @@ require_once get_stylesheet_directory() . '/view/formDevice.php';
 require_once get_stylesheet_directory() . '/view/formEmployee.php';
 require_once get_stylesheet_directory() . '/view/formMaintenance.php';
 require_once get_stylesheet_directory() . '/view/view_device_details.php';
-require_once get_stylesheet_directory() . '/view/audit_mode.php';
+require_once get_stylesheet_directory() . '/view/quick_transfer.php';
+
+// Auto-create Quick Transfer page if it doesn't exist
+function auto_create_quick_transfer_page()
+{
+    if (function_exists('get_page_by_path') && function_exists('wp_insert_post')) {
+        $page_check = get_page_by_path('quick-transfer');
+        if (!isset($page_check->ID)) {
+            $page_id = wp_insert_post([
+                'post_title' => 'Quick Transfer',
+                'post_content' => '[quick_transfer]',
+                'post_status' => 'publish',
+                'post_author' => 1,
+                'post_type' => 'page',
+                'post_name' => 'quick-transfer'
+            ]);
+            // Set Astra meta to ensure sidebar shows
+            update_post_meta($page_id, '_astra_site_sidebar_layout', 'left-sidebar');
+        }
+    }
+}
+add_action('init', 'auto_create_quick_transfer_page');
+
+// Force sidebar layout for Quick Transfer page (in case meta was missed)
+add_filter('astra_page_sidebar_layout', function ($sidebar) {
+    if (is_page('quick-transfer')) {
+        return 'left-sidebar';
+    }
+    return $sidebar;
+});
+
+// One-time fix: Update quick-transfer page meta to ensure it has the sidebar
+function fix_quick_transfer_meta()
+{
+    $qt_page = get_page_by_path('quick-transfer');
+    if ($qt_page) {
+        update_post_meta($qt_page->ID, 'site-sidebar-layout', 'left-sidebar');
+        update_post_meta($qt_page->ID, 'site-sidebar-style', 'boxed');
+        update_post_meta($qt_page->ID, 'ast-site-content-layout', 'normal-width-container');
+        update_post_meta($qt_page->ID, 'site-content-style', 'boxed');
+        // If it's using the blank template by mistake, reset it to default template
+        delete_post_meta($qt_page->ID, '_wp_page_template');
+    }
+}
+add_action('init', 'fix_quick_transfer_meta');
 
 // Keep the history retention policy out of the History page request.
 function astra_child_cleanup_expired_history()
@@ -450,7 +495,7 @@ function get_all_devices_for_search_ajax()
 {
     global $wpdb;
     $table_device_wn = 'DevicesWithNames';
-    
+
     // Select only needed fields to keep payload small
     $devices = $wpdb->get_results("
         SELECT DeviceID, Brand, Model, SerialNumber, Category, Status, Owner, Nickname, Department, CreatedAt 
@@ -826,17 +871,6 @@ function stock_supply_setup_db()
         $wpdb->query("ALTER TABLE Maintenance ADD COLUMN Photo VARCHAR(255) DEFAULT NULL");
     }
 
-    // Ensure LastAuditDate and LastAuditStatus exist in Devices
-    $dev_audit_date = $wpdb->get_results("SHOW COLUMNS FROM Devices LIKE 'LastAuditDate'");
-    if (empty($dev_audit_date)) {
-        $wpdb->query("ALTER TABLE Devices ADD COLUMN LastAuditDate DATETIME DEFAULT NULL");
-    }
-
-    $dev_audit_status = $wpdb->get_results("SHOW COLUMNS FROM Devices LIKE 'LastAuditStatus'");
-    if (empty($dev_audit_status)) {
-        $wpdb->query("ALTER TABLE Devices ADD COLUMN LastAuditStatus VARCHAR(100) DEFAULT NULL");
-    }
-
     // Clean up 'Other' category from Categories table
     $wpdb->query("DELETE FROM Categories WHERE LOWER(CategoryName) = 'other'");
 }
@@ -893,27 +927,32 @@ function stock_supply_add_page_loader()
         }
 
         @keyframes smoothMorph {
-            0% { 
+            0% {
                 transform: scale(1) rotate(0deg);
                 border-radius: 50%;
             }
-            20% { 
+
+            20% {
                 transform: scale(0.9) rotate(72deg);
                 border-radius: 35%;
             }
-            40% { 
+
+            40% {
                 transform: scale(1.1) rotate(144deg);
                 border-radius: 15%;
             }
-            60% { 
+
+            60% {
                 transform: scale(0.85) rotate(216deg);
                 border-radius: 8%;
             }
-            80% { 
+
+            80% {
                 transform: scale(1.05) rotate(288deg);
                 border-radius: 25%;
             }
-            100% { 
+
+            100% {
                 transform: scale(1) rotate(360deg);
                 border-radius: 50%;
             }
@@ -932,9 +971,12 @@ function stock_supply_add_page_loader()
         }
 
         @keyframes ss-pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 0.4;
             }
+
             50% {
                 opacity: 1;
             }
@@ -1538,11 +1580,11 @@ function stock_supply_ajax_get_employee_devices()
 
     wp_send_json_success([
         'devices' => $devices ?: [],
-        'owner'   => $owner ? [
-            'nickname'  => $owner->Nickname,
+        'owner' => $owner ? [
+            'nickname' => $owner->Nickname,
             'full_name' => trim($owner->FirstName . ' ' . $owner->LastName),
         ] : null,
-        'count'   => count($devices ?: []),
+        'count' => count($devices ?: []),
     ]);
 }
 add_action('wp_ajax_get_employee_devices', 'stock_supply_ajax_get_employee_devices');
@@ -1587,11 +1629,11 @@ function stock_supply_ajax_offboard_employee()
         wp_send_json_error(['message' => 'No devices found for this employee']);
     }
 
-    $current_user  = wp_get_current_user();
-    $user_email    = $current_user->user_email ?? 'unknown@domain.com';
-    $return_date   = current_time('Y-m-d');
+    $current_user = wp_get_current_user();
+    $user_email = $current_user->user_email ?? 'unknown@domain.com';
+    $return_date = current_time('Y-m-d');
     $success_count = 0;
-    $errors        = [];
+    $errors = [];
 
     $wpdb->query('START TRANSACTION');
 
@@ -1599,15 +1641,15 @@ function stock_supply_ajax_offboard_employee()
         $updated = $wpdb->update(
             'Devices',
             [
-                'StatusID'           => $available_status_id,
-                'OwnerID'            => null,
-                'DepartmentID'       => null,
-                'ReceiveDate'        => null,
-                'ReturnDate'         => null,
-                'RepairDate'         => null,
-                'PositionID'         => null,
+                'StatusID' => $available_status_id,
+                'OwnerID' => null,
+                'DepartmentID' => null,
+                'ReceiveDate' => null,
+                'ReturnDate' => null,
+                'RepairDate' => null,
+                'PositionID' => null,
                 'ExpectedReturnDate' => null,
-                'LastNotifiedDate'   => null,
+                'LastNotifiedDate' => null,
             ],
             ['DeviceID' => $dev->DeviceID]
         );
@@ -1616,13 +1658,13 @@ function stock_supply_ajax_offboard_employee()
             $safe_category_id = !empty($dev->CategoryID) ? $dev->CategoryID : null;
 
             $wpdb->insert('History_new', [
-                'DeviceID'    => $dev->DeviceID,
-                'Action'      => 'Offboard Return',
-                'Date'        => current_time('mysql'),
+                'DeviceID' => $dev->DeviceID,
+                'Action' => 'Offboard Return',
+                'Date' => current_time('mysql'),
                 'Description' => "Offboard: Device {$dev->DeviceID} ({$dev->Model}) returned to stock from {$safe_owner}",
-                'user_email'  => $user_email,
-                'CategoryID'  => $safe_category_id,
-                'Owner'       => $safe_owner,
+                'user_email' => $user_email,
+                'CategoryID' => $safe_category_id,
+                'Owner' => $safe_owner,
             ]);
             $success_count++;
         } else {
@@ -1641,10 +1683,10 @@ function stock_supply_ajax_offboard_employee()
     }
 
     wp_send_json_success([
-        'message'       => "Successfully returned {$success_count} device(s) to stock.",
+        'message' => "Successfully returned {$success_count} device(s) to stock.",
         'success_count' => $success_count,
-        'error_count'   => count($errors),
-        'error_ids'     => $errors,
+        'error_count' => count($errors),
+        'error_ids' => $errors,
     ]);
 }
 add_action('wp_ajax_offboard_employee', 'stock_supply_ajax_offboard_employee');
@@ -1703,7 +1745,7 @@ function stock_supply_ajax_get_quick_swap_options()
     ", $old_device_id, $old_device->CategoryID));
 
     wp_send_json_success([
-        'old_device'        => $old_device,
+        'old_device' => $old_device,
         'available_devices' => $available_devices ?: [],
     ]);
 }
@@ -1754,9 +1796,9 @@ function stock_supply_ajax_quick_swap_device()
     }
 
     $current_user = wp_get_current_user();
-    $user_email   = $current_user->user_email ?? 'unknown@domain.com';
-    $today_date   = current_time('Y-m-d');
-    $now_mysql    = current_time('mysql');
+    $user_email = $current_user->user_email ?? 'unknown@domain.com';
+    $today_date = current_time('Y-m-d');
+    $now_mysql = current_time('mysql');
 
     // Get owner nickname for history
     $owner_nickname = '-';
@@ -1770,57 +1812,57 @@ function stock_supply_ajax_quick_swap_device()
     // 1. Old Device -> Send to Maintenance
     // ----------------------------------------------------
     $inserted_maint = $wpdb->insert('Maintenance', [
-        'DeviceID'   => $old_device_id,
+        'DeviceID' => $old_device_id,
         'RepairDate' => $today_date,
-        'Details'    => $repair_reason,
+        'Details' => $repair_reason,
         'user_email' => $user_email,
-        'Photo'      => null,
-        'CreatedAt'  => $now_mysql,
-        'UpdatedAt'  => $now_mysql,
+        'Photo' => null,
+        'CreatedAt' => $now_mysql,
+        'UpdatedAt' => $now_mysql,
     ]);
 
     $updated_old = $wpdb->update('Devices', [
-        'StatusID'     => $maint_status_id,
-        'OwnerID'      => null,
+        'StatusID' => $maint_status_id,
+        'OwnerID' => null,
         'DepartmentID' => null,
-        'ReceiveDate'  => null,
-        'RepairDate'   => $today_date,
-        'ReturnDate'   => null,
-        'PositionID'   => null,
+        'ReceiveDate' => null,
+        'RepairDate' => $today_date,
+        'ReturnDate' => null,
+        'PositionID' => null,
     ], ['DeviceID' => $old_device_id]);
 
     // History for Old Device
     $wpdb->insert('History_new', [
-        'DeviceID'    => $old_device_id,
-        'Action'      => 'Quick Swap Maintenance',
-        'Date'        => $now_mysql,
+        'DeviceID' => $old_device_id,
+        'Action' => 'Quick Swap Maintenance',
+        'Date' => $now_mysql,
         'Description' => "Quick Swap: Device {$old_device_id} ({$old_dev->Model}) sent to Maintenance from {$owner_nickname}. Reason: {$repair_reason}",
-        'user_email'  => $user_email,
-        'CategoryID'  => $old_dev->CategoryID,
-        'Owner'       => $owner_nickname,
+        'user_email' => $user_email,
+        'CategoryID' => $old_dev->CategoryID,
+        'Owner' => $owner_nickname,
     ]);
 
     // ----------------------------------------------------
     // 2. New Device -> Reassign to Employee
     // ----------------------------------------------------
     $updated_new = $wpdb->update('Devices', [
-        'StatusID'     => $inuse_status_id,
-        'OwnerID'      => $old_dev->OwnerID,
+        'StatusID' => $inuse_status_id,
+        'OwnerID' => $old_dev->OwnerID,
         'DepartmentID' => $old_dev->DepartmentID,
-        'PositionID'   => $old_dev->PositionID,
-        'ReceiveDate'  => $today_date,
-        'ReturnDate'   => null,
+        'PositionID' => $old_dev->PositionID,
+        'ReceiveDate' => $today_date,
+        'ReturnDate' => null,
     ], ['DeviceID' => $new_device_id]);
 
     // History for New Device
     $wpdb->insert('History_new', [
-        'DeviceID'    => $new_device_id,
-        'Action'      => 'Quick Swap Reassign',
-        'Date'        => $now_mysql,
+        'DeviceID' => $new_device_id,
+        'Action' => 'Quick Swap Reassign',
+        'Date' => $now_mysql,
         'Description' => "Quick Swap: Replacement Device {$new_device_id} ({$new_dev->Model}) assigned to {$owner_nickname} (Replaced {$old_device_id})",
-        'user_email'  => $user_email,
-        'CategoryID'  => $new_dev->CategoryID,
-        'Owner'       => $owner_nickname,
+        'user_email' => $user_email,
+        'CategoryID' => $new_dev->CategoryID,
+        'Owner' => $owner_nickname,
     ]);
 
     if ($inserted_maint !== false && $updated_old !== false && $updated_new !== false) {
@@ -1839,10 +1881,11 @@ add_action('wp_ajax_quick_swap_device', 'stock_supply_ajax_quick_swap_device');
  * Global JavaScript for Quick Swap Device Modal
  */
 add_action('wp_footer', function () {
-    if (!is_user_logged_in()) return;
+    if (!is_user_logged_in())
+        return;
     ?>
     <script>
-        window.quickSwapDevice = function(oldDeviceID) {
+        window.quickSwapDevice = function (oldDeviceID) {
             if (!oldDeviceID) return;
 
             const ajaxUrl = '<?= admin_url('admin-ajax.php') ?>';

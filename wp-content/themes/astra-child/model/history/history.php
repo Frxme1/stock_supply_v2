@@ -147,19 +147,25 @@ function form_history()
 
             .badge-history {
                 padding: 6px 12px;
-                border-radius: 20px;
-                font-size: 0.8rem;
-                font-weight: 600;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                font-weight: 700;
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                gap: 8px;
+                white-space: normal;
+                word-break: break-word;
+                letter-spacing: 0.3px;
+                border: 1px solid rgba(0,0,0,0.05);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.02);
             }
 
             .badge-history::before {
                 content: '';
-                width: 6px;
-                height: 6px;
+                width: 8px;
+                height: 8px;
                 border-radius: 50%;
+                flex-shrink: 0;
             }
 
             .badge-add {
@@ -267,20 +273,17 @@ function form_history()
             </div>
         </form>
 
-        
+
 
         <div class="table-wrapper">
-            <table class="table-custom">
+            <table class="table-custom" style="width: 100%; table-layout: fixed;">
                 <thead>
                     <tr>
-                        <th class="text-nowrap py-3 text-start" style="width: 10%;">Action</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 12%;">Date</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 35%;">Description</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 8%;">Photo</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 8%;">User</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 8%;">Category</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 8%;">Owner</th>
-                        <th class="text-nowrap py-3 text-center" style="width: 7%;">Action</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 20%;">Action</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
+                        <th class="py-3 text-start" style="width: 45%;">Description</th>
+                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Info</th>
+                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Manage</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -307,36 +310,38 @@ function form_history()
                             <td class="align-middle">
                                 <span class="badge-history <?= $badge_class ?>"><?= esc_html($row->Action) ?></span>
                             </td>
-                            <td class="align-middle fw-medium"><?= $date->format("d/m/Y H:i:s") ?></td>
-                            <td class="align-middle text-muted">
+                            <td class="align-middle fw-medium text-nowrap" style="font-size: 0.95rem;"><?= $date->format("d M Y, H:i") ?></td>
+                            <td class="align-middle text-dark fw-bold" style="font-size: 1.05rem; line-height: 1.6;">
                                 <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
                             </td>
-                            <td class="align-middle">
-                                <?php if (!empty($row->Photo)): ?>
-                                    <img src="<?= esc_url($row->Photo) ?>"
-                                        onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
-                                        style="width:36px; height:36px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer; transition:transform 0.15s ease;"
-                                        onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
-                                        title="Click to view photo">
-                                <?php else: ?>
-                                    <span class="text-muted" style="font-size:0.85rem;">-</span>
-                                <?php endif; ?>
+                            <td class="align-middle text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-light btn-sm rounded-pill" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid #cbd5e1; font-size: 0.85rem; padding: 4px 12px; color: #475569;">
+                                        <i class="fa-solid fa-circle-info"></i> More
+                                    </button>
+                                    <div class="dropdown-menu p-3 shadow-sm" style="min-width: 250px; font-size: 0.9rem; color: #334155;">
+                                        <div class="mb-2"><strong><i class="fa-solid fa-user text-muted w-20px"></i> User:</strong> <?= esc_html($row->user_email ?: '-') ?></div>
+                                        <div class="mb-2"><strong><i class="fa-solid fa-tag text-muted w-20px"></i> Category:</strong> <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : esc_html($row->CategoryName ?: '-') ?></div>
+                                        <div class="mb-2"><strong><i class="fa-solid fa-briefcase text-muted w-20px"></i> Owner:</strong> <?= esc_html($row->Owner ?: '-') ?></div>
+                                        <?php if (!empty($row->Photo)): ?>
+                                            <div class="mt-3 text-center pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                                <div class="mb-1 text-muted" style="font-size:0.8rem;">Attached Photo</div>
+                                                <img src="<?= esc_url($row->Photo) ?>"
+                                                    onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
+                                                    style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;"
+                                                    title="Click to enlarge">
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="align-middle"><?= esc_html($row->user_email) ?></td>
-                            <td class="align-middle">
-                                <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : esc_html($row->CategoryName) ?>
-                            </td>
-                            <td class="align-middle"><?= esc_html($row->Owner) ?></td>
                             <td class="text-center align-middle">
                                 <div class="dropdown action-menu text-center">
                                     <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
                                         ...
                                     </button>
                                     <div class="dropdown-menu action-dropdown text-start">
-                                        <div class="action-dropdown-header">Actions</div>
-                                        <div class="action-dropdown-separator"></div>
-                                        <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View
-                                            Details</a>
+                                        <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
                                         <?php $status = $row->Status ?? ''; ?>
                                         <?php if ($status == 'Available'): ?>
                                             <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>

@@ -1,0 +1,93 @@
+Array
+(
+    [site-sidebar-layout] => Array
+        (
+            [0] => left-sidebar
+        )
+
+    [site-content-layout] => Array
+        (
+            [0] => 
+        )
+
+    [ast-site-content-layout] => Array
+        (
+            [0] => normal-width-container
+        )
+
+    [site-content-style] => Array
+        (
+            [0] => boxed
+        )
+
+    [site-sidebar-style] => Array
+        (
+            [0] => boxed
+        )
+
+    [ast-global-header-display] => Array
+        (
+            [0] => disabled
+        )
+
+    [ast-banner-title-visibility] => Array
+        (
+            [0] => 
+        )
+
+    [ast-main-header-display] => Array
+        (
+            [0] => 
+        )
+
+    [ast-hfb-above-header-display] => Array
+        (
+            [0] => 
+        )
+
+    [ast-hfb-below-header-display] => Array
+        (
+            [0] => 
+        )
+
+    [ast-hfb-mobile-header-display] => Array
+        (
+            [0] => 
+        )
+
+    [site-post-title] => Array
+        (
+            [0] => 
+        )
+
+    [ast-breadcrumbs-content] => Array
+        (
+            [0] => 
+        )
+
+    [ast-featured-img] => Array
+        (
+            [0] => 
+        )
+
+    [theme-transparent-header-meta] => Array
+        (
+            [0] => 
+        )
+
+    [ast-page-background-enabled] => Array
+        (
+            [0] => default
+        )
+
+    [ast-page-background-meta] => Array
+        (
+            [0] => s:1296:"a:3:{s:7:"desktop";a:12:{s:16:"background-color";s:25:"var(--ast-global-color-5)";s:16:"background-image";s:0:"";s:17:"background-repeat";s:6:"repeat";s:19:"background-position";s:13:"center center";s:15:"background-size";s:4:"auto";s:21:"background-attachment";s:6:"scroll";s:15:"background-type";s:0:"";s:16:"background-media";s:0:"";s:12:"overlay-type";s:0:"";s:13:"overlay-color";s:0:"";s:15:"overlay-opacity";s:0:"";s:16:"overlay-gradient";s:0:"";}s:6:"tablet";a:12:{s:16:"background-color";s:0:"";s:16:"background-image";s:0:"";s:17:"background-repeat";s:6:"repeat";s:19:"background-position";s:13:"center center";s:15:"background-size";s:4:"auto";s:21:"background-attachment";s:6:"scroll";s:15:"background-type";s:0:"";s:16:"background-media";s:0:"";s:12:"overlay-type";s:0:"";s:13:"overlay-color";s:0:"";s:15:"overlay-opacity";s:0:"";s:16:"overlay-gradient";s:0:"";}s:6:"mobile";a:12:{s:16:"background-color";s:0:"";s:16:"background-image";s:0:"";s:17:"background-repeat";s:6:"repeat";s:19:"background-position";s:13:"center center";s:15:"background-size";s:4:"auto";s:21:"background-attachment";s:6:"scroll";s:15:"background-type";s:0:"";s:16:"background-media";s:0:"";s:12:"overlay-type";s:0:"";s:13:"overlay-color";s:0:"";s:15:"overlay-opacity";s:0:"";s:16:"overlay-gradient";s:0:"";}}";
+        )
+
+    [ast-content-background-meta] => Array
+        (
+            [0] => s:1348:"a:3:{s:7:"desktop";a:12:{s:16:"background-color";s:25:"var(--ast-global-color-4)";s:16:"background-image";s:0:"";s:17:"background-repeat";s:6:"repeat";s:19:"background-position";s:13:"center center";s:15:"background-size";s:4:"auto";s:21:"background-attachment";s:6:"scroll";s:15:"background-type";s:0:"";s:16:"background-media";s:0:"";s:12:"overlay-type";s:0:"";s:13:"overlay-color";s:0:"";s:15:"overlay-opacity";s:0:"";s:16:"overlay-gradient";s:0:"";}s:6:"tablet";a:12:{s:16:"background-color";s:25:"var(--ast-global-color-4)";s:16:"background-image";s:0:"";s:17:"background-repeat";s:6:"repeat";s:19:"background-position";s:13:"center center";s:15:"background-size";s:4:"auto";s:21:"background-attachment";s:6:"scroll";s:15:"background-type";s:0:"";s:16:"background-media";s:0:"";s:12:"overlay-type";s:0:"";s:13:"overlay-color";s:0:"";s:15:"overlay-opacity";s:0:"";s:16:"overlay-gradient";s:0:"";}s:6:"mobile";a:12:{s:16:"background-color";s:25:"var(--ast-global-color-4)";s:16:"background-image";s:0:"";s:17:"background-repeat";s:6:"repeat";s:19:"background-position";s:13:"center center";s:15:"background-size";s:4:"auto";s:21:"background-attachment";s:6:"scroll";s:15:"background-type";s:0:"";s:16:"background-media";s:0:"";s:12:"overlay-type";s:0:"";s:13:"overlay-color";s:0:"";s:15:"overlay-opacity";s:0:"";s:16:"overlay-gradient";s:0:"";}}";
+        )
+
+)

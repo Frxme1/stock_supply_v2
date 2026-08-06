@@ -423,11 +423,22 @@ function device_view_details($device_id = null)
         </div>
 
         <!-- History Section -->
-        <div class="vd-history-section">
+        <?php $has_search = !empty($_GET['history_search']); ?>
+        <div class="vd-history-section <?= $has_search ? 'dtl-show-search' : '' ?>">
             <div class="vd-history-header">
-                <h3 class="vd-history-title"><i class="fa-solid fa-clock-rotate-left text-muted"></i> History Log</h3>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h3 class="vd-history-title"><i class="fa-solid fa-clock-rotate-left text-muted"></i> History Log</h3>
+                    <div class="dtl-view-toggle">
+                        <button type="button" class="dtl-toggle-btn <?= !$has_search ? 'active' : '' ?>" data-view="timeline">
+                            <i class="fa-solid fa-timeline"></i> Timeline
+                        </button>
+                        <button type="button" class="dtl-toggle-btn <?= $has_search ? 'active' : '' ?>" data-view="table">
+                            <i class="fa-solid fa-table"></i> Table
+                        </button>
+                    </div>
+                </div>
 
-                <form method="GET" action="" class="d-flex align-items-center gap-2">
+                <form method="GET" action="" class="dtl-search-form d-flex align-items-center gap-2">
                     <input type="hidden" name="view" value="<?= esc_attr($device->DeviceID) ?>">
                     <?php
                     foreach ($_GET as $key => $value) {
@@ -464,22 +475,148 @@ function device_view_details($device_id = null)
                 </form>
             </div>
 
+            <!-- ========== TIMELINE VIEW ========== -->
+            <?php
+            // Build action-to-class map
+            $action_map = [
+                'receive' => ['class' => 'dtl-action-receive', 'icon' => 'fa-box-open'],
+                'add' => ['class' => 'dtl-action-receive', 'icon' => 'fa-plus-circle'],
+                'create' => ['class' => 'dtl-action-receive', 'icon' => 'fa-plus-circle'],
+                'edit' => ['class' => 'dtl-action-edit', 'icon' => 'fa-pen'],
+                'update' => ['class' => 'dtl-action-edit', 'icon' => 'fa-pen-to-square'],
+                'maintenance' => ['class' => 'dtl-action-maintenance', 'icon' => 'fa-wrench'],
+                'repair' => ['class' => 'dtl-action-maintenance', 'icon' => 'fa-screwdriver-wrench'],
+                'transfer' => ['class' => 'dtl-action-transfer', 'icon' => 'fa-right-left'],
+                'move' => ['class' => 'dtl-action-transfer', 'icon' => 'fa-truck'],
+                'delete' => ['class' => 'dtl-action-delete', 'icon' => 'fa-trash'],
+                'remove' => ['class' => 'dtl-action-delete', 'icon' => 'fa-circle-minus'],
+                'status' => ['class' => 'dtl-action-status', 'icon' => 'fa-circle-dot'],
+                'change' => ['class' => 'dtl-action-status', 'icon' => 'fa-arrows-rotate'],
+            ];
+
+            function dtl_get_action_info($action, $map) {
+                $lower = strtolower(trim($action));
+                foreach ($map as $key => $info) {
+                    if (strpos($lower, $key) !== false) {
+                        return $info;
+                    }
+                }
+                return ['class' => 'dtl-action-default', 'icon' => 'fa-circle'];
+            }
+
+            // Group rows by month/year
+            $grouped = [];
+            foreach ($rows as $row) {
+                $dt = new DateTime($row->Date);
+                $key = $dt->format('F Y');
+                $grouped[$key][] = $row;
+            }
+
+            // Count actions for stats
+            $action_counts = [];
+            foreach ($rows as $row) {
+                $a = trim($row->Action);
+                if (!isset($action_counts[$a])) $action_counts[$a] = 0;
+                $action_counts[$a]++;
+            }
+            ?>
+            <div class="dtl-timeline-wrap <?= !$has_search ? 'active' : '' ?>">
+                <!-- Stats -->
+                <?php if (!empty($action_counts)): ?>
+                <div class="dtl-stats">
+                    <div class="dtl-stat-chip">
+                        <i class="fa-solid fa-list-check"></i> Total
+                        <span class="dtl-stat-count"><?= count($rows) ?></span>
+                    </div>
+                    <?php foreach ($action_counts as $act => $cnt): ?>
+                    <div class="dtl-stat-chip">
+                        <?= esc_html($act) ?>
+                        <span class="dtl-stat-count"><?= $cnt ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <?php if (empty($rows)): ?>
+                    <div class="dtl-empty">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <p>No history logs found.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($grouped as $month => $items): ?>
+                    <div class="dtl-date-group">
+                        <div class="dtl-date-header">
+                            <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
+                        </div>
+                        <div class="dtl-timeline">
+                            <?php foreach ($items as $row):
+                                $info = dtl_get_action_info($row->Action, $action_map);
+                                $dt = new DateTime($row->Date);
+                            ?>
+                            <div class="dtl-node <?= $info['class'] ?>">
+                                <div class="dtl-dot"></div>
+                                <div class="dtl-card">
+                                    <div class="dtl-card-head">
+                                        <span class="dtl-action-badge">
+                                            <i class="fa-solid <?= $info['icon'] ?>"></i>
+                                            <?= esc_html($row->Action) ?>
+                                        </span>
+                                        <span class="dtl-time">
+                                            <i class="fa-regular fa-clock"></i>
+                                            <?= esc_html($dt->format('d M Y, H:i')) ?>
+                                        </span>
+                                        <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
+                                    </div>
+                                    <div class="dtl-card-body">
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">Details</span>
+                                            <span class="dtl-detail-value">
+                                                <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $device->DeviceID)) ?>
+                                            </span>
+                                        </div>
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">User</span>
+                                            <span class="dtl-detail-value"><?= esc_html($row->user_email ?: '-') ?></span>
+                                        </div>
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">Owner</span>
+                                            <span class="dtl-detail-value"><?= esc_html($row->Owner ?: '-') ?></span>
+                                        </div>
+                                        <?php if (!empty($row->Photo)): ?>
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">Photo</span>
+                                            <span class="dtl-detail-value">
+                                                <img src="<?= esc_url($row->Photo) ?>" class="dtl-photo-thumb"
+                                                     onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>');"
+                                                     title="Click to view full photo">
+                                            </span>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <div class="dtl-table-wrap <?= $has_search ? 'active' : '' ?>">
             <div class="table-wrapper table-wrapper-details">
-                <table class="table-custom" style="width: 100%;">
+                <table class="table-custom" style="width: 100%; table-layout: fixed;">
                     <thead>
                         <tr>
-                            <th class="text-nowrap py-3 text-start" style="width: 15%;">Action</th>
+                            <th class="text-nowrap py-3 text-start" style="width: 20%;">Action</th>
                             <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 30%;">Reason / Details</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 10%;">Photo</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 15%;">User</th>
-                            <th class="text-nowrap py-3 text-start" style="width: 15%;">Owner</th>
+                            <th class="py-3 text-start" style="width: 55%;">Reason / Details</th>
+                            <th class="text-nowrap py-3 text-center" style="width: 10%;">Info</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($rows)): ?>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">No history logs found.</td>
+                                <td colspan="4" class="text-center py-4 text-muted">No history logs found.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($rows as $index => $row): ?>
@@ -487,30 +624,40 @@ function device_view_details($device_id = null)
                                 $date = new DateTime($row->Date);
                                 ?>
                                 <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
-                                    <td class="text-start align-middle" data-label="Action"><span class="vd-action-pill"><?= esc_html($row->Action) ?></span></td>
-                                    <td class="text-start align-middle vd-date-text" data-label="Date"><?= esc_html($date->format("d/m/Y H:i")) ?></td>
-                                    <td class="text-start align-middle vd-desc-text" data-label="Reason / Details">
+                                    <td class="text-start align-middle" data-label="Action">
+                                        <span class="vd-action-pill" style="white-space: normal; word-break: break-word;"><?= esc_html($row->Action) ?></span>
+                                    </td>
+                                    <td class="text-start align-middle vd-date-text text-nowrap" data-label="Date"><?= esc_html($date->format("d M Y, H:i")) ?></td>
+                                    <td class="text-start align-middle vd-desc-text fw-bold text-dark" style="font-size: 1.05rem; line-height: 1.6;" data-label="Reason / Details">
                                         <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $device->DeviceID)) ?>
                                     </td>
-                                    <td class="text-start align-middle" data-label="Photo">
-                                        <?php if (!empty($row->Photo)): ?>
-                                            <img src="<?= esc_url($row->Photo) ?>"
-                                                onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
-                                                style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor:pointer; transition:transform 0.15s ease;"
-                                                onmouseover="this.style.transform='scale(1.1)'"
-                                                onmouseout="this.style.transform='scale(1)'" title="Click to view full photo">
-                                        <?php else: ?>
-                                            <span style="color:#cbd5e1; font-size:0.85rem;">-</span>
-                                        <?php endif; ?>
+                                    <td class="align-middle text-center" data-label="Info">
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm rounded-pill" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid #cbd5e1; font-size: 0.85rem; padding: 4px 12px; color: #475569;">
+                                                <i class="fa-solid fa-circle-info"></i> More
+                                            </button>
+                                            <div class="dropdown-menu p-3 shadow-sm text-start" style="min-width: 250px; font-size: 0.9rem; color: #334155; right: 0; left: auto;">
+                                                <div class="mb-2"><strong><i class="fa-solid fa-user text-muted" style="width: 20px;"></i> User:</strong> <?= esc_html($row->user_email ?: '-') ?></div>
+                                                <div class="mb-2"><strong><i class="fa-solid fa-briefcase text-muted" style="width: 20px;"></i> Owner:</strong> <?= esc_html($row->Owner ?: '-') ?></div>
+                                                <?php if (!empty($row->Photo)): ?>
+                                                    <div class="mt-3 text-center pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                                        <div class="mb-1 text-muted" style="font-size:0.8rem;">Attached Photo</div>
+                                                        <img src="<?= esc_url($row->Photo) ?>"
+                                                            onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
+                                                            style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;"
+                                                            title="Click to enlarge">
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="text-start align-middle font-medium" data-label="User"><?= esc_html($row->user_email) ?></td>
-                                    <td class="text-start align-middle font-medium" data-label="Owner"><?= esc_html($row->Owner ?: '-') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
+            </div><!-- /dtl-table-wrap -->
 
             <script>
                 window.openPhotoModal = function (imgUrl) {
@@ -597,6 +744,8 @@ function device_view_details($device_id = null)
         </div>
     </div>
 
+    <link rel="stylesheet" href="<?= get_stylesheet_directory_uri() ?>/css/device_timeline.css?v=<?= time() ?>">
+    <script src="<?= get_stylesheet_directory_uri() ?>/js/device_timeline.js?v=<?= time() ?>"></script>
     <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
     <?php
     return ob_get_clean();

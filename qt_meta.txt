@@ -1,0 +1,18 @@
+Array
+(
+    [_astra_site_sidebar_layout] => Array
+        (
+            [0] => left-sidebar
+        )
+
+    [_astra_site_content_layout] => Array
+        (
+            [0] => default
+        )
+
+    [_wp_page_template] => Array
+        (
+            [0] => default
+        )
+
+)

@@ -83,14 +83,15 @@ $maintenance_count = $sidebar_badges['maintenance'];
             <span class="sidebar-link-text">Employees</span>
         </a>
 
-        <!-- Audit Mode -->
-        <a href="<?php echo esc_url(home_url('/audit/')); ?>" class="sidebar-link <?php echo (is_page('audit') || strpos($_SERVER['REQUEST_URI'], '/audit') !== false) ? 'active' : ''; ?>">
-            <span class="sidebar-link-icon">
-                <i class="fa-solid fa-clipboard-check" style="font-size: 20px;"></i>
-            </span>
-            <span class="sidebar-link-text">Audit Mode</span>
-        </a>
 
+
+        <!-- Quick Transfer -->
+        <a href="<?php echo esc_url(home_url('/quick-transfer/')); ?>" class="sidebar-link <?php echo (is_page('quick-transfer') || strpos($_SERVER['REQUEST_URI'], '/quick-transfer') !== false) ? 'active' : ''; ?>">
+            <span class="sidebar-link-icon">
+                <i class="fa-solid fa-right-left" style="font-size: 20px;"></i>
+            </span>
+            <span class="sidebar-link-text">Quick Transfer</span>
+        </a>
 
 
         <!-- Add Device -->
@@ -208,6 +209,10 @@ $maintenance_count = $sidebar_badges['maintenance'];
         </a>
         <a href="<?php echo esc_url(home_url('/owner/')); ?>" class="mobile-link <?php echo (is_page('owner')) ? 'active' : ''; ?>">
             <span><i class="fa-solid fa-users" style="font-size: 20px;"></i> Employees</span>
+        </a>
+
+        <a href="<?php echo esc_url(home_url('/quick-transfer/')); ?>" class="mobile-link <?php echo (is_page('quick-transfer')) ? 'active' : ''; ?>">
+            <span><i class="fa-solid fa-right-left" style="font-size: 20px;"></i> Quick Transfer</span>
         </a>
 
         <a href="<?php echo esc_url(home_url('/add-device/')); ?>" class="mobile-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
