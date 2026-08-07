@@ -83,7 +83,7 @@ function render_sectors_donut($args = []) {
                             data-index="<?= $i ?>"
                             <?php if (!empty($a['url'])): ?>
                                 data-url="<?= esc_url($a['url']) ?>"
-                                onclick="window.location.href='<?= esc_url($a['url']) ?>';"
+                                onclick="if(typeof triggerChartFilter==='function'){triggerChartFilter('<?= esc_url($a['url']) ?>');}else{window.location.href='<?= esc_url($a['url']) ?>';}"
                                 style="cursor: pointer;"
                             <?php endif; ?> />
                 <?php endforeach; ?>
@@ -99,7 +99,7 @@ function render_sectors_donut($args = []) {
                 <button type="button" class="sectors-donut-legend-item" data-index="<?= $i ?>" 
                         <?php if (!empty($a['url'])): ?>
                             data-url="<?= esc_url($a['url']) ?>"
-                            onclick="window.location.href='<?= esc_url($a['url']) ?>';"
+                            onclick="if(typeof triggerChartFilter==='function'){triggerChartFilter('<?= esc_url($a['url']) ?>');}else{window.location.href='<?= esc_url($a['url']) ?>';}"
                             style="cursor: pointer;"
                         <?php endif; ?>
                         title="<?= esc_attr($a['label']) ?> (<?= sprintf('%.1f', $a['pct']) ?>%)">

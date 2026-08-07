@@ -26,8 +26,43 @@ function child_enqueue_styles()
 {
     wp_enqueue_style('astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css'), filemtime(get_stylesheet_directory() . '/style.css'), 'all');
     wp_enqueue_script('aos-global', get_stylesheet_directory_uri() . '/js/aos_global.js', [], filemtime(get_stylesheet_directory() . '/js/aos_global.js'), true);
+    
+    // Enqueue mobile app CSS
+    $mobile_css_path = get_stylesheet_directory() . '/css/mobile_app.css';
+    $mobile_css_version = file_exists($mobile_css_path) ? filemtime($mobile_css_path) : '1.0';
+    wp_enqueue_style('mobile-app-css', get_stylesheet_directory_uri() . '/css/mobile_app.css', array(), $mobile_css_version, 'all');
+
+    // Enqueue AJAX Filter & Reset JS
+    $ajax_js_path = get_stylesheet_directory() . '/js/ajax_filter_reset.js';
+    wp_enqueue_script('ajax-filter-reset', get_stylesheet_directory_uri() . '/js/ajax_filter_reset.js', array(), time(), true);
 }
 add_action('wp_enqueue_scripts', 'child_enqueue_styles', 15);
+
+// PWA: Add manifest to header
+function add_pwa_manifest_to_head() {
+    echo '<link rel="manifest" href="' . get_stylesheet_directory_uri() . '/manifest.json">' . "\n";
+    echo '<meta name="theme-color" content="#2563eb">' . "\n";
+    echo '<link rel="apple-touch-icon" href="' . get_stylesheet_directory_uri() . '/images/icon-192x192.png">' . "\n";
+}
+add_action('wp_head', 'add_pwa_manifest_to_head');
+
+// PWA: Register Service Worker
+function add_pwa_service_worker() {
+    ?>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('<?= get_stylesheet_directory_uri() ?>/service-worker.js').then(function(registration) {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+    </script>
+    <?php
+}
+add_action('wp_footer', 'add_pwa_service_worker');
 if (has_post_thumbnail()) {
     the_post_thumbnail('full'); // หรือขนาดอื่น ๆ เช่น 'medium', 'large'
 }
@@ -109,7 +144,6 @@ require_once get_stylesheet_directory() . '/model/device/edit-device.php';
 require_once get_stylesheet_directory() . '/model/device/device-form-handler.php';
 require_once get_stylesheet_directory() . '/model/device/device_form_add.php';
 require_once get_stylesheet_directory() . '/model/employee/form_edit_employee.php';
-require_once get_stylesheet_directory() . '/controller/transfer_actions.php';
 
 
 
@@ -130,51 +164,16 @@ require_once get_stylesheet_directory() . '/view/formDevice.php';
 require_once get_stylesheet_directory() . '/view/formEmployee.php';
 require_once get_stylesheet_directory() . '/view/formMaintenance.php';
 require_once get_stylesheet_directory() . '/view/view_device_details.php';
-require_once get_stylesheet_directory() . '/view/quick_transfer.php';
 
-// Auto-create Quick Transfer page if it doesn't exist
-function auto_create_quick_transfer_page()
-{
-    if (function_exists('get_page_by_path') && function_exists('wp_insert_post')) {
-        $page_check = get_page_by_path('quick-transfer');
-        if (!isset($page_check->ID)) {
-            $page_id = wp_insert_post([
-                'post_title' => 'Quick Transfer',
-                'post_content' => '[quick_transfer]',
-                'post_status' => 'publish',
-                'post_author' => 1,
-                'post_type' => 'page',
-                'post_name' => 'quick-transfer'
-            ]);
-            // Set Astra meta to ensure sidebar shows
-            update_post_meta($page_id, '_astra_site_sidebar_layout', 'left-sidebar');
+// Cleanup: Delete Quick Transfer page if it exists
+add_action('init', function () {
+    if (function_exists('get_page_by_path')) {
+        $qt_page = get_page_by_path('quick-transfer');
+        if ($qt_page) {
+            wp_delete_post($qt_page->ID, true);
         }
     }
-}
-add_action('init', 'auto_create_quick_transfer_page');
-
-// Force sidebar layout for Quick Transfer page (in case meta was missed)
-add_filter('astra_page_sidebar_layout', function ($sidebar) {
-    if (is_page('quick-transfer')) {
-        return 'left-sidebar';
-    }
-    return $sidebar;
 });
-
-// One-time fix: Update quick-transfer page meta to ensure it has the sidebar
-function fix_quick_transfer_meta()
-{
-    $qt_page = get_page_by_path('quick-transfer');
-    if ($qt_page) {
-        update_post_meta($qt_page->ID, 'site-sidebar-layout', 'left-sidebar');
-        update_post_meta($qt_page->ID, 'site-sidebar-style', 'boxed');
-        update_post_meta($qt_page->ID, 'ast-site-content-layout', 'normal-width-container');
-        update_post_meta($qt_page->ID, 'site-content-style', 'boxed');
-        // If it's using the blank template by mistake, reset it to default template
-        delete_post_meta($qt_page->ID, '_wp_page_template');
-    }
-}
-add_action('init', 'fix_quick_transfer_meta');
 
 // Keep the history retention policy out of the History page request.
 function astra_child_cleanup_expired_history()
@@ -2026,4 +2025,45 @@ add_action('wp_footer', function () {
     </script>
     <?php
 });
+
+/**
+ * Helper to get department abbreviation
+ */
+function stock_supply_get_dept_abbr($dept)
+{
+    if (empty($dept) || $dept === '-') {
+        return '';
+    }
+    $map = [
+        'IT'                 => 'IT',
+        'Content'            => 'CT',
+        'Content Writer(TH)' => 'CW-TH',
+        'Content EN'         => 'CT-EN',
+        'SEO'                => 'SEO',
+        'SEM'                => 'SEM',
+        'SEO & SEM'          => 'SEO&SEM',
+        'PBN'                => 'PBN',
+        'Sale'               => 'SL',
+        'Account'            => 'ACC',
+        'Graphic'            => 'GR',
+        'Art Director'       => 'AD',
+    ];
+    $dept_trimmed = trim($dept);
+    $abbr = isset($map[$dept_trimmed]) ? $map[$dept_trimmed] : $dept_trimmed;
+    return '(' . $abbr . ')';
+}
+
+/**
+ * Helper to format owner name with department abbreviation
+ */
+function stock_supply_format_owner_with_dept($owner_name, $dept)
+{
+    $owner_name = trim($owner_name ?? '');
+    if (empty($owner_name) || $owner_name === '-') {
+        return '-';
+    }
+    $owner_name = trim(preg_replace('/\s*\(.*?\)$/', '', $owner_name));
+    $abbr = stock_supply_get_dept_abbr($dept);
+    return $abbr ? $owner_name . ' ' . $abbr : $owner_name;
+}
 

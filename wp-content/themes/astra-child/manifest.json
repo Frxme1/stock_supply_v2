@@ -1,0 +1,23 @@
+{
+  "name": "Stock Supply App",
+  "short_name": "StockApp",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#2563eb",
+  "description": "Mobile Web App for Stock Supply Management",
+  "icons": [
+    {
+      "src": "/wp-content/themes/astra-child/images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/wp-content/themes/astra-child/images/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

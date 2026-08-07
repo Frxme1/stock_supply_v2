@@ -1,6 +1,6 @@
 <?php
 if (!defined('ABSPATH')) {
-    exit;
+	exit;
 }
 
 function device_form($editing = null)
@@ -138,43 +138,97 @@ function device_form($editing = null)
 
 			<div class="form-group">
 				<label>Brand</label>
-				<select name="BrandID" id="brand-select" required onchange="toggleNewBrandInput(this)">
-					<option value="" style="text-align: center;">-- Select --</option>
-					<?php foreach ($brands as $brand): ?>
-						<option value="<?= $brand->BrandID ?>" <?= selected($editing->BrandID ?? '', $brand->BrandID, false) ?>>
-							<?= esc_html($brand->BrandName) ?>
-						</option>
-					<?php endforeach; ?>
-					<option value="add_new">+ Add New Brand</option>
-				</select>
-				<div id="new_brand_wrapper" style="display: none; margin-top: 8px;">
-					<input type="text" name="new_brand_name" id="new_brand_name" placeholder="Type new brand name (e.g. Razer, Anker)..." class="form-control form-control-sm" style="border-radius: 6px; padding: 6px 12px; border: 1px solid #15A5DA;">
+
+				<div id="brand-select-wrapper">
+					<select name="BrandID" id="brand-select" required onchange="checkBrandSelection(this)">
+						<option value="" style="text-align: center;">-- Select --</option>
+						<?php foreach ($brands as $brand): ?>
+							<option value="<?= $brand->BrandID ?>" <?= selected($editing->BrandID ?? '', $brand->BrandID, false) ?>>
+								<?= esc_html($brand->BrandName) ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+					<button type="button" id="btn-add-new-brand" class="btn w-100 mt-2"
+						style="border: 1.5px dashed #cbd5e1; color: #475569; font-weight: 600; border-radius: 8px; padding: 10px; background: #ffffff; transition: all 0.2s; <?= (!empty($editing->BrandID)) ? 'display: none;' : '' ?>"
+						onclick="toggleNewBrandMode()"
+						onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#3b82f6';"
+						onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#475569';">
+						<i class="fa-solid fa-plus me-1"></i> Add New Brand
+					</button>
+				</div>
+
+				<div id="new_brand_wrapper"
+					style="display: none; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<label class="mb-0" style="font-size: 0.85rem; font-weight: 700; color: #334155;"><i
+								class="fa-solid fa-sparkles text-primary me-1"></i> Create New Brand</label>
+						<button type="button" class="btn btn-link p-0 text-danger text-decoration-none"
+							style="font-weight: 600; font-size: 0.8rem;" onclick="cancelNewBrandMode()">
+							<i class="fa-solid fa-times me-1"></i> Cancel
+						</button>
+					</div>
+					<input type="text" name="new_brand_name" id="new_brand_name" placeholder="e.g. Razer, Anker, Dell..."
+						class="form-control"
+						style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.95rem; padding: 10px 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
 				</div>
 			</div>
+
 			<script>
-				function toggleNewBrandInput(selectElem) {
-					var wrapper = document.getElementById('new_brand_wrapper');
-					var input = document.getElementById('new_brand_name');
-					if (!wrapper || !input) return;
-					if (selectElem.value === 'add_new') {
-						wrapper.style.display = 'block';
-						input.focus();
-					} else {
-						wrapper.style.display = 'none';
-						input.value = '';
+				function checkBrandSelection(selectElem) {
+					var addBtn = document.getElementById('btn-add-new-brand');
+					if (addBtn) {
+						if (selectElem.value !== '') {
+							addBtn.style.display = 'none';
+						} else {
+							addBtn.style.display = 'block';
+						}
 					}
+				}
+
+				function toggleNewBrandMode() {
+					var selectWrapper = document.getElementById('brand-select-wrapper');
+					var newWrapper = document.getElementById('new_brand_wrapper');
+					var input = document.getElementById('new_brand_name');
+					var select = document.getElementById('brand-select');
+
+					if (!selectWrapper || !newWrapper || !input || !select) return;
+
+					selectWrapper.style.display = 'none';
+					newWrapper.style.display = 'block';
+
+					select.required = false;
+					input.required = true;
+					input.focus();
+					select.value = '';
+				}
+
+				function cancelNewBrandMode() {
+					var selectWrapper = document.getElementById('brand-select-wrapper');
+					var newWrapper = document.getElementById('new_brand_wrapper');
+					var input = document.getElementById('new_brand_name');
+					var select = document.getElementById('brand-select');
+
+					if (!selectWrapper || !newWrapper || !input || !select) return;
+
+					selectWrapper.style.display = 'block';
+					newWrapper.style.display = 'none';
+
+					select.required = true;
+					input.required = false;
+					input.value = '';
 				}
 			</script>
 
 
 			<div class="form-group" style="position: relative;">
 				<label>Model</label>
-				<input type="text" name="Model" id="model_input" value="<?= esc_attr($editing->Model ?? '') ?>" list="suggested_models" autocomplete="off" required>
+				<input type="text" name="Model" id="model_input" value="<?= esc_attr($editing->Model ?? '') ?>"
+					list="suggested_models" autocomplete="off" required>
 				<datalist id="suggested_models"></datalist>
 			</div>
 
 			<script>
-				document.addEventListener('DOMContentLoaded', function() {
+				document.addEventListener('DOMContentLoaded', function () {
 					const categorySelect = document.getElementById('category_select');
 					const brandSelect = document.getElementById('brand-select');
 					const modelList = document.getElementById('suggested_models');
@@ -197,17 +251,17 @@ function device_form($editing = null)
 							method: 'POST',
 							body: formData
 						})
-						.then(res => res.json())
-						.then(res => {
-							if (res.success && res.data.length > 0) {
-								res.data.forEach(modelName => {
-									const option = document.createElement('option');
-									option.value = modelName;
-									modelList.appendChild(option);
-								});
-							}
-						})
-						.catch(err => console.error('Error fetching models:', err));
+							.then(res => res.json())
+							.then(res => {
+								if (res.success && res.data.length > 0) {
+									res.data.forEach(modelName => {
+										const option = document.createElement('option');
+										option.value = modelName;
+										modelList.appendChild(option);
+									});
+								}
+							})
+							.catch(err => console.error('Error fetching models:', err));
 					}
 
 					if (categorySelect) categorySelect.addEventListener('change', fetchSuggestedModels);
@@ -279,18 +333,7 @@ function device_form($editing = null)
 
 	<style>
 		/* Next.js Inspired Form UI */
-		form {
-			max-width: 650px;
-			margin: 40px auto;
-			margin-top: 10px;
-			background: #ffffff;
-			padding: 2.5rem;
-			border-radius: 16px;
-			border: 1px solid #e5e7eb;
-			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-			animation: formFadeIn 0.5s ease-out forwards;
-		}
+
 
 		@keyframes formFadeIn {
 			from {
@@ -341,7 +384,8 @@ function device_form($editing = null)
 		.form-group select {
 			width: 100%;
 			box-sizing: border-box;
-			height: 44px; /* Ensure uniform height */
+			height: 44px;
+			/* Ensure uniform height */
 			padding: 0.5rem 1rem;
 			font-size: 0.95rem;
 			color: #111827;
@@ -350,7 +394,8 @@ function device_form($editing = null)
 			border-radius: 10px;
 			transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-			appearance: none; /* For custom select arrow */
+			appearance: none;
+			/* For custom select arrow */
 		}
 
 		/* Select specific - Custom Arrow */

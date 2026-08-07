@@ -290,9 +290,11 @@ function device_crud_monitor()
                                                 $lastInitial = '';
                                             }
                                             echo htmlspecialchars($lastInitial);
-                                            if ($position !== '') {
-                                                echo ' (' . htmlspecialchars($position) . ')';
-                                            }
+                                        }
+
+                                        $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
+                                        if (!empty($deptAbbr)) {
+                                            echo ' <span class="owner-dept text-muted" style="font-size: 0.85em;">' . htmlspecialchars($deptAbbr) . '</span>';
                                         }
                                     }
                                     ?>
@@ -388,8 +390,8 @@ function device_crud_monitor()
                                             <div class="row">
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block"
-                                                        style="font-size: 0.85em;">Department</span>
-                                                    <strong><?= formatName($row->Department) ?></strong>
+                                                        style="font-size: 0.85em;">Position</span>
+                                                    <strong><?= formatName($row->Position ?? '-') ?></strong>
                                                 </div>
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block" style="font-size: 0.85em;">Receive

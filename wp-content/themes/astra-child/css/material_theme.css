@@ -974,6 +974,7 @@ hr,
 .table-responsive-xxl,
 #bulk-action-form {
     animation: slideUp 0.4s var(--md-transition);
+    max-width: 200%;
 }
 
 /* Subtle page load fade-in */
@@ -1626,7 +1627,7 @@ button,
         margin-top: -40px !important;
         margin-left: -40px !important;
         margin-right: 0 !important;
-        width: 130% !important;
+        width: 150% !important;
         max-width: 130% !important;
         box-sizing: border-box !important;
     }
@@ -1963,13 +1964,14 @@ button,
     .fl-col[data-node] .fl-col-content,
     .fl-col-content {
         margin-left: -35px !important;
-        margin-top: -20px;
+        margin-top: -70px;
         margin-right: 0px !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
         width: 110% !important;
         box-sizing: border-box !important;
     }
+
 
     form {
         max-width: 100% !important;
@@ -2041,6 +2043,7 @@ button,
     background: #ffffff;
     padding: 16px 20px;
     border-radius: 12px;
+    max-width: 120%;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
     border: 1px solid #e5e7eb;
     margin-bottom: 24px;

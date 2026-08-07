@@ -371,11 +371,12 @@ function form_owner()
                 <?php foreach ($rows as $index => $row): ?>
                     <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
                         <td class="text-start align-middle" data-label="ID">
-                            <strong><?= esc_html($row->Nickname) ?></strong>
+                            <?php $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? ''); ?>
+                            <strong><?= esc_html($row->Nickname) ?></strong> <?= $deptAbbr ? '<span class="text-muted small fw-normal">' . esc_html($deptAbbr) . '</span>' : '' ?>
                             <small class="text-muted d-block font-monospace">#<?= $row->OwnerID ?></small>
                         </td>
                         <td class="text-start align-middle" data-label="Employee">
-                            <?= !empty(trim($row->FirstName . ' ' . $row->LastName)) ? esc_html($row->FirstName . ' ' . $row->LastName) : '-' ?>
+                            <?= !empty(trim($row->FirstName . ' ' . $row->LastName)) ? esc_html(trim($row->FirstName . ' ' . $row->LastName)) . ($deptAbbr ? ' <span class="text-muted small">' . esc_html($deptAbbr) . '</span>' : '') : '-' ?>
                         </td>
                         <td class="text-start align-middle text-muted" data-label="Email">
                             <?= !empty($row->Email) ? esc_html($row->Email) : '-' ?>

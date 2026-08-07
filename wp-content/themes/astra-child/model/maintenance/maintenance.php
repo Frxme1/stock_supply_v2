@@ -129,7 +129,7 @@ function device_crud_maintenance()
                                     <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
                             </td>
                             <td class="align-middle text-start">
-                                <strong><?= formatName($row->Owner) ?></strong><br>
+                                <strong><?= formatName(stock_supply_format_owner_with_dept($row->Owner, $row->Department)) ?></strong><br>
                                 <small class="text-muted"><?= formatName($row->Department) ?></small>
                             </td>
 
@@ -255,6 +255,86 @@ function device_crud_maintenance()
                     <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+
+        <div class="dtl-mobile-timeline-wrapper d-block d-md-none mt-4">
+            <link rel="stylesheet" href="<?= get_stylesheet_directory_uri() ?>/css/device_timeline.css?v=<?= time() ?>">
+            <script src="<?= get_stylesheet_directory_uri() ?>/js/device_timeline.js?v=<?= time() ?>"></script>
+            <style>
+                /* Force timeline visible since it's wrapped */
+                .dtl-mobile-timeline-wrapper .dtl-timeline-wrap { display: block !important; opacity: 1 !important; }
+            </style>
+            <?php
+            // Group rows by month/year based on RepairDate
+            $grouped = [];
+            foreach ($rows as $row) {
+                $dt = new DateTime($row->RepairDate);
+                $key = $dt->format('F Y');
+                $grouped[$key][] = $row;
+            }
+            ?>
+            <div class="dtl-timeline-wrap active">
+                <?php if (empty($rows)): ?>
+                    <div class="dtl-empty">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <p>No maintenance records found.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($grouped as $month => $items): ?>
+                    <div class="dtl-date-group">
+                        <div class="dtl-date-header">
+                            <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
+                        </div>
+                        <div class="dtl-timeline">
+                            <?php foreach ($items as $row):
+                                $dt = new DateTime($row->RepairDate);
+                                $dev_action_nonce = wp_create_nonce('device_action_nonce');
+                            ?>
+                            <div class="dtl-node dtl-action-maintenance">
+                                <div class="dtl-dot"></div>
+                                <div class="dtl-card">
+                                    <div class="dtl-card-head">
+                                        <span class="dtl-action-badge">
+                                            <i class="fa-solid fa-wrench"></i>
+                                            <?= esc_html($row->DeviceID) ?>
+                                        </span>
+                                        <span class="dtl-time">
+                                            <i class="fa-regular fa-clock"></i>
+                                            <?= esc_html($dt->format('d M Y, H:i')) ?>
+                                        </span>
+                                        <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
+                                    </div>
+                                    <div class="dtl-card-body">
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">Device Info</span>
+                                            <span class="dtl-detail-value fw-bold text-dark">
+                                                <?= esc_html($row->Brand) ?> <?= esc_html(!empty($row->Model) ? $row->Model : '') ?>
+                                            </span>
+                                        </div>
+                                        <div class="dtl-detail-row">
+                                             <span class="dtl-detail-label">Owner</span>
+                                             <span class="dtl-detail-value"><?= esc_html(formatName(stock_supply_format_owner_with_dept($row->Owner, $row->Department))) ?></span>
+                                         </div>
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label text-danger">Reason</span>
+                                            <span class="dtl-detail-value text-danger fw-bold"><?= esc_html(formatName($row->Details)) ?></span>
+                                        </div>
+                                        
+                                        <div class="dtl-detail-row mt-3 pt-3" style="border-top: 1px dashed #e2e8f0; display: flex; gap: 10px;">
+                                            <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="btn flex-grow-1" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; color: #334155; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; text-decoration: none;"><i class="fa-solid fa-magnifying-glass" style="font-size: 0.85rem;"></i> View Details</a>
+                                            <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
+                                                <a href="?return_to_owner=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>" class="btn flex-grow-1" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 6px; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 4px rgba(55, 48, 163, 0.1); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; text-decoration: none;"><i class="fa-solid fa-check" style="font-size: 0.85rem;"></i> Finish</a>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </div>
         <!-- Pagination -->
         <style>

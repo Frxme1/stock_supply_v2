@@ -54,17 +54,17 @@ function device_dashboard()
 
     // Category config (Links to respective category pages for Monitor/Laptop/Accessories, and clears filters on current page for All Devices)
     $category_config = [
-        ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>', 'url' => home_url('/formDevice/')],
+        ['label' => 'All Devices', 'count' => $total_devices, 'color' => '#1976D2', 'icon' => '<i class="fa-solid fa-chart-simple"></i>', 'url' => home_url('/home/')],
         ['label' => 'Monitor', 'count' => $total_monitor, 'color' => '#FDB840', 'icon' => '<i class="fa-solid fa-desktop"></i>', 'url' => home_url('/monitor/')],
         ['label' => 'Laptop', 'count' => $total_laptop, 'color' => '#15A5DA', 'icon' => '<i class="fa-solid fa-laptop"></i>', 'url' => home_url('/laptop/')],
         ['label' => 'Accessories', 'count' => $total_accessories, 'color' => '#6ABF57', 'icon' => '<i class="fa-solid fa-plug"></i>', 'url' => home_url('/accessories/')],
     ];
 
     $status_urls = [
-        'Available' => home_url('/formDevice/?filter_status=Available'),
-        'In Use' => home_url('/formDevice/?filter_status=In+Use'),
+        'Available' => home_url('/home/?filter_status=Available'),
+        'In Use' => home_url('/home/?filter_status=In+Use'),
         'Maintenance' => home_url('/maintenance/'),
-        'Retired' => home_url('/formDevice/?filter_status=Retired'),
+        'Retired' => home_url('/home/?filter_status=Retired'),
     ];
 
     // Query recently added devices (within 1 day)
@@ -148,7 +148,7 @@ function device_dashboard()
                 $percent = $total_devices > 0 ? round(($cat['count'] / $total_devices) * 100, 1) : 0;
                 $is_total = ($cat['label'] === 'All Devices');
                 ?>
-                <div class="next-card slide-up clickable-card" onclick="window.location.href='<?= esc_url($cat['url']) ?>'"
+                <div class="next-card slide-up clickable-card" onclick="triggerChartFilter('<?= esc_url($cat['url']) ?>')"
                     style="animation-delay: <?= $delay ?>s; cursor: pointer;" title="View <?= esc_attr($cat['label']) ?>">
                     <?php $delay += 0.05; ?>
                     <div class="next-card-header">
@@ -189,7 +189,7 @@ function device_dashboard()
                 $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
                 ?>
                 <div class="next-card slide-up clickable-card"
-                    onclick="window.location.href='<?= esc_url($status_urls[$status] ?? home_url('/formDevice/')) ?>'"
+                    onclick="triggerChartFilter('<?= esc_url($status_urls[$status] ?? home_url('/home/')) ?>')"
                     style="animation-delay: <?= $delay2 ?>s; cursor: pointer;" title="View <?= esc_attr($status) ?> devices">
                     <?php $delay2 += 0.05; ?>
                     <div class="next-card-header">
@@ -910,6 +910,25 @@ function device_dashboard()
             initApexCharts();
         }
 
+        function triggerChartFilter(targetUrl) {
+            try {
+                var targetObj = new URL(targetUrl, window.location.origin);
+                var isSamePath = (targetObj.pathname.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, ''));
+
+                if (isSamePath && typeof window.loadAjaxContent === 'function' && (document.querySelector('.table-wrapper') || document.querySelector('.table-custom'))) {
+                    window.loadAjaxContent(targetUrl);
+                    var tableElem = document.getElementById('bulk-action-form') || document.getElementById('device_table') || document.querySelector('.table-wrapper');
+                    if (tableElem) {
+                        tableElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                } else {
+                    window.location.href = targetUrl;
+                }
+            } catch(e) {
+                window.location.href = targetUrl;
+            }
+        }
+
         function initApexCharts() {
             // Chart 2: Status Overview
             var optionsStatus = {
@@ -923,16 +942,11 @@ function device_dashboard()
                         dataPointSelection: function (event, chartContext, config) {
                             var categories = <?= $js_status_labels ?>;
                             var selected = categories[config.dataPointIndex];
-                            if (selected === 'Available') {
-                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=Available')) ?>';
-                            } else if (selected === 'In Use') {
-                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=In+Use')) ?>';
-                            } else if (selected === 'Maintenance') {
+                            if (selected === 'Maintenance') {
                                 window.location.href = '<?= esc_url(home_url('/maintenance/')) ?>';
-                            } else if (selected === 'Retired') {
-                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=Retired')) ?>';
                             } else if (selected) {
-                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_status=')) ?>' + encodeURIComponent(selected);
+                                var targetUrl = '<?= esc_url(home_url('/home/')) ?>?filter_status=' + encodeURIComponent(selected);
+                                triggerChartFilter(targetUrl);
                             }
                         }
                     }
@@ -961,7 +975,8 @@ function device_dashboard()
                             var categories = <?= $js_dept_labels ?>;
                             var selected = categories[config.dataPointIndex];
                             if (selected) {
-                                window.location.href = '<?= esc_url(home_url('/formDevice/?filter_department=')) ?>' + encodeURIComponent(selected);
+                                var targetUrl = '<?= esc_url(home_url('/home/')) ?>?filter_department=' + encodeURIComponent(selected);
+                                triggerChartFilter(targetUrl);
                             }
                         }
                     }

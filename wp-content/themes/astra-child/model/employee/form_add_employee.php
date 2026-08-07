@@ -1,6 +1,6 @@
 <?php
 if (!defined('ABSPATH')) {
-    exit;
+	exit;
 }
 
 function form_add_owner($editing = null)
@@ -200,8 +200,15 @@ function form_add_owner($editing = null)
 		}
 
 		@keyframes formFadeIn {
-			from { opacity: 0; transform: translateY(10px); }
-			to { opacity: 1; transform: translateY(0); }
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
 		}
 
 		form h2 {
@@ -242,7 +249,8 @@ function form_add_owner($editing = null)
 		.form-group select {
 			width: 100%;
 			box-sizing: border-box;
-			height: 44px; /* Ensure uniform height */
+			height: 44px;
+			/* Ensure uniform height */
 			padding: 0.5rem 1rem;
 			font-size: 0.95rem;
 			color: #111827;
@@ -251,7 +259,8 @@ function form_add_owner($editing = null)
 			border-radius: 10px;
 			transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-			appearance: none; /* For custom select arrow */
+			appearance: none;
+			/* For custom select arrow */
 		}
 
 		/* Select specific - Custom Arrow */
@@ -324,6 +333,7 @@ function form_add_owner($editing = null)
 			.form-grid {
 				grid-template-columns: 1fr;
 			}
+
 			form {
 				margin: 20px;
 				padding: 1.5rem;

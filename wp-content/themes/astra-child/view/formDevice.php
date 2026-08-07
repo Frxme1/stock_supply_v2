@@ -135,7 +135,8 @@ function device_crud()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Brand</label>
-                            <select name="filter_brand" id="filter_brand" class="form-select form-select-sm staggered-dropdown">
+                            <select name="filter_brand" id="filter_brand"
+                                class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Brands</option>
                                 <?php foreach ($all_brands as $brand): ?>
                                     <option value="<?= esc_attr($brand) ?>" <?= $filter_brand == $brand ? 'selected' : '' ?>>
@@ -146,7 +147,8 @@ function device_crud()
                         </div>
                         <div class="col-12 col-sm-6 col-md-2" id="department_wrapper">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Department</label>
-                            <select name="filter_department" id="filter_department" class="form-select form-select-sm staggered-dropdown">
+                            <select name="filter_department" id="filter_department"
+                                class="form-select form-select-sm staggered-dropdown">
                                 <option value="">All Depts</option>
                                 <?php foreach ($all_departments as $dept): ?>
                                     <option value="<?= esc_attr($dept) ?>" <?= $filter_department == $dept ? 'selected' : '' ?>>
@@ -236,6 +238,31 @@ function device_crud()
                 </button>
             </div>
 
+            <div class="mobile-only-container">
+                <!-- Mobile Header / Quick Actions -->
+                <div class="quick-action-grid">
+                    <a href="javascript:void(0);" onclick="openAddDeviceBottomSheet()" class="quick-action-card receive"
+                        style="grid-column: span 2;">
+                        <div class="quick-action-icon"><i class="fa-solid fa-plus"></i></div>
+                        <div class="quick-action-title">Add Device</div>
+                    </a>
+                    <a href="<?= home_url('/maintenance/') ?>" class="quick-action-card swap">
+                        <div class="quick-action-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                        <div class="quick-action-title">Maintenance</div>
+                    </a>
+                    <a href="<?= home_url('/history/') ?>" class="quick-action-card return">
+                        <div class="quick-action-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <div class="quick-action-title">History</div>
+                    </a>
+                </div>
+
+                <!-- Mobile Filter Button -->
+                <button type="button" class="mobile-filter-btn" onclick="openBottomSheet()">
+                    <span><i class="fa-solid fa-filter"></i> Filters & Search</span>
+                    <i class="fa-solid fa-chevron-right text-muted"></i>
+                </button>
+            </div>
+
             <div id="device_table" class="table-wrapper">
                 <table class="table-custom" style="width: 100%;">
                     <thead>
@@ -297,9 +324,11 @@ function device_crud()
                                             }
 
                                             echo '<span class="owner-name">' . htmlspecialchars($lastInitial) . '</span>';
-                                            if ($position !== '') {
-                                                echo ' <span class="owner-position">(' . htmlspecialchars($position) . ')</span>';
-                                            }
+                                        }
+
+                                        $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
+                                        if (!empty($deptAbbr)) {
+                                            echo ' <span class="owner-dept text-muted" style="font-size: 0.85em;">' . htmlspecialchars($deptAbbr) . '</span>';
                                         }
                                     }
                                     ?>
@@ -398,8 +427,8 @@ function device_crud()
                                             <div class="row">
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block"
-                                                        style="font-size: 0.85em;">Department</span>
-                                                    <strong><?= formatName($row->Department) ?></strong>
+                                                        style="font-size: 0.85em;">Position</span>
+                                                    <strong><?= formatName($row->Position ?? '-') ?></strong>
                                                 </div>
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block" style="font-size: 0.85em;">Assign
@@ -435,6 +464,80 @@ function device_crud()
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Device Cards -->
+            <div class="mobile-only-container" style="margin-top: 16px;">
+                <?php foreach ($rows as $index => $row): ?>
+                    <?php
+                    $status = $row->Status;
+                    $statusClass = '';
+                    if (strcasecmp($status, 'Available') === 0)
+                        $statusClass = 'status-available';
+                    elseif (strcasecmp($status, 'In Use') === 0)
+                        $statusClass = 'status-inuse';
+                    elseif (strcasecmp($status, 'Maintenance') === 0)
+                        $statusClass = 'status-maintenance';
+                    elseif (strcasecmp($status, 'Retired') === 0)
+                        $statusClass = 'status-retired';
+                    ?>
+                    <div class="mobile-device-card">
+                        <div class="mobile-device-header">
+                            <div class="mobile-device-title-area">
+                                <div class="mobile-device-title"><?= esc_html($row->Brand) ?>
+                                    <?= esc_html(!empty($row->Model) ? $row->Model : '') ?>
+                                </div>
+                                <div class="mobile-device-meta"><?= esc_html($row->Category) ?> | SN:
+                                    <?= esc_html(!empty($row->SerialNumber) ? $row->SerialNumber : '-') ?>
+                                </div>
+                            </div>
+                            <div class="status-badge <?= $statusClass ?>">
+                                <span class="status-dot"></span>
+                                <?= esc_html($status) ?>
+                            </div>
+                        </div>
+                        <div class="mobile-device-body">
+                            <div class="mobile-device-owner">
+                                <i class="fa-solid fa-user"></i>
+                                <?php
+                                $owner = trim($row->Owner ?? '');
+                                $nickname = trim($row->Nickname ?? '');
+                                if ($owner === '' && $nickname === '') {
+                                    echo '-';
+                                } else {
+                                    if ($nickname !== '')
+                                        echo htmlspecialchars($nickname) . ' ';
+                                    if ($owner !== '') {
+                                        preg_match('/\((.*?)\)$/', $owner, $matches);
+                                        $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
+                                        $nameParts = explode(' ', $nameOnly);
+                                        if (count($nameParts) > 1) {
+                                            $lastInitial = strtoupper(mb_substr(end($nameParts), 0, 1)) . '.';
+                                            echo htmlspecialchars($lastInitial);
+                                        }
+                                    }
+                                    $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
+                                    if (!empty($deptAbbr)) {
+                                        echo ' <span class="text-muted small">' . htmlspecialchars($deptAbbr) . '</span>';
+                                    }
+                                }
+                                ?>
+                            </div>
+                            <div class="mobile-device-id"><strong><?= esc_html($row->DeviceID) ?></strong></div>
+                        </div>
+                        <div class="mobile-device-actions">
+                            <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
+                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"
+                                    class="mobile-btn-action mobile-btn-secondary"><i class="fa-solid fa-gear"></i> Edit</a>
+                            <?php else: ?>
+                                <a href="?edit=<?= esc_attr($row->DeviceID) ?>" class="mobile-btn-action mobile-btn-secondary"><i
+                                        class="fa-solid fa-gear"></i> Edit</a>
+                            <?php endif; ?>
+                            <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="mobile-btn-action mobile-btn-primary"><i
+                                    class="fa-solid fa-magnifying-glass"></i> View</a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </form>
 
@@ -722,10 +825,69 @@ function device_crud()
         </div>
     </div>
 
+    <!-- Bottom Sheet for Filters -->
+    <div class="bottom-sheet-backdrop" id="bottomSheetBackdrop" onclick="closeBottomSheet()"></div>
+    <div class="bottom-sheet" id="mobileBottomSheet">
+        <div class="bottom-sheet-header">
+            <h3>Filters</h3>
+            <button class="bottom-sheet-close" onclick="closeBottomSheet()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div id="mobile-filter-container"></div>
+    </div>
+    <script>
+        function closeBottomSheet() {
+            document.getElementById('mobileBottomSheet').classList.remove('open');
+            document.getElementById('bottomSheetBackdrop').classList.remove('open');
+        }
+        function openBottomSheet() {
+            document.getElementById('mobileBottomSheet').classList.add('open');
+            document.getElementById('bottomSheetBackdrop').classList.add('open');
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.innerWidth <= 768) {
+                var filterForm = document.getElementById('advanced-filter-form');
+                var mobileContainer = document.getElementById('mobile-filter-container');
+                if (filterForm && mobileContainer) {
+                    mobileContainer.appendChild(filterForm);
+                    filterForm.style.display = 'block';
+                }
+            }
+        });
+    </script>
+
+    <!-- Bottom Sheet for Add Device (Mobile Only) -->
+    <div class="bottom-sheet-backdrop" id="addDeviceBottomSheetBackdrop" onclick="closeAddDeviceBottomSheet()"></div>
+    <div class="bottom-sheet" id="addDeviceBottomSheet" style="height: 90vh; overflow-y: auto; padding: 20px;">
+        <div class="bottom-sheet-header"
+            style="position: sticky; top: 0; background: #ffffff; z-index: 10; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb;">
+            <h3 style="font-size: 1.2rem; margin: 0;">Add New Device</h3>
+            <button class="bottom-sheet-close" onclick="closeAddDeviceBottomSheet()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div id="add-device-container">
+            <style>
+                #add-device-container h2 {
+                    display: none !important;
+                }
+            </style>
+            <?php echo do_shortcode('[device_form]'); ?>
+        </div>
+    </div>
+    <script>
+        function openAddDeviceBottomSheet() {
+            document.getElementById('addDeviceBottomSheet').classList.add('open');
+            document.getElementById('addDeviceBottomSheetBackdrop').classList.add('open');
+        }
+        function closeAddDeviceBottomSheet() {
+            document.getElementById('addDeviceBottomSheet').classList.remove('open');
+            document.getElementById('addDeviceBottomSheetBackdrop').classList.remove('open');
+        }
+    </script>
+
     <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
 
-        <?php
-    
+    <?php
+
     return ob_get_clean();
 }
 
@@ -733,6 +895,3 @@ function device_crud()
 
 add_shortcode('device_crud', 'device_crud');
 ?>
-
-
-

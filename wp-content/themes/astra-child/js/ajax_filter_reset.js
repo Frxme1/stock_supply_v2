@@ -3,191 +3,235 @@
  * Stock Supply Theme
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+// Inject smooth transition CSS
+if (!document.getElementById('ajax-filter-reset-styles')) {
+    const style = document.createElement('style');
+    style.id = 'ajax-filter-reset-styles';
+    style.textContent = `
+        .table-loading-overlay {
+            opacity: 0.35 !important;
+            pointer-events: none !important;
+            transition: opacity 0.2s ease !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
 
-    // Inject smooth transition CSS
-    if (!document.getElementById('ajax-filter-reset-styles')) {
-        const style = document.createElement('style');
-        style.id = 'ajax-filter-reset-styles';
-        style.textContent = `
-            .table-loading-overlay {
-                opacity: 0.35 !important;
-                pointer-events: none !important;
-                transition: opacity 0.2s ease !important;
+/**
+ * Clean URL helper: Removes hashes (#) and handles relative/hash-only URLs
+ */
+function getCleanUrl(rawUrl) {
+    if (!rawUrl || rawUrl === '#' || rawUrl.startsWith('#')) {
+        return window.location.pathname;
+    }
+    try {
+        const base = window.location.origin + window.location.pathname;
+        const urlObj = new URL(rawUrl, base);
+        urlObj.hash = '';
+
+        let search = urlObj.search.replace(/^\?&/, '?').replace(/&&+/g, '&');
+        return urlObj.pathname + search;
+    } catch (e) {
+        return rawUrl.replace(/#.*$/, '');
+    }
+}
+
+/**
+ * Save Filter State in sessionStorage
+ */
+function saveFilterState(targetUrl) {
+    const pagePath = window.location.pathname;
+    try {
+        const urlObj = new URL(targetUrl, window.location.origin);
+        if (urlObj.search && urlObj.search !== '?') {
+            sessionStorage.setItem('filterState_' + pagePath, urlObj.search);
+        } else {
+            sessionStorage.removeItem('filterState_' + pagePath);
+        }
+    } catch (e) {
+        // ignore
+    }
+}
+
+/**
+ * Clear all filter inputs inside a form & remove stored filter state
+ */
+function clearFormInputs(form) {
+    const pagePath = window.location.pathname;
+    sessionStorage.removeItem('filterState_' + pagePath);
+
+    const targetForm = form || document.querySelector('#advanced-filter-form') || document.querySelector('.ajax-filter-form') || document.querySelector('form[method="GET"]') || document.querySelector('form');
+    if (!targetForm) return;
+
+    // 1. Reset all <select> dropdowns to default empty option & trigger change
+    const selectElements = targetForm.querySelectorAll('select');
+    selectElements.forEach(select => {
+        select.value = '';
+        select.selectedIndex = 0;
+        Array.from(select.options).forEach((opt, idx) => {
+            opt.selected = (idx === 0 || opt.value === '');
+        });
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    // 2. Clear text and search inputs
+    const textInputs = targetForm.querySelectorAll('input[type="text"], input[type="search"], input[name="device_search"]');
+    textInputs.forEach(input => {
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    // 3. Handle custom department wrapper toggle if function exists
+    if (typeof window.toggleDepartment === 'function') {
+        window.toggleDepartment();
+    }
+}
+
+/**
+ * Core AJAX Content Loader
+ */
+async function loadAjaxContent(targetUrl, formToClear = null) {
+    const cleanUrl = getCleanUrl(targetUrl);
+    const tableContainer = document.querySelector('.table-wrapper') || document.querySelector('.table-custom');
+
+    if (tableContainer) {
+        tableContainer.classList.add('table-loading-overlay');
+    }
+
+    if (formToClear) {
+        clearFormInputs(formToClear);
+    } else {
+        // Sync form controls with cleanUrl parameters
+        try {
+            const urlObj = new URL(cleanUrl, window.location.origin);
+            const filterForm = document.querySelector('#advanced-filter-form') || document.querySelector('.ajax-filter-form');
+            if (filterForm) {
+                const params = urlObj.searchParams;
+                filterForm.querySelectorAll('select').forEach(sel => {
+                    const val = params.get(sel.name) || '';
+                    sel.value = val;
+                });
+                filterForm.querySelectorAll('input[type="text"], input[name="device_search"]').forEach(inp => {
+                    const val = params.get(inp.name) || '';
+                    inp.value = val;
+                });
+                if (typeof window.toggleDepartment === 'function') {
+                    window.toggleDepartment();
+                }
             }
-        `;
-        document.head.appendChild(style);
-    }
-
-    /**
-     * Clean URL helper: Removes hashes (#) and handles relative/hash-only URLs
-     */
-    function getCleanUrl(rawUrl) {
-        if (!rawUrl || rawUrl === '#' || rawUrl.startsWith('#')) {
-            return window.location.pathname;
-        }
-        try {
-            const base = window.location.origin + window.location.pathname;
-            const urlObj = new URL(rawUrl, base);
-            urlObj.hash = '';
-
-            let search = urlObj.search.replace(/^\?&/, '?').replace(/&&+/g, '&');
-            return urlObj.pathname + search;
         } catch (e) {
-            return rawUrl.replace(/#.*$/, '');
+            // ignore url parse error
         }
     }
 
-    /**
-     * Save Filter State in sessionStorage
-     */
-    function saveFilterState(targetUrl) {
-        const pagePath = window.location.pathname;
-        try {
-            const urlObj = new URL(targetUrl, window.location.origin);
-            if (urlObj.search && urlObj.search !== '?') {
-                sessionStorage.setItem('filterState_' + pagePath, urlObj.search);
+    try {
+        const response = await fetch(cleanUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (response.ok) {
+            const htmlText = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+
+            // 1. Replace Table Content (.table-wrapper)
+            const newTable = doc.querySelector('.table-wrapper') || doc.querySelector('.table-custom');
+            const currentTable = document.querySelector('.table-wrapper') || document.querySelector('.table-custom');
+
+            if (newTable && currentTable) {
+                currentTable.innerHTML = newTable.innerHTML;
+            }
+
+            // 1.5 Replace Mobile Cards Content (.mobile-only-container)
+            const newMobiles = doc.querySelectorAll('.mobile-only-container');
+            const currentMobiles = document.querySelectorAll('.mobile-only-container');
+            if (newMobiles.length > 0 && currentMobiles.length === newMobiles.length) {
+                for (let i = 0; i < newMobiles.length; i++) {
+                    currentMobiles[i].innerHTML = newMobiles[i].innerHTML;
+                }
+            }
+
+            // 2. Replace Pagination Container
+            const newPagination = doc.querySelector('.pagination')?.closest('div, ul') || doc.querySelector('.pagination');
+            const currentPagination = document.querySelector('.pagination')?.closest('div, ul') || document.querySelector('.pagination');
+
+            if (newPagination && currentPagination) {
+                currentPagination.innerHTML = newPagination.innerHTML;
+            }
+
+            // 3. Update Browser History State silently (no reload)
+            window.history.pushState({}, '', cleanUrl);
+
+            // 4. Save filter state to sessionStorage
+            saveFilterState(cleanUrl);
+
+            // 5. Close Mobile Bottom Sheet if it's open
+            if (typeof closeBottomSheet === 'function') {
+                closeBottomSheet();
             } else {
-                sessionStorage.removeItem('filterState_' + pagePath);
+                const sheet = document.getElementById('mobileBottomSheet');
+                const backdrop = document.getElementById('bottomSheetBackdrop');
+                if (sheet) sheet.classList.remove('open');
+                if (backdrop) backdrop.classList.remove('open');
             }
-        } catch (e) {
-            // ignore
         }
-    }
 
-    /**
-     * Clear all filter inputs inside a form & remove stored filter state
-     */
-    function clearFormInputs(form) {
-        const pagePath = window.location.pathname;
-        sessionStorage.removeItem('filterState_' + pagePath);
-
-        const targetForm = form || document.querySelector('#advanced-filter-form') || document.querySelector('.ajax-filter-form') || document.querySelector('form[method="GET"]') || document.querySelector('form');
-        if (!targetForm) return;
-
-        // 1. Reset all <select> dropdowns to default empty option & trigger change
-        const selectElements = targetForm.querySelectorAll('select');
-        selectElements.forEach(select => {
-            select.value = '';
-            select.selectedIndex = 0;
-            Array.from(select.options).forEach((opt, idx) => {
-                opt.selected = (idx === 0 || opt.value === '');
-            });
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-
-        // 2. Clear text and search inputs
-        const textInputs = targetForm.querySelectorAll('input[type="text"], input[type="search"], input[name="device_search"]');
-        textInputs.forEach(input => {
-            input.value = '';
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-
-        // 3. Handle custom department wrapper toggle if function exists
-        if (typeof window.toggleDepartment === 'function') {
-            window.toggleDepartment();
-        }
-    }
-
-    /**
-     * Core AJAX Content Loader
-     */
-    async function loadAjaxContent(targetUrl, formToClear = null) {
-        const cleanUrl = getCleanUrl(targetUrl);
-        const tableContainer = document.querySelector('.table-wrapper') || document.querySelector('.table-custom');
-
+    } catch (err) {
+        console.error('AJAX Load Warning:', err);
+    } finally {
         if (tableContainer) {
-            tableContainer.classList.add('table-loading-overlay');
-        }
-
-        if (formToClear) {
-            clearFormInputs(formToClear);
-        }
-
-        try {
-            const response = await fetch(cleanUrl, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (response.ok) {
-                const htmlText = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlText, 'text/html');
-
-                // 1. Replace Table Content (.table-wrapper)
-                const newTable = doc.querySelector('.table-wrapper') || doc.querySelector('.table-custom');
-                const currentTable = document.querySelector('.table-wrapper') || document.querySelector('.table-custom');
-
-                if (newTable && currentTable) {
-                    currentTable.innerHTML = newTable.innerHTML;
-                }
-
-                // 2. Replace Pagination Container
-                const newPagination = doc.querySelector('.pagination')?.closest('div, ul') || doc.querySelector('.pagination');
-                const currentPagination = document.querySelector('.pagination')?.closest('div, ul') || document.querySelector('.pagination');
-
-                if (newPagination && currentPagination) {
-                    currentPagination.innerHTML = newPagination.innerHTML;
-                }
-
-                // 3. Update Browser History State silently (no reload)
-                window.history.pushState({}, '', cleanUrl);
-
-                // 4. Save filter state to sessionStorage
-                saveFilterState(cleanUrl);
-            }
-
-        } catch (err) {
-            console.error('AJAX Load Warning:', err);
-        } finally {
-            if (tableContainer) {
-                tableContainer.classList.remove('table-loading-overlay');
-            }
+            tableContainer.classList.remove('table-loading-overlay');
         }
     }
+}
 
-    /**
-     * Restore Filter State from sessionStorage if returning to page
-     */
-    function restoreFilterState() {
-        const pagePath = window.location.pathname;
-        const currentSearch = window.location.search;
+// Expose loadAjaxContent globally
+window.loadAjaxContent = loadAjaxContent;
 
-        // Skip auto-restore if action parameters like view, edit, delete exist
-        if (currentSearch.includes('view=') || currentSearch.includes('edit=') || currentSearch.includes('delete=')) {
-            return;
-        }
+/**
+ * Restore Filter State from sessionStorage if returning to page
+ */
+function restoreFilterState() {
+    const pagePath = window.location.pathname;
+    const currentSearch = window.location.search;
 
-        // Only restore state if referrer indicates navigation from within the same domain (e.g. Back button from Details view)
-        const isInternalBack = document.referrer && document.referrer.includes(window.location.host);
+    // Skip auto-restore if action parameters like view, edit, delete exist
+    if (currentSearch.includes('view=') || currentSearch.includes('edit=') || currentSearch.includes('delete=')) {
+        return;
+    }
 
-        if ((!currentSearch || currentSearch === '?') && isInternalBack) {
-            const savedState = sessionStorage.getItem('filterState_' + pagePath);
-            if (savedState) {
-                const restoredUrl = pagePath + savedState;
-                const params = new URLSearchParams(savedState);
+    // Only restore state if referrer indicates navigation from within the same domain (e.g. Back button from Details view)
+    const isInternalBack = document.referrer && document.referrer.includes(window.location.host);
 
-                const form = document.querySelector('#advanced-filter-form') || document.querySelector('.ajax-filter-form') || document.querySelector('form[method="GET"]');
-                if (form) {
-                    params.forEach((val, key) => {
-                        const field = form.querySelector(`[name="${key}"]`);
-                        if (field) {
-                            field.value = val;
-                            if (field.tagName === 'SELECT') {
-                                field.dispatchEvent(new Event('change', { bubbles: true }));
-                            }
+    if ((!currentSearch || currentSearch === '?') && isInternalBack) {
+        const savedState = sessionStorage.getItem('filterState_' + pagePath);
+        if (savedState) {
+            const restoredUrl = pagePath + savedState;
+            const params = new URLSearchParams(savedState);
+
+            const form = document.querySelector('#advanced-filter-form') || document.querySelector('.ajax-filter-form') || document.querySelector('form[method="GET"]');
+            if (form) {
+                params.forEach((val, key) => {
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        field.value = val;
+                        if (field.tagName === 'SELECT') {
+                            field.dispatchEvent(new Event('change', { bubbles: true }));
                         }
-                    });
-                }
-
-                loadAjaxContent(restoredUrl);
+                    }
+                });
             }
-        } else if (currentSearch && currentSearch !== '?') {
-            saveFilterState(window.location.href);
+
+            loadAjaxContent(restoredUrl);
         }
+    } else if (currentSearch && currentSearch !== '?') {
+        saveFilterState(window.location.href);
     }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Global Event Delegation: Click Handlers

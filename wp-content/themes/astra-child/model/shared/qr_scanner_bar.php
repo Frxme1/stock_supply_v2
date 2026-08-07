@@ -719,6 +719,29 @@ if ($category_filter) {
                 });
         };
 
+        if (!window.stock_supply_get_dept_abbr) {
+            window.stock_supply_get_dept_abbr = function(dept) {
+                if (!dept || dept === '-') return '';
+                const map = {
+                    'IT': 'IT',
+                    'Content': 'CT',
+                    'Content Writer(TH)': 'CW-TH',
+                    'Content EN': 'CT-EN',
+                    'SEO': 'SEO',
+                    'SEM': 'SEM',
+                    'SEO & SEM': 'SEO&SEM',
+                    'PBN': 'PBN',
+                    'Sale': 'SL',
+                    'Account': 'ACC',
+                    'Graphic': 'GR',
+                    'Art Director': 'AD'
+                };
+                const trimmed = dept.trim();
+                const abbr = map[trimmed] || trimmed;
+                return `(${abbr})`;
+            };
+        }
+
         window.__qrPromptAssign = function (deviceId) {
             const owners = window.__lastScannedOwners || [];
             let ownerOptionsHtml = '<option value="">-- Select Employee / Borrower --</option>';
@@ -727,8 +750,9 @@ if ($category_filter) {
                 let fullName = [o.FirstName, o.LastName].filter(Boolean).map(s => s.trim()).filter(Boolean).join(' ');
                 let namePart = nickname || fullName || `Owner #${o.OwnerID}`;
                 let dept = (o.DepartmentName || '').trim();
+                let deptAbbr = window.stock_supply_get_dept_abbr(dept);
 
-                let displayName = dept ? `${namePart} (${dept})` : namePart;
+                let displayName = deptAbbr ? `${namePart} ${deptAbbr}` : namePart;
                 ownerOptionsHtml += `<option value="${o.OwnerID}">${displayName}</option>`;
             });
 

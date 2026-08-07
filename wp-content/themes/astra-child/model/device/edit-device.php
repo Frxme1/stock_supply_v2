@@ -14,7 +14,7 @@ function edit_device_form($editing = null)
     $statuses = $wpdb->get_results("SELECT StatusID, StatusName FROM Statuses");
     $keywords = $wpdb->get_results("SELECT KeywordID, KeywordName FROM Keywords");
     $categories = $wpdb->get_results("SELECT CategoryID, CategoryName FROM Categories WHERE LOWER(CategoryName) != 'other' ORDER BY CategoryName ASC");
-    $owners = $wpdb->get_results("SELECT OwnerID, Nickname, FirstName, LastName FROM Owners ORDER BY Nickname ASC");
+    $owners = $wpdb->get_results("SELECT o.OwnerID, o.Nickname, o.FirstName, o.LastName, d.DepartmentName FROM Owners o LEFT JOIN Departments d ON o.DepartmentID = d.DepartmentID ORDER BY o.Nickname ASC");
 
 
     echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
@@ -223,31 +223,75 @@ function edit_device_form($editing = null)
 
             <div class="form-group">
                 <label>Brand</label>
-                <select name="BrandID" required onchange="toggleEditNewBrandInput(this)">
-                    <option value="">-- Select Brand --</option>
-                    <?php foreach ($brands as $b): ?>
-                        <option value="<?= esc_attr($b->BrandID) ?>" <?= selected($editing->BrandID ?? '', $b->BrandID, false) ?>>
-                            <?= esc_html($b->BrandName) ?>
-                        </option>
-                    <?php endforeach; ?>
-                    <option value="add_new">+ Add New Brand</option>
-                </select>
-                <div id="edit_new_brand_wrapper" style="display: none; margin-top: 8px;">
-                    <input type="text" name="new_brand_name" id="edit_new_brand_name" placeholder="Type new brand name (e.g. Razer, Anker)..." class="form-control form-control-sm" style="border-radius: 6px; padding: 6px 12px; border: 1px solid #15A5DA;">
+                
+                <div id="edit-brand-select-wrapper">
+                    <select name="BrandID" id="edit-brand-select" required onchange="checkEditBrandSelection(this)">
+                        <option value="">-- Select Brand --</option>
+                        <?php foreach ($brands as $b): ?>
+                            <option value="<?= esc_attr($b->BrandID) ?>" <?= selected($editing->BrandID ?? '', $b->BrandID, false) ?>>
+                                <?= esc_html($b->BrandName) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" id="btn-edit-add-new-brand" class="btn w-100 mt-2" style="border: 1.5px dashed #cbd5e1; color: #475569; font-weight: 600; border-radius: 8px; padding: 10px; background: #ffffff; transition: all 0.2s; <?= (!empty($editing->BrandID)) ? 'display: none;' : '' ?>" onclick="toggleEditNewBrandMode()" onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#3b82f6';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#475569';">
+                        <i class="fa-solid fa-plus me-1"></i> Add New Brand
+                    </button>
+                </div>
+                
+                <div id="edit_new_brand_wrapper" style="display: none; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="mb-0" style="font-size: 0.85rem; font-weight: 700; color: #334155;"><i class="fa-solid fa-sparkles text-primary me-1"></i> Create New Brand</label>
+                        <button type="button" class="btn btn-link p-0 text-danger text-decoration-none" style="font-weight: 600; font-size: 0.8rem;" onclick="cancelEditNewBrandMode()">
+                            <i class="fa-solid fa-times me-1"></i> Cancel
+                        </button>
+                    </div>
+                    <input type="text" name="new_brand_name" id="edit_new_brand_name" placeholder="e.g. Razer, Anker, Dell..." class="form-control" style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.95rem; padding: 10px 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                 </div>
             </div>
+            
             <script>
-                function toggleEditNewBrandInput(selectElem) {
-                    var wrapper = document.getElementById('edit_new_brand_wrapper');
-                    var input = document.getElementById('edit_new_brand_name');
-                    if (!wrapper || !input) return;
-                    if (selectElem.value === 'add_new') {
-                        wrapper.style.display = 'block';
-                        input.focus();
-                    } else {
-                        wrapper.style.display = 'none';
-                        input.value = '';
+                function checkEditBrandSelection(selectElem) {
+                    var addBtn = document.getElementById('btn-edit-add-new-brand');
+                    if (addBtn) {
+                        if (selectElem.value !== '') {
+                            addBtn.style.display = 'none';
+                        } else {
+                            addBtn.style.display = 'block';
+                        }
                     }
+                }
+                
+                function toggleEditNewBrandMode() {
+                    var selectWrapper = document.getElementById('edit-brand-select-wrapper');
+                    var newWrapper = document.getElementById('edit_new_brand_wrapper');
+                    var input = document.getElementById('edit_new_brand_name');
+                    var select = document.getElementById('edit-brand-select');
+                    
+                    if (!selectWrapper || !newWrapper || !input || !select) return;
+                    
+                    selectWrapper.style.display = 'none';
+                    newWrapper.style.display = 'block';
+                    
+                    select.required = false;
+                    input.required = true;
+                    input.focus();
+                    select.value = '';
+                }
+                
+                function cancelEditNewBrandMode() {
+                    var selectWrapper = document.getElementById('edit-brand-select-wrapper');
+                    var newWrapper = document.getElementById('edit_new_brand_wrapper');
+                    var input = document.getElementById('edit_new_brand_name');
+                    var select = document.getElementById('edit-brand-select');
+                    
+                    if (!selectWrapper || !newWrapper || !input || !select) return;
+                    
+                    selectWrapper.style.display = 'block';
+                    newWrapper.style.display = 'none';
+                    
+                    select.required = true;
+                    input.required = false;
+                    input.value = '';
                 }
             </script>
 
@@ -293,7 +337,7 @@ function edit_device_form($editing = null)
                     <option value="">-- No Owner --</option>
                     <?php foreach ($owners as $o): ?>
                         <option value="<?= esc_attr($o->OwnerID) ?>" <?= selected($editing->OwnerID ?? '', $o->OwnerID, false) ?>>
-                            <?= esc_html($o->Nickname . ($o->FirstName ? ' (' . $o->FirstName . ' ' . $o->LastName . ')' : '')) ?>
+                            <?= esc_html(trim($o->Nickname . ($o->FirstName ? ' (' . $o->FirstName . ' ' . $o->LastName . ')' : '') . ' ' . stock_supply_get_dept_abbr($o->DepartmentName ?? ''))) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

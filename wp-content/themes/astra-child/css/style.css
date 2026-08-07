@@ -197,13 +197,16 @@ span.badge,
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
-    padding: 5px 14px !important;
+    padding: 5px 12px !important;
     border-radius: 9999px !important;
     font-size: 0.82rem !important;
     font-weight: 600 !important;
     line-height: 1.2 !important;
     white-space: nowrap !important;
     border: none !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 /* Status Dot Child Div/Span */

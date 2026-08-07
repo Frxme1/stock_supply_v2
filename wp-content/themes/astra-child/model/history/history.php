@@ -49,12 +49,29 @@ function form_history()
         $wpdb->prepare("
         SELECT 
             H.HistoryID, H.DeviceID, H.Action, H.Date, H.Description, H.user_email, H.Owner, H.Photo,
-            C.CategoryName, S.StatusName AS Status
+            C.CategoryName, S.StatusName AS Status,
+            dep.DepartmentName AS Dept, pos.PositionName AS Position,
+            u_dep.DepartmentName AS UserDept
         FROM $table_history AS H
         LEFT JOIN $table_category AS C ON H.CategoryID = C.CategoryID
         LEFT JOIN Devices AS D ON H.DeviceID = D.DeviceID
         LEFT JOIN Statuses AS S ON D.StatusID = S.StatusID
+        LEFT JOIN (
+            SELECT Nickname, FirstName, LastName, DepartmentID, PositionID 
+            FROM Owners 
+            GROUP BY Nickname, FirstName, LastName, DepartmentID, PositionID
+        ) AS o ON (H.Owner = o.Nickname OR CONCAT(o.FirstName, ' ', o.LastName) = H.Owner)
+        LEFT JOIN Departments AS dep ON o.DepartmentID = dep.DepartmentID
+        LEFT JOIN Positions AS pos ON o.PositionID = pos.PositionID
+        LEFT JOIN (
+            SELECT Email, user_email, DepartmentID 
+            FROM Owners 
+            WHERE Email != '' OR user_email != ''
+            GROUP BY Email, user_email, DepartmentID
+        ) AS u_o ON (H.user_email = u_o.Email OR H.user_email = u_o.user_email)
+        LEFT JOIN Departments AS u_dep ON u_o.DepartmentID = u_dep.DepartmentID
         $search_sql
+        GROUP BY H.HistoryID
         $order_sql
         LIMIT %d OFFSET %d
     ", ...array_merge($params, [$page, $offset]))
@@ -279,11 +296,11 @@ function form_history()
             <table class="table-custom" style="width: 100%; table-layout: fixed;">
                 <thead>
                     <tr>
-                        <th class="text-nowrap py-3 text-start" style="width: 20%;">Action</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Action</th>
                         <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
-                        <th class="py-3 text-start" style="width: 45%;">Description</th>
-                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Info</th>
-                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Manage</th>
+                        <th class="py-3 text-start" style="width: 35%;">Description</th>
+                        <th class="text-nowrap py-3 text-start" style="width: 20%;">User</th>
+                        <th class="text-nowrap py-3 text-center" style="width: 15%;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -314,57 +331,87 @@ function form_history()
                             <td class="align-middle text-dark fw-bold" style="font-size: 1.05rem; line-height: 1.6;">
                                 <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
                             </td>
-                            <td class="align-middle text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-light btn-sm rounded-pill" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid #cbd5e1; font-size: 0.85rem; padding: 4px 12px; color: #475569;">
-                                        <i class="fa-solid fa-circle-info"></i> More
-                                    </button>
-                                    <div class="dropdown-menu p-3 shadow-sm" style="min-width: 250px; font-size: 0.9rem; color: #334155;">
-                                        <div class="mb-2"><strong><i class="fa-solid fa-user text-muted w-20px"></i> User:</strong> <?= esc_html($row->user_email ?: '-') ?></div>
-                                        <div class="mb-2"><strong><i class="fa-solid fa-tag text-muted w-20px"></i> Category:</strong> <?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : esc_html($row->CategoryName ?: '-') ?></div>
-                                        <div class="mb-2"><strong><i class="fa-solid fa-briefcase text-muted w-20px"></i> Owner:</strong> <?= esc_html($row->Owner ?: '-') ?></div>
-                                        <?php if (!empty($row->Photo)): ?>
-                                            <div class="mt-3 text-center pt-3" style="border-top: 1px dashed #e2e8f0;">
-                                                <div class="mb-1 text-muted" style="font-size:0.8rem;">Attached Photo</div>
-                                                <img src="<?= esc_url($row->Photo) ?>"
-                                                    onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
-                                                    style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;"
-                                                    title="Click to enlarge">
-                                            </div>
-                                        <?php endif; ?>
+                            <td class="text-start align-middle" data-label="User">
+                                <?php
+                                $user_email = trim($row->user_email ?? '');
+                                $user_dept_abbr = stock_supply_get_dept_abbr($row->UserDept ?? '');
+                                if (empty($user_email)) {
+                                    echo '<span class="text-muted">-</span>';
+                                } else {
+                                    echo esc_html($user_email);
+                                    if (!empty($user_dept_abbr)) {
+                                        echo ' <span class="text-muted small">' . esc_html($user_dept_abbr) . '</span>';
+                                    }
+                                }
+                                ?>
+                            </td>
+                            <td class="align-middle text-center" data-label="Action">
+                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-<?= $row->HistoryID ?>" onclick="toggleRow('<?= $row->HistoryID ?>')">▼</button>
+                                    <div class="dropdown action-menu mb-0 text-center">
+                                        <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                            ...
+                                        </button>
+                                        <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
+                                            <div class="action-dropdown-header">Actions</div>
+                                            <div class="action-dropdown-separator"></div>
+                                            <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
+                                            <?php $status = $row->Status ?? ''; ?>
+                                            <?php if ($status == 'Available'): ?>
+                                                <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($status == 'In Use'): ?>
+                                                <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
+                                                    Return</a>
+                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($status == 'Maintenance'): ?>
+                                                <a href="?available=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-circle text-success"></i> Available</a>
+                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
+                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                            <?php elseif ($status == 'Retired'): ?>
+                                                <a href="?available=<?= $row->DeviceID ?>"><i
+                                                        class="fa-solid fa-circle text-success"></i> Available</a>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-center align-middle">
-                                <div class="dropdown action-menu text-center">
-                                    <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                                        ...
-                                    </button>
-                                    <div class="dropdown-menu action-dropdown text-start">
-                                        <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
-                                        <?php $status = $row->Status ?? ''; ?>
-                                        <?php if ($status == 'Available'): ?>
-                                            <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i
-                                                    class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
-                                                    class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($status == 'In Use'): ?>
-                                            <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
-                                                Return</a>
-                                            <a href="?maintenance=<?= $row->DeviceID ?>"><i
-                                                    class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
-                                                    class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($status == 'Maintenance'): ?>
-                                            <a href="?available=<?= $row->DeviceID ?>"><i
-                                                    class="fa-solid fa-circle text-success"></i> Available</a>
-                                            <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
-                                                    class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                        <?php elseif ($status == 'Retired'): ?>
-                                            <a href="?available=<?= $row->DeviceID ?>"><i
-                                                    class="fa-solid fa-circle text-success"></i> Available</a>
-                                        <?php endif; ?>
+                        </tr>
+                        <tr id="details-<?= $row->HistoryID ?>" style="display: none;">
+                            <td colspan="5" class="p-0 border-0">
+                                <div class="collapse-content" id="content-<?= $row->HistoryID ?>">
+                                    <div class="p-3 bg-light text-start m-2 rounded border">
+                                        <div class="row">
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-user text-muted"></i> User</span>
+                                                <strong><?= esc_html($row->user_email ?: '-') ?><?= !empty($user_dept_abbr) ? ' ' . esc_html($user_dept_abbr) : '' ?></strong>
+                                            </div>
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-tag text-muted"></i> Category</span>
+                                                <strong><?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : esc_html($row->CategoryName ?: '-') ?></strong>
+                                            </div>
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-briefcase text-muted"></i> Owner</span>
+                                                <strong><?= esc_html(stock_supply_format_owner_with_dept($row->Owner, $row->Dept)) ?></strong>
+                                            </div>
+                                            <div class="col-sm-3 mb-2 mb-sm-0">
+                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-id-badge text-muted"></i> Position</span>
+                                                <strong><?= esc_html($row->Position ?: '-') ?></strong>
+                                            </div>
+                                            <?php if (!empty($row->Photo)): ?>
+                                                <div class="col-12 mt-3 pt-3 text-center" style="border-top: 1px dashed #cbd5e1;">
+                                                    <span class="text-muted d-block mb-1" style="font-size: 0.8em;">Attached Photo</span>
+                                                    <img src="<?= esc_url($row->Photo) ?>" onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')" style="max-height: 140px; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer;" title="Click to enlarge">
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -372,6 +419,136 @@ function form_history()
                     <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+
+        <div class="dtl-mobile-timeline-wrapper d-block d-md-none mt-4">
+            <link rel="stylesheet" href="<?= get_stylesheet_directory_uri() ?>/css/device_timeline.css?v=<?= time() ?>">
+            <script src="<?= get_stylesheet_directory_uri() ?>/js/device_timeline.js?v=<?= time() ?>"></script>
+            <style>
+                /* Force timeline visible since it's wrapped */
+                .dtl-mobile-timeline-wrapper .dtl-timeline-wrap { display: block !important; opacity: 1 !important; }
+            </style>
+            <?php
+            // Action map for timeline icons and colors
+            $action_map = [
+                'add' => ['class' => 'dtl-action-add', 'icon' => 'fa-plus'],
+                'update' => ['class' => 'dtl-action-update', 'icon' => 'fa-pen'],
+                'delete' => ['class' => 'dtl-action-delete', 'icon' => 'fa-trash'],
+                'receive' => ['class' => 'dtl-action-receive', 'icon' => 'fa-box'],
+                'return' => ['class' => 'dtl-action-return', 'icon' => 'fa-rotate-left'],
+                'maintenance' => ['class' => 'dtl-action-maintenance', 'icon' => 'fa-screwdriver-wrench'],
+                'repair' => ['class' => 'dtl-action-maintenance', 'icon' => 'fa-wrench'],
+                'retired' => ['class' => 'dtl-action-retired', 'icon' => 'fa-circle-xmark'],
+                'audit' => ['class' => 'dtl-action-audit', 'icon' => 'fa-clipboard-check']
+            ];
+            
+            if (!function_exists('dtl_get_action_info_history')) {
+                function dtl_get_action_info_history($action, $map) {
+                    $lower = strtolower($action);
+                    foreach ($map as $key => $info) {
+                        if (strpos($lower, $key) !== false) return $info;
+                    }
+                    return ['class' => 'dtl-action-default', 'icon' => 'fa-circle'];
+                }
+            }
+
+            // Group rows by month/year
+            $grouped = [];
+            foreach ($rows as $row) {
+                $dt = new DateTime($row->Date);
+                $key = $dt->format('F Y');
+                $grouped[$key][] = $row;
+            }
+
+            // Count actions for stats
+            $action_counts = [];
+            foreach ($rows as $row) {
+                $a = trim($row->Action);
+                if (!isset($action_counts[$a])) $action_counts[$a] = 0;
+                $action_counts[$a]++;
+            }
+            ?>
+            <div class="dtl-timeline-wrap active">
+                <!-- Stats -->
+                <?php if (!empty($action_counts)): ?>
+                <div class="dtl-stats">
+                    <div class="dtl-stat-chip">
+                        <i class="fa-solid fa-list-check"></i> Total
+                        <span class="dtl-stat-count"><?= count($rows) ?></span>
+                    </div>
+                    <?php foreach ($action_counts as $act => $cnt): ?>
+                    <div class="dtl-stat-chip">
+                        <?= esc_html($act) ?>
+                        <span class="dtl-stat-count"><?= $cnt ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <?php if (empty($rows)): ?>
+                    <div class="dtl-empty">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <p>No history logs found.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($grouped as $month => $items): ?>
+                    <div class="dtl-date-group">
+                        <div class="dtl-date-header">
+                            <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
+                        </div>
+                        <div class="dtl-timeline">
+                            <?php foreach ($items as $row):
+                                $info = dtl_get_action_info_history($row->Action, $action_map);
+                                $dt = new DateTime($row->Date);
+                            ?>
+                            <div class="dtl-node <?= $info['class'] ?>">
+                                <div class="dtl-dot"></div>
+                                <div class="dtl-card">
+                                    <div class="dtl-card-head">
+                                        <span class="dtl-action-badge">
+                                            <i class="fa-solid <?= $info['icon'] ?>"></i>
+                                            <?= esc_html($row->Action) ?>
+                                        </span>
+                                        <span class="dtl-time">
+                                            <i class="fa-regular fa-clock"></i>
+                                            <?= esc_html($dt->format('d M Y, H:i')) ?>
+                                        </span>
+                                        <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
+                                    </div>
+                                    <div class="dtl-card-body">
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">Details</span>
+                                            <span class="dtl-detail-value fw-bold text-dark">
+                                                <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
+                                            </span>
+                                        </div>
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">User</span>
+                                            <span class="dtl-detail-value"><?= esc_html($row->user_email ?: '-') ?></span>
+                                        </div>
+                                        <div class="dtl-detail-row">
+                                            <span class="dtl-detail-label">Owner</span>
+                                            <span class="dtl-detail-value"><?= esc_html($row->Owner ?: '-') ?></span>
+                                        </div>
+                                        <div class="dtl-detail-row mt-2">
+                                            <a href="?view=<?= $row->DeviceID ?>" class="btn btn-sm" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; color: #334155; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 16px; text-decoration: none;"><i class="fa-solid fa-magnifying-glass" style="font-size: 0.85rem;"></i> View Details</a>
+                                        </div>
+                                        <?php if (!empty($row->Photo)): ?>
+                                        <div class="dtl-detail-row mt-3 pt-3" style="border-top: 1px dashed #e2e8f0; display: block;">
+                                            <img src="<?= esc_url($row->Photo) ?>" class="dtl-photo-thumb"
+                                                 onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>');"
+                                                 title="Click to view full photo" style="width: 100%; max-height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid #cbd5e1;">
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </div>
         <script>
             window.openPhotoModal = function (imgUrl) {
@@ -463,6 +640,20 @@ function form_history()
 
 
 
+    <script>
+        function toggleRow(id) {
+            var detailsRow = document.getElementById('details-' + id);
+            var btn = document.getElementById('btn-' + id);
+            if (!detailsRow || !btn) return;
+            if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+                detailsRow.style.display = 'table-row';
+                btn.textContent = '▲';
+            } else {
+                detailsRow.style.display = 'none';
+                btn.textContent = '▼';
+            }
+        }
+    </script>
     <?php
 
     return ob_get_clean();

@@ -241,6 +241,7 @@ function device_crud_laptop()
                 </button>
             </div>
 
+            <?php include(get_stylesheet_directory() . '/model/shared/mobile_device_list.php'); ?>
             <div class="table-wrapper">
                 <table class="table-custom">
                     <thead>
@@ -300,9 +301,11 @@ function device_crud_laptop()
                                             }
 
                                             echo htmlspecialchars($lastInitial);
-                                            if ($position !== '') {
-                                                echo ' (' . htmlspecialchars($position) . ')';
-                                            }
+                                        }
+
+                                        $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
+                                        if (!empty($deptAbbr)) {
+                                            echo ' <span class="owner-dept text-muted" style="font-size: 0.85em;">' . htmlspecialchars($deptAbbr) . '</span>';
                                         }
                                     }
                                     ?>
@@ -398,8 +401,8 @@ function device_crud_laptop()
                                             <div class="row">
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block"
-                                                        style="font-size: 0.85em;">Department</span>
-                                                    <strong><?= formatName($row->Department) ?></strong>
+                                                        style="font-size: 0.85em;">Position</span>
+                                                    <strong><?= formatName($row->Position ?? '-') ?></strong>
                                                 </div>
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block" style="font-size: 0.85em;">Receive
@@ -550,7 +553,7 @@ function device_crud_laptop()
 
     <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
     <?php
-
+    include(get_stylesheet_directory() . '/model/shared/mobile_styles.php');
     return ob_get_clean();
 }
 add_shortcode('device_crud_laptop', 'device_crud_laptop');

@@ -85,13 +85,7 @@ $maintenance_count = $sidebar_badges['maintenance'];
 
 
 
-        <!-- Quick Transfer -->
-        <a href="<?php echo esc_url(home_url('/quick-transfer/')); ?>" class="sidebar-link <?php echo (is_page('quick-transfer') || strpos($_SERVER['REQUEST_URI'], '/quick-transfer') !== false) ? 'active' : ''; ?>">
-            <span class="sidebar-link-icon">
-                <i class="fa-solid fa-right-left" style="font-size: 20px;"></i>
-            </span>
-            <span class="sidebar-link-text">Quick Transfer</span>
-        </a>
+
 
 
         <!-- Add Device -->
@@ -211,9 +205,7 @@ $maintenance_count = $sidebar_badges['maintenance'];
             <span><i class="fa-solid fa-users" style="font-size: 20px;"></i> Employees</span>
         </a>
 
-        <a href="<?php echo esc_url(home_url('/quick-transfer/')); ?>" class="mobile-link <?php echo (is_page('quick-transfer')) ? 'active' : ''; ?>">
-            <span><i class="fa-solid fa-right-left" style="font-size: 20px;"></i> Quick Transfer</span>
-        </a>
+
 
         <a href="<?php echo esc_url(home_url('/add-device/')); ?>" class="mobile-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
             <span><i class="fa-solid fa-plus" style="font-size: 20px;"></i> Add Device</span>

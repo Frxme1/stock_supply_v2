@@ -156,7 +156,7 @@ function receive_device($device_data = null)
                     <?php foreach ($owners_data as $o): ?>
                         <option value="<?= esc_attr($o->OwnerID) ?>" data-dept="<?= esc_attr($o->DepartmentID) ?>"
                             data-pos="<?= esc_attr($o->PositionID) ?>">
-                            <?= esc_html($o->Nickname) ?>
+                            <?= esc_html(trim($o->Nickname . ' ' . stock_supply_get_dept_abbr($o->DepartmentName ?? ''))) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -209,7 +209,7 @@ function receive_device($device_data = null)
                 if (ref && ref.includes(window.location.host) && !ref.includes('receive=') && !ref.includes('edit=')) {
                     window.location.href = ref;
                 } else {
-                    window.location.href = '<?= esc_url(home_url('/formDevice/')) ?>';
+                    window.location.href = '<?= esc_url(home_url('/home/')) ?>';
                 }
             " class="btn btn-danger border rounded-pill">Cancel</button>
             <button type="submit" name="update_device" class="btn btn-success border rounded-pill"
