@@ -67,8 +67,8 @@ function device_dashboard()
         'Retired' => home_url('/home/?filter_status=Retired'),
     ];
 
-    // Query recently added devices (within 1 day)
-    $new_devices_days = 1;
+    // Query recently added devices (within 7 days)
+    $new_devices_days = 7;
     $new_devices = $wpdb->get_results($wpdb->prepare(
         "SELECT DeviceID, Brand, Model, Category, CreatedAt 
          FROM $table_device_wn 
@@ -265,435 +265,12 @@ function device_dashboard()
     </div>
 
     <style>
-        /* ===== QR Scanner Compact Bar ===== */
-        .dash-qr-bar {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 14px 20px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
-        }
+        /* ============================================================
+           device_dashboard — page-specific styles only
+           Shared card/grid/animation styles → dashboard_cards.css
+           ============================================================ */
 
-        .dash-qr-scan-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 22px;
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
-        }
-
-        .dash-qr-scan-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-        }
-
-        .dash-qr-stop-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 22px;
-            background: #ef4444;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .dash-qr-stop-btn:hover {
-            background: #dc2626;
-        }
-
-        .dash-qr-hint {
-            color: #94a3b8;
-            font-size: 0.82rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .dash-scan-popup {
-            border-radius: 16px !important;
-        }
-
-        /* Next.js / Vercel Inspired UI */
-        .next-dashboard {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #111827;
-            background: transparent !important;
-            padding-bottom: 2rem;
-            padding-top: 0.5rem;
-        }
-
-        .next-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.25rem;
-        }
-
-        .next-grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.25rem;
-        }
-
-        .next-grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.25rem;
-        }
-
-        .next-card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
-            transition: all 0.2s ease-in-out;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .next-card:hover {
-            border-color: #d1d5db;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-            transform: translateY(-2px);
-        }
-
-        .next-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .next-card-title {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #4b5563;
-            letter-spacing: -0.01em;
-        }
-
-        .next-section-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #111827;
-            margin: 0;
-            letter-spacing: -0.025em;
-        }
-
-        .next-icon-wrapper {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
-
-        .next-icon-wrapper-sm {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.875rem;
-        }
-
-        .next-number {
-            font-size: 2.25rem;
-            font-weight: 700;
-            line-height: 1.2;
-            letter-spacing: -0.025em;
-            color: #111827;
-        }
-
-        .next-number-md {
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            color: #111827;
-            display: block;
-        }
-
-        .next-card-body {
-            margin-top: 1.25rem;
-        }
-
-        .next-trend {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-        }
-
-        .next-badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.15rem 0.6rem;
-            border-radius: 9999px;
-            letter-spacing: -0.01em;
-        }
-
-        .next-trend-text {
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-
-        .next-status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .next-progress-wrap {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .next-progress-wrap-sm {
-            width: 100px;
-        }
-
-        .next-progress-bar {
-            flex: 1;
-            height: 6px;
-            background: #f3f4f6;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-
-        .next-progress-fill {
-            height: 100%;
-            border-radius: 9999px;
-            transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .next-progress-text {
-            font-size: 0.875rem;
-            color: #6b7280;
-            font-weight: 500;
-            min-width: 32px;
-            text-align: right;
-        }
-
-        .next-donut-container {
-            display: flex;
-            align-items: center;
-            gap: 2.5rem;
-        }
-
-        .next-donut-wrap {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            flex-shrink: 0;
-        }
-
-        .next-donut {
-            width: 100%;
-            height: 100%;
-            transform: scale(1);
-            transition: transform 0.3s ease;
-        }
-
-        .next-donut:hover {
-            transform: scale(1.03);
-        }
-
-        .donut-segment {
-            transition: stroke-dasharray 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .next-donut-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .next-donut-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #111827;
-            line-height: 1;
-            letter-spacing: -0.025em;
-        }
-
-        .next-donut-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-top: 0.35rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 500;
-        }
-
-        .next-legend-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .next-legend-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .next-legend-item:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .next-legend-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .next-legend-label {
-            font-size: 0.875rem;
-            color: #4b5563;
-            font-weight: 500;
-        }
-
-        .next-legend-value {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .next-status-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .next-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0.5rem;
-            border-radius: 8px;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-        }
-
-        .next-list-item:hover {
-            background: #f9fafb;
-            border-color: #f3f4f6;
-            transform: translateX(2px);
-        }
-
-        .next-list-left {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .next-list-name {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .next-list-right {
-            display: flex;
-            align-items: center;
-            gap: 1.25rem;
-        }
-
-        .next-list-value {
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: #111827;
-            min-width: 24px;
-            text-align: right;
-        }
-
-        .mt-4 {
-            margin-top: 1.5rem;
-        }
-
-        /* Animations */
-        .slide-up {
-            opacity: 0;
-            transform: translateY(15px);
-            animation: nextSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes nextSlideUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .next-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .next-grid-2,
-            .next-grid-3 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .next-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .next-donut-container {
-                flex-direction: column;
-                gap: 1.5rem;
-            }
-
-            .next-legend-wrap {
-                width: 100%;
-            }
-
-            .new-devices-alert {
-                flex-direction: column;
-            }
-        }
-
-        /* ===== New Devices Notification Card ===== */
-        .new-devices-alert {
-            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-            border: 1px solid #bbf7d0;
-            border-radius: 14px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.08);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .new-devices-alert:hover {
-            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.12);
-        }
-
+        /* ---- New Devices Notification Card ---- */
         .new-devices-alert-header {
             display: flex;
             align-items: center;
@@ -710,49 +287,36 @@ function device_dashboard()
         }
 
         .new-devices-alert-icon {
-            width: 42px;
-            height: 42px;
+            width: 42px; height: 42px;
             border-radius: 12px;
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 1.1rem;
             flex-shrink: 0;
-            animation: bellPulse 2s ease-in-out infinite;
+            animation: bellPulse 2.2s ease-in-out infinite;
         }
 
         @keyframes bellPulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.08);
-            }
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25%       { transform: scale(1.08) rotate(-6deg); }
+            75%       { transform: scale(1.08) rotate(6deg); }
         }
 
         .new-devices-alert-title {
             font-size: 0.95rem;
             font-weight: 700;
             color: #111827;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            display: flex; align-items: center; gap: 0.5rem;
         }
 
         .new-devices-count-badge {
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #ffffff;
-            font-size: 0.7rem;
-            font-weight: 700;
+            font-size: 0.68rem; font-weight: 700;
             padding: 2px 8px;
             border-radius: 9999px;
-            min-width: 20px;
-            text-align: center;
+            min-width: 20px; text-align: center;
         }
 
         .new-devices-alert-subtitle {
@@ -765,28 +329,17 @@ function device_dashboard()
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
             border-radius: 8px;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
             color: #16a34a;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             font-size: 0.8rem;
         }
 
-        .new-devices-toggle-btn:hover {
-            background: #dcfce7;
-        }
-
-        .new-devices-toggle-btn.expanded i {
-            transform: rotate(180deg);
-        }
-
-        .new-devices-toggle-btn i {
-            transition: transform 0.3s ease;
-        }
+        .new-devices-toggle-btn:hover { background: #dcfce7; }
+        .new-devices-toggle-btn.expanded i { transform: rotate(180deg); }
+        .new-devices-toggle-btn i { transition: transform 0.3s ease; }
 
         .new-devices-alert-body {
             max-height: 0;
@@ -806,9 +359,7 @@ function device_dashboard()
             font-size: 0.85rem;
         }
 
-        .new-devices-table thead {
-            background: #f0fdf4;
-        }
+        .new-devices-table thead { background: #f0fdf4; }
 
         .new-devices-table th {
             padding: 0.6rem 1.25rem;
@@ -825,32 +376,61 @@ function device_dashboard()
             padding: 0.65rem 1.25rem;
             border-bottom: 1px solid #f3f4f6;
             color: #374151;
-            border-top: none;
-            border-left: none;
-            border-right: none;
+            border-top: none; border-left: none; border-right: none;
         }
 
-        .new-devices-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .new-devices-table tbody tr:hover {
-            background: #f0fdf4;
-        }
+        .new-devices-table tbody tr:last-child td { border-bottom: none; }
+        .new-devices-table tbody tr:hover { background: #f0fdf4; }
 
         .new-device-badge-sm {
             display: inline-block;
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #ffffff;
-            font-size: 0.6rem;
-            font-weight: 800;
+            font-size: 0.6rem; font-weight: 800;
             padding: 1px 6px;
             border-radius: 4px;
             letter-spacing: 0.06em;
             margin-right: 6px;
-            vertical-align: middle;
-            line-height: 1.5;
+            vertical-align: middle; line-height: 1.5;
         }
+
+        /* ---- QR Bar ---- */
+        .dash-qr-scan-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 22px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: #fff;
+            border: none; border-radius: 10px;
+            font-weight: 600; font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+        }
+
+        .dash-qr-scan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+        }
+
+        .dash-qr-stop-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 22px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            border: none; border-radius: 10px;
+            font-weight: 600; font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dash-qr-stop-btn:hover { background: #dc2626; }
+
+        .dash-qr-hint {
+            color: #94a3b8; font-size: 0.82rem;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+
+        .dash-scan-popup { border-radius: 16px !important; }
     </style>
 
     <script>

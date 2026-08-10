@@ -42,6 +42,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['CategoryID'])
 
 	if (!empty($_POST['edit_id'])) {
 		$wpdb->update($table_devices, $data, ['DeviceID' => intval($_POST['edit_id'])]);
+
+		// Log history for edit
+		$current_user = wp_get_current_user();
+		$wpdb->insert($table_history, [
+			'DeviceID'    => $data['DeviceID'],
+			'Action'      => 'Update Device',
+			'Date'        => current_time('mysql'),
+			'Description' => "Device ID {$data['DeviceID']} information updated",
+			'user_email'  => $current_user->user_email ?? '',
+			'CategoryID'  => $data['CategoryID'],
+			'Owner'       => '-',
+		]);
+
 		wp_redirect(add_query_arg('updated', '1', wp_get_referer()));
 		exit;
 	} else {

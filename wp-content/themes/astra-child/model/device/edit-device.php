@@ -184,7 +184,7 @@ function edit_device_form($editing = null)
 ?>
 
     <!-- HTML ฟอร์ม -->
-    <form method="POST" action="">
+    <form method="POST" action="" id="edit-device-form" class="edit-data-form">
         <?php wp_nonce_field('edit_device_nonce', '_edit_dev_nonce'); ?>
         <h2 style="text-align: center;">Edit Device</h2>
         <input type="hidden" name="DeviceID" value="<?= esc_attr($editing->DeviceID ?? '') ?>">
@@ -332,16 +332,103 @@ function edit_device_form($editing = null)
             </div>
 
             <div class="form-group" id="owner-group">
-                <label>Owner (Employee)</label>
-                <select name="OwnerID" id="OwnerID">
-                    <option value="">-- No Owner --</option>
-                    <?php foreach ($owners as $o): ?>
-                        <option value="<?= esc_attr($o->OwnerID) ?>" <?= selected($editing->OwnerID ?? '', $o->OwnerID, false) ?>>
-                            <?= esc_html(trim($o->Nickname . ($o->FirstName ? ' (' . $o->FirstName . ' ' . $o->LastName . ')' : '') . ' ' . stock_supply_get_dept_abbr($o->DepartmentName ?? ''))) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <label style="font-weight: 600;">Owner (Employee / ค้นหา/เลือกพนักงาน)</label>
+                <div id="website_edit_owner_search_wrap" style="position: relative; width: 100%;">
+                    <div style="position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none;"></i>
+                        <?php
+                        $current_owner_name = '';
+                        if (!empty($editing->OwnerID)) {
+                            foreach ($owners as $o) {
+                                if ($o->OwnerID == $editing->OwnerID) {
+                                    $current_owner_name = trim($o->Nickname) . ($o->DepartmentName ? ' (' . $o->DepartmentName . ')' : '');
+                                    break;
+                                }
+                            }
+                        }
+                        ?>
+                        <input type="text" id="edit_owner_search_input" value="<?= esc_attr($current_owner_name) ?>" placeholder="🔍 พิมพ์หรือเลือกชื่อพนักงาน..." autocomplete="off" style="width: 100%; padding: 10px 36px 10px 38px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; background-color: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); box-sizing: border-box; transition: all 0.2s;" onfocus="this.select(); openEditOwnerSearchPopup()" oninput="onEditOwnerInputChanged(this.value)">
+                        <i class="fa-solid fa-chevron-down" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
+                    </div>
+
+                    <!-- Live Floating Results Popup -->
+                    <div id="edit_owner_search_popup" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12); z-index: 99999; padding: 4px;">
+                    </div>
+                </div>
+
+                <!-- Hidden Input for 100% Form & CSS compatibility -->
+                <input type="hidden" name="OwnerID" id="OwnerID" value="<?= esc_attr($editing->OwnerID ?? '') ?>">
             </div>
+            <script>
+                const editOwnerDataList = [
+                    { id: '', name: '-- No Owner (ไม่มีผู้ดูแล) --', deptName: '' },
+                    <?php foreach ($owners as $o): ?>
+                    {
+                        id: <?= intval($o->OwnerID) ?>,
+                        name: <?= json_encode(trim($o->Nickname)) ?>,
+                        deptName: <?= json_encode($o->DepartmentName ?? '') ?>
+                    },
+                    <?php endforeach; ?>
+                ];
+
+                function openEditOwnerSearchPopup() {
+                    const input = document.getElementById('edit_owner_search_input');
+                    if (input) filterEditOwnerSearchPopup(input.value);
+                }
+
+                function onEditOwnerInputChanged(val) {
+                    filterEditOwnerSearchPopup(val);
+                    if (!val.trim()) {
+                        const select = document.getElementById('OwnerID');
+                        if (select) select.value = '';
+                    }
+                }
+
+                function filterEditOwnerSearchPopup(query) {
+                    const popup = document.getElementById('edit_owner_search_popup');
+                    if (!popup) return;
+                    const term = query.toLowerCase().trim();
+
+                    const filtered = editOwnerDataList.filter(o => {
+                        return !term || o.name.toLowerCase().includes(term) || o.deptName.toLowerCase().includes(term);
+                    });
+
+                    if (filtered.length === 0) {
+                        popup.innerHTML = `<div style="padding: 10px 14px; color: #94a3b8; font-size: 0.85rem; text-align: center;">❌ ไม่พบพนักงานที่ค้นหา</div>`;
+                    } else {
+                        let html = '';
+                        filtered.forEach(o => {
+                            const deptBadge = o.deptName ? `<span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 600;">${o.deptName}</span>` : '';
+                            html += `
+                                <div class="owner-item-row" onclick="selectEditOwnerItem(${o.id}, '${o.name.replace(/'/g, "\\'")}')" style="padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='transparent';">
+                                    <span style="font-weight: 600; color: #0f172a;"><i class="fa-solid fa-user me-2" style="color: #64748b; font-size: 0.8rem;"></i>${o.name}</span>
+                                    ${deptBadge}
+                                </div>
+                            `;
+                        });
+                        popup.innerHTML = html;
+                    }
+                    popup.style.display = 'block';
+                }
+
+                function selectEditOwnerItem(id, name) {
+                    const input = document.getElementById('edit_owner_search_input');
+                    const select = document.getElementById('OwnerID');
+                    const popup = document.getElementById('edit_owner_search_popup');
+
+                    if (input) input.value = (id === '' ? '' : name);
+                    if (select) select.value = id;
+                    if (popup) popup.style.display = 'none';
+                }
+
+                document.addEventListener('click', function(e) {
+                    const wrap = document.getElementById('website_edit_owner_search_wrap');
+                    const popup = document.getElementById('edit_owner_search_popup');
+                    if (wrap && popup && !wrap.contains(e.target)) {
+                        popup.style.display = 'none';
+                    }
+                });
+            </script>
 
             <div class="form-group">
                 <label>Add Device Date</label>

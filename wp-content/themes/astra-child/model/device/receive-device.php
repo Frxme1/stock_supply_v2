@@ -135,11 +135,106 @@ function receive_device($device_data = null)
 
 
     $date_value = !empty($device_data->ReceiveDate) ? date('Y-m-d', strtotime($device_data->ReceiveDate)) : '';
+
+    // คำนวณอุปกรณ์คงเหลือและข้อมูลรุ่นอุปกรณ์
+    $device_model_name = '';
+    $category_name_info = '';
+    $brand_name_info = '';
+    $available_count = 0;
+
+    if (!empty($device_data->DeviceID)) {
+        $info = $wpdb->get_row($wpdb->prepare("
+            SELECT d.DeviceID, d.Model, d.CategoryID, d.BrandID, c.CategoryName, b.BrandName
+            FROM Devices d
+            LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+            LEFT JOIN Brands b ON d.BrandID = b.BrandID
+            WHERE d.DeviceID = %s
+        ", $device_data->DeviceID));
+
+        if ($info) {
+            $device_model_name = $info->Model ?? '';
+            $category_name_info = $info->CategoryName ?? '';
+            $brand_name_info = $info->BrandName ?? '';
+
+            $avail_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
+
+            if (!empty($info->BrandID) && !empty($info->CategoryID)) {
+                $available_count = (int) $wpdb->get_var($wpdb->prepare("
+                    SELECT COUNT(*) FROM Devices 
+                    WHERE CategoryID = %d AND BrandID = %d AND (StatusID = %d OR StatusID IS NULL)
+                ", $info->CategoryID, $info->BrandID, $avail_status_id));
+            } elseif (!empty($info->BrandID)) {
+                $available_count = (int) $wpdb->get_var($wpdb->prepare("
+                    SELECT COUNT(*) FROM Devices 
+                    WHERE BrandID = %d AND (StatusID = %d OR StatusID IS NULL)
+                ", $info->BrandID, $avail_status_id));
+            }
+        }
+    }
     ?>
+
+    <?php if ($available_count < 3): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'warning',
+                title: '⚠️ แจ้งเตือนแบรนด์ <?= esc_js($brand_name_info ?: 'อุปกรณ์') ?> เหลือน้อย!',
+                html: 'อุปกรณ์แบรนด์ <strong><?= esc_js($brand_name_info) ?></strong> คงเหลือในสต็อกเพียง <strong><?= $available_count ?></strong> ชิ้น',
+                confirmButtonText: 'รับทราบ (ดำเนินการต่อ)',
+                confirmButtonColor: '#f59e0b',
+                timer: 5000,
+                timerProgressBar: true
+            });
+        });
+    </script>
+    <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data">
         <?php wp_nonce_field('receive_device_nonce', '_rcv_nonce'); ?>
         <h2>Assign Device</h2>
+
+        <!-- Brand Stock & Projection Info Card -->
+        <?php $after_borrow_count = max(0, $available_count - 1); ?>
+        <div style="background: <?= ($available_count < 3) ? '#fffbe6' : '#ffffff' ?>; border: 1.5px solid <?= ($available_count < 3) ? '#fde047' : '#e2e8f0' ?>; border-radius: 14px; padding: 16px 20px; margin-bottom: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 10px; background: <?= ($available_count < 3) ? '#fef3c7' : '#e0f2fe' ?>; color: <?= ($available_count < 3) ? '#d97706' : '#0284c7' ?>; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                        <i class="fa-solid <?= ($available_count < 3) ? 'fa-triangle-exclamation' : 'fa-laptop' ?>"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #0f172a; font-size: 0.98rem;">
+                            แบรนด์: <?= esc_html($brand_name_info ?: 'ไม่ระบุ') ?> <?= esc_html($device_model_name ? '- ' . $device_model_name : '') ?>
+                            <span style="font-size: 0.8rem; font-weight: 500; color: #64748b; margin-left: 4px;">(<?= esc_html($device_data->DeviceID ?? '') ?>)</span>
+                        </div>
+                        <div style="font-size: 0.82rem; color: #64748b;">หมวดหมู่: <strong style="color: #334155;"><?= esc_html($category_name_info ?: '-') ?></strong></div>
+                    </div>
+                </div>
+                <?php if ($available_count < 3): ?>
+                    <span style="font-size: 0.78rem; font-weight: 700; background: #fef3c7; color: #b45309; border: 1px solid #fde047; padding: 3px 10px; border-radius: 20px;">⚠️ สต็อกเหลือน้อย</span>
+                <?php endif; ?>
+            </div>
+
+            <!-- Mini Stock Stats Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #f1f5f9; text-align: center;">
+                <div style="border-right: 1px solid #e2e8f0; padding-right: 8px;">
+                    <span style="font-size: 0.78rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">
+                        <i class="fa-solid fa-boxes-stacked me-1" style="color: #3b82f6;"></i> คงเหลือในสต็อกปัจจุบัน
+                    </span>
+                    <span style="font-size: 1.25rem; font-weight: 800; color: <?= ($available_count < 3) ? '#d97706' : '#1e293b' ?>;">
+                        <?= $available_count ?> <span style="font-size: 0.82rem; font-weight: 600;">เครื่อง</span>
+                    </span>
+                </div>
+
+                <div style="padding-left: 8px;">
+                    <span style="font-size: 0.78rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">
+                        <i class="fa-solid fa-arrow-right-from-bracket me-1" style="color: #8b5cf6;"></i> ถ้ายืม/มอบหมายเครื่องนี้จะเหลือ
+                    </span>
+                    <span style="font-size: 1.25rem; font-weight: 800; color: <?= ($after_borrow_count < 3) ? '#dc2626' : '#16a34a' ?>;">
+                        <?= $after_borrow_count ?> <span style="font-size: 0.82rem; font-weight: 600;">เครื่อง</span>
+                    </span>
+                </div>
+            </div>
+        </div>
 
         <input type="hidden" name="DeviceID" value="<?= esc_attr($device_data->DeviceID ?? '') ?>">
 
@@ -150,17 +245,115 @@ function receive_device($device_data = null)
             </div>
 
             <div class="form-group">
-                <label>Owner</label>
-                <select name="OwnerID" id="OwnerID" required onchange="handleOwnerChange()">
-                    <option value="">-- Select Owner --</option>
-                    <?php foreach ($owners_data as $o): ?>
-                        <option value="<?= esc_attr($o->OwnerID) ?>" data-dept="<?= esc_attr($o->DepartmentID) ?>"
-                            data-pos="<?= esc_attr($o->PositionID) ?>">
-                            <?= esc_html(trim($o->Nickname . ' ' . stock_supply_get_dept_abbr($o->DepartmentName ?? ''))) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <label style="font-weight: 600;">Owner (ค้นหา/เลือกชื่อพนักงาน)</label>
+                <div id="website_owner_search_wrap" style="position: relative; width: 100%;">
+                    <div style="position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none;"></i>
+                        <input type="text" id="owner_search_input" placeholder="🔍 พิมพ์หรือเลือกชื่อพนักงาน..." autocomplete="off" style="width: 100%; padding: 10px 36px 10px 38px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; background-color: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); box-sizing: border-box; transition: all 0.2s;" onfocus="this.select(); openOwnerSearchPopup()" oninput="onOwnerInputChanged(this.value)">
+                        <i class="fa-solid fa-chevron-down" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
+                    </div>
+
+                    <!-- Live Floating Results Popup -->
+                    <div id="owner_search_popup" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12); z-index: 99999; padding: 4px;">
+                    </div>
+                </div>
+
+                <!-- Hidden Input for 100% Form & CSS compatibility -->
+                <input type="hidden" name="OwnerID" id="OwnerID" value="" required>
             </div>
+            <script>
+                const ownerDataList = [
+                    <?php foreach ($owners_data as $o): ?>
+                    {
+                        id: <?= intval($o->OwnerID) ?>,
+                        name: <?= json_encode(trim($o->Nickname)) ?>,
+                        deptId: <?= json_encode($o->DepartmentID) ?>,
+                        posId: <?= json_encode($o->PositionID) ?>,
+                        deptName: <?= json_encode($o->DepartmentName ?? '') ?>
+                    },
+                    <?php endforeach; ?>
+                ];
+
+                function openOwnerSearchPopup() {
+                    const input = document.getElementById('owner_search_input');
+                    if (input) filterOwnerSearchPopup(input.value);
+                }
+
+                function onOwnerInputChanged(val) {
+                    filterOwnerSearchPopup(val);
+                    if (!val.trim()) {
+                        const hiddenInput = document.getElementById('OwnerID');
+                        if (hiddenInput) {
+                            hiddenInput.value = '';
+                            handleOwnerChange();
+                        }
+                    }
+                }
+
+                function filterOwnerSearchPopup(query) {
+                    const popup = document.getElementById('owner_search_popup');
+                    if (!popup) return;
+                    const term = query.toLowerCase().trim();
+
+                    const filtered = ownerDataList.filter(o => {
+                        return !term || o.name.toLowerCase().includes(term) || o.deptName.toLowerCase().includes(term);
+                    });
+
+                    if (filtered.length === 0) {
+                        popup.innerHTML = `<div style="padding: 10px 14px; color: #94a3b8; font-size: 0.85rem; text-align: center;">❌ ไม่พบพนักงานที่ค้นหา</div>`;
+                    } else {
+                        let html = '';
+                        filtered.forEach(o => {
+                            const deptBadge = o.deptName ? `<span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 600;">${o.deptName}</span>` : '';
+                            const displayName = o.name + (o.deptName ? ` (${o.deptName})` : '');
+                            html += `
+                                <div class="owner-item-row" onclick="selectOwnerItem(${o.id}, '${displayName.replace(/'/g, "\\'")}')" style="padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='transparent';">
+                                    <span style="font-weight: 600; color: #0f172a;"><i class="fa-solid fa-user me-2" style="color: #64748b; font-size: 0.8rem;"></i>${o.name}</span>
+                                    ${deptBadge}
+                                </div>
+                            `;
+                        });
+                        popup.innerHTML = html;
+                    }
+                    popup.style.display = 'block';
+                }
+
+                function selectOwnerItem(id, displayName) {
+                    const input = document.getElementById('owner_search_input');
+                    const hiddenInput = document.getElementById('OwnerID');
+                    const popup = document.getElementById('owner_search_popup');
+
+                    if (input) input.value = displayName;
+                    if (hiddenInput) {
+                        hiddenInput.value = id;
+                        handleOwnerChange();
+                    }
+                    if (popup) popup.style.display = 'none';
+                }
+
+                function handleOwnerChange() {
+                    const ownerId = document.getElementById('OwnerID').value;
+                    const deptSelect = document.getElementById('DepartmentID');
+                    const posSelect = document.getElementById('PositionID');
+
+                    const found = ownerDataList.find(o => String(o.id) === String(ownerId));
+                    if (found) {
+                        if (found.deptId && deptSelect) deptSelect.value = found.deptId;
+                        if (found.posId && posSelect) posSelect.value = found.posId;
+                    } else {
+                        if (deptSelect) deptSelect.value = '';
+                        if (posSelect) posSelect.value = '';
+                    }
+                }
+
+                document.addEventListener('click', function(e) {
+                    const wrap = document.getElementById('website_owner_search_wrap');
+                    const popup = document.getElementById('owner_search_popup');
+                    if (wrap && popup && !wrap.contains(e.target)) {
+                        popup.style.display = 'none';
+                    }
+                });
+            </script>
 
             <div class="form-group">
                 <label>Department</label>

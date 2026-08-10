@@ -429,57 +429,11 @@ function device_view_details($device_id = null)
         </div>
 
         <!-- History Section -->
-        <?php $has_search = !empty($_GET['history_search']); ?>
-        <div class="vd-history-section <?= $has_search ? 'dtl-show-search' : '' ?>">
+        <div class="vd-history-section dtl-show-search">
             <div class="vd-history-header">
                 <div class="d-flex align-items-center gap-3 flex-wrap">
                     <h3 class="vd-history-title"><i class="fa-solid fa-clock-rotate-left text-muted"></i> History Log</h3>
-                    <div class="dtl-view-toggle">
-                        <button type="button" class="dtl-toggle-btn <?= !$has_search ? 'active' : '' ?>"
-                            data-view="timeline">
-                            <i class="fa-solid fa-timeline"></i> Timeline
-                        </button>
-                        <button type="button" class="dtl-toggle-btn <?= $has_search ? 'active' : '' ?>" data-view="table">
-                            <i class="fa-solid fa-table"></i> Table
-                        </button>
-                    </div>
                 </div>
-
-                <form method="GET" action="" class="dtl-search-form d-flex align-items-center gap-2">
-                    <input type="hidden" name="view" value="<?= esc_attr($device->DeviceID) ?>">
-                    <?php
-                    foreach ($_GET as $key => $value) {
-                        if (!in_array($key, ['history_search', 'device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'view'])) {
-                            if (is_array($value)) {
-                                foreach ($value as $v) {
-                                    echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
-                                }
-                            } else {
-                                echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
-                            }
-                        }
-                    }
-                    ?>
-                    <div style="max-width: 250px;">
-                        <?php
-                        $search_name = 'history_search';
-                        $search_placeholder = 'Search History...';
-                        $search_list = 'search_suggestions';
-                        include get_stylesheet_directory() . '/view/animated-search.php';
-                        ?>
-                    </div>
-                    <button type="submit" class="btn-filter-modern">
-                        <i class="fa-solid fa-filter"></i> Filter
-                    </button>
-                    <?php $reset_url = remove_query_arg(['history_search', 'device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
-                    <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
-
-                    <datalist id="search_suggestions">
-                        <?php foreach ($suggestions as $suggest): ?>
-                            <option value="<?= esc_attr($suggest) ?>"></option>
-                        <?php endforeach; ?>
-                    </datalist>
-                </form>
             </div>
 
             <!-- ========== TIMELINE VIEW ========== -->
@@ -529,7 +483,7 @@ function device_view_details($device_id = null)
                 $action_counts[$a]++;
             }
             ?>
-            <div class="dtl-timeline-wrap <?= !$has_search ? 'active' : '' ?>">
+            <div class="dtl-timeline-wrap active">
                 <!-- Stats -->
                 <?php if (!empty($action_counts)): ?>
                     <div class="dtl-stats">
@@ -552,7 +506,9 @@ function device_view_details($device_id = null)
                         <p>No history logs found.</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($grouped as $month => $items): ?>
+                    <?php 
+                    $item_idx = 0;
+                    foreach ($grouped as $month => $items): ?>
                         <div class="dtl-date-group">
                             <div class="dtl-date-header">
                                 <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
@@ -561,10 +517,12 @@ function device_view_details($device_id = null)
                                 <?php foreach ($items as $row):
                                     $info = dtl_get_action_info($row->Action, $action_map);
                                     $dt = new DateTime($row->Date);
+                                    $isOpen = ($item_idx === 0);
+                                    $item_idx++;
                                     ?>
-                                    <div class="dtl-node <?= $info['class'] ?>">
+                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible">
                                         <div class="dtl-dot"></div>
-                                        <div class="dtl-card">
+                                        <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
                                             <div class="dtl-card-head">
                                                 <span class="dtl-action-badge">
                                                     <i class="fa-solid <?= $info['icon'] ?>"></i>
@@ -576,7 +534,7 @@ function device_view_details($device_id = null)
                                                 </span>
                                                 <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
                                             </div>
-                                            <div class="dtl-card-body">
+                                            <div class="dtl-card-body <?= $isOpen ? 'dtl-expanded' : '' ?>">
                                                 <div class="dtl-detail-row">
                                                     <span class="dtl-detail-label">Details</span>
                                                     <span class="dtl-detail-value">
@@ -589,7 +547,8 @@ function device_view_details($device_id = null)
                                                 </div>
                                                 <div class="dtl-detail-row">
                                                     <span class="dtl-detail-label">Owner</span>
-                                                    <span class="dtl-detail-value"><?= esc_html(stock_supply_format_owner_with_dept($row->Owner, $row->Department)) ?></span>
+                                                    <span
+                                                        class="dtl-detail-value"><?= esc_html(stock_supply_format_owner_with_dept($row->Owner ?? '', $row->Department ?? '')) ?></span>
                                                 </div>
                                                 <?php if (!empty($row->Photo)): ?>
                                                     <div class="dtl-detail-row">
@@ -611,75 +570,7 @@ function device_view_details($device_id = null)
                 <?php endif; ?>
             </div>
 
-            <div class="dtl-table-wrap <?= $has_search ? 'active' : '' ?>">
-                <div class="table-wrapper table-wrapper-details">
-                    <table class="table-custom" style="width: 100%; table-layout: fixed;">
-                        <thead>
-                            <tr>
-                                <th class="text-nowrap py-3 text-start" style="width: 20%;">Action</th>
-                                <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
-                                <th class="py-3 text-start" style="width: 55%;">Reason / Details</th>
-                                <th class="text-nowrap py-3 text-center" style="width: 10%;">Info</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($rows)): ?>
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted">No history logs found.</td>
-                                </tr>
-                            <?php else: ?>
-                                <?php foreach ($rows as $index => $row): ?>
-                                    <?php
-                                    $date = new DateTime($row->Date);
-                                    ?>
-                                    <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
-                                        <td class="text-start align-middle" data-label="Action">
-                                            <span class="vd-action-pill"
-                                                style="white-space: normal; word-break: break-word;"><?= esc_html($row->Action) ?></span>
-                                        </td>
-                                        <td class="text-start align-middle vd-date-text text-nowrap" data-label="Date">
-                                            <?= esc_html($date->format("d M Y, H:i")) ?>
-                                        </td>
-                                        <td class="text-start align-middle vd-desc-text fw-bold text-dark"
-                                            style="font-size: 1.05rem; line-height: 1.6;" data-label="Reason / Details">
-                                            <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $device->DeviceID)) ?>
-                                        </td>
-                                        <td class="align-middle text-center" data-label="Info">
-                                            <div class="dropdown">
-                                                <button class="btn btn-light btn-sm rounded-pill" type="button"
-                                                    data-bs-toggle="dropdown" aria-expanded="false"
-                                                    style="border: 1px solid #cbd5e1; font-size: 0.85rem; padding: 4px 12px; color: #475569;">
-                                                    <i class="fa-solid fa-circle-info"></i> More
-                                                </button>
-                                                <div class="dropdown-menu p-3 shadow-sm text-start"
-                                                    style="min-width: 250px; font-size: 0.9rem; color: #334155; right: 0; left: auto;">
-                                                    <div class="mb-2"><strong><i class="fa-solid fa-user text-muted"
-                                                                style="width: 20px;"></i> User:</strong>
-                                                        <?= esc_html($row->user_email ?: '-') ?>
-                                                    </div>
-                                                    <div class="mb-2"><strong><i class="fa-solid fa-briefcase text-muted"
-                                                                style="width: 20px;"></i> Owner:</strong>
-                                                        <?= esc_html(stock_supply_format_owner_with_dept($row->Owner, $row->Department)) ?>
-                                                    </div>
-                                                    <?php if (!empty($row->Photo)): ?>
-                                                        <div class="mt-3 text-center pt-3" style="border-top: 1px dashed #e2e8f0;">
-                                                            <div class="mb-1 text-muted" style="font-size:0.8rem;">Attached Photo</div>
-                                                            <img src="<?= esc_url($row->Photo) ?>"
-                                                                onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>')"
-                                                                style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;"
-                                                                title="Click to enlarge">
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div><!-- /dtl-table-wrap -->
+            <!-- Photo Lightbox Modal Script -->
 
             <script>
                 window.openPhotoModal = function (imgUrl) {

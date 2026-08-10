@@ -40,7 +40,7 @@ function device_crud_laptop()
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
         $where_sql .= $wpdb->prepare(
-            " AND (Brand LIKE '%s' OR DeviceID LIKE '%s' OR Department LIKE '%s' OR NickName LIKE '%s' OR Status LIKE '%s' OR Model LIKE '%s' OR SerialNumber LIKE '%s' OR Owner LIKE %s OR ReceiveDate LIKE '%s' OR ReturnDate LIKE '%s' OR RepairDate LIKE '%s' OR NickName LIKE '%s')",
+            " AND (Brand LIKE %s OR DeviceID LIKE %s OR Department LIKE %s OR NickName LIKE %s OR Status LIKE %s OR Model LIKE %s OR SerialNumber LIKE %s OR Owner LIKE %s OR ReceiveDate LIKE %s OR ReturnDate LIKE %s OR RepairDate LIKE %s OR NickName LIKE %s)",
             $like,
             $like,
             $like,
@@ -264,7 +264,7 @@ function device_crud_laptop()
                                 </td>
                                 <td class="align-middle text-start" data-label="ID">
                                     <?php
-                                    $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-1 day');
+                                    $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-7 days');
                                     if ($is_new_device): ?>
                                         <span class="new-device-badge">NEW</span>
                                     <?php endif; ?>

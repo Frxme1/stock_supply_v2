@@ -10,42 +10,50 @@
    1. CSS VARIABLES — Material Design Color Palette
    ============================================================ */
 :root {
-    /* Primary: Indigo 600 (MUI default) */
-    --md-primary: #1976D2;
-    --md-primary-light: #42A5F5;
-    --md-primary-dark: #1565C0;
-    --md-primary-surface: rgba(25, 118, 210, 0.08);
+    /* ======= Modern Indigo-Violet Accent System ======= */
+    /* Primary: Indigo 500 (modern, distinct from generic blue) */
+    --md-primary: #6366f1;
+    --md-primary-light: #818cf8;
+    --md-primary-dark: #4f46e5;
+    --md-primary-surface: rgba(99, 102, 241, 0.08);
 
-    /* Secondary: Teal 500 */
-    --md-secondary: #009688;
-    --md-secondary-light: #4DB6AC;
+    /* Secondary: Violet 500 */
+    --md-secondary: #8b5cf6;
+    --md-secondary-light: #a78bfa;
+
+    /* Gradient accent — used for CTAs, active states */
+    --md-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --md-gradient-glow: 0 8px 24px rgba(99, 102, 241, 0.35);
 
     /* Error / Success / Warning */
-    --md-error: #D32F2F;
-    --md-success: #2E7D32;
-    --md-warning: #ED6C02;
-    --md-info: #0288D1;
+    --md-error: #ef4444;
+    --md-success: #10b981;
+    --md-warning: #f59e0b;
+    --md-info: #0ea5e9;
 
-    /* Surfaces & Text */
-    --md-surface: #FFFFFF;
-    --md-background: #FAFAFA;
-    --md-text-primary: rgba(0, 0, 0, 0.87);
-    --md-text-secondary: rgba(0, 0, 0, 0.60);
-    --md-text-disabled: rgba(0, 0, 0, 0.38);
-    --md-divider: rgba(0, 0, 0, 0.12);
+    /* Surfaces & Text — Slate-based */
+    --md-surface: #ffffff;
+    --md-background: #f8fafc;
+    --md-surface-hover: #f1f5f9;
+    --md-text-primary: #0f172a;
+    --md-text-secondary: #475569;
+    --md-text-muted: #94a3b8;
+    --md-text-disabled: rgba(15, 23, 42, 0.38);
+    --md-divider: rgba(15, 23, 42, 0.08);
 
-    /* Elevation Shadows (MUI dp levels) */
-    --md-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-    --md-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
-    --md-shadow-3: 0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.10);
-    --md-shadow-4: 0 15px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05);
+    /* Elevation Shadows — softer, more modern */
+    --md-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --md-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --md-shadow-3: 0 12px 28px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.06);
+    --md-shadow-4: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
+    --md-shadow-indigo: 0 8px 24px rgba(99, 102, 241, 0.30);
 
-    /* Border Radius */
-    --md-radius-sm: 4px;
-    --md-radius-md: 8px;
-    --md-radius-lg: 12px;
-    --md-radius-xl: 16px;
-    --md-radius-pill: 50px;
+    /* Border Radius — slightly more rounded */
+    --md-radius-sm: 6px;
+    --md-radius-md: 10px;
+    --md-radius-lg: 14px;
+    --md-radius-xl: 20px;
+    --md-radius-pill: 9999px;
 
     /* Transition */
     --md-transition: cubic-bezier(0.4, 0, 0.2, 1);
@@ -59,6 +67,45 @@
    SHINING TEXT ANIMATION (Inspired by ShiningText component)
    Targeting <h1 class="entry-title">Dashboard</h1> and all page headers
    ============================================================ */
+
+/* ============================================================
+   GLOBAL PAGE ENTRANCE ANIMATIONS
+   ============================================================ */
+@keyframes pageEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes staggerRow {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmerPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
 
 @keyframes shiningText {
     0% {
@@ -103,7 +150,7 @@ h1.title *,
 
 body,
 html {
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     color: var(--md-text-primary);
     background-color: transparent !important;
     -webkit-font-smoothing: antialiased;
@@ -115,15 +162,28 @@ html {
 
 html body #page,
 html body #content,
-html body .site-content,
-html body footer,
-html body .custom-footer {
+html body .site-content {
     width: 100% !important;
     max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     float: none !important;
     box-sizing: border-box !important;
+}
+
+/* Completely Hide Footer */
+footer,
+.custom-footer,
+.site-footer,
+#colophon,
+.ast-footer-overlay,
+.ast-site-footer-wrap {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
 }
 
 html body .ast-container,
@@ -279,28 +339,28 @@ a:hover {
 
 /* --- Contained Buttons (default .btn) --- */
 .btn {
-    font-family: 'Roboto', sans-serif !important;
-    font-weight: 500;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    font-weight: 600;
     font-size: 0.875rem;
-    letter-spacing: 0.02857em;
-    text-transform: uppercase;
-    border-radius: var(--md-radius-sm) !important;
-    padding: 8px 22px;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    border-radius: var(--md-radius-md) !important;
+    padding: 8px 20px;
     border: none;
     box-shadow: var(--md-shadow-1);
-    transition: all 0.25s var(--md-transition);
+    transition: all 0.22s var(--md-transition);
     position: relative;
     overflow: hidden;
 }
 
 .btn:hover {
     box-shadow: var(--md-shadow-2);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 .btn:active {
-    box-shadow: var(--md-shadow-3);
     transform: translateY(0);
+    box-shadow: var(--md-shadow-1);
 }
 
 /* Ripple Effect */
@@ -325,61 +385,67 @@ a:hover {
     transition: 0s;
 }
 
-/* Primary Button */
+/* Primary Button — Gradient */
 .btn-primary,
 .btn-info {
-    background-color: var(--md-primary) !important;
-    border-color: var(--md-primary) !important;
+    background: var(--md-gradient) !important;
+    border-color: transparent !important;
     color: #fff !important;
+    box-shadow: var(--md-shadow-indigo) !important;
 }
 
 .btn-primary:hover,
 .btn-info:hover {
-    background-color: var(--md-primary-dark) !important;
-    border-color: var(--md-primary-dark) !important;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.45) !important;
+    transform: translateY(-2px);
 }
 
 /* Success Button */
 .btn-success {
-    background-color: var(--md-success) !important;
-    border-color: var(--md-success) !important;
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    border-color: transparent !important;
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3) !important;
 }
 
 /* Danger Button */
 .btn-danger {
-    background-color: var(--md-error) !important;
-    border-color: var(--md-error) !important;
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    border-color: transparent !important;
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25) !important;
 }
 
 /* Warning Button */
 .btn-warning {
-    background-color: var(--md-warning) !important;
-    border-color: var(--md-warning) !important;
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    border-color: transparent !important;
     color: #fff !important;
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25) !important;
 }
 
 /* Outlined Buttons */
 .btn-outline-primary {
     color: var(--md-primary) !important;
-    border: 1px solid var(--md-primary) !important;
+    border: 1.5px solid var(--md-primary) !important;
     background: transparent !important;
     box-shadow: none;
 }
 
 .btn-outline-primary:hover {
-    background-color: var(--md-primary-surface) !important;
+    background: var(--md-primary-surface) !important;
     box-shadow: none;
+    transform: translateY(-1px);
 }
 
-/* Rounded Pill Override — Material uses slightly rounded, not full pill */
+/* Rounded Pill Override */
 .btn.rounded-pill {
-    border-radius: 20px !important;
+    border-radius: var(--md-radius-pill) !important;
 }
 
 /* Small Button */
 .btn-sm {
     font-size: 0.8125rem;
-    padding: 6px 16px;
+    padding: 6px 14px;
 }
 
 
@@ -422,8 +488,17 @@ label {
 }
 
 /* Select Dropdown Arrow */
-.form-select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(0,0,0,0.54)' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+select,
+.form-select,
+.staggered-dropdown {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+    background-size: 16px 16px !important;
+    padding-right: 40px !important;
 }
 
 /* Custom form-group-input Override for Material look */
@@ -526,7 +601,7 @@ input[type="checkbox"] {
 
 
 /* ============================================================
-   6. DASHBOARD CARDS — Material Elevation
+   6. DASHBOARD CARDS — Modern Elevated
    ============================================================ */
 .device-dashboard {
     background-color: transparent !important;
@@ -535,24 +610,29 @@ input[type="checkbox"] {
 .card-status {
     border-radius: var(--md-radius-lg) !important;
     box-shadow: var(--md-shadow-2) !important;
-    transition: box-shadow 0.3s var(--md-transition), transform 0.3s var(--md-transition);
+    border: 1px solid rgba(99, 102, 241, 0.06);
+    transition: box-shadow 0.3s var(--md-transition), transform 0.3s var(--md-transition), border-color 0.3s;
     padding: 22px !important;
+    animation: pageEntrance 0.4s var(--md-transition) both;
 }
 
 .card-status:hover {
     box-shadow: var(--md-shadow-3) !important;
-    transform: translateY(-4px);
+    transform: translateY(-5px);
+    border-color: rgba(99, 102, 241, 0.15);
 }
 
 .card-title {
-    font-weight: 500 !important;
-    font-size: 1rem !important;
-    letter-spacing: 0.02em;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    opacity: 0.75;
 }
 
 .card-icon {
-    font-size: 2.5rem !important;
-    opacity: 0.6 !important;
+    font-size: 2.25rem !important;
+    opacity: 0.5 !important;
 }
 
 .card-count {
@@ -561,15 +641,15 @@ input[type="checkbox"] {
 }
 
 .progress-bar {
-    background: rgba(255, 255, 255, 0.25) !important;
-    border-radius: var(--md-radius-sm) !important;
-    height: 6px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--md-radius-pill) !important;
+    height: 5px !important;
 }
 
 .progress-fill {
     background: rgba(255, 255, 255, 0.9) !important;
-    border-radius: var(--md-radius-sm) !important;
-    transition: width 0.6s var(--md-transition);
+    border-radius: var(--md-radius-pill) !important;
+    transition: width 0.8s var(--md-transition);
 }
 
 .percent-text {
@@ -591,28 +671,31 @@ input[type="checkbox"] {
     border-radius: var(--md-radius-lg) !important;
     box-shadow: var(--md-shadow-1);
     padding: 28px 20px !important;
-    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition);
-    border: 1px solid var(--md-divider);
+    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition), border-color 0.3s;
+    border: 1px solid rgba(99, 102, 241, 0.07);
+    animation: pageEntrance 0.45s var(--md-transition) both;
 }
 
 .all-device-summary:hover {
     box-shadow: var(--md-shadow-2);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    border-color: rgba(99, 102, 241, 0.16);
 }
 
 .all-device-summary h4 {
-    font-size: 0.875rem !important;
+    font-size: 0.8rem !important;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--md-text-secondary) !important;
-    font-weight: 500 !important;
+    color: var(--md-text-muted) !important;
+    font-weight: 600 !important;
     margin-bottom: 12px;
 }
 
 .all-device-summary h3 {
     font-size: 2rem !important;
-    font-weight: 300 !important;
+    font-weight: 700 !important;
     color: var(--md-text-primary) !important;
+    letter-spacing: -0.02em;
 }
 
 /* Circle Chart */
@@ -623,27 +706,27 @@ input[type="checkbox"] {
 }
 
 .circle-bg {
-    stroke: #E0E0E0 !important;
+    stroke: rgba(99, 102, 241, 0.1) !important;
     stroke-width: 3.5;
 }
 
 
 
 /* ============================================================
-   9. PAGINATION — Material Design
+   9. PAGINATION — Modern
    ============================================================ */
 .pagination {
     gap: 4px;
 }
 
 .pagination .page-item .page-link {
-    font-family: 'Roboto', sans-serif !important;
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: var(--md-text-primary);
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: var(--md-text-secondary);
     background-color: transparent;
     border: none !important;
-    border-radius: 50% !important;
+    border-radius: 8px !important;
     width: 36px;
     height: 36px;
     display: flex;
@@ -657,16 +740,17 @@ input[type="checkbox"] {
 .pagination .page-item .page-link:hover {
     background-color: var(--md-primary-surface);
     color: var(--md-primary);
+    transform: translateY(-1px);
 }
 
 .pagination .page-item.active .page-link {
-    background-color: var(--md-primary) !important;
+    background: var(--md-gradient) !important;
     color: #fff !important;
-    box-shadow: var(--md-shadow-1);
+    box-shadow: var(--md-shadow-indigo);
 }
 
 .pagination .page-item.disabled .page-link {
-    color: var(--md-text-disabled);
+    color: var(--md-text-muted);
     background: transparent;
 }
 
@@ -674,11 +758,10 @@ input[type="checkbox"] {
 .pagination .page-item:first-child .page-link,
 .pagination .page-item:last-child .page-link {
     width: auto;
-    border-radius: 18px !important;
+    border-radius: var(--md-radius-md) !important;
     padding: 0 16px;
-    font-size: 0.8125rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    font-size: 0.8rem;
+    letter-spacing: 0.01em;
 }
 
 
@@ -752,19 +835,19 @@ form {
 }
 
 .swal2-styled.swal2-confirm {
-    background: linear-gradient(135deg, var(--md-primary), var(--md-primary-dark)) !important;
-    border-radius: 50px !important;
+    background: var(--md-gradient) !important;
+    border-radius: var(--md-radius-pill) !important;
     font-weight: 600 !important;
     text-transform: none !important;
-    letter-spacing: 0.5px !important;
-    box-shadow: 0 8px 16px rgba(25, 118, 210, 0.3) !important;
+    letter-spacing: 0.3px !important;
+    box-shadow: var(--md-shadow-indigo) !important;
     padding: 12px 32px !important;
-    transition: all 0.3s ease !important;
+    transition: all 0.25s ease !important;
 }
 
 .swal2-styled.swal2-confirm:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 20px rgba(25, 118, 210, 0.4) !important;
+    box-shadow: 0 16px 32px rgba(99, 102, 241, 0.45) !important;
 }
 
 .swal2-styled.swal2-cancel {
@@ -802,11 +885,11 @@ form {
 
 
 /* ============================================================
-   13. SCROLLBAR — Material Thin
+   13. SCROLLBAR — Indigo Accent
    ============================================================ */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -814,12 +897,12 @@ form {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    background: rgba(99, 102, 241, 0.25);
+    border-radius: var(--md-radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(99, 102, 241, 0.5);
 }
 
 
@@ -847,21 +930,65 @@ hr,
 
 /* Card hover subtle scale */
 .card {
-    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition);
+    border: 1px solid rgba(99, 102, 241, 0.06);
+    border-radius: var(--md-radius-lg) !important;
+    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition), border-color 0.3s;
 }
 
 .card:hover {
-    box-shadow: var(--md-shadow-3);
-    transform: translateY(-3px);
+    box-shadow: var(--md-shadow-3) !important;
+    transform: translateY(-4px);
+    border-color: rgba(99, 102, 241, 0.14);
 }
 
-/* Table wrapper with Material Paper look */
+/* Table wrapper with modern surface */
 .table-responsive-xxl {
-    background: transparent;
-    border-radius: var(--md-radius-md);
+    background: var(--md-surface);
+    border-radius: var(--md-radius-lg);
     box-shadow: var(--md-shadow-1);
     overflow: visible;
-    border: 1px solid var(--md-divider);
+    border: 1px solid rgba(99, 102, 241, 0.07);
+}
+
+/* Stagger animation for table rows */
+.next-table-row:nth-child(1) {
+    animation-delay: 0.02s;
+}
+
+.next-table-row:nth-child(2) {
+    animation-delay: 0.04s;
+}
+
+.next-table-row:nth-child(3) {
+    animation-delay: 0.06s;
+}
+
+.next-table-row:nth-child(4) {
+    animation-delay: 0.08s;
+}
+
+.next-table-row:nth-child(5) {
+    animation-delay: 0.10s;
+}
+
+.next-table-row:nth-child(6) {
+    animation-delay: 0.12s;
+}
+
+.next-table-row:nth-child(7) {
+    animation-delay: 0.14s;
+}
+
+.next-table-row:nth-child(8) {
+    animation-delay: 0.16s;
+}
+
+.next-table-row:nth-child(9) {
+    animation-delay: 0.18s;
+}
+
+.next-table-row:nth-child(10) {
+    animation-delay: 0.20s;
 }
 
 /* Responsive Web Application Adjustments */
@@ -930,8 +1057,11 @@ hr,
         padding: 16px 14px !important;
     }
 
-    /* Bulk actions toolbar */
-    #bulk-action-form>.d-flex {
+    /* Bulk actions toolbar per page */
+    #bulk-action-form-device>.d-flex,
+    #bulk-action-form-laptop>.d-flex,
+    #bulk-action-form-monitor>.d-flex,
+    #bulk-action-form-acc>.d-flex {
         flex-wrap: wrap;
         gap: 8px !important;
     }
@@ -972,24 +1102,29 @@ hr,
 .device-dashboard,
 .all-device-summary-container,
 .table-responsive-xxl,
-#bulk-action-form {
-    animation: slideUp 0.4s var(--md-transition);
+#bulk-action-form-device,
+#bulk-action-form-laptop,
+#bulk-action-form-monitor,
+#bulk-action-form-acc {
+    animation: pageEntrance 0.4s var(--md-transition) both;
     max-width: 200%;
 }
 
-/* Subtle page load fade-in */
+/* Subtle page load fade-in for containers */
 @keyframes fadeInPage {
     from {
         opacity: 0;
+        transform: translateY(6px);
     }
 
     to {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
 .container-fluid {
-    animation: fadeInPage 0.3s ease-out;
+    animation: fadeInPage 0.35s ease-out;
 }
 
 /* ============================================================
@@ -1880,9 +2015,11 @@ button,
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    #advanced-filter-form .search-input-modern {
+    #advanced-filter-form .search-input-modern,
+    .search-input-modern {
         font-size: 0.85rem !important;
-        padding: 8px 12px 8px 2.25rem !important;
+        padding-left: 2.75rem !important;
+        padding-right: 1rem !important;
         border-radius: 10px !important;
         border: 1.5px solid #e5e7eb !important;
         background-color: #fafafa !important;
@@ -1955,58 +2092,314 @@ button,
         word-break: break-all;
     }
 
-    /* --- Print labels bar hide on mobile --- */
-    form[id^="bulk-action-form"]>.d-flex {
+    /* --- Print labels bar hide on mobile per page --- */
+    #bulk-action-form-device>.d-flex,
+    #bulk-action-form-laptop>.d-flex,
+    #bulk-action-form-monitor>.d-flex,
+    #bulk-action-form-acc>.d-flex {
         display: none !important;
     }
 
-    /* --- Form Container Mobile Size Adjustments --- */
-    .fl-col[data-node] .fl-col-content,
-    .fl-col-content {
-        margin-left: -35px !important;
-        margin-top: -70px;
-        margin-right: 0px !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        width: 110% !important;
-        box-sizing: border-box !important;
-    }
-
-
-    form {
+    /* --- Mobile Edit & Add Data Forms (Themed Soft Minimalist / Bento Grid) --- */
+    .edit-data-form,
+    #edit-device-form,
+    #edit-employee-form,
+    #add-device-form,
+    #add-employee-form {
         max-width: 100% !important;
         width: 100% !important;
-        margin: 10px 0 !important;
-        padding: 1.25rem 1rem !important;
+        margin: 14px 0 28px 0 !important;
+        padding: 24px 18px !important;
         box-sizing: border-box !important;
-        border-radius: 14px !important;
+        border-radius: 28px !important;
+        background: #f8fafc !important;
+        /* Matches Website Slate Theme */
+        border: 1.5px solid #e2e8f0 !important;
+        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02) !important;
     }
 
-    .form-grid {
-        grid-template-columns: 1fr !important;
-        gap: 1rem !important;
-        width: 100% !important;
+    .edit-data-form h2,
+    #edit-device-form h2,
+    #edit-employee-form h2,
+    #add-device-form h2,
+    #add-employee-form h2 {
+        font-size: 1.35rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        letter-spacing: -0.02em !important;
+        margin-bottom: 20px !important;
+        text-align: center !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
     }
 
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    .form-actions {
+    /* Card-Based Layout / Bento Grid for form fields on mobile */
+    .edit-data-form .form-grid,
+    #edit-device-form .form-grid,
+    #edit-employee-form .form-grid,
+    #add-device-form .form-grid,
+    #add-employee-form .form-grid {
         display: flex !important;
         flex-direction: column !important;
-        gap: 10px !important;
+        gap: 14px !important;
         width: 100% !important;
     }
 
-    .form-actions button,
-    .form-actions a,
-    .form-actions .btn {
+    .edit-data-form .form-group,
+    #edit-device-form .form-group,
+    #edit-employee-form .form-group,
+    #add-device-form .form-group,
+    #add-employee-form .form-group {
+        background: #ffffff !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 20px !important;
+        padding: 16px 18px !important;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+        margin-bottom: 0 !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+    }
+
+    .edit-data-form .form-group:focus-within,
+    #edit-device-form .form-group:focus-within,
+    #edit-employee-form .form-group:focus-within,
+    #add-device-form .form-group:focus-within,
+    #add-employee-form .form-group:focus-within {
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+        transform: translateY(-1px) !important;
+        position: relative !important;
+        z-index: 100 !important;
+    }
+
+    .edit-data-form .form-group label,
+    #edit-device-form .form-group label,
+    #edit-employee-form .form-group label,
+    #add-device-form .form-group label,
+    #add-employee-form .form-group label {
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        color: #475569 !important;
+        margin-bottom: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    .edit-data-form .form-group input,
+    .edit-data-form .form-group select,
+    .edit-data-form .form-group textarea,
+    #edit-device-form .form-group input,
+    #edit-device-form .form-group select,
+    #edit-employee-form .form-group input,
+    #edit-employee-form .form-group select,
+    #add-device-form .form-group input,
+    #add-device-form .form-group select {
         width: 100% !important;
         box-sizing: border-box !important;
+        height: 48px !important;
+        border-radius: 14px !important;
+        background: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        padding: 0 16px !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+        transition: all 0.2s ease !important;
+    }
+
+
+    .edit-data-form .form-group select,
+    #edit-device-form .form-group select,
+    #edit-employee-form .form-group select,
+    #add-device-form .form-group select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+        background-position: right 0.85rem center !important;
+        background-repeat: no-repeat !important;
+        background-size: 1.25em 1.25em !important;
+        padding-right: 2.5rem !important;
+    }
+
+    .edit-data-form .form-group input:focus,
+    .edit-data-form .form-group select:focus,
+    .edit-data-form .form-group textarea:focus,
+    #edit-device-form .form-group input:focus,
+    #edit-device-form .form-group select:focus {
+        background: #ffffff !important;
+        border-color: #2563eb !important;
+        outline: none !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+    }
+
+    .edit-data-form .form-group input[disabled],
+    .edit-data-form .form-group select[disabled],
+    .edit-data-form .form-group input[readonly],
+    #edit-device-form .form-group input[disabled],
+    #edit-device-form .form-group select[disabled] {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        border-color: #e2e8f0 !important;
+        cursor: not-allowed !important;
+        opacity: 0.9 !important;
+    }
+
+    /* Pill-Shaped Buttons in Form Actions */
+    .edit-data-form .form-actions,
+    #edit-device-form .form-actions,
+    #edit-employee-form .form-actions,
+    #add-device-form .form-actions,
+    #add-employee-form .form-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 12px !important;
+        margin-top: 24px !important;
+        padding-top: 18px !important;
+        border-top: 1.5px dashed #e2e8f0 !important;
+        width: 100% !important;
+    }
+
+    .edit-data-form .form-actions button,
+    .edit-data-form .form-actions .btn,
+    #edit-device-form .form-actions button,
+    #edit-employee-form .form-actions button,
+    #add-device-form .form-actions button,
+    #add-employee-form .form-actions button {
+        flex: 1 !important;
+        height: 52px !important;
+        border-radius: 9999px !important;
+        /* Pill-shaped button */
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+        padding: 0 20px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Primary/Submit Pill Button */
+    .edit-data-form .form-actions button[type="submit"],
+    .edit-data-form .form-actions .btn-success,
+    #edit-device-form .form-actions button[type="submit"],
+    #edit-employee-form .form-actions button[type="submit"],
+    #add-device-form .form-actions button[type="submit"] {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28) !important;
+    }
+
+    .edit-data-form .form-actions button[type="submit"]:active,
+    .edit-data-form .form-actions .btn-success:active {
+        transform: scale(0.96) !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    /* Cancel Pill Button */
+    .edit-data-form .form-actions button[type="button"],
+    .edit-data-form .form-actions .btn-danger,
+    .edit-data-form .form-actions .btn-secondary,
+    #edit-device-form .form-actions button[type="button"],
+    #edit-employee-form .form-actions button[type="button"] {
+        background: #f1f5f9 !important;
+        color: #334155 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        box-shadow: none !important;
+    }
+
+    .edit-data-form .form-actions button[type="button"]:active,
+    .edit-data-form .form-actions .btn-danger:active {
+        background: #e2e8f0 !important;
+        transform: scale(0.96) !important;
+    }
+
+    /* Fixed z-index stacking for Owner group and floating popups */
+    .edit-data-form .form-group#owner-group,
+    #edit-device-form .form-group#owner-group {
+        position: relative !important;
+        z-index: 80 !important;
+    }
+
+    #website_edit_owner_search_wrap,
+    #website_owner_search_wrap {
+        position: relative !important;
+        z-index: 100 !important;
+    }
+
+    /* Sub-components: Add Brand & Owner Search on Mobile */
+    .edit-data-form #btn-edit-add-new-brand,
+    #edit-device-form #btn-edit-add-new-brand {
+        border-radius: 9999px !important;
+        background: #f8fafc !important;
+        border: 1.5px dashed #cbd5e1 !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        padding: 10px 18px !important;
+        margin-top: 10px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    .edit-data-form #edit_owner_search_input,
+    #edit-device-form #edit_owner_search_input {
+        height: 48px !important;
+        border-radius: 14px !important;
+        background: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        font-weight: 500 !important;
+        color: #0f172a !important;
+    }
+
+    .edit-data-form #edit_owner_search_popup,
+    #edit-device-form #edit_owner_search_popup,
+    #owner_search_popup {
+        border-radius: 18px !important;
+        border: 1.5px solid #cbd5e1 !important;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.15) !important;
+        background: #ffffff !important;
+        z-index: 999999 !important;
+    }
+
+    /* --- Device View Details & History Timeline on Mobile --- */
+    .view-details-container,
+    .vd-history-section,
+    .dtl-history-timeline-wrapper {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+    }
+
+    .dtl-timeline-wrap,
+    .dtl-timeline-wrap.active {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .dtl-timeline {
+        display: block !important;
+        position: relative !important;
+    }
+
+    .dtl-node {
+        display: block !important;
+        opacity: 1 !important;
+        transform: none !important;
+        visibility: visible !important;
+    }
+
+    .dtl-card {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 }
 
@@ -2139,6 +2532,47 @@ button,
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.01) !important;
     background-color: #ffffff !important;
 }
+
+/* ============================================================
+   INDEPENDENT BULK ACTION FORM STYLES (PER PAGE)
+   ============================================================ */
+
+/* 1. All Devices Page */
+#bulk-action-form-device {
+    margin-bottom: 16px;
+}
+
+#bulk-action-form-device>.d-flex {
+    align-items: center;
+}
+
+/* 2. Laptop Page */
+#bulk-action-form-laptop {
+    margin-bottom: 16px;
+}
+
+#bulk-action-form-laptop>.d-flex {
+    align-items: center;
+}
+
+/* 3. Monitor Page */
+#bulk-action-form-monitor {
+    margin-bottom: 16px;
+}
+
+#bulk-action-form-monitor>.d-flex {
+    align-items: center;
+}
+
+/* 4. Accessories Page */
+#bulk-action-form-acc {
+    margin-bottom: 16px;
+}
+
+#bulk-action-form-acc>.d-flex {
+    align-items: center;
+}
+
 
 #advanced-filter-form .search-input-modern {
     padding-left: 2.25rem !important;

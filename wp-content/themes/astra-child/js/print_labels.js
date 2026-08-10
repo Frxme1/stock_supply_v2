@@ -28,7 +28,6 @@ function printDeviceLabels(devices) {
         <meta charset="UTF-8">
         <title>Print Labels</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
         <style>
             @media print {
                 @page { margin: 10mm; }
@@ -49,12 +48,12 @@ function printDeviceLabels(devices) {
                 body { background-color: white; padding: 0; }
             }
             .label-card {
-                width: 260px; /* Standard A4 address label width equivalent */
-                height: 120px;
+                width: 250px;
+                height: 100px;
                 background: white;
                 border: 1px dashed #aaa;
                 border-radius: 8px;
-                padding: 10px;
+                padding: 10px 14px;
                 box-sizing: border-box;
                 display: flex;
                 flex-direction: row;
@@ -62,7 +61,7 @@ function printDeviceLabels(devices) {
                 page-break-inside: avoid;
             }
             @media print {
-                .label-card { border: 1px solid transparent; /* Hide border when printing if using pre-cut labels */ }
+                .label-card { border: 1px solid transparent; }
             }
             .qr-col {
                 width: 80px;
@@ -72,34 +71,31 @@ function printDeviceLabels(devices) {
                 justify-content: center;
             }
             .qr-code {
-                width: 70px;
-                height: 70px;
+                width: 75px;
+                height: 75px;
             }
             .info-col {
                 flex: 1;
-                padding-left: 10px;
+                padding-left: 12px;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                align-items: center;
+                align-items: flex-start;
                 overflow: hidden;
             }
             .info-col h3 {
-                margin: 0 0 5px 0;
-                font-size: 16px;
-                text-align: center;
+                margin: 0 0 6px 0;
+                font-size: 17px;
+                font-weight: 700;
+                color: #0f172a;
                 white-space: nowrap;
             }
             .info-col p {
-                margin: 0 0 5px 0;
-                font-size: 12px;
-                color: #555;
-                text-align: center;
+                margin: 0;
+                font-size: 13px;
+                font-weight: 600;
+                color: #475569;
                 white-space: nowrap;
-            }
-            .barcode-svg {
-                width: 100%;
-                height: 40px;
             }
             .print-btn-container {
                 width: 100%;
@@ -135,7 +131,6 @@ function printDeviceLabels(devices) {
             <div class="info-col">
                 <h3>${dev.id}</h3>
                 <p>SN: ${dev.sn || '-'}</p>
-                <svg id="barcode-${index}" class="barcode-svg"></svg>
             </div>
         </div>
         `;
@@ -152,21 +147,11 @@ function printDeviceLabels(devices) {
                     const qrUrl = baseUrl + "?view=" + encodeURIComponent(dev.id);
                     new QRCode(document.getElementById('qr-' + index), {
                         text: qrUrl,
-                        width: 70,
-                        height: 70,
+                        width: 75,
+                        height: 75,
                         colorDark : "#000000",
                         colorLight : "#ffffff",
                         correctLevel : QRCode.CorrectLevel.L
-                    });
-
-                    // Generate Barcode
-                    JsBarcode("#barcode-" + index, dev.id, {
-                        format: "CODE128",
-                        displayValue: false, // Value is already displayed as h3
-                        lineColor: "#000000",
-                        width: 1.5,
-                        height: 35,
-                        margin: 0
                     });
                 });
 
@@ -188,7 +173,7 @@ function printDeviceLabels(devices) {
 // Bulk action handler logic
 function handleBulkAction(type) {
     try {
-        let formId = 'bulk-action-form';
+        let formId = document.getElementById('bulk-action-form-device') ? 'bulk-action-form-device' : 'bulk-action-form';
         let checkboxClass = '.device-checkbox';
 
         if (type && type !== 'device') {

@@ -33,11 +33,14 @@ function device_dashboard_maintenance()
     <div class="next-dashboard">
         <!-- Summary Box for Total Maintenance -->
         <div class="next-grid-2 mt-4" style="grid-template-columns: 1fr;">
-            <div class="next-card slide-up" style="background: linear-gradient(135deg, #FDB840 0%, #f59e0b 100%); color: white; border: none; box-shadow: 0 10px 20px -5px rgba(253, 184, 64, 0.4);">
-                <div class="text-center py-4">
-                    <p style="color: rgba(255,255,255,0.9); font-weight: 500; font-size: 1.1rem; margin-bottom: 0.5rem;">Total Devices Under Maintenance</p>
-                    <div style="font-size: 4rem; font-weight: 800; line-height: 1; margin-bottom: 1rem;"><span class="count-up" data-count="<?= $total_maintenance ?>">0</span></div>
-                    <span style="background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 9999px; font-size: 0.875rem; font-weight: 600;"><?= $percent_maintenance ?>% of all devices</span>
+            <div class="next-card slide-up" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 20px; box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.25), 0 4px 14px rgba(245, 158, 11, 0.12); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: rgba(245, 158, 11, 0.12); border-radius: 50%; filter: blur(30px); pointer-events: none;"></div>
+                <div class="text-center py-4 position-relative" style="z-index: 2;">
+                    <div class="d-inline-flex align-items-center gap-2 mb-2" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 5px 16px; border-radius: 9999px; font-size: 0.85rem; font-weight: 700;">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Total Devices Under Maintenance
+                    </div>
+                    <div style="font-size: 3.75rem; font-weight: 800; line-height: 1; margin: 12px 0; color: #ffffff; letter-spacing: -0.03em;"><span class="count-up" data-count="<?= $total_maintenance ?>">0</span></div>
+                    <span style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 6px 18px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; color: #cbd5e1;"><?= $percent_maintenance ?>% of total device stock</span>
                 </div>
             </div>
         </div>
@@ -84,40 +87,7 @@ function device_dashboard_maintenance()
     </div>
 
     <style>
-        /* Next.js Inspired UI (Shared) */
-        .next-dashboard {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #111827;
-            background: transparent !important;
-            padding-bottom: 2rem;
-        }
-        .next-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-        .next-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
-        .next-card {
-            background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03); transition: all 0.2s ease-in-out;
-        }
-        .next-card:hover { border-color: #d1d5db; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04); transform: translateY(-2px); }
-        .next-card-header { display: flex; justify-content: space-between; align-items: center; }
-        .next-card-title { font-size: 0.875rem; font-weight: 500; color: #4b5563; margin: 0; }
-        .next-section-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0; }
-        .next-icon-wrapper-sm {
-            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;
-        }
-        .next-number-md { font-size: 1.5rem; font-weight: 700; line-height: 1.2; display: block; }
-        .next-status-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .next-progress-wrap { display: flex; align-items: center; gap: 0.75rem; }
-        .next-progress-bar { flex: 1; height: 6px; background: #f3f4f6; border-radius: 9999px; overflow: hidden; }
-        .next-progress-fill { height: 100%; border-radius: 9999px; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .next-progress-text { font-size: 0.875rem; color: #6b7280; font-weight: 500; min-width: 32px; text-align: right; }
-        .mt-4 { margin-top: 1.5rem; }
-        .mt-5 { margin-top: 2rem; }
-        .mb-4 { margin-bottom: 1.5rem; }
-        .py-4 { padding-top: 1.5rem; padding-bottom: 1.5rem; text-align: center; }
-        .slide-up { opacity: 0; transform: translateY(15px); animation: nextSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes nextSlideUp { to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 1024px) { .next-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-        @media (max-width: 640px) { .next-grid { grid-template-columns: 1fr !important; } }
+        /* maintenance_dashboard — shared styles from dashboard_cards.css */
     </style>
     
     <script>

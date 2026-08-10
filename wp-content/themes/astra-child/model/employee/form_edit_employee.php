@@ -88,7 +88,7 @@ function form_edit_owner($editing = null)
 
 
 ?>
-    <form method="POST" style="width: 30rem;">
+    <form method="POST" id="edit-employee-form" class="edit-data-form">
         <?php wp_nonce_field('edit_employee_nonce', '_edit_emp_nonce'); ?>
         <h2 style="text-align: center;">Edit Owner</h2>
         <input type="hidden" name="OwnerID" value="<?= esc_attr($editing->OwnerID ?? '') ?>">
@@ -167,8 +167,175 @@ function form_edit_owner($editing = null)
             <button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
             <button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57"><?= $editing ? 'Update' : 'Submit' ?></button>
         </div>
+    </form>
+
+    <style>
+		/* Next.js Inspired Form UI — Identical to Edit Device */
+		#edit-employee-form {
+			max-width: 650px;
+			margin: 40px auto;
+			margin-top: 10px;
+			background: #ffffff;
+			padding: 2.5rem;
+			border-radius: 16px;
+			border: 1px solid #e5e7eb;
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+			animation: formFadeIn 0.5s ease-out forwards;
+		}
+
+		@keyframes formFadeIn {
+			from { opacity: 0; transform: translateY(10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		#edit-employee-form h2 {
+			font-weight: 700;
+			color: #111827;
+			letter-spacing: -0.025em;
+			margin-bottom: 1.5rem;
+		}
+
+		#edit-employee-form .form-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.5rem;
+			margin-top: 1rem;
+		}
+
+		#edit-employee-form .form-group {
+			display: flex;
+			flex-direction: column;
+			margin-bottom: 0;
+			position: relative;
+		}
+
+		#edit-employee-form .form-group label {
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: #374151;
+			margin-bottom: 6px;
+			transition: color 0.2s ease;
+		}
+
+		#edit-employee-form .form-group:focus-within label {
+			color: #3b82f6;
+		}
+
+		#edit-employee-form .form-group input,
+		#edit-employee-form .form-group select {
+			width: 100%;
+			box-sizing: border-box;
+			height: 44px;
+			padding: 0.5rem 1rem;
+			font-size: 0.95rem;
+			color: #111827;
+			background-color: #ffffff;
+			border: 1px solid #d1d5db;
+			border-radius: 10px;
+			transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+			appearance: none;
+		}
+
+		#edit-employee-form .form-group select {
+			background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+			background-position: right 0.75rem center;
+			background-repeat: no-repeat;
+			background-size: 1.25em 1.25em;
+			cursor: pointer;
+		}
+
+		#edit-employee-form .form-group input:hover:not([readonly]):not([disabled]),
+		#edit-employee-form .form-group select:hover:not([readonly]):not([disabled]) {
+			border-color: #9ca3af;
+		}
+
+		#edit-employee-form .form-group input:focus:not([readonly]):not([disabled]),
+		#edit-employee-form .form-group select:focus:not([readonly]):not([disabled]) {
+			outline: none;
+			border-color: #3b82f6;
+			box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+			transform: translateY(-1px);
+		}
+
+		#edit-employee-form .form-actions {
+			display: flex;
+			justify-content: center;
+			gap: 1rem;
+			margin-top: 2.5rem;
+			padding-top: 1.5rem;
+			border-top: 1px solid #f3f4f6;
+		}
+
+		#edit-employee-form .form-actions button {
+			padding: 0.6rem 2rem;
+			font-weight: 600;
+			font-size: 0.95rem;
+			letter-spacing: 0.025em;
+			transition: all 0.2s ease;
+			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+		}
+
+		@media (max-width: 640px) {
+			#edit-employee-form .form-grid {
+				grid-template-columns: 1fr;
+			}
+			#edit-employee-form {
+				margin: 14px auto;
+				padding: 1.5rem;
+			}
+		}
+    </style>
+
+        <?php
+        // แสดงปุ่ม Resign เฉพาะพนักงานที่ Status = Active
+        $is_active = false;
+        if (!empty($editing->StatusID)) {
+            $current_status_name = $wpdb->get_var($wpdb->prepare(
+                "SELECT Status_name FROM Status_Employee WHERE StatusID = %d",
+                $editing->StatusID
+            ));
+            $is_active = (strcasecmp(trim($current_status_name ?? ''), 'Active') === 0);
+        }
+        ?>
+        <?php if ($is_active): ?>
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #fca5a5; text-align: center;">
+            <p style="color: #9ca3af; font-size: 0.8rem; margin-bottom: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Danger Zone</p>
+            <button type="button"
+                onclick="confirmResign(<?= intval($editing->OwnerID) ?>, '<?= esc_js($editing->Nickname ?? '') ?>', '<?= wp_create_nonce('resign_owner_nonce') ?>')"
+                style="background: #fff7ed; color: #b45309; border: 1.5px solid #fbbf24; border-radius: 999px; padding: 0.5rem 1.75rem; font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;"
+                onmouseover="this.style.background='#fef3c7'; this.style.borderColor='#d97706';"
+                onmouseout="this.style.background='#fff7ed'; this.style.borderColor='#fbbf24';">
+                <i class="fa-solid fa-user-minus"></i> Resign Employee
+            </button>
+        </div>
+        <?php endif; ?>
 
     </form>
+
+    <script>
+        function confirmResign(ownerID, nickname, nonce) {
+            Swal.fire({
+                icon: 'warning',
+                title: '⚠️ ยืนยันการ Resign?',
+                html: `<div style="text-align:center;">
+                    <p style="margin-bottom:8px;">พนักงาน <strong style="color:#0f172a;">${nickname}</strong> จะถูกเปลี่ยน Status เป็น <span style="color:#d97706;font-weight:700;">Resigned</span></p>
+                    <p style="color:#64748b; font-size:0.9rem;">อุปกรณ์ที่ถือครองทั้งหมดจะถูกคืนเข้า Stock อัตโนมัติ<br>ข้อมูลพนักงานจะยังคงอยู่ในระบบ ไม่ถูกลบ</p>
+                </div>`,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> ยืนยัน Resign',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#d97706',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '<?= esc_url(home_url('/Owner/')) ?>?resign=' + ownerID + '&_wpnonce=' + nonce;
+                }
+            });
+        }
+    </script>
 
 
     <style>

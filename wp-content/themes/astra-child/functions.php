@@ -5,6 +5,22 @@ if (!defined('ABSPATH')) {
 
 date_default_timezone_set('Asia/Bangkok');
 
+// Remove Astra theme footer
+add_action('init', function () {
+    remove_action('astra_footer', 'astra_footer_markup');
+}, 99);
+
+// Add page slug to body classes for page-specific mobile CSS targeting
+add_filter('body_class', function ($classes) {
+    if (is_page()) {
+        global $post;
+        if ($post && !empty($post->post_name)) {
+            $classes[] = 'page-' . sanitize_html_class($post->post_name);
+        }
+    }
+    return $classes;
+});
+
 
 /**
  * Astra Child Theme functions and definitions
@@ -35,6 +51,13 @@ function child_enqueue_styles()
     // Enqueue AJAX Filter & Reset JS
     $ajax_js_path = get_stylesheet_directory() . '/js/ajax_filter_reset.js';
     wp_enqueue_script('ajax-filter-reset', get_stylesheet_directory_uri() . '/js/ajax_filter_reset.js', array(), time(), true);
+
+    // Enqueue Device Timeline CSS and JS globally
+    wp_enqueue_style('device-timeline-css', get_stylesheet_directory_uri() . '/css/device_timeline.css', array(), time(), 'all');
+    wp_enqueue_script('device-timeline-js', get_stylesheet_directory_uri() . '/js/device_timeline.js', array(), time(), true);
+
+    // Enqueue Mobile Load More JS
+    wp_enqueue_script('mobile-load-more-js', get_stylesheet_directory_uri() . '/js/mobile_load_more.js', array(), time(), true);
 }
 add_action('wp_enqueue_scripts', 'child_enqueue_styles', 15);
 
@@ -164,6 +187,18 @@ require_once get_stylesheet_directory() . '/view/formDevice.php';
 require_once get_stylesheet_directory() . '/view/formEmployee.php';
 require_once get_stylesheet_directory() . '/view/formMaintenance.php';
 require_once get_stylesheet_directory() . '/view/view_device_details.php';
+
+// require Models & Shortcodes
+require_once get_stylesheet_directory() . '/model/laptop/laptop.php';
+require_once get_stylesheet_directory() . '/model/monitor/monitor.php';
+require_once get_stylesheet_directory() . '/model/accessories/accessories.php';
+require_once get_stylesheet_directory() . '/model/maintenance/maintenance.php';
+require_once get_stylesheet_directory() . '/model/history/history.php';
+require_once get_stylesheet_directory() . '/model/employee/form_add_employee.php';
+require_once get_stylesheet_directory() . '/model/employee/form_edit_employee.php';
+require_once get_stylesheet_directory() . '/model/device/device_form_add.php';
+require_once get_stylesheet_directory() . '/model/device/edit-device.php';
+require_once get_stylesheet_directory() . '/model/device/receive-device.php';
 
 // Cleanup: Delete Quick Transfer page if it exists
 add_action('init', function () {
@@ -306,6 +341,20 @@ function enqueue_device_dashboard_styles()
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_device_dashboard_styles');
+
+
+// ---- Shared Dashboard Cards — Modern Light Theme (all dashboards) ----
+function enqueue_dashboard_cards_styles()
+{
+    wp_enqueue_style(
+        'dashboard-cards-css',
+        get_stylesheet_directory_uri() . '/css/dashboard_cards.css',
+        [],
+        filemtime(get_stylesheet_directory() . '/css/dashboard_cards.css')
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_dashboard_cards_styles');
+
 
 
 
@@ -1731,21 +1780,32 @@ function stock_supply_ajax_get_quick_swap_options()
         wp_send_json_error(['message' => 'Old device not found']);
     }
 
-    // Get available replacement devices ONLY in the same category
+    // Get available replacement devices ONLY in the same category as the faulty device
     $available_devices = $wpdb->get_results($wpdb->prepare("
-        SELECT d.DeviceID, d.Model, d.SerialNumber, d.CategoryID,
+        SELECT d.DeviceID, d.Model, d.SerialNumber, d.CategoryID, d.BrandID,
                c.CategoryName, b.BrandName
         FROM Devices d
         LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
         LEFT JOIN Brands b     ON d.BrandID    = b.BrandID
         INNER JOIN Statuses s  ON d.StatusID   = s.StatusID
         WHERE s.StatusName = 'Available' AND d.DeviceID != %s AND d.CategoryID = %d
-        ORDER BY d.DeviceID ASC
+        ORDER BY b.BrandName ASC, d.DeviceID ASC
+    ", $old_device_id, $old_device->CategoryID));
+
+    // Get brands of available replacement devices in this locked category
+    $brands = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT b.BrandID, b.BrandName
+        FROM Devices d
+        INNER JOIN Brands b    ON d.BrandID  = b.BrandID
+        INNER JOIN Statuses s  ON d.StatusID = s.StatusID
+        WHERE s.StatusName = 'Available' AND d.DeviceID != %s AND d.CategoryID = %d
+        ORDER BY b.BrandName ASC
     ", $old_device_id, $old_device->CategoryID));
 
     wp_send_json_success([
         'old_device' => $old_device,
         'available_devices' => $available_devices ?: [],
+        'brands' => $brands ?: [],
     ]);
 }
 add_action('wp_ajax_get_quick_swap_options', 'stock_supply_ajax_get_quick_swap_options');
@@ -1915,17 +1975,15 @@ add_action('wp_footer', function () {
                     }
 
                     const oldDev = data.data.old_device;
-                    const availables = data.data.available_devices;
+                    const availables = data.data.available_devices || [];
+                    const brands = data.data.brands || [];
 
-                    let availableOptionsHtml = `<option value="">-- Select replacement ${oldDev.CategoryName || 'device'} --</option>`;
-                    if (availables.length === 0) {
-                        availableOptionsHtml = `<option value="">❌ No available replacement devices in ${oldDev.CategoryName || 'this category'}</option>`;
-                    } else {
-                        availables.forEach(dev => {
-                            const brandModel = (dev.BrandName || '') + ' ' + (dev.Model || '');
-                            availableOptionsHtml += `<option value="${dev.DeviceID}">[${dev.DeviceID}] ${brandModel} - SN: ${dev.SerialNumber || '-'}</option>`;
-                        });
-                    }
+                    let brandOptionsHtml = '';
+                    brands.forEach(b => {
+                        brandOptionsHtml += `<option value="${b.BrandID}">${b.BrandName}</option>`;
+                    });
+
+                    const categoryName = oldDev.CategoryName || 'N/A';
 
                     const modalHtml = `
                         <div style="text-align: left; font-size: 0.92rem; font-family: sans-serif;">
@@ -1934,7 +1992,7 @@ add_action('wp_footer', function () {
                                     <i class="fa-solid fa-laptop-medical"></i> Faulty Device (to Maintenance):
                                 </div>
                                 <div style="color: #431407;">
-                                    <strong>${oldDev.DeviceID}</strong> - ${oldDev.BrandName || ''} ${oldDev.Model || ''} (${oldDev.CategoryName || ''})<br>
+                                    <strong>${oldDev.DeviceID}</strong> - ${oldDev.BrandName || ''} ${oldDev.Model || ''} (${categoryName})<br>
                                     <small style="color: #7c2d12;">Held by: <strong>${oldDev.OwnerNickname || '-'}</strong> ${oldDev.OwnerFullName ? '(' + oldDev.OwnerFullName + ')' : ''} | Dept: ${oldDev.DepartmentName || '-'}</small>
                                 </div>
                             </div>
@@ -1950,8 +2008,26 @@ add_action('wp_footer', function () {
                                 <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 6px;">
                                     2. Select Replacement Device <span style="color: #ef4444;">*</span>
                                 </label>
+                                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                    <div style="flex: 1;">
+                                        <label style="display: block; font-size: 0.76rem; font-weight: 600; color: #64748b; margin-bottom: 3px;">
+                                            <i class="fa-solid fa-lock"></i> หมวดหมู่ (Category Locked)
+                                        </label>
+                                        <select id="swap-filter-category" class="swal2-select" disabled style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.82rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 4px 8px; height: 38px; background-color: #f1f5f9; color: #334155; cursor: not-allowed;">
+                                            <option value="${oldDev.CategoryID}">🔒 ${categoryName}</option>
+                                        </select>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label style="display: block; font-size: 0.76rem; font-weight: 600; color: #64748b; margin-bottom: 3px;">
+                                            <i class="fa-solid fa-tags"></i> ยี่ห้อ (Filter Brand)
+                                        </label>
+                                        <select id="swap-filter-brand" class="swal2-select" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.82rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 4px 8px; height: 38px;">
+                                            <option value="">-- ทุกยี่ห้อ (All Brands) --</option>
+                                            ${brandOptionsHtml}
+                                        </select>
+                                    </div>
+                                </div>
                                 <select id="swap-new-device-id" class="swal2-select" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 8px 12px; height: 42px;">
-                                    ${availableOptionsHtml}
                                 </select>
                             </div>
                         </div>
@@ -1966,6 +2042,34 @@ add_action('wp_footer', function () {
                         confirmButtonColor: '#f59e0b',
                         cancelButtonColor: '#6b7280',
                         customClass: { popup: 'quick-swap-popup' },
+                        didOpen: () => {
+                            const brandSelect = document.getElementById('swap-filter-brand');
+                            const devSelect = document.getElementById('swap-new-device-id');
+
+                            const updateDevList = () => {
+                                const brandVal = brandSelect ? brandSelect.value : '';
+
+                                const filtered = availables.filter(dev => {
+                                    const matchBrand = !brandVal || String(dev.BrandID) === String(brandVal);
+                                    return matchBrand;
+                                });
+
+                                let opts = '';
+                                if (filtered.length === 0) {
+                                    opts = `<option value="">❌ ไม่มี ${categoryName} ที่พร้อมใช้งาน (No available devices)</option>`;
+                                } else {
+                                    opts = `<option value="">-- เลือกอุปกรณ์ ${categoryName} ที่จะแทนที่ (${filtered.length} เครื่อง) --</option>`;
+                                    filtered.forEach(dev => {
+                                        const brandModel = (dev.BrandName || '') + ' ' + (dev.Model || '');
+                                        opts += `<option value="${dev.DeviceID}">[${dev.DeviceID}] ${brandModel} - SN: ${dev.SerialNumber || '-'}</option>`;
+                                    });
+                                }
+                                devSelect.innerHTML = opts;
+                            };
+
+                            if (brandSelect) brandSelect.addEventListener('change', updateDevList);
+                            updateDevList();
+                        },
                         preConfirm: () => {
                             const reason = document.getElementById('swap-repair-reason').value.trim();
                             const newDevId = document.getElementById('swap-new-device-id').value;

@@ -622,6 +622,9 @@ function handle_device_actions()
     }
 
     if (isset($_GET['lost'])) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'device_action_nonce')) {
+            return;
+        }
         $device_id = sanitize_text_field($_GET['lost']);
         $lost_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Lost'");
 

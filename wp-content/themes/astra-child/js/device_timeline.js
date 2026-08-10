@@ -4,11 +4,22 @@
 (function () {
     'use strict';
 
-    document.addEventListener('DOMContentLoaded', function () {
+    if (window.__device_timeline_initialized) {
+        return;
+    }
+    window.__device_timeline_initialized = true;
+
+    function init() {
         initViewToggle();
         initCardExpand();
         initScrollReveal();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
     /** Toggle between Timeline and Table view */
     function initViewToggle() {
@@ -46,29 +57,18 @@
             const card = e.target.closest('.dtl-card');
             if (!card) return;
 
-            // Don't toggle if clicking photo
-            if (e.target.closest('.dtl-photo-thumb')) return;
+            // Don't toggle if clicking photo, links, or inputs
+            if (e.target.closest('.dtl-photo-thumb, a, button, input, select, textarea')) return;
 
             const body = card.querySelector('.dtl-card-body');
-            if (!body) return;
-
+            
             const isOpen = card.classList.contains('dtl-open');
-
-            // Close all others
-            document.querySelectorAll('.dtl-card.dtl-open').forEach(function (c) {
-                if (c !== card) {
-                    c.classList.remove('dtl-open');
-                    var b = c.querySelector('.dtl-card-body');
-                    if (b) b.classList.remove('dtl-expanded');
-                }
-            });
-
             if (isOpen) {
                 card.classList.remove('dtl-open');
-                body.classList.remove('dtl-expanded');
+                if (body) body.classList.remove('dtl-expanded');
             } else {
                 card.classList.add('dtl-open');
-                body.classList.add('dtl-expanded');
+                if (body) body.classList.add('dtl-expanded');
             }
         });
     }
@@ -78,25 +78,37 @@
         var nodes = document.querySelectorAll('.dtl-node');
         if (!nodes.length) return;
 
+        // Ensure nodes are immediately visible on mobile / small screens
+        if (window.innerWidth <= 768) {
+            nodes.forEach(function (node) {
+                node.classList.add('dtl-visible');
+            });
+            return;
+        }
+
         if ('IntersectionObserver' in window) {
             var observer = new IntersectionObserver(function (entries) {
                 entries.forEach(function (entry, i) {
                     if (entry.isIntersecting) {
-                        // Stagger animation
                         setTimeout(function () {
                             entry.target.classList.add('dtl-visible');
                         }, i * 60);
                         observer.unobserve(entry.target);
                     }
                 });
-            }, { threshold: 0.15 });
+            }, { threshold: 0.05, rootMargin: '50px 0px' });
 
             nodes.forEach(function (node) {
-                node.classList.remove('dtl-visible');
                 observer.observe(node);
             });
+
+            // Failsafe timeout for all nodes
+            setTimeout(function () {
+                nodes.forEach(function (node) {
+                    node.classList.add('dtl-visible');
+                });
+            }, 300);
         } else {
-            // Fallback: show all
             nodes.forEach(function (node) {
                 node.classList.add('dtl-visible');
             });

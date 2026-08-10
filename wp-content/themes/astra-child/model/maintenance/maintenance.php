@@ -23,14 +23,14 @@ function device_crud_maintenance()
 
 
 
-    // section search
+    // Search filter
     $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
     $where_sql = "WHERE Status = 'Maintenance'";
 
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
         $where_sql .= $wpdb->prepare(
-            " AND (Brand LIKE %s OR DeviceID LIKE %s OR RepairDate LIKE %s OR Details LIKE %s OR Model  LIKE %s OR SerialNumber LIKE %s OR Owner LIKE %s)",
+            " AND (Brand LIKE %s OR DeviceID LIKE %s OR RepairDate LIKE %s OR Details LIKE %s OR Model LIKE %s OR SerialNumber LIKE %s OR Owner LIKE %s)",
             $like,
             $like,
             $like,
@@ -41,19 +41,14 @@ function device_crud_maintenance()
         );
     }
 
-
-    // Default sort
-    $order_sql = "ORDER BY RepairDate DESC, CASE WHEN DeviceID LIKE '%-%' THEN CAST(SUBSTRING_INDEX(DeviceID, '-', -1) AS UNSIGNED) ELSE CAST(DeviceID AS UNSIGNED) END DESC, DeviceID DESC";
-
-    $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_mainten $where_sql");
-    $total_pages = ceil($total_items / $page);
-
-    $rows = $wpdb->get_results("SELECT * FROM $table_mainten $where_sql 
-    $order_sql 
-    LIMIT $page OFFSET $offset");
+    // Fetch all active maintenance devices matching query
+    $all_active_maintenance = $wpdb->get_results("
+        SELECT * FROM $table_mainten 
+        $where_sql 
+        ORDER BY RepairDate DESC, DeviceID DESC
+    ");
 
     $suggestions = $wpdb->get_col("SELECT DISTINCT Brand FROM $table_mainten ORDER BY Category LIMIT 50");
-
 
     if (!function_exists('formatName')) {
         function formatName($el)
@@ -65,9 +60,8 @@ function device_crud_maintenance()
     }
     ?>
 
-
     <div class="container-fluid">
-        <form method="GET" action="">
+        <form method="GET" action="" id="advanced-filter-form">
             <?php
             foreach ($_GET as $key => $value) {
                 if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'sort', 'order'])) {
@@ -81,12 +75,13 @@ function device_crud_maintenance()
                 }
             }
             ?>
-            <div class="row align-items-center g-2">
-                <label class="col-auto col-form-label">Device</label>
+            <div class="row align-items-center g-2 mb-4">
+                <label class="col-auto col-form-label font-medium" style="font-weight: 700; color: #1e293b;">Device
+                    Search</label>
 
-                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 280px;">
                     <?php
-                    $search_placeholder = 'Search Device...';
+                    $search_placeholder = 'Search Maintenance Device...';
                     $search_list = 'search_suggestions';
                     include get_stylesheet_directory() . '/view/animated-search.php';
                     ?>
@@ -97,338 +92,247 @@ function device_crud_maintenance()
                     </datalist>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-auto" style="width: 200px;">
-                    <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
-                        Filter</button>
+                <div class="col-12 col-sm-6 col-md-auto d-flex gap-2">
+                    <button class="btn btn-primary" type="submit"
+                        style="background: #1e40af; border-color: #1e40af; font-weight: 700; border-radius: 10px; padding: 8px 18px;"><i
+                            class="fa-solid fa-magnifying-glass me-1"></i> Filter</button>
                     <?php $reset_url = remove_query_arg(['device_search', 'paged', 'sort', 'order']); ?>
-                    <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
+                    <a href="<?= esc_url($reset_url) ?>" class="btn btn-outline-secondary"
+                        style="border-radius: 10px; font-weight: 600; padding: 8px 16px;">Reset</a>
                 </div>
             </div>
         </form>
 
+        <!-- ===== ACTIVE MAINTENANCE DEVICES PANEL ===== -->
+        <div class="active-maintenance-panel slide-up mb-4"
+            style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
 
-        <br>
-        <div class="table-wrapper">
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th class="text-nowrap py-3 text-start" style="width: 15%;">ID</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 35%;">Device Info</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 25%;">Owner</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Status</th>
-                        <th class="text-nowrap py-3 text-center" style="width: 10%;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($rows as $index => $row): ?>
-                        <tr>
-                            <td class="align-middle text-start"><?= $row->DeviceID ?></td>
-                            <td class="text-start align-middle">
-                                <strong><?= $row->Brand ?>         <?= !empty($row->Model) ? $row->Model : '' ?></strong><br>
-                                <small class="text-muted"><?= $row->Category ?> | SN:
-                                    <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
-                            </td>
-                            <td class="align-middle text-start">
-                                <strong><?= formatName(stock_supply_format_owner_with_dept($row->Owner, $row->Department)) ?></strong><br>
-                                <small class="text-muted"><?= formatName($row->Department) ?></small>
-                            </td>
-
-                            <td class="align-middle text-start">
-                                <?php
-                                $status = $row->Status;
-                                $statusClass = 'status-retired';
-                                if (strcasecmp($status, 'Available') === 0)
-                                    $statusClass = 'status-available';
-                                elseif (strcasecmp($status, 'In Use') === 0)
-                                    $statusClass = 'status-inuse';
-                                elseif (strcasecmp($status, 'Maintenance') === 0)
-                                    $statusClass = 'status-maintenance';
-                                ?>
-                                <span class="status-badge <?= $statusClass ?>">
-                                    <span class="status-dot"></span>
-                                    <?= esc_html($status) ?>
-                                </span>
-                            </td>
-
-                            <td class="align-middle text-center">
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        id="btn-<?= $row->DeviceID ?>" onclick="toggleRow('<?= $row->DeviceID ?>')">▼</button>
-                                    <div class="dropdown action-menu mb-0 text-center">
-                                        <button type="button" class="action-btn" data-bs-toggle="dropdown"
-                                            aria-expanded="false">
-                                            ...
-                                        </button>
-                                        <?php $dev_action_nonce = wp_create_nonce('device_action_nonce'); ?>
-                                        <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
-                                            <div class="action-dropdown-header">Actions</div>
-                                            <div class="action-dropdown-separator"></div>
-                                            <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
-                                                        class="fa-solid fa-gear"></i>
-                                                    Edit</a>
-                                            <?php else: ?>
-                                                <a href="?edit=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-gear"></i>
-                                                    Edit</a>
-                                            <?php endif; ?>
-                                            <a href="?view=<?= esc_attr($row->DeviceID) ?>"><i
-                                                    class="fa-solid fa-magnifying-glass"></i>
-                                                View Details</a>
-                                            <?php if ($row->Status == 'Available'): ?>
-                                                <a href="?receive=<?= esc_attr($row->DeviceID) ?>"><i class="fa-solid fa-box"></i>
-                                                    Receive</a>
-                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
-                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#"
-                                                    onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
-                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                            <?php elseif ($row->Status == 'In Use'): ?>
-                                                <a href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
-                                                        class="fa-solid fa-rotate-left"></i>
-                                                    Return</a>
-                                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
-                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#"
-                                                    onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
-                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                            <?php elseif ($row->Status == 'Maintenance'): ?>
-                                                <a
-                                                    href="?return_to_owner=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
-                                                        class="fa-solid fa-user-check"></i> Return to Owner</a>
-                                                <a
-                                                    href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
-                                                        class="fa-solid fa-circle text-success"></i> Available</a>
-                                                <a href="#"
-                                                    onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
-                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                            <?php elseif ($row->Status == 'Retired'): ?>
-                                                <a
-                                                    href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
-                                                        class="fa-solid fa-circle text-success"></i> Available</a>
-                                            <?php endif; ?>
-                                            <a href="#"
-                                                onclick="confirmDelete('<?= esc_js($row->DeviceID) ?>', '<?= $dev_action_nonce ?>'); return false;"><i
-                                                    class="fa-solid fa-trash-can"></i> Delete</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr id="details-<?= $row->DeviceID ?>" style="display: none;">
-                            <td colspan="5" class="p-0 border-0">
-                                <div class="collapse-content" id="content-<?= $row->DeviceID ?>">
-                                    <div class="p-3 bg-light text-start m-2 rounded border">
-                                        <div class="row">
-                                            <div class="col-sm-3 mb-2 mb-sm-0">
-                                                <span class="text-muted d-block" style="font-size: 0.85em;">Repair Date</span>
-                                                <strong><?= formatName($row->RepairDate) ?></strong>
-                                            </div>
-                                            <div class="col-sm-9 mb-2 mb-sm-0">
-                                                <span class="text-muted d-block" style="font-size: 0.85em;">Maintenance Reason /
-                                                    Details</span>
-                                                <strong class="text-danger"><?= formatName($row->Details) ?></strong>
-                                            </div>
-                                            <?php if (strcasecmp($row->Status, 'Retired') === 0): ?>
-                                                <div class="col-sm-12 mt-2">
-                                                    <?php
-                                                    $r_details = $wpdb->get_var($wpdb->prepare(
-                                                        "SELECT Description FROM History_new WHERE DeviceID = %s AND (Action = 'Retired' OR (Action = 'Update Device' AND Description LIKE '%%| Reason:%%')) ORDER BY HistoryID DESC LIMIT 1",
-                                                        $row->DeviceID
-                                                    ));
-                                                    $r_reason = '-';
-                                                    if ($r_details) {
-                                                        if (preg_match('/\|\s*Reason:\s*(.*)$/i', $r_details, $matches)) {
-                                                            $r_reason = trim($matches[1]);
-                                                        }
-                                                    }
-                                                    ?>
-                                                    <span class="text-muted d-block" style="font-size: 0.85em;">Retired
-                                                        Reason</span>
-                                                    <strong class="text-danger"><?= formatName($r_reason) ?></strong>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="dtl-mobile-timeline-wrapper d-block d-md-none mt-4">
-            <link rel="stylesheet" href="<?= get_stylesheet_directory_uri() ?>/css/device_timeline.css?v=<?= time() ?>">
-            <script src="<?= get_stylesheet_directory_uri() ?>/js/device_timeline.js?v=<?= time() ?>"></script>
-            <style>
-                /* Force timeline visible since it's wrapped */
-                .dtl-mobile-timeline-wrapper .dtl-timeline-wrap { display: block !important; opacity: 1 !important; }
-            </style>
-            <?php
-            // Group rows by month/year based on RepairDate
-            $grouped = [];
-            foreach ($rows as $row) {
-                $dt = new DateTime($row->RepairDate);
-                $key = $dt->format('F Y');
-                $grouped[$key][] = $row;
-            }
-            ?>
-            <div class="dtl-timeline-wrap active">
-                <?php if (empty($rows)): ?>
-                    <div class="dtl-empty">
+            <!-- Panel Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3 pb-3"
+                style="border-bottom: 1.5px solid #f1f5f9;">
+                <div class="d-flex align-items-center gap-3">
+                    <div
+                        style="width: 46px; height: 46px; border-radius: 16px; background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 6px 18px rgba(30, 64, 175, 0.3);">
                         <i class="fa-solid fa-screwdriver-wrench"></i>
-                        <p>No maintenance records found.</p>
                     </div>
-                <?php else: ?>
-                    <?php foreach ($grouped as $month => $items): ?>
-                    <div class="dtl-date-group">
-                        <div class="dtl-date-header">
-                            <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
-                        </div>
-                        <div class="dtl-timeline">
-                            <?php foreach ($items as $row):
-                                $dt = new DateTime($row->RepairDate);
-                                $dev_action_nonce = wp_create_nonce('device_action_nonce');
-                            ?>
-                            <div class="dtl-node dtl-action-maintenance">
-                                <div class="dtl-dot"></div>
-                                <div class="dtl-card">
-                                    <div class="dtl-card-head">
-                                        <span class="dtl-action-badge">
-                                            <i class="fa-solid fa-wrench"></i>
-                                            <?= esc_html($row->DeviceID) ?>
-                                        </span>
-                                        <span class="dtl-time">
-                                            <i class="fa-regular fa-clock"></i>
-                                            <?= esc_html($dt->format('d M Y, H:i')) ?>
-                                        </span>
-                                        <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
+                    <div>
+                        <h3
+                            style="margin: 0; font-weight: 800; color: #0f172a; font-size: 1.25rem; letter-spacing: -0.02em;">
+                            รายการอุปกรณ์ที่อยู่ระหว่างการส่งซ่อม (Active Maintenance Devices)
+                        </h3>
+                        <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+                            พบทั้งหมด <strong style="color: #1e40af;"><?= count($all_active_maintenance) ?></strong>
+                            รายการกำลังส่งซ่อมอยู่ในขณะนี้
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge d-inline-flex align-items-center gap-2"
+                        style="background: #eff6ff; color: #1e40af; border: 1.5px solid #bfdbfe; font-size: 0.85rem; padding: 8px 18px; border-radius: 9999px; font-weight: 700; box-shadow: 0 2px 8px rgba(30, 64, 175, 0.06);">
+                        <i class="fa-solid fa-circle-notch fa-spin text-primary"></i> In Maintenance
+                        (<?= count($all_active_maintenance) ?>)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Mobile Only View (3 Cards Initial + Load More +3 Cards) -->
+            <div class="mobile-only-container">
+                <?php if (!empty($all_active_maintenance)): ?>
+                    <?php
+                    $dev_action_nonce = wp_create_nonce('device_action_nonce');
+                    foreach ($all_active_maintenance as $idx => $item):
+                        $deptAbbr = stock_supply_get_dept_abbr($item->Department ?? '');
+                        ?>
+                        <div class="mobile-device-card slide-up">
+                            <!-- Header: Title & Maintenance Status Badge -->
+                            <div class="mobile-device-header">
+                                <div class="mobile-device-title-area">
+                                    <div class="mobile-device-title">
+                                        <?= esc_html($item->Brand) ?>             <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
                                     </div>
-                                    <div class="dtl-card-body">
-                                        <div class="dtl-detail-row">
-                                            <span class="dtl-detail-label">Device Info</span>
-                                            <span class="dtl-detail-value fw-bold text-dark">
-                                                <?= esc_html($row->Brand) ?> <?= esc_html(!empty($row->Model) ? $row->Model : '') ?>
-                                            </span>
-                                        </div>
-                                        <div class="dtl-detail-row">
-                                             <span class="dtl-detail-label">Owner</span>
-                                             <span class="dtl-detail-value"><?= esc_html(formatName(stock_supply_format_owner_with_dept($row->Owner, $row->Department))) ?></span>
-                                         </div>
-                                        <div class="dtl-detail-row">
-                                            <span class="dtl-detail-label text-danger">Reason</span>
-                                            <span class="dtl-detail-value text-danger fw-bold"><?= esc_html(formatName($row->Details)) ?></span>
-                                        </div>
-                                        
-                                        <div class="dtl-detail-row mt-3 pt-3" style="border-top: 1px dashed #e2e8f0; display: flex; gap: 10px;">
-                                            <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="btn flex-grow-1" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; color: #334155; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; text-decoration: none;"><i class="fa-solid fa-magnifying-glass" style="font-size: 0.85rem;"></i> View Details</a>
-                                            <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                                <a href="?return_to_owner=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>" class="btn flex-grow-1" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 6px; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 4px rgba(55, 48, 163, 0.1); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; text-decoration: none;"><i class="fa-solid fa-check" style="font-size: 0.85rem;"></i> Finish</a>
-                                            <?php endif; ?>
-                                        </div>
+                                    <div class="mobile-device-meta">
+                                        <?= esc_html($item->Category) ?> | SN:
+                                        <?= esc_html(!empty($item->SerialNumber) ? $item->SerialNumber : '-') ?>
                                     </div>
+                                </div>
+                                <div class="status-badge status-maintenance">
+                                    <span class="status-dot"></span>
+                                    Maintenance
                                 </div>
                             </div>
-                            <?php endforeach; ?>
+
+                            <!-- Body: Owner, DeviceID, Repair Date & Reason -->
+                            <div class="mobile-device-body flex-column align-items-start gap-2 pt-2"
+                                style="border-top: 1px dashed #e2e8f0; width: 100%;">
+                                <div class="d-flex justify-content-between align-items-center w-100" style="font-size: 0.88rem;">
+                                    <div class="mobile-device-owner">
+                                        <i class="fa-solid fa-user me-1" style="color: #6366f1;"></i>
+                                        <strong><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></strong>
+                                    </div>
+                                    <div class="mobile-device-id">
+                                        <span class="badge bg-light text-dark border"
+                                            style="font-size: 0.8rem; font-weight: 700;"><?= esc_html($item->DeviceID) ?></span>
+                                    </div>
+                                </div>
+
+                                <div
+                                    style="font-size: 0.82rem; font-weight: 600; color: #d97706; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-regular fa-clock"></i> ส่งซ่อมเมื่อ:
+                                    <?= esc_html(!empty($item->RepairDate) ? date('d M Y, H:i', strtotime($item->RepairDate)) : '-') ?>
+                                </div>
+
+                                <div
+                                    style="width: 100%; font-size: 0.84rem; color: #92400e; background: #fffbeb; border: 1px solid #fde047; padding: 10px 12px; border-radius: 12px; font-weight: 600; margin-top: 4px;">
+                                    <div
+                                        style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #b45309; margin-bottom: 2px; font-weight: 700;">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> อาการเสีย / สาเหตุ
+                                    </div>
+                                    <?= esc_html($item->Details ?: 'ไม่มีการระบุรายละเอียดเพิ่มเติม') ?>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="mobile-device-actions w-100 mt-2">
+                                <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="mobile-btn-action mobile-btn-secondary"
+                                    style="flex: 1; text-decoration: none; text-align: center;">
+                                    <i class="fa-solid fa-magnifying-glass me-1"></i> Details
+                                </a>
+                                <a href="?return_to_owner=<?= esc_attr($item->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"
+                                    class="mobile-btn-action mobile-btn-primary"
+                                    style="flex: 1.3; text-decoration: none; text-align: center;">
+                                    <i class="fa-solid fa-circle-check me-1"></i> คืนให้ผู้ใช้ / ซ่อมเสร็จ
+                                </a>
+                            </div>
                         </div>
-                    </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-        </div>
-        <!-- Pagination -->
-        <style>
-            .collapse-content {
-                max-height: 0;
-                overflow: hidden;
-                transition: max-height 0.3s ease;
-            }
-        </style>
-        <script>
-            function toggleRow(id) {
-                const allContents = document.querySelectorAll('.collapse-content');
-                allContents.forEach(content => {
-                    if (content.id !== 'content-' + id && content.style.maxHeight !== '0px' && content.style.maxHeight !== '') {
-                        content.style.maxHeight = '0px';
-                        const otherBtn = document.getElementById('btn-' + content.id.replace('content-', ''));
-                        if (otherBtn) otherBtn.innerHTML = '▼';
-                        setTimeout(() => {
-                            const tr = document.getElementById('details-' + content.id.replace('content-', ''));
-                            if (tr) tr.style.display = 'none';
-                        }, 300);
-                    }
-                });
 
-                const row = document.getElementById('details-' + id);
-                const content = document.getElementById('content-' + id);
-                const btn = document.getElementById('btn-' + id);
+            <!-- Desktop View Grid of Maintenance Device Cards -->
+            <div class="desktop-only-container">
+                <?php if (!empty($all_active_maintenance)): ?>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;">
+                        <?php
+                        $dev_action_nonce = wp_create_nonce('device_action_nonce');
+                        foreach ($all_active_maintenance as $idx => $item):
+                            $is_latest = ($idx === 0 && empty($search));
+                            $is_recent = !empty($item->RepairDate) && strtotime($item->RepairDate) >= strtotime('-7 days');
+                            $delay = min(0.6, $idx * 0.05);
+                            ?>
+                            <div class="maint-card slide-up"
+                                style="animation-delay: <?= $delay ?>s; background: <?= ($is_latest || $is_recent) ? 'linear-gradient(180deg, #ffffff 0%, #fffbeb 100%)' : '#ffffff' ?>; border: <?= $is_latest ? '2px solid #ea580c' : ($is_recent ? '1.5px solid #f97316' : '1.5px solid #e2e8f0') ?>; border-radius: 20px; padding: 22px; box-shadow: <?= $is_latest ? '0 10px 28px rgba(234, 88, 12, 0.16)' : '0 4px 16px rgba(15, 23, 42, 0.04)' ?>; position: relative; transition: all 0.28s ease; overflow: hidden;"
+                                onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 14px 32px rgba(30, 64, 175, 0.12)';"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='<?= $is_latest ? '0 10px 28px rgba(234, 88, 12, 0.16)' : '0 4px 16px rgba(15, 23, 42, 0.04)' ?>';">
 
-                if (row.style.display === 'none' || row.style.display === '') {
-                    row.style.display = 'table-row';
-                    setTimeout(() => {
-                        content.style.maxHeight = content.scrollHeight + 'px';
-                    }, 10);
-                    if (btn) btn.innerHTML = '▲';
-                } else {
-                    content.style.maxHeight = '0px';
-                    if (btn) btn.innerHTML = '▼';
-                    setTimeout(() => {
-                        row.style.display = 'none';
-                    }, 300);
-                }
-            }
-        </script>
+                                <!-- Top subtle accent bar -->
+                                <div
+                                    style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: <?= $is_latest ? 'linear-gradient(90deg, #ef4444, #ea580c)' : ($is_recent ? 'linear-gradient(90deg, #f97316, #f59e0b)' : 'linear-gradient(90deg, #1e40af, #3b82f6)') ?>;">
+                                </div>
 
-        <div class="d-flex justify-content-center mt-4">
-            <ul class="pagination">
-                <?php
-                if ($total_pages > 1) {
-                    $query_str = http_build_query(array_merge($_GET, ['paged' => null]));
-                    $range = 2;
-                    $start = max(1, $current_page - $range);
-                    $end = min($total_pages, $current_page + $range);
+                                <!-- Badges for latest / recent -->
+                                <?php if ($is_latest): ?>
+                                    <div
+                                        style="position: absolute; top: 14px; right: 16px; background: linear-gradient(135deg, #ef4444 0%, #ea580c 100%); color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35); text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="fa-solid fa-fire me-1"></i> เพิ่งส่งซ่อมล่าสุด
+                                    </div>
+                                <?php elseif ($is_recent): ?>
+                                    <div
+                                        style="position: absolute; top: 14px; right: 16px; background: linear-gradient(135deg, #f97316 0%, #d97706 100%); color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; box-shadow: 0 3px 8px rgba(249, 115, 22, 0.3);">
+                                        <i class="fa-solid fa-sparkles me-1"></i> ส่งซ่อมสัปดาห์นี้
+                                    </div>
+                                <?php endif; ?>
 
-                    // Previous Button
-                    echo '<li class="page-item ' . ($current_page <= 1 ? 'disabled' : '') . '">';
-                    echo '<a class="page-link" style="text-decoration: none;" href="?' . $query_str . '&paged=' . ($current_page - 1) . '">Previous</a>';
-                    echo '</li>';
+                                <!-- Header: DeviceID + Category -->
+                                <div class="d-flex align-items-center justify-content-between mb-2"
+                                    style="margin-top: <?= ($is_latest || $is_recent) ? '14px' : '0' ?>;">
+                                    <span
+                                        style="font-weight: 800; font-size: 0.95rem; color: #1e40af; background: #eff6ff; border: 1px solid #bfdbfe; padding: 4px 12px; border-radius: 10px; letter-spacing: -0.01em;">
+                                        <?= esc_html($item->DeviceID) ?>
+                                    </span>
+                                    <span
+                                        style="font-size: 0.8rem; font-weight: 700; color: #475569; background: #f1f5f9; padding: 4px 12px; border-radius: 10px;">
+                                        <i class="fa-solid fa-layer-group me-1" style="color: #6366f1;"></i>
+                                        <?= esc_html($item->Category) ?>
+                                    </span>
+                                </div>
 
-                    // First page
-                    if ($start > 1) {
-                        echo '<li class="page-item"><a class="page-link" href="?' . $query_str . '&paged=1">1</a></li>';
-                        if ($start > 2) {
-                            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                        }
-                    }
+                                <!-- Device Title & Info -->
+                                <div
+                                    style="font-weight: 800; color: #0f172a; font-size: 1.1rem; margin-bottom: 4px; line-height: 1.3;">
+                                    <?= esc_html($item->Brand) ?>             <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
+                                </div>
+                                <?php if (!empty($item->SerialNumber)): ?>
+                                    <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 10px; font-weight: 500;">
+                                        SN: <?= esc_html($item->SerialNumber) ?>
+                                    </div>
+                                <?php endif; ?>
 
-                    // Page numbers
-                    for ($i = $start; $i <= $end; $i++) {
-                        $active = $i === $current_page ? 'active' : '';
-                        echo '<li class="page-item ' . $active . '">';
-                        echo '<a class="page-link" style="text-decoration: none;" href="?' . $query_str . '&paged=' . $i . '">' . $i . '</a>';
-                        echo '</li>';
-                    }
+                                <!-- Owner & Department -->
+                                <div class="d-flex align-items-center gap-3 mb-2 flex-wrap"
+                                    style="font-size: 0.86rem; color: #334155; font-weight: 500;">
+                                    <?php if (!empty($item->Owner)): ?>
+                                        <div>
+                                            <i class="fa-solid fa-user me-1" style="color: #6366f1;"></i>
+                                            <strong><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
 
-                    // Last page
-                    if ($end < $total_pages) {
-                        if ($end < $total_pages - 1) {
-                            echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                        }
-                        echo '<li class="page-item"><a class="page-link" style="text-decoration: none;" href="?' . $query_str . '&paged=' . $total_pages . '">' . $total_pages . '</a></li>';
-                    }
+                                <!-- Repair Date -->
+                                <div
+                                    style="font-size: 0.83rem; font-weight: 600; color: #d97706; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-regular fa-clock"></i>
+                                    ส่งซ่อมเมื่อ:
+                                    <?= esc_html(!empty($item->RepairDate) ? date('d M Y, H:i', strtotime($item->RepairDate)) : '-') ?>
+                                </div>
 
-                    // Next Button
-                    echo '<li class="page-item ' . ($current_page >= $total_pages ? 'disabled' : '') . '">';
-                    echo '<a class="page-link" style="text-decoration: none;" href="?' . $query_str . '&paged=' . ($current_page + 1) . '">Next</a>';
-                    echo '</li>';
-                }
-                ?>
-            </ul>
+                                <!-- Repair Reason / Details Box -->
+                                <div
+                                    style="font-size: 0.86rem; color: #92400e; background: #fffbeb; border: 1.5px solid #fde047; padding: 12px 14px; border-radius: 14px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
+                                    <div
+                                        style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #b45309; margin-bottom: 2px; font-weight: 700;">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> อาการเสีย / สาเหตุการส่งซ่อม
+                                    </div>
+                                    <?= esc_html($item->Details ?: 'ไม่มีการระบุรายละเอียดเพิ่มเติม') ?>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 justify-content-end pt-2" style="border-top: 1px dashed #e2e8f0;">
+                                    <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="btn btn-sm btn-outline-secondary"
+                                        style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                                        <i class="fa-solid fa-magnifying-glass"></i> รายละเอียด
+                                    </a>
+                                    <a href="?return_to_owner=<?= esc_attr($item->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"
+                                        class="btn btn-sm btn-success"
+                                        style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: #16a34a; border-color: #16a34a;">
+                                        <i class="fa-solid fa-circle-check"></i> คืนให้ผู้ใช้ / ซ่อมเสร็จ
+                                    </a>
+                                </div>
+
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <!-- Empty State -->
+                    <div class="text-center py-5"
+                        style="background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 20px; padding: 44px 20px;">
+                        <div
+                            style="width: 64px; height: 64px; border-radius: 50%; background: #eff6ff; color: #1e40af; display: inline-flex; align-items: center; justify-content: center; font-size: 1.85rem; margin-bottom: 16px;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <h4 style="font-weight: 800; color: #0f172a; margin-bottom: 6px;">ไม่มีอุปกรณ์ที่อยู่ระหว่างการซ่อมแซม
+                        </h4>
+                        <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 0;">
+                            อุปกรณ์ทุกชิ้นในระบบอยู่ในสถานะพร้อมใช้งานหรือถูกใช้งานเรียบร้อยแล้ว</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+
         </div>
     </div>
 
     <?php
-
     return ob_get_clean();
 }
 add_shortcode('device_crud_mainten', 'device_crud_maintenance');
+

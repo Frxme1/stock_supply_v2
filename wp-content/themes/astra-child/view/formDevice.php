@@ -228,7 +228,7 @@ function device_crud()
 
 
 
-        <form method="POST" action="" id="bulk-action-form">
+        <form method="POST" action="" id="bulk-action-form-device">
             <?php wp_nonce_field('bulk_device_action_nonce', 'bulk_action_nonce'); ?>
             <div class="d-flex align-items-center mb-3">
                 <!-- Dropdown removed as per user request -->
@@ -285,7 +285,7 @@ function device_crud()
                                 </td>
                                 <td class="align-middle text-start font-medium text-gray-900" data-label="ID">
                                     <?php
-                                    $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-1 day');
+                                    $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-7 days');
                                     if ($is_new_device): ?>
                                         <span class="new-device-badge">NEW</span>
                                     <?php endif; ?>
@@ -836,18 +836,46 @@ function device_crud()
     </div>
     <script>
         function closeBottomSheet() {
-            document.getElementById('mobileBottomSheet').classList.remove('open');
-            document.getElementById('bottomSheetBackdrop').classList.remove('open');
+            var sheet = document.getElementById('mobileBottomSheet');
+            var backdrop = document.getElementById('bottomSheetBackdrop');
+            if (sheet) sheet.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
         }
         function openBottomSheet() {
-            document.getElementById('mobileBottomSheet').classList.add('open');
-            document.getElementById('bottomSheetBackdrop').classList.add('open');
+            var sheet = document.getElementById('mobileBottomSheet');
+            var backdrop = document.getElementById('bottomSheetBackdrop');
+            if (sheet) {
+                if (sheet.parentElement !== document.body) {
+                    document.body.appendChild(sheet);
+                }
+                sheet.classList.add('open');
+            }
+            if (backdrop) {
+                if (backdrop.parentElement !== document.body) {
+                    document.body.appendChild(backdrop);
+                }
+                backdrop.classList.add('open');
+            }
+            var filterForm = document.getElementById('advanced-filter-form');
+            var mobileContainer = document.getElementById('mobile-filter-container');
+            if (filterForm && mobileContainer && filterForm.parentElement !== mobileContainer) {
+                mobileContainer.appendChild(filterForm);
+                filterForm.style.display = 'block';
+            }
         }
         document.addEventListener('DOMContentLoaded', function () {
+            var sheet = document.getElementById('mobileBottomSheet');
+            var backdrop = document.getElementById('bottomSheetBackdrop');
+            if (sheet && sheet.parentElement !== document.body) {
+                document.body.appendChild(sheet);
+            }
+            if (backdrop && backdrop.parentElement !== document.body) {
+                document.body.appendChild(backdrop);
+            }
             if (window.innerWidth <= 768) {
                 var filterForm = document.getElementById('advanced-filter-form');
                 var mobileContainer = document.getElementById('mobile-filter-container');
-                if (filterForm && mobileContainer) {
+                if (filterForm && mobileContainer && filterForm.parentElement !== mobileContainer) {
                     mobileContainer.appendChild(filterForm);
                     filterForm.style.display = 'block';
                 }

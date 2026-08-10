@@ -16,59 +16,95 @@ function form_owner()
 
 
 
-    if (isset($_GET['delete'])) {
-        if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'delete_owner_nonce')) {
+    // ===== RESIGN (Soft Delete) =====
+    if (isset($_GET['resign'])) {
+        if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'resign_owner_nonce')) {
             return;
         }
-        $owner_id = intval($_GET['delete']);
-
-        // get Owner data
+        $owner_id = intval($_GET['resign']);
         $owner_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_owner_wn WHERE OwnerID = %d", $owner_id));
 
         if ($owner_data) {
-            $owner_fullname = $owner_data->FirstName . ' ' . $owner_data->LastName;
+            $owner_fullname = trim($owner_data->FirstName . ' ' . $owner_data->LastName);
+            $owner_nickname = $owner_data->Nickname ?? '-';
 
-            // insert to History_new (Action Delete)
-            $wpdb->insert('History_new', [
-                'DeviceID' => $owner_data->OwnerID,
-                'Action' => 'Delete Employee',
-                'Date' => current_time('mysql'),
-                'Description' => 'Deleted employee: ' . $owner_fullname,
-                'user_email' => wp_get_current_user()->user_email,
-                'CategoryID' => 'Employee',
-                'Owner' => $owner_fullname,
-            ]);
+            // Set StatusID = 2 (Resigned) — Soft Delete, ข้อมูลยังอยู่
+            $resigned_status_id = $wpdb->get_var("SELECT StatusID FROM Status_Employee WHERE Status_name = 'Resigned'");
+            $wpdb->update($table_owner, ['StatusID' => $resigned_status_id], ['OwnerID' => $owner_id]);
 
-            // ดึง StatusID ของ 'Available'
+            // คืนอุปกรณ์ทั้งหมดที่ถือครองกลับเป็น Available
             $available_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
-
-            // update Devices  Owner 
             $wpdb->update(
                 $table_devices,
-                [
-                    'StatusID' => $available_status_id,
-                    'OwnerID' => null,
-                    'DepartmentID' => null,
-                    'ReceiveDate' => null,
-                    'ReturnDate' => null,
-                    'RepairDate' => null
-                ],
+                ['StatusID' => $available_status_id, 'OwnerID' => null, 'DepartmentID' => null, 'ReceiveDate' => null, 'ReturnDate' => null, 'RepairDate' => null],
                 ['OwnerID' => $owner_id]
             );
 
-            // delete Owner
-            $wpdb->delete($table_owner, ['OwnerID' => $owner_id]);
+            // บันทึก History
+            $wpdb->insert('History_new', [
+                'DeviceID' => 0,
+                'Action' => 'Employee Resigned',
+                'Date' => current_time('mysql'),
+                'Description' => 'Employee resigned: ' . $owner_nickname . ($owner_fullname ? ' (' . $owner_fullname . ')' : ''),
+                'user_email' => wp_get_current_user()->user_email,
+                'CategoryID' => 1,
+                'Owner' => $owner_nickname,
+            ]);
+
             echo "<script>
             Swal.fire({
                 icon: 'success',
-                title: 'Deleted Employee',
-                text: 'The employee has been removed.',
+                title: 'Resigned',
+                text: '{$owner_nickname} has been marked as Resigned.',
                 showConfirmButton: false,
                 timer: 1500
             }).then(() => {
                 window.location.href = '" . esc_url(home_url('/Owner/')) . "';
             });
-        </script>";
+            </script>";
+            exit;
+        }
+    }
+
+    // ===== DELETE (Hard Delete) =====
+    if (isset($_GET['delete'])) {
+        if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'delete_owner_nonce')) {
+            return;
+        }
+        $owner_id = intval($_GET['delete']);
+        $owner_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_owner_wn WHERE OwnerID = %d", $owner_id));
+
+        if ($owner_data) {
+            $owner_fullname = $owner_data->FirstName . ' ' . $owner_data->LastName;
+            $wpdb->insert('History_new', [
+                'DeviceID' => 0,
+                'Action' => 'Delete Employee',
+                'Date' => current_time('mysql'),
+                'Description' => 'Permanently deleted employee: ' . $owner_fullname,
+                'user_email' => wp_get_current_user()->user_email,
+                'CategoryID' => 1,
+                'Owner' => $owner_data->Nickname ?? $owner_fullname,
+            ]);
+
+            $available_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
+            $wpdb->update(
+                $table_devices,
+                ['StatusID' => $available_status_id, 'OwnerID' => null, 'DepartmentID' => null, 'ReceiveDate' => null, 'ReturnDate' => null, 'RepairDate' => null],
+                ['OwnerID' => $owner_id]
+            );
+            $wpdb->delete($table_owner, ['OwnerID' => $owner_id]);
+
+            echo "<script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Deleted Employee',
+                text: 'The employee has been permanently removed.',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                window.location.href = '" . esc_url(home_url('/Owner/')) . "';
+            });
+            </script>";
             exit;
         }
     }
@@ -130,11 +166,6 @@ function form_owner()
     $rows = $wpdb->get_results("SELECT * FROM $table_owner_wn $search_sql ORDER BY OwnerID DESC LIMIT $page OFFSET $offset");
 
     $suggestions = $wpdb->get_col("SELECT DISTINCT Nickname FROM $table_owner_wn ORDER BY OwnerType ASC");
-
-    ob_start();
-
-
-
 
     ?>
 
@@ -354,6 +385,92 @@ function form_owner()
         </div>
     </form>
 
+    <!-- Mobile Employee List View -->
+    <div class="mobile-only-container mb-4">
+        <?php if (!empty($rows)): ?>
+            <?php foreach ($rows as $row):
+                $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
+                $fullname = trim($row->FirstName . ' ' . $row->LastName);
+                $statusClass = (strcasecmp($row->Status, 'Active') === 0) ? 'status-available' : 'status-inuse';
+                ?>
+                <div class="mobile-device-card slide-up" style="background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 14px;
+    width: 110%;
+    margin-left: -20px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);">
+                    <!-- Header: Nickname & Status -->
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div>
+                            <h4 style="margin: 0; font-weight: 800; font-size: 1.15rem; color: #0f172a;">
+                                <?= esc_html($row->Nickname) ?>
+                                <?php if ($deptAbbr): ?>
+                                    <span class="badge bg-light text-dark border ms-1"
+                                        style="font-size: 0.75rem; font-weight: 600;"><?= esc_html($deptAbbr) ?></span>
+                                <?php endif; ?>
+                            </h4>
+                            <div style="font-size: 0.85rem; color: #64748b; font-weight: 500; margin-top: 2px;">
+                                <i class="fa-solid fa-id-card me-1" style="color: #6366f1;"></i> <?= $fullname ?: '-' ?>
+                            </div>
+                        </div>
+                        <span class="status-badge <?= $statusClass ?>">
+                            <span class="status-dot"></span>
+                            <?= esc_html($row->Status) ?>
+                        </span>
+                    </div>
+
+                    <!-- Info Body: Email, Dept, Position -->
+                    <div
+                        style="padding-top: 10px; border-top: 1px dashed #e2e8f0; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 6px;">
+                        <?php if (!empty($row->Email)): ?>
+                            <div><i class="fa-regular fa-envelope me-1" style="color: #94a3b8; width: 16px;"></i>
+                                <?= esc_html($row->Email) ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($row->Department)): ?>
+                            <div><i class="fa-solid fa-building me-1" style="color: #94a3b8; width: 16px;"></i>
+                                <?= esc_html($row->Department) ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($row->Position)): ?>
+                            <div><i class="fa-solid fa-briefcase me-1" style="color: #94a3b8; width: 16px;"></i>
+                                <?= esc_html($row->Position) ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 justify-content-end mt-3 pt-2" style="border-top: 1px dashed #f1f5f9;">
+                        <a href="?edit=<?= $row->OwnerID ?>" class="btn btn-sm btn-outline-secondary"
+                            style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; text-decoration: none;">
+                            <i class="fa-solid fa-gear me-1"></i> Edit
+                        </a>
+                        <?php if (strcasecmp($row->Status, 'Active') !== 0): ?>
+                            <button type="button" onclick="offboardEmployee(<?= $row->OwnerID ?>, '<?= esc_js($row->Nickname) ?>')"
+                                class="btn btn-sm btn-warning text-dark"
+                                style="border-radius: 8px; font-weight: 700; font-size: 0.8rem; padding: 6px 14px;">
+                                <i class="fa-solid fa-user-xmark me-1"></i> Offboard
+                            </button>
+                        <?php endif; ?>
+                        <button type="button"
+                            onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"
+                            class="btn btn-sm btn-outline-danger"
+                            style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 12px;">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="text-center py-4 text-muted bg-white rounded-4 border p-4">
+                <i class="fa-solid fa-users-slash display-6 mb-2 text-muted"></i>
+                <p class="mb-0 font-medium">No employee records found.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <div class="table-wrapper table-wrapper-employee">
         <table class="table-custom" style="width: 100%;">
             <thead>
@@ -372,7 +489,8 @@ function form_owner()
                     <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
                         <td class="text-start align-middle" data-label="ID">
                             <?php $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? ''); ?>
-                            <strong><?= esc_html($row->Nickname) ?></strong> <?= $deptAbbr ? '<span class="text-muted small fw-normal">' . esc_html($deptAbbr) . '</span>' : '' ?>
+                            <strong><?= esc_html($row->Nickname) ?></strong>
+                            <?= $deptAbbr ? '<span class="text-muted small fw-normal">' . esc_html($deptAbbr) . '</span>' : '' ?>
                             <small class="text-muted d-block font-monospace">#<?= $row->OwnerID ?></small>
                         </td>
                         <td class="text-start align-middle" data-label="Employee">
@@ -408,7 +526,7 @@ function form_owner()
                                     <div class="action-dropdown-header">Actions</div>
                                     <div class="action-dropdown-separator"></div>
                                     <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                    <?php if (strcasecmp($row->Status, 'Active') !== 0 || in_array(strtolower(trim($row->Status)), ['resigned', 'resign', 'registered'])): ?>
+                                    <?php if (strcasecmp($row->Status, 'Active') !== 0): ?>
                                         <a href="#"
                                             onclick="offboardEmployee(<?= $row->OwnerID ?>, '<?= esc_js($row->Nickname) ?>'); return false;"
                                             class="offboard-action-link text-warning"><i class="fa-solid fa-user-xmark"></i>
@@ -568,6 +686,50 @@ function form_owner()
             }
         }
     </style>
+
+    <!-- Employee Action Scripts -->
+    <script>
+        // Resign confirmation dialog
+        function confirmResign(ownerID, nickname, nonce) {
+            Swal.fire({
+                icon: 'warning',
+                title: '⚠️ ยืนยันการ Resign?',
+                html: `<div style="text-align:center;">
+                    <p style="margin-bottom:8px;">พนักงาน <strong style="color:#0f172a;">${nickname}</strong> จะถูกเปลี่ยน Status เป็น <span style="color:#d97706;font-weight:700;">Resigned</span></p>
+                    <p style="color:#64748b; font-size:0.9rem;">อุปกรณ์ที่ถือครองทั้งหมดจะถูกคืนเข้า Stock อัตโนมัติ<br>ข้อมูลพนักงานจะยังคงอยู่ในระบบ ไม่ถูกลบ</p>
+                </div>`,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> ยืนยัน Resign',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#d97706',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '?resign=' + ownerID + '&_wpnonce=' + nonce;
+                }
+            });
+        }
+
+        // Delete confirmation dialog
+        function confirmDelete(ownerID, nonce) {
+            Swal.fire({
+                icon: 'error',
+                title: '🗑️ ลบพนักงานถาวร?',
+                html: `<p style="color:#64748b;">การลบนี้ <strong style="color:#dc2626;">ไม่สามารถกู้คืนได้</strong><br>ข้อมูลพนักงานจะหายไปจากระบบทั้งหมด</p>`,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-trash-can me-1"></i> ลบถาวร',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '?delete=' + ownerID + '&_wpnonce=' + nonce;
+                }
+            });
+        }
+    </script>
 
     <!-- Offboard Employee JavaScript -->
     <script>

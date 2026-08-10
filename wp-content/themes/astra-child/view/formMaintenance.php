@@ -37,9 +37,20 @@ function form_maintenance($editing = null)
         }
         $DeviceID = sanitize_text_field($_POST['DeviceID']);
         $RepairDate = sanitize_text_field($_POST['RepairDate']);
-        $Details = sanitize_textarea_field($_POST['Details']);
-        if (($Details === 'Others' || $Details === 'อื่นๆ / Others') && !empty($_POST['OtherDetails'])) {
-            $Details = 'Others - ' . sanitize_text_field($_POST['OtherDetails']);
+        $SelectedDetails = sanitize_text_field($_POST['Details'] ?? '');
+        $OtherDetails = sanitize_text_field($_POST['OtherDetails'] ?? '');
+
+        if (!empty($SelectedDetails) && !empty($OtherDetails)) {
+            $Details = $SelectedDetails . ' - ' . $OtherDetails;
+        } elseif (!empty($OtherDetails)) {
+            $Details = $OtherDetails;
+        } else {
+            $Details = $SelectedDetails;
+        }
+
+        if (empty($Details)) {
+            show_alert('error', 'Incomplete Form', 'Please select a maintenance reason or enter details.');
+            return ob_get_clean();
         }
 
         $device_info = $wpdb->get_row($wpdb->prepare(
@@ -229,24 +240,22 @@ function form_maintenance($editing = null)
         ?>
 
         <div class="form-group" style="margin-top: 1.5rem;">
-            <label>Details</label>
-            <select name="Details" required>
-                <option value="" disabled selected>-- Select Maintenance Reason --</option>
-                <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false || $details_val === 'Screen Issue') ? 'selected' : '' ?>>Screen Issue</option>
-                <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false || $details_val === 'Battery Issue') ? 'selected' : '' ?>>Battery Issue</option>
-                <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false || $details_val === 'Power Issue') ? 'selected' : '' ?>>Power Issue</option>
-                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Input Device Issue') !== false || $details_val === 'Keyboard / Mouse Issue') ? 'selected' : '' ?>>Keyboard / Mouse Issue</option>
-                <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false || $details_val === 'Hardware Upgrade') ? 'selected' : '' ?>>Hardware Upgrade</option>
-                <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false || $details_val === 'Software Issue') ? 'selected' : '' ?>>Software Issue</option>
-                <option value="Others" <?= $is_other ? 'selected' : '' ?>>Others</option>
+            <label>Details (หัวข้อการซ่อม)</label>
+            <select name="Details">
+                <option value="" selected>-- Select Maintenance Reason (เลือกหัวข้อการซ่อม) --</option>
+                <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false) ? 'selected' : '' ?>>Screen Issue (ปัญหาหน้าจอ)</option>
+                <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false) ? 'selected' : '' ?>>Battery Issue (ปัญหาแบตเตอรี่)</option>
+                <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false) ? 'selected' : '' ?>>Power Issue (ปัญหาเปิดไม่ติด/ไฟไม่เข้า)</option>
+                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Keyboard') !== false || strpos($details_val, 'Mouse') !== false || strpos($details_val, 'Input Device') !== false) ? 'selected' : '' ?>>Keyboard / Mouse Issue (ปัญหาแป้นพิมพ์/เมาส์)</option>
+                <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false) ? 'selected' : '' ?>>Hardware Upgrade (อัปเกรดฮาร์ดแวร์)</option>
+                <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false) ? 'selected' : '' ?>>Software Issue (ปัญหาซอฟต์แวร์/โปรแกรม)</option>
             </select>
         </div>
 
-        <div class="form-group" id="other-details-group"
-            style="display: <?= $is_other ? 'flex' : 'none' ?>; margin-top: 1.5rem;">
-            <label>Additional Details <span class="text-danger">*</span></label>
-            <input type="text" name="OtherDetails" id="OtherDetails" placeholder="Please specify reason..."
-                value="<?= esc_attr($other_text) ?>" <?= $is_other ? 'required' : '' ?>>
+        <div class="form-group" id="other-details-group" style="margin-top: 1rem;">
+            <label>Additional Details / Custom Reason (รายละเอียดเพิ่มเติม / ระบุอาการอื่นๆ)</label>
+            <input type="text" name="OtherDetails" id="OtherDetails" placeholder="ระบุอาการเพิ่มเติม หรือระบุสาเหตุการซ่อมอื่นๆ..."
+                value="<?= esc_attr($other_text) ?>">
         </div>
 
         <div class="form-group" style="margin-top: 1.5rem;">
@@ -428,18 +437,14 @@ function form_maintenance($editing = null)
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const detailsSelect = document.querySelector('select[name="Details"]');
-            const otherGroup = document.getElementById('other-details-group');
             const otherInput = document.getElementById('OtherDetails');
 
-            if (detailsSelect) {
+            if (detailsSelect && otherInput) {
                 detailsSelect.addEventListener('change', function () {
-                    if (this.value === 'Others' || this.value === 'อื่นๆ / Others') {
-                        otherGroup.style.display = 'flex';
-                        otherInput.required = true;
+                    if (this.value) {
+                        otherInput.placeholder = 'ระบุรายละเอียดเพิ่มเติมเกี่ยวกับ ' + this.value + ' (ถ้ามี)...';
                     } else {
-                        otherGroup.style.display = 'none';
-                        otherInput.required = false;
-                        otherInput.value = '';
+                        otherInput.placeholder = 'ระบุอาการเพิ่มเติม หรือระบุสาเหตุการซ่อมอื่นๆ...';
                     }
                 });
             }

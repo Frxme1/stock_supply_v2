@@ -110,7 +110,7 @@ function device_form($editing = null)
 	<script src="<?= get_stylesheet_directory_uri() ?>/js/change_prefix.js"></script>
 
 
-	<form method="POST" action="">
+	<form method="POST" action="" id="add-device-form" class="edit-data-form">
 		<input type="hidden" name="DeviceID" value="<?= esc_attr($device_id) ?>">
 
 		<div class="d-flex justify-content-between align-items-center mb-4" style="max-width: 600px; margin: 0 auto;">
@@ -183,6 +183,8 @@ function device_form($editing = null)
 							addBtn.style.display = 'block';
 						}
 					}
+					var badge = document.getElementById('brand_stock_badge');
+					if (badge) badge.style.display = 'none';
 				}
 
 				function toggleNewBrandMode() {

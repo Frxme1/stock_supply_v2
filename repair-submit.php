@@ -4,7 +4,6 @@ ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
 
-define('SHORTINIT', true);
 require_once(dirname(__FILE__) . '/wp-load.php');
 global $wpdb;
 
@@ -25,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($owner_id && !empty($device_id) && !empty($reason)) {
         
         // Ensure device actually exists and belongs to this owner
-        $device_check = $wpdb->get_row($wpdb->prepare("SELECT StatusID FROM Devices WHERE DeviceID = %s AND (OwnerID = %d OR OwnerID = %s)", $device_id, $owner_id, (string)$owner_id));
+        $device_check = $wpdb->get_row($wpdb->prepare("SELECT StatusID FROM Devices WHERE DeviceID = %s AND OwnerID = %d", $device_id, $owner_id));
         
         if (!$device_check) {
             send_json_response(['success' => false, 'message' => 'Invalid device or you do not own this device.']);

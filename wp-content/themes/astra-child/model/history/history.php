@@ -249,9 +249,14 @@ function form_history()
             }
         </style>
 
-        <div class="history-header">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <h2>System History</h2>
+        <link rel="stylesheet" href="<?= get_stylesheet_directory_uri() ?>/css/device_timeline.css?v=<?= time() ?>">
+        <script src="<?= get_stylesheet_directory_uri() ?>/js/device_timeline.js?v=<?= time() ?>"></script>
+
+        <div class="history-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <h2 class="m-0">System History</h2>
+            </div>
         </div>
         <form method="GET" action="" id="advanced-filter-form">
             <?php
@@ -290,144 +295,7 @@ function form_history()
             </div>
         </form>
 
-
-
-        <div class="table-wrapper">
-            <table class="table-custom" style="width: 100%; table-layout: fixed;">
-                <thead>
-                    <tr>
-                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Action</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 15%;">Date</th>
-                        <th class="py-3 text-start" style="width: 35%;">Description</th>
-                        <th class="text-nowrap py-3 text-start" style="width: 20%;">User</th>
-                        <th class="text-nowrap py-3 text-center" style="width: 15%;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($rows as $index => $row): ?>
-                        <?php
-                        $date = new DateTime($row->Date);
-
-                        $action_lower = strtolower($row->Action);
-                        $badge_class = 'badge-default';
-                        if (strpos($action_lower, 'add') !== false)
-                            $badge_class = 'badge-add';
-                        elseif (strpos($action_lower, 'update') !== false)
-                            $badge_class = 'badge-update';
-                        elseif (strpos($action_lower, 'delete') !== false)
-                            $badge_class = 'badge-delete';
-                        elseif (strpos($action_lower, 'receive') !== false)
-                            $badge_class = 'badge-receive';
-                        elseif (strpos($action_lower, 'maintenance') !== false)
-                            $badge_class = 'badge-maintenance';
-                        elseif (strpos($action_lower, 'return') !== false)
-                            $badge_class = 'badge-return';
-                        ?>
-                        <tr>
-                            <td class="align-middle">
-                                <span class="badge-history <?= $badge_class ?>"><?= esc_html($row->Action) ?></span>
-                            </td>
-                            <td class="align-middle fw-medium text-nowrap" style="font-size: 0.95rem;"><?= $date->format("d M Y, H:i") ?></td>
-                            <td class="align-middle text-dark fw-bold" style="font-size: 1.05rem; line-height: 1.6;">
-                                <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
-                            </td>
-                            <td class="text-start align-middle" data-label="User">
-                                <?php
-                                $user_email = trim($row->user_email ?? '');
-                                $user_dept_abbr = stock_supply_get_dept_abbr($row->UserDept ?? '');
-                                if (empty($user_email)) {
-                                    echo '<span class="text-muted">-</span>';
-                                } else {
-                                    echo esc_html($user_email);
-                                    if (!empty($user_dept_abbr)) {
-                                        echo ' <span class="text-muted small">' . esc_html($user_dept_abbr) . '</span>';
-                                    }
-                                }
-                                ?>
-                            </td>
-                            <td class="align-middle text-center" data-label="Action">
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-<?= $row->HistoryID ?>" onclick="toggleRow('<?= $row->HistoryID ?>')">▼</button>
-                                    <div class="dropdown action-menu mb-0 text-center">
-                                        <button type="button" class="action-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                                            ...
-                                        </button>
-                                        <div class="dropdown-menu action-dropdown text-start" style="z-index: 10000;">
-                                            <div class="action-dropdown-header">Actions</div>
-                                            <div class="action-dropdown-separator"></div>
-                                            <a href="?view=<?= $row->DeviceID ?>"><i class="fa-solid fa-magnifying-glass"></i> View Details</a>
-                                            <?php $status = $row->Status ?? ''; ?>
-                                            <?php if ($status == 'Available'): ?>
-                                                <a href="?receive=<?= $row->DeviceID ?>"><i class="fa-solid fa-box"></i> Receive</a>
-                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
-                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
-                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                            <?php elseif ($status == 'In Use'): ?>
-                                                <a href="?return=<?= $row->DeviceID ?>"><i class="fa-solid fa-rotate-left"></i>
-                                                    Return</a>
-                                                <a href="?maintenance=<?= $row->DeviceID ?>"><i
-                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
-                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                            <?php elseif ($status == 'Maintenance'): ?>
-                                                <a href="?available=<?= $row->DeviceID ?>"><i
-                                                        class="fa-solid fa-circle text-success"></i> Available</a>
-                                                <a href="#" onclick="confirmRetire('<?= $row->DeviceID ?>'); return false;"><i
-                                                        class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                            <?php elseif ($status == 'Retired'): ?>
-                                                <a href="?available=<?= $row->DeviceID ?>"><i
-                                                        class="fa-solid fa-circle text-success"></i> Available</a>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr id="details-<?= $row->HistoryID ?>" style="display: none;">
-                            <td colspan="5" class="p-0 border-0">
-                                <div class="collapse-content" id="content-<?= $row->HistoryID ?>">
-                                    <div class="p-3 bg-light text-start m-2 rounded border">
-                                        <div class="row">
-                                            <div class="col-sm-3 mb-2 mb-sm-0">
-                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-user text-muted"></i> User</span>
-                                                <strong><?= esc_html($row->user_email ?: '-') ?><?= !empty($user_dept_abbr) ? ' ' . esc_html($user_dept_abbr) : '' ?></strong>
-                                            </div>
-                                            <div class="col-sm-3 mb-2 mb-sm-0">
-                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-tag text-muted"></i> Category</span>
-                                                <strong><?= $row->Action === 'Add Employee' || $row->Action === 'Update Employee' || $row->Action === 'Delete Employee' ? 'Employee' : esc_html($row->CategoryName ?: '-') ?></strong>
-                                            </div>
-                                            <div class="col-sm-3 mb-2 mb-sm-0">
-                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-briefcase text-muted"></i> Owner</span>
-                                                <strong><?= esc_html(stock_supply_format_owner_with_dept($row->Owner, $row->Dept)) ?></strong>
-                                            </div>
-                                            <div class="col-sm-3 mb-2 mb-sm-0">
-                                                <span class="text-muted d-block" style="font-size: 0.85em;"><i class="fa-solid fa-id-badge text-muted"></i> Position</span>
-                                                <strong><?= esc_html($row->Position ?: '-') ?></strong>
-                                            </div>
-                                            <?php if (!empty($row->Photo)): ?>
-                                                <div class="col-12 mt-3 pt-3 text-center" style="border-top: 1px dashed #cbd5e1;">
-                                                    <span class="text-muted d-block mb-1" style="font-size: 0.8em;">Attached Photo</span>
-                                                    <img src="<?= esc_url($row->Photo) ?>" onclick="window.openPhotoModal('<?= esc_url($row->Photo) ?>')" style="max-height: 140px; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer;" title="Click to enlarge">
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="dtl-mobile-timeline-wrapper d-block d-md-none mt-4">
-            <link rel="stylesheet" href="<?= get_stylesheet_directory_uri() ?>/css/device_timeline.css?v=<?= time() ?>">
-            <script src="<?= get_stylesheet_directory_uri() ?>/js/device_timeline.js?v=<?= time() ?>"></script>
-            <style>
-                /* Force timeline visible since it's wrapped */
-                .dtl-mobile-timeline-wrapper .dtl-timeline-wrap { display: block !important; opacity: 1 !important; }
-            </style>
+        <div class="dtl-history-timeline-wrapper mt-4">
             <?php
             // Action map for timeline icons and colors
             $action_map = [
@@ -491,7 +359,9 @@ function form_history()
                         <p>No history logs found.</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($grouped as $month => $items): ?>
+                    <?php 
+                    $item_idx = 0;
+                    foreach ($grouped as $month => $items): ?>
                     <div class="dtl-date-group">
                         <div class="dtl-date-header">
                             <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
@@ -500,10 +370,12 @@ function form_history()
                             <?php foreach ($items as $row):
                                 $info = dtl_get_action_info_history($row->Action, $action_map);
                                 $dt = new DateTime($row->Date);
+                                $isOpen = ($item_idx === 0);
+                                $item_idx++;
                             ?>
-                            <div class="dtl-node <?= $info['class'] ?>">
+                            <div class="dtl-node <?= $info['class'] ?> dtl-visible">
                                 <div class="dtl-dot"></div>
-                                <div class="dtl-card">
+                                <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
                                     <div class="dtl-card-head">
                                         <span class="dtl-action-badge">
                                             <i class="fa-solid <?= $info['icon'] ?>"></i>
@@ -515,7 +387,7 @@ function form_history()
                                         </span>
                                         <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
                                     </div>
-                                    <div class="dtl-card-body">
+                                    <div class="dtl-card-body <?= $isOpen ? 'dtl-expanded' : '' ?>">
                                         <div class="dtl-detail-row">
                                             <span class="dtl-detail-label">Details</span>
                                             <span class="dtl-detail-value fw-bold text-dark">

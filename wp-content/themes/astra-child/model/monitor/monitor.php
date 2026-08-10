@@ -234,6 +234,8 @@ function device_crud_monitor()
                 </button>
             </div>
 
+            <?php include(get_stylesheet_directory() . '/model/shared/mobile_device_list.php'); ?>
+
             <div class="table-wrapper">
                 <table class="table-custom">
                     <thead>
@@ -256,7 +258,7 @@ function device_crud_monitor()
                                 </td>
                                 <td class="align-middle text-start" data-label="ID">
                                     <?php
-                                    $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-1 day');
+                                    $is_new_device = !empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-7 days');
                                     if ($is_new_device): ?>
                                         <span class="new-device-badge">NEW</span>
                                     <?php endif; ?>

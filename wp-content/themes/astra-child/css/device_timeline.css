@@ -206,8 +206,9 @@
     padding-top: 0;
 }
 
+.dtl-card.dtl-open .dtl-card-body,
 .dtl-card-body.dtl-expanded {
-    max-height: 400px;
+    max-height: 800px;
     padding-top: 0.85rem;
 }
 

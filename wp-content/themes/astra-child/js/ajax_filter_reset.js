@@ -136,6 +136,18 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlText, 'text/html');
 
+            // 0. Replace View Details Container if present
+            const newViewDetails = doc.querySelector('.view-details-container');
+            const currentViewDetails = document.querySelector('.view-details-container');
+            if (newViewDetails && currentViewDetails) {
+                currentViewDetails.innerHTML = newViewDetails.innerHTML;
+            } else if (newViewDetails && !currentViewDetails) {
+                const targetArea = document.querySelector('#content.site-content') || document.querySelector('.entry-content') || document.querySelector('#content') || document.body;
+                if (targetArea) {
+                    targetArea.innerHTML = newViewDetails.outerHTML;
+                }
+            }
+
             // 1. Replace Table Content (.table-wrapper)
             const newTable = doc.querySelector('.table-wrapper') || doc.querySelector('.table-custom');
             const currentTable = document.querySelector('.table-wrapper') || document.querySelector('.table-custom');
@@ -152,6 +164,13 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
                     currentMobiles[i].innerHTML = newMobiles[i].innerHTML;
                 }
             }
+
+            if (typeof window.initMobileLoadMore === 'function') {
+                window.initMobileLoadMore();
+            }
+
+            // Make sure timeline nodes are revealed if present
+            document.querySelectorAll('.dtl-node').forEach(n => n.classList.add('dtl-visible'));
 
             // 2. Replace Pagination Container
             const newPagination = doc.querySelector('.pagination')?.closest('div, ul') || doc.querySelector('.pagination');

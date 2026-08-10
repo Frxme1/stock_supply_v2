@@ -87,46 +87,7 @@ function device_dashboard_monitor()
     </div>
 
     <style>
-        /* Next.js Inspired UI (Shared) */
-        .next-dashboard {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #111827;
-            background: transparent !important;
-            padding-bottom: 2rem;
-        }
-        .next-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
-        .next-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
-        .next-card {
-            background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03); transition: all 0.2s ease-in-out;
-        }
-        .next-card:hover { border-color: #d1d5db; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04); transform: translateY(-2px); }
-        .next-card-header { display: flex; justify-content: space-between; align-items: center; }
-        .next-card-title { font-size: 0.875rem; font-weight: 500; color: #4b5563; margin: 0; }
-        .next-section-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0; }
-        .next-icon-wrapper-sm {
-            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;
-        }
-        .next-number { font-weight: 700; line-height: 1.2; letter-spacing: -0.025em; }
-        .next-number-md { font-size: 1.5rem; font-weight: 700; line-height: 1.2; display: block; }
-        .next-status-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .next-progress-wrap { display: flex; align-items: center; gap: 0.75rem; }
-        .next-progress-bar { flex: 1; height: 6px; background: #f3f4f6; border-radius: 9999px; overflow: hidden; }
-        .next-progress-fill { height: 100%; border-radius: 9999px; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .next-progress-text { font-size: 0.875rem; color: #6b7280; font-weight: 500; min-width: 32px; text-align: right; }
-        .next-donut-container { display: flex; align-items: center; }
-        .next-donut-wrap { position: relative; width: 140px; height: 140px; }
-        .next-donut { width: 100%; height: 100%; transform: scale(1); transition: transform 0.3s ease; }
-        .next-donut:hover { transform: scale(1.03); }
-        .donut-segment { transition: stroke-dasharray 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
-        .next-donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: flex; flex-direction: column; }
-        .next-donut-value { font-size: 1.5rem; font-weight: 700; color: #111827; line-height: 1; }
-        .next-donut-label { font-size: 0.7rem; color: #6b7280; margin-top: 0.35rem; text-transform: uppercase; font-weight: 500; }
-        .next-trend-text { font-size: 0.875rem; color: #6b7280; }
-        .slide-up { opacity: 0; transform: translateY(15px); animation: nextSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes nextSlideUp { to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 1024px) { .next-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .next-grid { grid-template-columns: 1fr; } .next-donut-container { flex-direction: column; } }
+        /* monitor_dashboard — shared styles from dashboard_cards.css */
     </style>
     
     <script>

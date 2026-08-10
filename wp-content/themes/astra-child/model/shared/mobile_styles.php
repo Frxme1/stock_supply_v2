@@ -304,8 +304,24 @@ function closeBottomSheet() {
 function openBottomSheet() {
     var sheet = document.getElementById('mobileBottomSheet');
     var backdrop = document.getElementById('bottomSheetBackdrop');
-    if (sheet) sheet.classList.add('open');
-    if (backdrop) backdrop.classList.add('open');
+    if (sheet) {
+        if (sheet.parentElement !== document.body) {
+            document.body.appendChild(sheet);
+        }
+        sheet.classList.add('open');
+    }
+    if (backdrop) {
+        if (backdrop.parentElement !== document.body) {
+            document.body.appendChild(backdrop);
+        }
+        backdrop.classList.add('open');
+    }
+    var filterForm = document.getElementById('advanced-filter-form');
+    var mobileContainer = document.getElementById('mobile-filter-container');
+    if (filterForm && mobileContainer && filterForm.parentElement !== mobileContainer) {
+        mobileContainer.appendChild(filterForm);
+        filterForm.style.display = 'block';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

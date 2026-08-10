@@ -22,7 +22,9 @@
         -webkit-box-sizing: border-box;
         -moz-box-sizing: border-box;
         box-sizing: border-box;
-        margin-top: -4px !important;
+        margin-top: -2px !important;
+        margin-left: -2px;
+
     }
 
     .mobile-only-container {
@@ -43,6 +45,39 @@
         gap: 18px;
         position: relative;
         z-index: 10;
+        margin-left: -30px;
+        width: 120%;
+    }
+
+    /* --- Mobile Load More (+3 Cards) Button --- */
+    .mobile-load-more-wrapper {
+        position: relative !important;
+        z-index: 10 !important;
+        width: 100% !important;
+        margin-top: 14px !important;
+    }
+
+    .mobile-load-more-btn {
+        width: 100% !important;
+        min-height: 52px !important;
+        background: #ffffff !important;
+        border: 1.5px solid #1e40af !important;
+        color: #1e40af !important;
+        border-radius: 18px !important;
+        font-weight: 700 !important;
+        font-size: 1.05rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 14px 20px !important;
+        box-shadow: 0 4px 14px rgba(30, 64, 175, 0.08) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .mobile-load-more-btn:active {
+        transform: scale(0.96) !important;
+        background: #eff6ff !important;
     }
 
     .mobile-device-header {
@@ -196,6 +231,8 @@
     .quick-action-card.swap {
         background: #fffbeb !important;
         border: 1.5px solid #fde68a !important;
+        width: 130%;
+        margin-left: -35px;
     }
 
     .quick-action-card.swap .quick-action-icon {
@@ -211,6 +248,7 @@
     .quick-action-card.return {
         background: #eef2ff !important;
         border: 1.5px solid #c7d2fe !important;
+        width: 130%;
     }
 
     .quick-action-card.return .quick-action-icon {
@@ -313,17 +351,17 @@
         pointer-events: auto !important;
     }
 
-    /* Bottom Sheet Modal & Backdrop (Fixed Unclickable Backdrop Bug) */
+    /* Bottom Sheet Modal & Backdrop (Theme Soft Minimalist / Bento Grid) */
     .bottom-sheet-backdrop {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
-        background: rgba(15, 23, 42, 0.6) !important;
-        backdrop-filter: blur(4px) !important;
-        -webkit-backdrop-filter: blur(4px) !important;
-        z-index: 99999 !important;
+        background: rgba(15, 23, 42, 0.65) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        z-index: 999998 !important;
         display: none !important;
         opacity: 0 !important;
         pointer-events: none !important;
@@ -344,19 +382,270 @@
         background: #ffffff !important;
         border-top-left-radius: 28px !important;
         border-top-right-radius: 28px !important;
-        z-index: 100000 !important;
-        padding: 28px 24px !important;
-        padding-bottom: calc(28px + env(safe-area-inset-bottom)) !important;
-        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        z-index: 999999 !important;
+        padding: 24px 20px 32px 20px !important;
+        padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+        box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.18), 0 -4px 12px rgba(15, 23, 42, 0.06) !important;
         transition: bottom 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
         max-height: 85vh !important;
         overflow-y: auto !important;
         pointer-events: none !important;
     }
 
+    .bottom-sheet::before {
+        content: '' !important;
+        display: block !important;
+        width: 44px !important;
+        height: 5px !important;
+        background: #cbd5e1 !important;
+        border-radius: 9999px !important;
+        margin: 0 auto 16px auto !important;
+    }
+
     .bottom-sheet.open {
         bottom: 0 !important;
         pointer-events: auto !important;
+    }
+
+    .bottom-sheet-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        margin-bottom: 20px !important;
+        padding-bottom: 12px !important;
+        border-bottom: 1.5px solid #f1f5f9 !important;
+    }
+
+    .bottom-sheet-header h3 {
+        margin: 0 !important;
+        font-size: 1.3rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        font-family: 'Inter', 'Prompt', -apple-system, sans-serif !important;
+        letter-spacing: -0.02em !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    .bottom-sheet-header h3::before {
+        content: '\f0b0' !important;
+        font-family: 'Font Awesome 6 Free' !important;
+        font-weight: 900 !important;
+        color: #1e40af !important;
+        font-size: 1.15rem !important;
+    }
+
+    .bottom-sheet-close,
+    .bottom-sheet-close.btn,
+    .bottom-sheet-close.btn-primary {
+        background: #f1f5f9 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #475569 !important;
+        font-size: 0.95rem !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+    .bottom-sheet-close:active {
+        background: #e2e8f0 !important;
+        color: #0f172a !important;
+        transform: scale(0.92) !important;
+    }
+
+    /* Filter Form Container inside Bottom Sheet */
+    #mobile-filter-container #advanced-filter-form,
+    #mobile-filter-container .ajax-filter-form {
+        display: block !important;
+        background: #ffffff !important;
+        border-radius: 20px !important;
+        padding: 18px 16px !important;
+        margin-left: 0px;
+        border: 1.5px solid #e2e8f0 !important;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+    }
+
+    #mobile-filter-container .row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+        margin: 0 !important;
+    }
+
+    #mobile-filter-container .row>[class*="col-"] {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
+    #mobile-filter-container label,
+    #mobile-filter-container .form-label {
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        color: #475569 !important;
+        margin-bottom: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    #mobile-filter-container input[type="text"],
+    #mobile-filter-container select,
+    #mobile-filter-container .form-select,
+    #mobile-filter-container .search-input-modern {
+        width: 100% !important;
+        height: 48px !important;
+        border-radius: 14px !important;
+        background: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        padding: 0 16px !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        box-sizing: border-box !important;
+        box-shadow: none !important;
+        transition: border-color 0.2s ease, background-color 0.2s ease !important;
+    }
+
+    #mobile-filter-container input[type="text"]:focus,
+    #mobile-filter-container select:focus,
+    #mobile-filter-container .form-select:focus,
+    #mobile-filter-container .search-input-modern:focus {
+        border-color: #1e40af !important;
+        background: #ffffff !important;
+        box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.12) !important;
+        outline: none !important;
+    }
+
+    select,
+    .form-select,
+    .staggered-dropdown,
+    #mobile-filter-container select,
+    #mobile-filter-container .form-select,
+    .edit-data-form select,
+    #edit-device-form select,
+    #edit-employee-form select,
+    #add-device-form select {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 14px center !important;
+        background-size: 16px 16px !important;
+        padding-right: 40px !important;
+    }
+
+    /* Fix magnifying glass icon overlap on all mobile search inputs */
+    .search-wrapper-modern,
+    #mobile-filter-container .search-wrapper-modern {
+        position: relative !important;
+        width: 100% !important;
+    }
+
+    .search-input-modern,
+    .search-wrapper-modern .search-input-modern,
+    #mobile-filter-container .search-input-modern,
+    #advanced-filter-form .search-input-modern,
+    input[name="device_search"],
+    input[name="history_search"] {
+        padding-left: 2.75rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .search-icon-modern,
+    .search-wrapper-modern .search-icon-modern {
+        position: absolute !important;
+        left: 1rem !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 5 !important;
+        pointer-events: none !important;
+        font-size: 0.95rem !important;
+        color: #64748b !important;
+    }
+
+    .search-wrapper-modern:focus-within .search-icon-modern {
+        color: #1e40af !important;
+    }
+
+    /* Action Buttons row in mobile filter */
+    #mobile-filter-container .d-flex:has(.btn-filter-modern),
+    #mobile-filter-container .row>div:last-child {
+        display: flex !important;
+        gap: 12px !important;
+        width: 100% !important;
+        margin-top: 6px !important;
+    }
+
+    #mobile-filter-container .btn-filter-modern,
+    #mobile-filter-container button[type="submit"] {
+        flex: 1.4 !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        border-radius: 9999px !important;
+        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        box-shadow: 0 6px 18px rgba(30, 64, 175, 0.28) !important;
+        cursor: pointer !important;
+        transition: transform 0.15s ease !important;
+        margin: 0 !important;
+    }
+
+    #mobile-filter-container .btn-filter-modern:active,
+    #mobile-filter-container button[type="submit"]:active {
+        transform: scale(0.96) !important;
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
+    }
+
+    #mobile-filter-container .btn-reset-modern,
+    #mobile-filter-container a.btn-reset-modern {
+        flex: 1 !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        border-radius: 9999px !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        text-decoration: none !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+        transition: transform 0.15s ease !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #mobile-filter-container .btn-reset-modern:active,
+    #mobile-filter-container a.btn-reset-modern:active {
+        background: #f1f5f9 !important;
+        transform: scale(0.96) !important;
+        color: #0f172a !important;
     }
 
     .next-dashboard {
@@ -374,9 +663,310 @@
     #mobile-filter-container #advanced-filter-form {
         display: block !important;
     }
+
+    /* --- Mobile Edit & Add Data Forms (Themed Soft Minimalist / Bento Grid) --- */
+    .edit-data-form,
+    #edit-device-form,
+    #edit-employee-form,
+    #add-device-form,
+    #add-employee-form {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 14px 0 28px 0 !important;
+        padding: 24px 18px !important;
+        box-sizing: border-box !important;
+        border-radius: 28px !important;
+        background: #f8fafc !important;
+        /* Matches Website Slate Theme */
+        border: 1.5px solid #e2e8f0 !important;
+        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02) !important;
+    }
+
+    .edit-data-form h2,
+    #edit-device-form h2,
+    #edit-employee-form h2,
+    #add-device-form h2,
+    #add-employee-form h2 {
+        font-size: 1.35rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        letter-spacing: -0.02em !important;
+        margin-bottom: 20px !important;
+        text-align: center !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+    }
+
+    /* Card-Based Layout / Bento Grid for form fields on mobile */
+    .edit-data-form .form-grid,
+    #edit-device-form .form-grid,
+    #edit-employee-form .form-grid,
+    #add-device-form .form-grid,
+    #add-employee-form .form-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        width: 100% !important;
+    }
+
+    .edit-data-form .form-group,
+    #edit-device-form .form-group,
+    #edit-employee-form .form-group,
+    #add-device-form .form-group,
+    #add-employee-form .form-group {
+        background: #ffffff !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 20px !important;
+        padding: 16px 18px !important;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+        margin-bottom: 0 !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+    }
+
+    .edit-data-form .form-group:focus-within,
+    #edit-device-form .form-group:focus-within,
+    #edit-employee-form .form-group:focus-within,
+    #add-device-form .form-group:focus-within,
+    #add-employee-form .form-group:focus-within {
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+        transform: translateY(-1px) !important;
+        position: relative !important;
+        z-index: 100 !important;
+    }
+
+    .edit-data-form .form-group label,
+    #edit-device-form .form-group label,
+    #edit-employee-form .form-group label,
+    #add-device-form .form-group label,
+    #add-employee-form .form-group label {
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        color: #475569 !important;
+        margin-bottom: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    .edit-data-form .form-group input,
+    .edit-data-form .form-group select,
+    .edit-data-form .form-group textarea,
+    #edit-device-form .form-group input,
+    #edit-device-form .form-group select,
+    #edit-employee-form .form-group input,
+    #edit-employee-form .form-group select,
+    #add-device-form .form-group input,
+    #add-device-form .form-group select {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        height: 48px !important;
+        border-radius: 14px !important;
+        background: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        padding: 0 16px !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .edit-data-form .form-group select,
+    #edit-device-form .form-group select,
+    #edit-employee-form .form-group select,
+    #add-device-form .form-group select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+        background-position: right 0.85rem center !important;
+        background-repeat: no-repeat !important;
+        background-size: 1.25em 1.25em !important;
+        padding-right: 2.5rem !important;
+    }
+
+    .edit-data-form .form-group input:focus,
+    .edit-data-form .form-group select:focus,
+    .edit-data-form .form-group textarea:focus,
+    #edit-device-form .form-group input:focus,
+    #edit-device-form .form-group select:focus {
+        background: #ffffff !important;
+        border-color: #2563eb !important;
+        outline: none !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+    }
+
+    .edit-data-form .form-group input[disabled],
+    .edit-data-form .form-group select[disabled],
+    .edit-data-form .form-group input[readonly],
+    #edit-device-form .form-group input[disabled],
+    #edit-device-form .form-group select[disabled] {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        border-color: #e2e8f0 !important;
+        cursor: not-allowed !important;
+        opacity: 0.9 !important;
+    }
+
+    /* Pill-Shaped Buttons in Form Actions */
+    .edit-data-form .form-actions,
+    #edit-device-form .form-actions,
+    #edit-employee-form .form-actions,
+    #add-device-form .form-actions,
+    #add-employee-form .form-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 12px !important;
+        margin-top: 24px !important;
+        padding-top: 18px !important;
+        border-top: 1.5px dashed #e2e8f0 !important;
+        width: 100% !important;
+    }
+
+    .edit-data-form .form-actions button,
+    .edit-data-form .form-actions .btn,
+    #edit-device-form .form-actions button,
+    #edit-employee-form .form-actions button,
+    #add-device-form .form-actions button,
+    #add-employee-form .form-actions button {
+        flex: 1 !important;
+        height: 52px !important;
+        border-radius: 9999px !important;
+        /* Pill-shaped button */
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+        padding: 0 20px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Primary/Submit Pill Button */
+    .edit-data-form .form-actions button[type="submit"],
+    .edit-data-form .form-actions .btn-success,
+    #edit-device-form .form-actions button[type="submit"],
+    #edit-employee-form .form-actions button[type="submit"],
+    #add-device-form .form-actions button[type="submit"] {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28) !important;
+    }
+
+    .edit-data-form .form-actions button[type="submit"]:active,
+    .edit-data-form .form-actions .btn-success:active {
+        transform: scale(0.96) !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    /* Cancel Pill Button */
+    .edit-data-form .form-actions button[type="button"],
+    .edit-data-form .form-actions .btn-danger,
+    .edit-data-form .form-actions .btn-secondary,
+    #edit-device-form .form-actions button[type="button"],
+    #edit-employee-form .form-actions button[type="button"] {
+        background: #f1f5f9 !important;
+        color: #334155 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        box-shadow: none !important;
+    }
+
+    .edit-data-form .form-actions button[type="button"]:active,
+    .edit-data-form .form-actions .btn-danger:active {
+        background: #e2e8f0 !important;
+        transform: scale(0.96) !important;
+    }
+
+    /* Fixed z-index stacking for Owner group and floating popups */
+    .edit-data-form .form-group#owner-group,
+    #edit-device-form .form-group#owner-group {
+        position: relative !important;
+        z-index: 80 !important;
+    }
+
+    #website_edit_owner_search_wrap,
+    #website_owner_search_wrap {
+        position: relative !important;
+        z-index: 100 !important;
+    }
+
+    /* Sub-components: Add Brand & Owner Search on Mobile */
+    .edit-data-form #btn-edit-add-new-brand,
+    #edit-device-form #btn-edit-add-new-brand {
+        border-radius: 9999px !important;
+        background: #f8fafc !important;
+        border: 1.5px dashed #cbd5e1 !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        padding: 10px 18px !important;
+        margin-top: 10px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    .edit-data-form #edit_owner_search_input,
+    #edit-device-form #edit_owner_search_input {
+        height: 48px !important;
+        border-radius: 14px !important;
+        background: #f8fafc !important;
+        border: 1.5px solid #cbd5e1 !important;
+        font-weight: 500 !important;
+        color: #0f172a !important;
+    }
+
+    .edit-data-form #edit_owner_search_popup,
+    #edit-device-form #edit_owner_search_popup,
+    /* --- Device View Details & History Timeline on Mobile --- */
+    .view-details-container,
+    .vd-history-section,
+    .dtl-history-timeline-wrapper {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+    }
+
+    .dtl-timeline-wrap,
+    .dtl-timeline-wrap.active {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .dtl-timeline {
+        display: block !important;
+        position: relative !important;
+    }
+
+    .dtl-node {
+        display: block !important;
+        opacity: 1 !important;
+        transform: none !important;
+        visibility: visible !important;
+    }
+
+    .dtl-card {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .desktop-only-container {
+        display: none !important;
+    }
 }
 
 @media (min-width: 769px) {
+
+    .desktop-only-container {
+        display: block !important;
+    }
 
     .mobile-only-container,
     .quick-action-grid,
