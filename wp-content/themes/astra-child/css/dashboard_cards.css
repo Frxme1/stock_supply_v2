@@ -8,17 +8,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --dc-radius:         16px;
-    --dc-bg:             #ffffff;
-    --dc-border:         rgba(99, 102, 241, 0.08);
-    --dc-shadow:         0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
-    --dc-shadow-hover:   0 8px 32px rgba(99,102,241,0.14), 0 2px 8px rgba(0,0,0,0.06);
-    --dc-gap:            1.25rem;
-    --dc-text:           #0f172a;
-    --dc-text-sec:       #475569;
-    --dc-text-muted:     #94a3b8;
-    --dc-surface-muted:  #f8fafc;
-    --dc-progress-bg:    #f1f5f9;
+    --dc-radius: 16px;
+    --dc-bg: #ffffff;
+    --dc-border: rgba(99, 102, 241, 0.08);
+    --dc-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
+    --dc-shadow-hover: 0 8px 32px rgba(99, 102, 241, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+    --dc-gap: 1.25rem;
+    --dc-text: #0f172a;
+    --dc-text-sec: #475569;
+    --dc-text-muted: #94a3b8;
+    --dc-surface-muted: #f8fafc;
+    --dc-progress-bg: #f1f5f9;
 }
 
 /* ============================================================
@@ -35,9 +35,23 @@
 /* ============================================================
    GRID LAYOUTS
    ============================================================ */
-.next-grid   { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--dc-gap); }
-.next-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--dc-gap); }
-.next-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--dc-gap); }
+.next-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--dc-gap);
+}
+
+.next-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--dc-gap);
+}
+
+.next-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--dc-gap);
+}
 
 /* ============================================================
    BASE CARD
@@ -57,9 +71,11 @@
 .next-card::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.0), transparent);
+    background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.0), transparent);
     border-radius: var(--dc-radius) var(--dc-radius) 0 0;
     transition: background 0.35s ease;
     pointer-events: none;
@@ -72,12 +88,17 @@
 }
 
 .next-card:hover::before {
-    background: linear-gradient(90deg, transparent 10%, rgba(99,102,241,0.55) 50%, transparent 90%);
+    background: linear-gradient(90deg, transparent 10%, rgba(99, 102, 241, 0.55) 50%, transparent 90%);
 }
 
 /* Clickable cards */
-.clickable-card { cursor: pointer; }
-.clickable-card:active { transform: translateY(-2px) scale(0.99); }
+.clickable-card {
+    cursor: pointer;
+}
+
+.clickable-card:active {
+    transform: translateY(-2px) scale(0.99);
+}
 
 /* ============================================================
    CARD HEADER & TITLE
@@ -108,29 +129,41 @@
    ICON WRAPPERS
    ============================================================ */
 .next-icon-wrapper {
-    width: 42px; height: 42px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.1rem;
-    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.next-card:hover .next-icon-wrapper { transform: scale(1.12) rotate(-6deg); }
+.next-card:hover .next-icon-wrapper {
+    transform: scale(1.12) rotate(-6deg);
+}
 
 .next-icon-wrapper-sm {
-    width: 34px; height: 34px;
+    width: 34px;
+    height: 34px;
     border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 0.95rem;
-    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.next-card:hover .next-icon-wrapper-sm { transform: scale(1.1); }
+.next-card:hover .next-icon-wrapper-sm {
+    transform: scale(1.1);
+}
 
 /* ============================================================
    NUMBERS
    ============================================================ */
-.next-card-body { margin-top: 1.25rem; }
+.next-card-body {
+    margin-top: 1.25rem;
+}
 
 .next-number {
     font-size: 2.6rem;
@@ -179,14 +212,24 @@
    STATUS DOT (pulsing)
    ============================================================ */
 .next-status-dot {
-    width: 9px; height: 9px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     animation: pulseDot 2.8s ease-in-out infinite;
 }
 
 @keyframes pulseDot {
-    0%, 100% { transform: scale(1);    opacity: 1; }
-    50%       { transform: scale(1.3); opacity: 0.65; }
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.3);
+        opacity: 0.65;
+    }
 }
 
 /* ============================================================
@@ -217,18 +260,30 @@
 .next-progress-fill::after {
     content: '';
     position: absolute;
-    top: 0; left: -60%;
-    width: 40%; height: 100%;
-    background: rgba(255,255,255,0.5);
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
     transform: skewX(-20deg);
     animation: shimmerBar 2.8s ease-in-out infinite;
     animation-delay: 1.6s;
 }
 
 @keyframes shimmerBar {
-    0%   { left: -60%; opacity: 0; }
-    30%  { opacity: 1; }
-    100% { left: 120%; opacity: 0; }
+    0% {
+        left: -60%;
+        opacity: 0;
+    }
+
+    30% {
+        opacity: 1;
+    }
+
+    100% {
+        left: 120%;
+        opacity: 0;
+    }
 }
 
 .next-progress-text {
@@ -243,43 +298,60 @@
 /* ============================================================
    DONUT CHART
    ============================================================ */
-.next-donut-container { display: flex; align-items: center; gap: 2.5rem; }
+.next-donut-container {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+}
 
 .next-donut-wrap {
     position: relative;
-    width: 150px; height: 150px;
+    width: 150px;
+    height: 150px;
     flex-shrink: 0;
 }
 
 .next-donut {
-    width: 100%; height: 100%;
+    width: 100%;
+    height: 100%;
     transform: scale(1);
     transition: transform 0.3s ease;
-    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.08));
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
-.next-donut:hover { transform: scale(1.04); }
+.next-donut:hover {
+    transform: scale(1.04);
+}
 
-.donut-segment { transition: stroke-dasharray 1.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.donut-segment {
+    transition: stroke-dasharray 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 .next-donut-center {
     position: absolute;
-    top: 50%; left: 50%;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .next-donut-value {
-    font-size: 1.75rem; font-weight: 800;
-    color: var(--dc-text); line-height: 1;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--dc-text);
+    line-height: 1;
     letter-spacing: -0.04em;
 }
 
 .next-donut-label {
-    font-size: 0.65rem; color: var(--dc-text-muted);
+    font-size: 0.65rem;
+    color: var(--dc-text-muted);
     margin-top: 0.3rem;
-    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
 }
 
 /* ============================================================
@@ -287,28 +359,55 @@
    ============================================================ */
 .next-legend-wrap {
     flex: 1;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
     gap: 0.875rem;
 }
 
 .next-legend-item {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #f1f5f9;
 }
 
-.next-legend-item:last-child { border-bottom: none; padding-bottom: 0; }
-.next-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-.next-legend-label { font-size: 0.875rem; color: var(--dc-text-sec); font-weight: 500; }
-.next-legend-value { font-size: 1rem; font-weight: 700; color: var(--dc-text); }
+.next-legend-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.next-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.next-legend-label {
+    font-size: 0.875rem;
+    color: var(--dc-text-sec);
+    font-weight: 500;
+}
+
+.next-legend-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dc-text);
+}
 
 /* ============================================================
    LIST ITEMS
    ============================================================ */
-.next-status-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.next-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
 
 .next-list-item {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 0.75rem 0.875rem;
     border-radius: 10px;
     border: 1px solid transparent;
@@ -318,14 +417,35 @@
 
 .next-list-item:hover {
     background: #f8fafc;
-    border-color: rgba(99,102,241,0.12);
+    border-color: rgba(99, 102, 241, 0.12);
     transform: translateX(3px);
 }
 
-.next-list-left  { display: flex; align-items: center; gap: 0.75rem; }
-.next-list-name  { font-size: 0.875rem; font-weight: 500; color: var(--dc-text-sec); }
-.next-list-right { display: flex; align-items: center; gap: 1.25rem; }
-.next-list-value { font-size: 0.9375rem; font-weight: 700; color: var(--dc-text); min-width: 24px; text-align: right; }
+.next-list-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.next-list-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dc-text-sec);
+}
+
+.next-list-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.next-list-value {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--dc-text);
+    min-width: 24px;
+    text-align: right;
+}
 
 /* ============================================================
    SLIDE-UP ENTRANCE ANIMATION
@@ -337,7 +457,10 @@
 }
 
 @keyframes nextSlideUp {
-    to { opacity: 1; transform: translateY(0); }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ============================================================
@@ -348,13 +471,13 @@
     border: 1px solid #bbf7d0;
     border-radius: 16px;
     margin-bottom: 1.5rem;
-    box-shadow: 0 2px 12px rgba(16,185,129,0.08);
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.08);
     overflow: hidden;
     transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .new-devices-alert:hover {
-    box-shadow: 0 6px 24px rgba(16,185,129,0.14);
+    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.14);
     transform: translateY(-2px);
 }
 
@@ -363,34 +486,59 @@
    ============================================================ */
 .dash-qr-bar {
     background: #ffffff;
-    border: 1px solid rgba(99,102,241,0.1);
+    border: 1px solid rgba(99, 102, 241, 0.1);
     border-radius: 14px;
     padding: 14px 20px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
 }
 
 /* ============================================================
    UTILITY
    ============================================================ */
-.mt-4 { margin-top: 1.5rem; }
-.mt-3 { margin-top: 1rem; }
-.mt-2 { margin-top: 0.5rem; }
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
 
 /* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1100px) {
-    .next-grid   { grid-template-columns: repeat(2, 1fr); }
-    .next-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .next-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .next-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 1024px) {
+
     .next-grid-2,
-    .next-grid-3 { grid-template-columns: 1fr; }
+    .next-grid-3 {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 640px) {
-    .next-grid            { grid-template-columns: 1fr; }
-    .next-donut-container { flex-direction: column; gap: 1.5rem; }
-    .next-legend-wrap     { width: 100%; }
+    .next-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .next-donut-container {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .next-legend-wrap {
+        width: 100%;
+    }
 }

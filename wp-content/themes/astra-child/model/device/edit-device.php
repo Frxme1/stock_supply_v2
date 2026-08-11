@@ -29,11 +29,11 @@ function edit_device_form($editing = null)
             echo '<p style="color:red;">Security check failed.</p>';
             return ob_get_clean();
         }
-        $DeviceID       = sanitize_text_field($_POST['DeviceID']);
-        $Model          = sanitize_text_field($_POST['Model']);
-        $SerialNumber   = sanitize_text_field($_POST['SerialNumber']);
+        $DeviceID = sanitize_text_field($_POST['DeviceID']);
+        $Model = sanitize_text_field($_POST['Model']);
+        $SerialNumber = sanitize_text_field($_POST['SerialNumber']);
 
-        $raw_brand_id   = $_POST['BrandID'] ?? '';
+        $raw_brand_id = $_POST['BrandID'] ?? '';
         $new_brand_name = trim($_POST['new_brand_name'] ?? '');
 
         if (!empty($new_brand_name)) {
@@ -52,16 +52,16 @@ function edit_device_form($editing = null)
             $BrandID = intval($raw_brand_id);
         }
 
-        $StatusID       = intval($_POST['StatusID']);
-        $KeywordID      = intval($_POST['KeywordID']);
-        $OwnerID        = !empty($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
+        $StatusID = intval($_POST['StatusID']);
+        $KeywordID = intval($_POST['KeywordID']);
+        $OwnerID = !empty($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
         $AddDeviceDate_edit = sanitize_text_field($_POST['AddDeviceDate']);
-        $AddDeviceDate  = date('Y-m-d', strtotime($AddDeviceDate_edit));
-        $Reason         = !empty($_POST['Reason']) ? sanitize_text_field($_POST['Reason']) : '';
+        $AddDeviceDate = date('Y-m-d', strtotime($AddDeviceDate_edit));
+        $Reason = !empty($_POST['Reason']) ? sanitize_text_field($_POST['Reason']) : '';
 
         // Validate IDs
-        $valid_brand   = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Brands WHERE BrandID = %d", $BrandID));
-        $valid_status  = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Statuses WHERE StatusID = %d", $StatusID));
+        $valid_brand = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Brands WHERE BrandID = %d", $BrandID));
+        $valid_status = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Statuses WHERE StatusID = %d", $StatusID));
         $valid_keyword = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM Keywords WHERE KeywordID = %d", $KeywordID));
 
         if (!$valid_brand || !$valid_status || !$valid_keyword) {
@@ -83,14 +83,14 @@ function edit_device_form($editing = null)
         }
 
         $data = [
-            'Model'         => $Model,
-            'SerialNumber'  => $SerialNumber,
-            'BrandID'       => $BrandID,
-            'StatusID'      => $StatusID,
-            'KeywordID'     => $KeywordID,
-            'OwnerID'       => $OwnerID,
+            'Model' => $Model,
+            'SerialNumber' => $SerialNumber,
+            'BrandID' => $BrandID,
+            'StatusID' => $StatusID,
+            'KeywordID' => $KeywordID,
+            'OwnerID' => $OwnerID,
             'AddDeviceDate' => $AddDeviceDate,
-            'UpdatedAt'     => current_time('mysql'),
+            'UpdatedAt' => current_time('mysql'),
         ];
 
         $format = ['%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s'];
@@ -157,13 +157,13 @@ function edit_device_form($editing = null)
             }
 
             $wpdb->insert('History_new', [
-                'DeviceID'    => $DeviceID,
-                'Action'      => ($old_status_name !== $new_status_name ? 'Update Status' : 'Update Device'),
-                'Date'        => current_time('mysql'),
+                'DeviceID' => $DeviceID,
+                'Action' => ($old_status_name !== $new_status_name ? 'Update Status' : 'Update Device'),
+                'Date' => current_time('mysql'),
                 'Description' => $history_description,
-                'user_email'  => $user_email,
-                'CategoryID'  => $device_info->CategoryID ?? null,
-                'Owner'       => $owner_nickname
+                'user_email' => $user_email,
+                'CategoryID' => $device_info->CategoryID ?? null,
+                'Owner' => $owner_nickname
             ]);
 
             echo "<script>
@@ -181,7 +181,7 @@ function edit_device_form($editing = null)
         // รีเฟรชหลัง update
         $editing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $DeviceID));
     }
-?>
+    ?>
 
     <!-- HTML ฟอร์ม -->
     <form method="POST" action="" id="edit-device-form" class="edit-data-form">
@@ -218,12 +218,13 @@ function edit_device_form($editing = null)
 
             <div class="form-group">
                 <label>DeviceID</label>
-                <input type="text" style="background-color: #f0f0f0; color: #666; cursor: not-allowed;" value="<?= esc_attr($editing->DeviceID ?? '') ?>" disabled>
+                <input type="text" style="background-color: #f0f0f0; color: #666; cursor: not-allowed;"
+                    value="<?= esc_attr($editing->DeviceID ?? '') ?>" disabled>
             </div>
 
             <div class="form-group">
                 <label>Brand</label>
-                
+
                 <div id="edit-brand-select-wrapper">
                     <select name="BrandID" id="edit-brand-select" required onchange="checkEditBrandSelection(this)">
                         <option value="">-- Select Brand --</option>
@@ -233,22 +234,31 @@ function edit_device_form($editing = null)
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <button type="button" id="btn-edit-add-new-brand" class="btn w-100 mt-2" style="border: 1.5px dashed #cbd5e1; color: #475569; font-weight: 600; border-radius: 8px; padding: 10px; background: #ffffff; transition: all 0.2s; <?= (!empty($editing->BrandID)) ? 'display: none;' : '' ?>" onclick="toggleEditNewBrandMode()" onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#3b82f6';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#475569';">
+                    <button type="button" id="btn-edit-add-new-brand" class="btn w-100 mt-2"
+                        style="border: 1.5px dashed #cbd5e1; color: #475569; font-weight: 600; border-radius: 8px; padding: 10px; background: #ffffff; transition: all 0.2s; <?= (!empty($editing->BrandID)) ? 'display: none;' : '' ?>"
+                        onclick="toggleEditNewBrandMode()"
+                        onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#3b82f6';"
+                        onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#475569';">
                         <i class="fa-solid fa-plus me-1"></i> Add New Brand
                     </button>
                 </div>
-                
-                <div id="edit_new_brand_wrapper" style="display: none; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+
+                <div id="edit_new_brand_wrapper"
+                    style="display: none; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="mb-0" style="font-size: 0.85rem; font-weight: 700; color: #334155;"><i class="fa-solid fa-sparkles text-primary me-1"></i> Create New Brand</label>
-                        <button type="button" class="btn btn-link p-0 text-danger text-decoration-none" style="font-weight: 600; font-size: 0.8rem;" onclick="cancelEditNewBrandMode()">
+                        <label class="mb-0" style="font-size: 0.85rem; font-weight: 700; color: #334155;"><i
+                                class="fa-solid fa-sparkles text-primary me-1"></i> Create New Brand</label>
+                        <button type="button" class="btn btn-link p-0 text-danger text-decoration-none"
+                            style="font-weight: 600; font-size: 0.8rem;" onclick="cancelEditNewBrandMode()">
                             <i class="fa-solid fa-times me-1"></i> Cancel
                         </button>
                     </div>
-                    <input type="text" name="new_brand_name" id="edit_new_brand_name" placeholder="e.g. Razer, Anker, Dell..." class="form-control" style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.95rem; padding: 10px 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                    <input type="text" name="new_brand_name" id="edit_new_brand_name"
+                        placeholder="e.g. Razer, Anker, Dell..." class="form-control"
+                        style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.95rem; padding: 10px 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
                 </div>
             </div>
-            
+
             <script>
                 function checkEditBrandSelection(selectElem) {
                     var addBtn = document.getElementById('btn-edit-add-new-brand');
@@ -260,35 +270,35 @@ function edit_device_form($editing = null)
                         }
                     }
                 }
-                
+
                 function toggleEditNewBrandMode() {
                     var selectWrapper = document.getElementById('edit-brand-select-wrapper');
                     var newWrapper = document.getElementById('edit_new_brand_wrapper');
                     var input = document.getElementById('edit_new_brand_name');
                     var select = document.getElementById('edit-brand-select');
-                    
+
                     if (!selectWrapper || !newWrapper || !input || !select) return;
-                    
+
                     selectWrapper.style.display = 'none';
                     newWrapper.style.display = 'block';
-                    
+
                     select.required = false;
                     input.required = true;
                     input.focus();
                     select.value = '';
                 }
-                
+
                 function cancelEditNewBrandMode() {
                     var selectWrapper = document.getElementById('edit-brand-select-wrapper');
                     var newWrapper = document.getElementById('edit_new_brand_wrapper');
                     var input = document.getElementById('edit_new_brand_name');
                     var select = document.getElementById('edit-brand-select');
-                    
+
                     if (!selectWrapper || !newWrapper || !input || !select) return;
-                    
+
                     selectWrapper.style.display = 'block';
                     newWrapper.style.display = 'none';
-                    
+
                     select.required = true;
                     input.required = false;
                     input.value = '';
@@ -300,10 +310,9 @@ function edit_device_form($editing = null)
                 <select name="StatusID" id="StatusID" required>
                     <option value="">-- Select Status --</option>
                     <?php foreach ($statuses as $s): ?>
-                        <option value="<?= esc_attr($s->StatusID) ?>" data-name="<?= esc_attr(strtolower($s->StatusName)) ?>" <?= selected($editing->StatusID ?? '', $s->StatusID, false) ?>>
-                            <?=
-                            ($s->StatusName === 'Available' ? '<i class="fa-solid fa-circle text-success"></i> Available' : ($s->StatusName === 'In Use' ? '<i class="fa-solid fa-circle text-danger"></i> In Use' : ($s->StatusName === 'Maintenance' ? '<i class="fa-solid fa-circle text-warning"></i> Maintenance' : ($s->StatusName === 'Retired' ? '<i class="fa-solid fa-circle text-dark"></i> Retired' : '❔'))))
-                            ?>
+                        <option value="<?= esc_attr($s->StatusID) ?>" data-name="<?= esc_attr(strtolower($s->StatusName)) ?>"
+                            <?= selected($editing->StatusID ?? '', $s->StatusID, false) ?>>
+                            <?= esc_html($s->StatusName) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -332,10 +341,11 @@ function edit_device_form($editing = null)
             </div>
 
             <div class="form-group" id="owner-group">
-                <label style="font-weight: 600;">Owner (Employee / ค้นหา/เลือกพนักงาน)</label>
+                <label style="font-weight: 600;">Owner (Employee / Search Owner)</label>
                 <div id="website_edit_owner_search_wrap" style="position: relative; width: 100%;">
                     <div style="position: relative;">
-                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none;"></i>
+                        <i class="fa-solid fa-magnifying-glass"
+                            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none;"></i>
                         <?php
                         $current_owner_name = '';
                         if (!empty($editing->OwnerID)) {
@@ -347,12 +357,18 @@ function edit_device_form($editing = null)
                             }
                         }
                         ?>
-                        <input type="text" id="edit_owner_search_input" value="<?= esc_attr($current_owner_name) ?>" placeholder="🔍 พิมพ์หรือเลือกชื่อพนักงาน..." autocomplete="off" style="width: 100%; padding: 10px 36px 10px 38px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; background-color: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); box-sizing: border-box; transition: all 0.2s;" onfocus="this.select(); openEditOwnerSearchPopup()" oninput="onEditOwnerInputChanged(this.value)">
-                        <i class="fa-solid fa-chevron-down" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
+                        <input type="text" id="edit_owner_search_input" value="<?= esc_attr($current_owner_name) ?>"
+                            placeholder="Type or select employee..." autocomplete="off"
+                            style="width: 100%; padding: 10px 36px 10px 38px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 0.9rem; background-color: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); box-sizing: border-box; transition: all 0.2s;"
+                            onfocus="this.select(); openEditOwnerSearchPopup()"
+                            oninput="onEditOwnerInputChanged(this.value)">
+                        <i class="fa-solid fa-chevron-down"
+                            style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
                     </div>
 
                     <!-- Live Floating Results Popup -->
-                    <div id="edit_owner_search_popup" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12); z-index: 99999; padding: 4px;">
+                    <div id="edit_owner_search_popup"
+                        style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12); z-index: 99999; padding: 4px;">
                     </div>
                 </div>
 
@@ -361,13 +377,13 @@ function edit_device_form($editing = null)
             </div>
             <script>
                 const editOwnerDataList = [
-                    { id: '', name: '-- No Owner (ไม่มีผู้ดูแล) --', deptName: '' },
+                    { id: '', name: '-- No Owner --', deptName: '' },
                     <?php foreach ($owners as $o): ?>
-                    {
-                        id: <?= intval($o->OwnerID) ?>,
-                        name: <?= json_encode(trim($o->Nickname)) ?>,
-                        deptName: <?= json_encode($o->DepartmentName ?? '') ?>
-                    },
+                            {
+                            id: <?= intval($o->OwnerID) ?>,
+                            name: <?= json_encode(trim($o->Nickname)) ?>,
+                            deptName: <?= json_encode($o->DepartmentName ?? '') ?>
+                        },
                     <?php endforeach; ?>
                 ];
 
@@ -394,286 +410,299 @@ function edit_device_form($editing = null)
                     });
 
                     if (filtered.length === 0) {
-                        popup.innerHTML = `<div style="padding: 10px 14px; color: #94a3b8; font-size: 0.85rem; text-align: center;">❌ ไม่พบพนักงานที่ค้นหา</div>`;
+                        popup.innerHTML = `<div style="padding: 10px 14px; color: #94a3b8; font-size: 0.85rem; text-align: center;">❌ No matching employee found</div>`;
                     } else {
                         let html = '';
                         filtered.forEach(o => {
                             const deptBadge = o.deptName ? `<span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 600;">${o.deptName}</span>` : '';
                             html += `
-                                <div class="owner-item-row" onclick="selectEditOwnerItem(${o.id}, '${o.name.replace(/'/g, "\\'")}')" style="padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='transparent';">
+                                <div class="owner-item-row" onclick="selectEditOwnerItem(${o.id}, '${o.name.replace(/'/g, "\\'")}')" onmousedown="event.preventDefault(); selectEditOwnerItem(${o.id}, '${o.name.replace(/'/g, "\\'")}')" ontouchstart="event.preventDefault(); selectEditOwnerItem(${o.id}, '${o.name.replace(/'/g, "\\'")}')" style="padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='transparent';">
                                     <span style="font-weight: 600; color: #0f172a;"><i class="fa-solid fa-user me-2" style="color: #64748b; font-size: 0.8rem;"></i>${o.name}</span>
                                     ${deptBadge}
                                 </div>
                             `;
-                        });
-                        popup.innerHTML = html;
-                    }
-                    popup.style.display = 'block';
+                    });
+                    popup.innerHTML = html;
                 }
+                popup.style.display = 'block';
+            }
 
-                function selectEditOwnerItem(id, name) {
-                    const input = document.getElementById('edit_owner_search_input');
-                    const select = document.getElementById('OwnerID');
-                    const popup = document.getElementById('edit_owner_search_popup');
+            function selectEditOwnerItem(id, name) {
+                const input = document.getElementById('edit_owner_search_input');
+                const select = document.getElementById('OwnerID');
+                const popup = document.getElementById('edit_owner_search_popup');
 
-                    if (input) input.value = (id === '' ? '' : name);
-                    if (select) select.value = id;
-                    if (popup) popup.style.display = 'none';
+                if (input) input.value = (id === '' ? '' : name);
+                if (select) select.value = id;
+                if (popup) popup.style.display = 'none';
+            }
+
+            document.addEventListener('click', function (e) {
+                const wrap = document.getElementById('website_edit_owner_search_wrap');
+                const popup = document.getElementById('edit_owner_search_popup');
+                if (wrap && popup && !wrap.contains(e.target)) {
+                    popup.style.display = 'none';
                 }
+            });
+        </script>
 
-                document.addEventListener('click', function(e) {
-                    const wrap = document.getElementById('website_edit_owner_search_wrap');
-                    const popup = document.getElementById('edit_owner_search_popup');
-                    if (wrap && popup && !wrap.contains(e.target)) {
-                        popup.style.display = 'none';
-                    }
-                });
-            </script>
-
-            <div class="form-group">
-                <label>Add Device Date</label>
-                <input type="date" name="AddDeviceDate" id="AddDeviceDate" value="<?= esc_attr($editing->AddDeviceDate ?? '') ?>" min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
-            </div>
-
-            <div class="form-group" id="reason-group" style="display: none; grid-column: span 2;">
-                <label>Reason <span class="text-danger">*</span></label>
-                <input type="text" name="Reason" id="Reason" placeholder="Please enter reason (Required for Retired)">
-            </div>
+        <div class="form-group">
+            <label>Add Device Date</label>
+            <input type="date" name="AddDeviceDate" id="AddDeviceDate"
+                value="<?= esc_attr($editing->AddDeviceDate ?? '') ?>"
+                min="<?= esc_attr($editing->AddDeviceDate ?? date('Y-m-d')) ?>" required>
         </div>
 
-        <div class="form-actions">
-            <button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
-            <button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57">Update</button>
+        <div class="form-group" id="reason-group" style="display: none; grid-column: span 2;">
+            <label>Reason <span class="text-danger">*</span></label>
+            <input type="text" name="Reason" id="Reason" placeholder="Please enter reason (Required for Retired)">
         </div>
-    </form>
+    </div>
 
-    <style>
-		/* Next.js Inspired Form UI */
-		form {
-			max-width: 650px;
-			margin: 40px auto;
-			margin-top: 10px;
-			background: #ffffff;
-			padding: 2.5rem;
-			border-radius: 16px;
-			border: 1px solid #e5e7eb;
-			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-			animation: formFadeIn 0.5s ease-out forwards;
-		}
+    <div class="form-actions">
+        <button type="button" onclick="history.back()" class="btn btn-danger border rounded-pill">Cancel</button>
+        <button type="submit" class="btn btn-success border rounded-pill"
+            style="background-color: #6ABF57">Update</button>
+    </div>
+</form>
 
-		@keyframes formFadeIn {
-			from { opacity: 0; transform: translateY(10px); }
-			to { opacity: 1; transform: translateY(0); }
-		}
+<style>
+    /* Next.js Inspired Form UI */
+    form {
+        max-width: 650px;
+        margin: 40px auto;
+        margin-top: 10px;
+        background: #ffffff;
+        padding: 2.5rem;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        animation: formFadeIn 0.5s ease-out forwards;
+    }
 
-		form h2 {
-			font-weight: 700;
-			color: #111827;
-			letter-spacing: -0.025em;
-			margin-bottom: 1.5rem;
-		}
+    @keyframes formFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
 
-		.form-grid {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 1.5rem;
-			margin-top: 1rem;
-		}
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-		.form-group {
-			display: flex;
-			flex-direction: column;
-			margin-bottom: 0;
-			position: relative;
-		}
+    form h2 {
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.025em;
+        margin-bottom: 1.5rem;
+    }
 
-		.form-group label {
-			font-size: 0.875rem;
-			font-weight: 600;
-			color: #374151;
-			margin-bottom: 6px;
-			transition: color 0.2s ease;
-		}
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
 
-		.form-group:focus-within label {
-			color: #3b82f6;
-		}
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+        position: relative;
+    }
 
-		/* Unified Input and Select Styling */
-		.form-group input,
-		.form-group select {
-			width: 100%;
-			box-sizing: border-box;
-			height: 44px; /* Ensure uniform height */
-			padding: 0.5rem 1rem;
-			font-size: 0.95rem;
-			color: #111827;
-			background-color: #ffffff;
-			border: 1px solid #d1d5db;
-			border-radius: 10px;
-			transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-			appearance: none; /* For custom select arrow */
-		}
+    .form-group label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+        transition: color 0.2s ease;
+    }
 
-		/* Select specific - Custom Arrow */
-		.form-group select {
-			background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-			background-position: right 0.75rem center;
-			background-repeat: no-repeat;
-			background-size: 1.25em 1.25em;
-			cursor: pointer;
-		}
+    .form-group:focus-within label {
+        color: #3b82f6;
+    }
 
-		/* Hover and Focus States */
-		.form-group input:hover:not([readonly]):not([disabled]),
-		.form-group select:hover:not([readonly]):not([disabled]) {
-			border-color: #9ca3af;
-		}
+    /* Unified Input and Select Styling */
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        box-sizing: border-box;
+        height: 44px;
+        /* Ensure uniform height */
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        color: #111827;
+        background-color: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        appearance: none;
+        /* For custom select arrow */
+    }
 
-		.form-group input:focus:not([readonly]):not([disabled]),
-		.form-group select:focus:not([readonly]):not([disabled]) {
-			outline: none;
-			border-color: #3b82f6;
-			box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-			transform: translateY(-1px);
-		}
+    /* Select specific - Custom Arrow */
+    .form-group select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.75rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25em 1.25em;
+        cursor: pointer;
+    }
 
-		/* Click Animation for Select (Active state) */
-		.form-group select:active:not([disabled]) {
-			transform: scale(0.98);
-		}
+    /* Hover and Focus States */
+    .form-group input:hover:not([readonly]):not([disabled]),
+    .form-group select:hover:not([readonly]):not([disabled]) {
+        border-color: #9ca3af;
+    }
 
-		/* Readonly/Disabled Input Styling */
-		.form-group input[readonly],
-		.form-group input[disabled],
-		.form-group select[disabled] {
-			background-color: #f9fafb !important;
-			color: #6b7280 !important;
-			cursor: not-allowed !important;
-			border-color: #e5e7eb !important;
-			box-shadow: none !important;
-		}
+    .form-group input:focus:not([readonly]):not([disabled]),
+    .form-group select:focus:not([readonly]):not([disabled]) {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        transform: none;
+    }
 
-		.form-actions {
-			display: flex;
-			justify-content: center;
-			gap: 1rem;
-			margin-top: 2.5rem;
-			padding-top: 1.5rem;
-			border-top: 1px solid #f3f4f6;
-		}
+    /* Click Animation for Select (Active state) */
+    .form-group select:active:not([disabled]) {
+        transform: none;
+    }
 
-		.form-actions button {
-			padding: 0.6rem 2rem;
-			font-weight: 600;
-			font-size: 0.95rem;
-			letter-spacing: 0.025em;
-			transition: all 0.2s ease;
-			box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-		}
+    /* Readonly/Disabled Input Styling */
+    .form-group input[readonly],
+    .form-group input[disabled],
+    .form-group select[disabled] {
+        background-color: #f9fafb !important;
+        color: #6b7280 !important;
+        cursor: not-allowed !important;
+        border-color: #e5e7eb !important;
+        box-shadow: none !important;
+    }
 
-		.form-actions button:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-		}
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #f3f4f6;
+    }
 
-		.form-actions button:active {
-			transform: translateY(0);
-		}
+    .form-actions button {
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: 0.025em;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
 
-		@media (max-width: 640px) {
-			.form-grid {
-				grid-template-columns: 1fr;
-			}
-			form {
-				margin: 20px;
-				padding: 1.5rem;
-			}
-		}
-    </style>
+    .form-actions button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const statusSelect = document.getElementById('StatusID');
-            const ownerGroup = document.getElementById('owner-group');
-            const ownerSelect = document.getElementById('OwnerID');
-            const dateField = document.getElementById('AddDeviceDate');
-            
-            // ตรวจสอบค่า Status เริ่มต้นเพื่อใช้เทียบถ้ามีการเปลี่ยนสถานะ
-            const initialStatusName = statusSelect && statusSelect.options[statusSelect.selectedIndex] 
-                                        ? statusSelect.options[statusSelect.selectedIndex].getAttribute('data-name') 
-                                        : '';
+    .form-actions button:active {
+        transform: translateY(0);
+    }
 
-            function handleStatusChange() {
-                const selectedOption = statusSelect.options[statusSelect.selectedIndex];
-                const statusName = selectedOption ? selectedOption.getAttribute('data-name') : '';
-                const reasonGroup = document.getElementById('reason-group');
-                const reasonInput = document.getElementById('Reason');
+    @media (max-width: 640px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
 
-                if (statusName === 'retired') {
-                    if (reasonGroup) reasonGroup.style.display = 'flex';
-                    if (reasonInput) {
-                        reasonInput.required = true;
-                        reasonInput.placeholder = 'Please enter reason (Required for Retired)';
-                    }
-                } else if (statusName === 'maintenance') {
-                    if (reasonGroup) reasonGroup.style.display = 'flex';
-                    if (reasonInput) {
-                        reasonInput.required = false;
-                        reasonInput.placeholder = 'Please enter maintenance details / reason (Optional)';
-                    }
-                } else {
-                    if (reasonGroup) reasonGroup.style.display = 'none';
-                    if (reasonInput) {
-                        reasonInput.required = false;
-                        reasonInput.value = '';
-                    }
+        form {
+            margin: 20px;
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const statusSelect = document.getElementById('StatusID');
+        const ownerGroup = document.getElementById('owner-group');
+        const ownerSelect = document.getElementById('OwnerID');
+        const dateField = document.getElementById('AddDeviceDate');
+
+        // ตรวจสอบค่า Status เริ่มต้นเพื่อใช้เทียบถ้ามีการเปลี่ยนสถานะ
+        const initialStatusName = statusSelect && statusSelect.options[statusSelect.selectedIndex]
+            ? statusSelect.options[statusSelect.selectedIndex].getAttribute('data-name')
+            : '';
+
+        function handleStatusChange() {
+            const selectedOption = statusSelect.options[statusSelect.selectedIndex];
+            const statusName = selectedOption ? selectedOption.getAttribute('data-name') : '';
+            const reasonGroup = document.getElementById('reason-group');
+            const reasonInput = document.getElementById('Reason');
+
+            if (statusName === 'retired') {
+                if (reasonGroup) reasonGroup.style.display = 'flex';
+                if (reasonInput) {
+                    reasonInput.required = true;
+                    reasonInput.placeholder = 'Please enter reason (Required for Retired)';
                 }
-
-                if (statusName === 'retired' || statusName === 'available') {
-                    // ซ่อนและล้างช่อง Owner
-                    if (ownerGroup) ownerGroup.style.display = 'none';
-                    if (ownerSelect) ownerSelect.value = '';
-                } else {
-                    // แสดงช่อง Owner ปกติ
-                    if (ownerGroup) ownerGroup.style.display = 'flex';
+            } else if (statusName === 'maintenance') {
+                if (reasonGroup) reasonGroup.style.display = 'flex';
+                if (reasonInput) {
+                    reasonInput.required = false;
+                    reasonInput.placeholder = 'Please enter maintenance details / reason (Optional)';
                 }
-
-                if (statusName === 'retired') {
-                    // ล็อควันที่ และตั้งเป็นวันปัจจุบัน (เฉพาะกรณีที่เพิ่งเปลี่ยนเป็น retired ครั้งแรก หรือกำลังเลือกใหม่)
-                    if (dateField) {
-                        if (initialStatusName !== 'retired' || !dateField.value) {
-                            dateField.value = new Date().toISOString().split('T')[0];
-                        }
-                        // ทำให้เป็น readonly แทน disabled เพื่อให้ยังส่งค่าผ่าน form ได้
-                        dateField.readOnly = true;
-                        dateField.style.backgroundColor = '#f0f0f0';
-                        dateField.style.color = '#666';
-                        dateField.style.cursor = 'not-allowed';
-                    }
-                } else {
-                    // ปลดล็อควันที่
-                    if (dateField) {
-                        dateField.readOnly = false;
-                        dateField.style.backgroundColor = '';
-                        dateField.style.color = '';
-                        dateField.style.cursor = '';
-                    }
+            } else {
+                if (reasonGroup) reasonGroup.style.display = 'none';
+                if (reasonInput) {
+                    reasonInput.required = false;
+                    reasonInput.value = '';
                 }
             }
 
-            if (statusSelect) {
-                statusSelect.addEventListener('change', handleStatusChange);
-                handleStatusChange(); // เรียกครั้งแรกตอนโหลดหน้า
+            if (statusName === 'retired' || statusName === 'available') {
+                // ซ่อนและล้างช่อง Owner
+                if (ownerGroup) ownerGroup.style.display = 'none';
+                if (ownerSelect) ownerSelect.value = '';
+            } else {
+                // แสดงช่อง Owner ปกติ
+                if (ownerGroup) ownerGroup.style.display = 'flex';
             }
-        });
-    </script>
+
+            if (statusName === 'retired') {
+                // ล็อควันที่ และตั้งเป็นวันปัจจุบัน (เฉพาะกรณีที่เพิ่งเปลี่ยนเป็น retired ครั้งแรก หรือกำลังเลือกใหม่)
+                if (dateField) {
+                    if (initialStatusName !== 'retired' || !dateField.value) {
+                        dateField.value = new Date().toISOString().split('T')[0];
+                    }
+                    // ทำให้เป็น readonly แทน disabled เพื่อให้ยังส่งค่าผ่าน form ได้
+                    dateField.readOnly = true;
+                    dateField.style.backgroundColor = '#f0f0f0';
+                    dateField.style.color = '#666';
+                    dateField.style.cursor = 'not-allowed';
+                }
+            } else {
+                // ปลดล็อควันที่
+                if (dateField) {
+                    dateField.readOnly = false;
+                    dateField.style.backgroundColor = '';
+                    dateField.style.color = '';
+                    dateField.style.cursor = '';
+                }
+            }
+        }
+
+        if (statusSelect) {
+            statusSelect.addEventListener('change', handleStatusChange);
+            handleStatusChange(); // เรียกครั้งแรกตอนโหลดหน้า
+        }
+    });
+</script>
 
 
 <?php
-    return ob_get_clean();
+        return ob_get_clean();
 }
 
 add_shortcode('edit_device', 'edit_device_form');

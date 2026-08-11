@@ -21,14 +21,15 @@
     font-size: 0.875rem;
     font-weight: 500;
     box-sizing: border-box;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.animated-dropdown-btn:hover, .animated-dropdown-btn:focus {
+.animated-dropdown-btn:hover,
+.animated-dropdown-btn:focus {
     border-color: #3b82f6;
     background-color: #f8fafc;
     color: #0f172a;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(0,0,0,0.02);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.02);
     outline: none;
 }
 
@@ -48,99 +49,113 @@
     transform: rotate(180deg);
 }
 
-/* Staggered Floating List - Premium Glassmorphism */
+/* Staggered Floating List - Clean Spring Pop Card */
 .animated-dropdown-list {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.5rem;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 0 20px rgba(0, 0, 0, 0.03);
+    gap: 4px;
+    padding: 8px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.16), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
     width: 100%;
-    min-width: 12rem;
+    min-width: 13rem;
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: 250px;
+    max-height: 280px;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
     margin: 0;
     list-style: none;
     z-index: 1000;
 
-    /* Animation base state (closed) */
-    transform-origin: top;
-    transform: translateY(-8px) scaleY(0.96);
+    /* Spring-pop animation base state */
+    transform-origin: top center;
+    transform: translateY(-12px) scale(0.94);
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    transition: transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* List Open State */
 .animated-dropdown-list.open {
-    transform: translateY(0) scaleY(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
     pointer-events: auto;
 }
 
-/* List Items (Options) */
+/* List Items (Options) - Comfortable Spacing & Line Height */
 .animated-dropdown-item {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    width: 110%;
+    margin-left: -10px;
+    justify-content: flex-start;
+    gap: 8px;
     width: 100%;
-    padding: 0.6rem 0.75rem;
-    border-radius: 8px;
+    padding: 20px 15px;
+    border-radius: 10px;
     cursor: pointer;
-    color: #475569;
-    font-size: 0.9rem;
-    font-weight: 500;
+    color: #0f172a;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.45;
     background-color: transparent;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.15s ease, color 0.15s ease;
     box-sizing: border-box;
     position: relative;
     overflow: hidden;
     white-space: nowrap;
-    
-    /* Child staggered animation base */
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
 }
 
 .animated-dropdown-list.open .animated-dropdown-item {
     opacity: 1;
     transform: translateY(0);
-    /* Transition delay is set dynamically by JS */
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, background-color 0.2s, color 0.2s, padding-left 0.2s;
+    transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
-.animated-dropdown-item:hover, .animated-dropdown-item:focus {
-    background-color: #f8fafc;
+.animated-dropdown-item:hover,
+.animated-dropdown-item:focus {
+    background-color: #f1f5f9;
     color: #0f172a;
-    padding-left: 0.85rem;
+}
+
+.animated-dropdown-item.selected {
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-weight: 700;
+    width: 110%;
+    margin-left: -10px;
 }
 
 .animated-dropdown-item .action-icon {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    color: #94a3b8;
-    transition: all 0.2s ease;
-    width: 18px;
     justify-content: center;
+    color: #64748b;
+    transition: transform 0.18s ease, color 0.18s ease;
+    width: 20px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
 }
 
 .animated-dropdown-item:hover .action-icon {
-    color: #3b82f6;
-    transform: scale(1.1);
+    color: #2563eb;
+    transform: scale(1.15);
+}
+
+.animated-dropdown-item.selected .action-icon {
+    color: #2563eb;
 }
 
 /* Custom hide for original select */
+select.animated-hidden,
 .staggered-dropdown {
     display: none !important;
 }
@@ -156,4 +171,40 @@
 .animated-dropdown-list::-webkit-scrollbar-thumb {
     background-color: #cbd5e1;
     border-radius: 10px;
+}
+
+/* Global Mobile Override: Hide Custom Dropdown & Enforce Native Select on Mobile (<= 768px) */
+@media (max-width: 768px) {
+    .animated-dropdown-wrapper {
+        display: none !important;
+    }
+
+    select,
+    .form-select,
+    .form-group select {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 50 !important;
+        pointer-events: auto !important;
+        width: 100% !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 14px !important;
+        padding: 0 40px 0 16px !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
+        background-position: right 14px center !important;
+        background-repeat: no-repeat !important;
+        background-size: 16px 16px !important;
+        box-sizing: border-box !important;
+    }
 }

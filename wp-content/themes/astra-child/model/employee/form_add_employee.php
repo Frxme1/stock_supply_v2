@@ -11,6 +11,7 @@ function form_add_owner($editing = null)
 	$departments = $wpdb->get_results("SELECT DepartmentID, DepartmentName FROM Departments");
 	$positions = $wpdb->get_results("SELECT PositionID, PositionName FROM Positions");
 	$status_emp = $wpdb->get_results("SELECT StatusID, Status_name FROM Status_Employee");
+	$active_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Status_Employee WHERE LOWER(Status_name) = 'active'") ?: 1);
 
 	ob_start();
 	echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
@@ -33,13 +34,15 @@ function form_add_owner($editing = null)
 		$owner_id = isset($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
 		$nickname = sanitize_text_field($_POST['Nickname'] ?? '');
 
+		$status_id = ($editing && !empty($_POST['StatusID'])) ? intval($_POST['StatusID']) : $active_status_id;
+
 		$data = [
 			'Nickname' => $nickname,
 			'FirstName' => sanitize_text_field($_POST['FirstName'] ?? ''),
 			'LastName' => sanitize_text_field($_POST['LastName'] ?? ''),
 			'DepartmentID' => !empty($_POST['DepartmentID']) ? intval($_POST['DepartmentID']) : null,
 			'PositionID' => !empty($_POST['PositionID']) ? intval($_POST['PositionID']) : null,
-			'StatusID' => !empty($_POST['StatusID']) ? intval($_POST['StatusID']) : 1,
+			'StatusID' => $status_id,
 			'Email' => !empty($_POST['Email']) ? sanitize_email($_POST['Email']) : null,
 		];
 
@@ -127,21 +130,28 @@ function form_add_owner($editing = null)
 
 			<div class="form-group">
 				<label>Status</label>
-				<select name="StatusID">
-					<option value="" style="text-align:center;">-- Select --</option>
-					<?php foreach ($status_emp as $status):
-						$emoji = '';
-						if (($status->Status_name) === 'Active') {
-							$emoji = '🟢 ';
-						} elseif (($status->Status_name) === 'Resigned') {
-							$emoji = '🔴 ';
-						}
-						?>
-						<option value="<?= $status->StatusID ?>" <?= selected($editing->StatusID ?? '', $status->StatusID, false) ?>>
-							<?= esc_html($emoji . $status->Status_name) ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
+				<?php if (!$editing): ?>
+					<input type="hidden" name="StatusID" value="<?= $active_status_id ?>">
+					<select disabled style="background-color: #f9fafb; cursor: not-allowed; opacity: 0.85;">
+						<option value="<?= $active_status_id ?>" selected>🟢 Active</option>
+					</select>
+				<?php else: ?>
+					<select name="StatusID">
+						<option value="" style="text-align:center;">-- Select --</option>
+						<?php foreach ($status_emp as $status):
+							$emoji = '';
+							if (($status->Status_name) === 'Active') {
+								$emoji = '🟢 ';
+							} elseif (($status->Status_name) === 'Resigned') {
+								$emoji = '🔴 ';
+							}
+							?>
+							<option value="<?= $status->StatusID ?>" <?= selected($editing->StatusID ?? '', $status->StatusID, false) ?>>
+								<?= esc_html($emoji . $status->Status_name) ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				<?php endif; ?>
 			</div>
 
 		</div>

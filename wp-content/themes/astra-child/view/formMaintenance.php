@@ -240,21 +240,21 @@ function form_maintenance($editing = null)
         ?>
 
         <div class="form-group" style="margin-top: 1.5rem;">
-            <label>Details (หัวข้อการซ่อม)</label>
+            <label>Details (Maintenance Reason)</label>
             <select name="Details">
-                <option value="" selected>-- Select Maintenance Reason (เลือกหัวข้อการซ่อม) --</option>
-                <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false) ? 'selected' : '' ?>>Screen Issue (ปัญหาหน้าจอ)</option>
-                <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false) ? 'selected' : '' ?>>Battery Issue (ปัญหาแบตเตอรี่)</option>
-                <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false) ? 'selected' : '' ?>>Power Issue (ปัญหาเปิดไม่ติด/ไฟไม่เข้า)</option>
-                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Keyboard') !== false || strpos($details_val, 'Mouse') !== false || strpos($details_val, 'Input Device') !== false) ? 'selected' : '' ?>>Keyboard / Mouse Issue (ปัญหาแป้นพิมพ์/เมาส์)</option>
-                <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false) ? 'selected' : '' ?>>Hardware Upgrade (อัปเกรดฮาร์ดแวร์)</option>
-                <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false) ? 'selected' : '' ?>>Software Issue (ปัญหาซอฟต์แวร์/โปรแกรม)</option>
+                <option value="" selected>-- Select Maintenance Reason --</option>
+                <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false) ? 'selected' : '' ?>>Screen Issue</option>
+                <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false) ? 'selected' : '' ?>>Battery Issue</option>
+                <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false) ? 'selected' : '' ?>>Power Issue</option>
+                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Keyboard') !== false || strpos($details_val, 'Mouse') !== false || strpos($details_val, 'Input Device') !== false) ? 'selected' : '' ?>>Keyboard / Mouse Issue</option>
+                <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false) ? 'selected' : '' ?>>Hardware Upgrade</option>
+                <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false) ? 'selected' : '' ?>>Software Issue</option>
             </select>
         </div>
 
         <div class="form-group" id="other-details-group" style="margin-top: 1rem;">
-            <label>Additional Details / Custom Reason (รายละเอียดเพิ่มเติม / ระบุอาการอื่นๆ)</label>
-            <input type="text" name="OtherDetails" id="OtherDetails" placeholder="ระบุอาการเพิ่มเติม หรือระบุสาเหตุการซ่อมอื่นๆ..."
+            <label>Additional Details / Custom Reason</label>
+            <input type="text" name="OtherDetails" id="OtherDetails" placeholder="Specify additional details or custom reason..."
                 value="<?= esc_attr($other_text) ?>">
         </div>
 
@@ -442,9 +442,9 @@ function form_maintenance($editing = null)
             if (detailsSelect && otherInput) {
                 detailsSelect.addEventListener('change', function () {
                     if (this.value) {
-                        otherInput.placeholder = 'ระบุรายละเอียดเพิ่มเติมเกี่ยวกับ ' + this.value + ' (ถ้ามี)...';
+                        otherInput.placeholder = 'Specify additional details regarding ' + this.value + ' (if any)...';
                     } else {
-                        otherInput.placeholder = 'ระบุอาการเพิ่มเติม หรือระบุสาเหตุการซ่อมอื่นๆ...';
+                        otherInput.placeholder = 'Specify additional details or custom reason...';
                     }
                 });
             }

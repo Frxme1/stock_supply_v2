@@ -1,10 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Icons (Lucide)
+    // Icons
     const iconChevronDown = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>`;
-    const iconChevronRight = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>`;
-    const iconCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-square"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`;
+    const iconUser = `<i class="fa-solid fa-user"></i>`;
+    const iconBuilding = `<i class="fa-solid fa-building"></i>`;
+    const iconTag = `<i class="fa-solid fa-tag"></i>`;
+    const iconStatus = `<i class="fa-solid fa-circle-dot"></i>`;
+    const iconCheck = `<i class="fa-solid fa-check"></i>`;
 
     function initStaggeredDropdowns() {
+        // Skip custom dropdowns on mobile screens to preserve native touch pickers
+        if (window.innerWidth <= 768) {
+            return;
+        }
+
         // Target all selects except sweetalert, multiple-choice, and initially disabled ones
         const selects = document.querySelectorAll('select:not(.swal2-select):not([multiple]):not(:disabled)');
 
@@ -14,7 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Determine icon set by select name/id/class
+            const sName = (select.name || select.id || select.className || '').toLowerCase();
+            let defaultIcon = iconTag;
+            if (sName.includes('owner') || sName.includes('employee') || sName.includes('user')) {
+                defaultIcon = iconUser;
+            } else if (sName.includes('dept') || sName.includes('department')) {
+                defaultIcon = iconBuilding;
+            } else if (sName.includes('status')) {
+                defaultIcon = iconStatus;
+            }
+
             // Visually hide original to preserve HTML5 form validation focus
+            select.classList.add('animated-hidden');
+            select.style.display = 'none';
             select.style.position = 'absolute';
             select.style.opacity = '0';
             select.style.height = '0';
@@ -52,20 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
             Array.from(select.options).forEach((option, index) => {
                 const li = document.createElement('li');
                 li.className = 'animated-dropdown-item';
-                // Stagger delay (matching 0.1s stagger in framer-motion, using 0.05s to make it slightly faster if there are many items)
-                li.style.transitionDelay = `${index * 0.05}s`;
+                if (index === select.selectedIndex) {
+                    li.classList.add('selected');
+                }
+                li.style.transitionDelay = `${index * 0.035}s`;
 
                 const iconSpan = document.createElement('span');
                 iconSpan.className = 'action-icon';
 
-                // Keep original icons if they exist (e.g. FontAwesome), otherwise default to check/chevron
                 if (option.innerHTML.includes('<i')) {
-                    iconSpan.style.display = 'none'; // Don't show default icon if it has its own
+                    iconSpan.style.display = 'none';
                 } else {
-                    iconSpan.innerHTML = option.value ? iconCheck : iconChevronRight;
+                    iconSpan.innerHTML = option.value ? defaultIcon : iconCheck;
                 }
 
                 const textSpan = document.createElement('span');
+                textSpan.className = 'item-text';
                 textSpan.innerHTML = option.innerHTML;
 
                 li.appendChild(iconSpan);
@@ -74,6 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.addEventListener('click', () => {
                     select.value = option.value;
                     btnText.innerHTML = option.innerHTML;
+
+                    Array.from(list.children).forEach((child, i) => {
+                        if (i === index) child.classList.add('selected');
+                        else child.classList.remove('selected');
+                    });
 
                     // Trigger change event for original select to run existing scripts
                     const event = new Event('change', { bubbles: true });
@@ -121,6 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update text if original select changes externally
             select.addEventListener('change', () => {
                 btnText.innerHTML = select.options[select.selectedIndex]?.innerHTML || 'Select...';
+                Array.from(list.children).forEach((child, i) => {
+                    if (i === select.selectedIndex) child.classList.add('selected');
+                    else child.classList.remove('selected');
+                });
             });
         });
     }

@@ -196,6 +196,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    margin-left: 10px;
 }
 
 /* Card Body (collapsible) */
@@ -231,6 +232,7 @@
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    margin-left: 5px;
 }
 
 .dtl-detail-value {
@@ -272,60 +274,109 @@
    ============================================================ */
 
 /* Receive / Add */
-.dtl-action-receive { color: #059669; }
+.dtl-action-receive {
+    color: #059669;
+}
+
 .dtl-action-receive .dtl-action-badge {
     background: #ecfdf5;
     color: #059669;
 }
-.dtl-action-receive .dtl-dot { color: #10b981; background: #d1fae5; }
+
+.dtl-action-receive .dtl-dot {
+    color: #10b981;
+    background: #d1fae5;
+}
 
 /* Edit / Update */
-.dtl-action-edit { color: #2563eb; }
+.dtl-action-edit {
+    color: #2563eb;
+}
+
 .dtl-action-edit .dtl-action-badge {
     background: #eff6ff;
     color: #2563eb;
 }
-.dtl-action-edit .dtl-dot { color: #3b82f6; background: #dbeafe; }
+
+.dtl-action-edit .dtl-dot {
+    color: #3b82f6;
+    background: #dbeafe;
+}
 
 /* Maintenance */
-.dtl-action-maintenance { color: #d97706; }
+.dtl-action-maintenance {
+    color: #d97706;
+}
+
 .dtl-action-maintenance .dtl-action-badge {
     background: #fffbeb;
     color: #d97706;
 }
-.dtl-action-maintenance .dtl-dot { color: #f59e0b; background: #fef3c7; }
+
+.dtl-action-maintenance .dtl-dot {
+    color: #f59e0b;
+    background: #fef3c7;
+}
 
 /* Transfer */
-.dtl-action-transfer { color: #7c3aed; }
+.dtl-action-transfer {
+    color: #7c3aed;
+}
+
 .dtl-action-transfer .dtl-action-badge {
     background: #f5f3ff;
     color: #7c3aed;
 }
-.dtl-action-transfer .dtl-dot { color: #8b5cf6; background: #ede9fe; }
+
+.dtl-action-transfer .dtl-dot {
+    color: #8b5cf6;
+    background: #ede9fe;
+}
 
 /* Delete / Remove */
-.dtl-action-delete { color: #dc2626; }
+.dtl-action-delete {
+    color: #dc2626;
+}
+
 .dtl-action-delete .dtl-action-badge {
     background: #fef2f2;
     color: #dc2626;
 }
-.dtl-action-delete .dtl-dot { color: #ef4444; background: #fee2e2; }
+
+.dtl-action-delete .dtl-dot {
+    color: #ef4444;
+    background: #fee2e2;
+}
 
 /* Status Change */
-.dtl-action-status { color: #0891b2; }
+.dtl-action-status {
+    color: #0891b2;
+}
+
 .dtl-action-status .dtl-action-badge {
     background: #ecfeff;
     color: #0891b2;
 }
-.dtl-action-status .dtl-dot { color: #06b6d4; background: #cffafe; }
+
+.dtl-action-status .dtl-dot {
+    color: #06b6d4;
+    background: #cffafe;
+}
 
 /* Default */
-.dtl-action-default { color: #6b7280; }
+.dtl-action-default {
+    color: #6b7280;
+}
+
 .dtl-action-default .dtl-action-badge {
     background: #f3f4f6;
     color: #374151;
 }
-.dtl-action-default .dtl-dot { color: #9ca3af; background: #f3f4f6; }
+
+.dtl-action-default .dtl-dot {
+    color: #9ca3af;
+    background: #f3f4f6;
+}
 
 /* Summary Stats */
 .dtl-stats {
@@ -383,8 +434,15 @@
 
 /* Animations */
 @keyframes dtlFadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Responsive */

@@ -724,16 +724,16 @@ if ($category_filter) {
                 if (!dept || dept === '-') return '';
                 const map = {
                     'IT': 'IT',
-                    'Content': 'CT',
+                    'Content': 'CONTENT',
                     'Content Writer(TH)': 'CW-TH',
                     'Content EN': 'CT-EN',
                     'SEO': 'SEO',
                     'SEM': 'SEM',
                     'SEO & SEM': 'SEO&SEM',
                     'PBN': 'PBN',
-                    'Sale': 'SL',
+                    'Sale': 'SALE',
                     'Account': 'ACC',
-                    'Graphic': 'GR',
+                    'Graphic': 'GRAPHIC',
                     'Art Director': 'AD'
                 };
                 const trimmed = dept.trim();

@@ -21,6 +21,13 @@ function device_dashboard_monitor()
         'Retired'     => ['color' => '#919191', 'icon' => '<i class="fa-solid fa-trash-can"></i>'],
     ];
 
+    $status_urls = [
+        'Available'   => home_url('/monitor/?filter_status=Available'),
+        'In Use'      => home_url('/monitor/?filter_status=In+Use'),
+        'Maintenance' => home_url('/maintenance/'),
+        'Retired'     => home_url('/monitor/?filter_status=Retired'),
+    ];
+
     // Map count per status
     $summary_map = [];
     foreach ($status_summary as $row) {
@@ -37,8 +44,9 @@ function device_dashboard_monitor()
             <?php foreach ($status_config as $status => $config):
                 $count = $summary_map[$status] ?? 0;
                 $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
+                $target_url = $status_urls[$status] ?? home_url('/monitor/');
             ?>
-                <div class="next-card slide-up">
+                <div class="next-card slide-up clickable-card" onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url($target_url) ?>');}else{window.location.href='<?= esc_url($target_url) ?>';}" style="cursor: pointer;" title="Filter by <?= esc_attr($status) ?>">
                     <div class="next-card-header">
                         <div class="d-flex align-items-center gap-2">
                             <span class="next-status-dot" style="background: <?= $config['color'] ?>;"></span>

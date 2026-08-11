@@ -894,9 +894,7 @@ $maintenance_count = $sidebar_badges['maintenance'];
             display: none !important;
         }
 
-        .mobile-sidebar-bar {
-            display: flex !important;
-        }
+
 
         .mobile-bottom-nav {
             display: flex !important;

@@ -1017,11 +1017,60 @@ hr,
     h1[itemprop="headline"],
     .entry-title,
     .title {
-        font-size: 24px !important;
+        font-size: 40px !important;
         margin-top: 0 !important;
         margin-left: 0 !important;
-        margin-bottom: 14px !important;
+        margin-bottom: -50px !important;
     }
+
+    body.page-owner h1,
+    body.page-owner .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 30px !important;
+    }
+
+    body.page-add-device h1,
+    body.page-add-device .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 30px !important;
+    }
+
+    body.page-history h1,
+    body.page-history .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 0px !important;
+    }
+
+    body.page-monitor h1,
+    body.page-monitor .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 30px !important;
+    }
+
+    body.page-laptop h1,
+    body.page-laptop .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 30px !important;
+    }
+
+    body.page-maintenance h1,
+    body.page-maintenance .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 30px !important;
+    }
+
 
     /* Search Bar & Filter Row Stack */
     .row.align-items-center.g-2 {
@@ -2168,7 +2217,7 @@ button,
     #add-employee-form .form-group:focus-within {
         border-color: #cbd5e1 !important;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
-        transform: translateY(-1px) !important;
+        transform: none !important;
         position: relative !important;
         z-index: 100 !important;
     }
@@ -2202,26 +2251,56 @@ button,
         box-sizing: border-box !important;
         height: 48px !important;
         border-radius: 14px !important;
-        background: #f8fafc !important;
+        background-color: #f8fafc !important;
         border: 1.5px solid #cbd5e1 !important;
         padding: 0 16px !important;
-        font-size: 0.95rem !important;
+        font-size: 16px !important;
         font-weight: 600 !important;
         color: #0f172a !important;
         box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-        transition: all 0.2s ease !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
 
 
-    .edit-data-form .form-group select,
-    #edit-device-form .form-group select,
-    #edit-employee-form .form-group select,
-    #add-device-form .form-group select {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
-        background-position: right 0.85rem center !important;
+    .animated-dropdown-wrapper {
+        display: none !important;
+    }
+
+    select,
+    .form-group select,
+    .edit-data-form select,
+    #edit-device-form select,
+    #edit-employee-form select,
+    #add-device-form select {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 50 !important;
+        pointer-events: auto !important;
+        width: 100% !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 14px !important;
+        padding: 0 40px 0 16px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
+        background-position: right 14px center !important;
         background-repeat: no-repeat !important;
-        background-size: 1.25em 1.25em !important;
-        padding-right: 2.5rem !important;
+        background-size: 16px 16px !important;
+        box-sizing: border-box !important;
+        transform: none !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
 
     .edit-data-form .form-group input:focus,
@@ -2233,6 +2312,7 @@ button,
         border-color: #2563eb !important;
         outline: none !important;
         box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+        transform: none !important;
     }
 
     .edit-data-form .form-group input[disabled],
@@ -2348,13 +2428,17 @@ button,
     }
 
     .edit-data-form #edit_owner_search_input,
-    #edit-device-form #edit_owner_search_input {
+    #edit-device-form #edit_owner_search_input,
+    #edit_owner_search_input,
+    #owner_search_input {
         height: 48px !important;
         border-radius: 14px !important;
         background: #f8fafc !important;
         border: 1.5px solid #cbd5e1 !important;
         font-weight: 500 !important;
         color: #0f172a !important;
+        padding-left: 38px !important;
+        padding-right: 36px !important;
     }
 
     .edit-data-form #edit_owner_search_popup,
@@ -2575,10 +2659,14 @@ button,
 
 
 #advanced-filter-form .search-input-modern {
-    padding-left: 2.25rem !important;
+    padding-left: 12px !important;
 }
 
+/* Hide magnifying glass search icon */
 #advanced-filter-form i.fa-search,
-#advanced-filter-form i.fa-magnifying-glass {
-    color: #94a3b8 !important;
+#advanced-filter-form i.fa-magnifying-glass,
+#advanced-filter-form .search-icon-modern,
+.search-wrapper-modern .search-icon-modern,
+.search-icon-modern {
+    display: none !important;
 }

@@ -42,7 +42,7 @@ function child_enqueue_styles()
 {
     wp_enqueue_style('astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css'), filemtime(get_stylesheet_directory() . '/style.css'), 'all');
     wp_enqueue_script('aos-global', get_stylesheet_directory_uri() . '/js/aos_global.js', [], filemtime(get_stylesheet_directory() . '/js/aos_global.js'), true);
-    
+
     // Enqueue mobile app CSS
     $mobile_css_path = get_stylesheet_directory() . '/css/mobile_app.css';
     $mobile_css_version = file_exists($mobile_css_path) ? filemtime($mobile_css_path) : '1.0';
@@ -62,7 +62,8 @@ function child_enqueue_styles()
 add_action('wp_enqueue_scripts', 'child_enqueue_styles', 15);
 
 // PWA: Add manifest to header
-function add_pwa_manifest_to_head() {
+function add_pwa_manifest_to_head()
+{
     echo '<link rel="manifest" href="' . get_stylesheet_directory_uri() . '/manifest.json">' . "\n";
     echo '<meta name="theme-color" content="#2563eb">' . "\n";
     echo '<link rel="apple-touch-icon" href="' . get_stylesheet_directory_uri() . '/images/icon-192x192.png">' . "\n";
@@ -70,18 +71,19 @@ function add_pwa_manifest_to_head() {
 add_action('wp_head', 'add_pwa_manifest_to_head');
 
 // PWA: Register Service Worker
-function add_pwa_service_worker() {
+function add_pwa_service_worker()
+{
     ?>
     <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('<?= get_stylesheet_directory_uri() ?>/service-worker.js').then(function(registration) {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            }, function(err) {
-                console.log('ServiceWorker registration failed: ', err);
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('<?= get_stylesheet_directory_uri() ?>/service-worker.js').then(function (registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function (err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
             });
-        });
-    }
+        }
     </script>
     <?php
 }
@@ -601,7 +603,7 @@ function load_sweetalert_delete_details_script()
     }
     wp_enqueue_script('sweetalert_delete_details', get_stylesheet_directory_uri() . '/js/sweetalert_delete_details.js', array('sweetalert2'), null, true);
     wp_enqueue_script('sweetalert_retire', get_stylesheet_directory_uri() . '/js/sweetalert_retire.js', array('sweetalert2'), '1.1', true);
-    wp_enqueue_script('ajax_filter_reset', get_stylesheet_directory_uri() . '/js/ajax_filter_reset.js', array(), filemtime(get_stylesheet_directory() . '/js/ajax_filter_reset.js'), true);
+    wp_enqueue_script('ajax_filter_reset', get_stylesheet_directory_uri() . '/js/ajax_filter_reset.js', array(), time(), true);
 }
 add_action('wp_enqueue_scripts', 'load_sweetalert_delete_details_script');
 
@@ -2011,7 +2013,7 @@ add_action('wp_footer', function () {
                                 <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                                     <div style="flex: 1;">
                                         <label style="display: block; font-size: 0.76rem; font-weight: 600; color: #64748b; margin-bottom: 3px;">
-                                            <i class="fa-solid fa-lock"></i> หมวดหมู่ (Category Locked)
+                                            <i class="fa-solid fa-lock"></i> Category (Locked)
                                         </label>
                                         <select id="swap-filter-category" class="swal2-select" disabled style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.82rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 4px 8px; height: 38px; background-color: #f1f5f9; color: #334155; cursor: not-allowed;">
                                             <option value="${oldDev.CategoryID}">🔒 ${categoryName}</option>
@@ -2019,10 +2021,10 @@ add_action('wp_footer', function () {
                                     </div>
                                     <div style="flex: 1;">
                                         <label style="display: block; font-size: 0.76rem; font-weight: 600; color: #64748b; margin-bottom: 3px;">
-                                            <i class="fa-solid fa-tags"></i> ยี่ห้อ (Filter Brand)
+                                            <i class="fa-solid fa-tags"></i> Filter Brand
                                         </label>
                                         <select id="swap-filter-brand" class="swal2-select" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.82rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 4px 8px; height: 38px;">
-                                            <option value="">-- ทุกยี่ห้อ (All Brands) --</option>
+                                            <option value="">-- All Brands --</option>
                                             ${brandOptionsHtml}
                                         </select>
                                     </div>
@@ -2056,9 +2058,9 @@ add_action('wp_footer', function () {
 
                                 let opts = '';
                                 if (filtered.length === 0) {
-                                    opts = `<option value="">❌ ไม่มี ${categoryName} ที่พร้อมใช้งาน (No available devices)</option>`;
+                                    opts = `<option value="">❌ No available ${categoryName} devices</option>`;
                                 } else {
-                                    opts = `<option value="">-- เลือกอุปกรณ์ ${categoryName} ที่จะแทนที่ (${filtered.length} เครื่อง) --</option>`;
+                                    opts = `<option value="">-- Select replacement ${categoryName} (${filtered.length} available) --</option>`;
                                     filtered.forEach(dev => {
                                         const brandModel = (dev.BrandName || '') + ' ' + (dev.Model || '');
                                         opts += `<option value="${dev.DeviceID}">[${dev.DeviceID}] ${brandModel} - SN: ${dev.SerialNumber || '-'}</option>`;
@@ -2139,18 +2141,18 @@ function stock_supply_get_dept_abbr($dept)
         return '';
     }
     $map = [
-        'IT'                 => 'IT',
-        'Content'            => 'CT',
+        'IT' => 'IT',
+        'Content' => 'CONTENT',
         'Content Writer(TH)' => 'CW-TH',
-        'Content EN'         => 'CT-EN',
-        'SEO'                => 'SEO',
-        'SEM'                => 'SEM',
-        'SEO & SEM'          => 'SEO&SEM',
-        'PBN'                => 'PBN',
-        'Sale'               => 'SL',
-        'Account'            => 'ACC',
-        'Graphic'            => 'GR',
-        'Art Director'       => 'AD',
+        'Content EN' => 'CT-EN',
+        'SEO' => 'SEO',
+        'SEM' => 'SEM',
+        'SEO & SEM' => 'SEO&SEM',
+        'PBN' => 'PBN',
+        'Sale' => 'SALE',
+        'Account' => 'ACC',
+        'Graphic' => 'GRAPHIC',
+        'Art Director' => 'AD',
     ];
     $dept_trimmed = trim($dept);
     $abbr = isset($map[$dept_trimmed]) ? $map[$dept_trimmed] : $dept_trimmed;
@@ -2170,4 +2172,584 @@ function stock_supply_format_owner_with_dept($owner_name, $dept)
     $abbr = stock_supply_get_dept_abbr($dept);
     return $abbr ? $owner_name . ' ' . $abbr : $owner_name;
 }
+
+
+/* ============================================================
+   CUSTOM WP-LOGIN.PHP STYLING & ANIMATIONS
+   Matches Split Card Layout with Stock Supply Badge & Pill Controls
+   ============================================================ */
+
+// Dequeue WordPress default user-profile & capslock scripts at PHP level
+function disable_wp_login_capslock_script() {
+    wp_dequeue_script('user-profile');
+    wp_deregister_script('user-profile');
+    wp_dequeue_script('password-strength-meter');
+    wp_deregister_script('password-strength-meter');
+}
+add_action('login_enqueue_scripts', 'disable_wp_login_capslock_script', 1);
+
+function custom_wp_login_head() {
+    ?>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body.login {
+            background: #f0f4f9 !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 100vh !important;
+            margin: 0 !important;
+            padding: 24px !important;
+        }
+
+        #login h1 {
+            display: none !important;
+        }
+
+        /* Completely Eradicate Caps Lock Notice & WebKit Indicator */
+        input::-webkit-caps-lock-indicator,
+        input::-webkit-credentials-auto-fill-button,
+        input::-webkit-strong-password-auto-fill-button,
+        input::-webkit-contacts-auto-fill-button,
+        input::-ms-reveal,
+        input::-ms-clear,
+        body.login input::-webkit-caps-lock-indicator,
+        body.login input::-ms-reveal,
+        body.login input::-ms-clear,
+        .capslock,
+        #login .capslock,
+        div.capslock,
+        p.capslock,
+        span.capslock,
+        .user-pass-wrap .capslock,
+        [class*="capslock"],
+        [id*="capslock"],
+        .dashicons-arrow-up-alt {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            width: 0 !important;
+            max-height: 0 !important;
+            max-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
+            position: absolute !important;
+            top: -99999px !important;
+            left: -99999px !important;
+            pointer-events: none !important;
+        }
+
+        .capslock *,
+        [class*="capslock"] * {
+            display: none !important;
+        }
+
+        /* Split Card Container */
+        #login {
+            width: 100% !important;
+            max-width: 900px !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
+            background: #ffffff !important;
+            border-radius: 28px !important;
+            box-shadow: 0 20px 50px rgba(59, 130, 246, 0.12), 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+            display: flex !important;
+            flex-direction: row !important;
+            overflow: hidden !important;
+            min-height: 520px !important;
+            animation: cardEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes cardEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(28px) scale(0.96);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Left Banner Card */
+        .login-left-banner {
+            flex: 1.1;
+            background: linear-gradient(145deg, #448cfb 0%, #2563eb 100%);
+            margin: 16px;
+            border-radius: 22px;
+            padding: 48px 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #ffffff;
+            position: relative;
+            box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.15);
+            animation: bannerEntrance 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes bannerEntrance {
+            0% {
+                opacity: 0;
+                transform: translateX(-24px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Logo Badge Box */
+        .login-logo-card {
+            background: #ffffff;
+            padding: 20px 42px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+            transform: rotate(-3.5deg);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-bottom: 32px;
+            display: inline-block;
+            animation: badgeFloat 4s ease-in-out infinite alternate;
+        }
+
+        .login-logo-card:hover {
+            transform: rotate(0deg) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        @keyframes badgeFloat {
+            0% {
+                transform: rotate(-3.5deg) translateY(0);
+            }
+            100% {
+                transform: rotate(-2deg) translateY(-6px);
+            }
+        }
+
+        .logo-title-stock {
+            font-size: 34px;
+            font-weight: 800;
+            color: #059669;
+            display: block;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-title-supply {
+            font-size: 34px;
+            font-weight: 800;
+            display: block;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-sup {
+            color: #f59e0b;
+        }
+        .logo-ply {
+            color: #2563eb;
+        }
+
+        .banner-description {
+            font-size: 13.5px;
+            line-height: 1.65;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 500;
+            max-width: 320px;
+            margin: 0 auto;
+            letter-spacing: 0.1px;
+        }
+
+        /* Right Form Area */
+        .login-right-container {
+            flex: 1;
+            padding: 48px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .login-form-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 32px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Form Styles */
+        body.login form#loginform {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        body.login form .user-pass-wrap,
+        body.login form p {
+            margin: 0 !important;
+            position: relative !important;
+            width: 100% !important;
+        }
+
+        body.login form label {
+            display: none !important;
+        }
+
+        /* Input Icon Wrapper & Alignment Fix */
+        .input-icon-wrapper {
+            position: relative !important;
+            width: 100% !important;
+            display: block !important;
+            margin: 0 !important;
+            animation: inputEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .input-icon-wrapper.delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        @keyframes inputEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Perfectly Vertically Centered Field Icons */
+        .input-field-icon {
+            position: absolute !important;
+            left: 20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 18px !important;
+            height: 18px !important;
+            color: #94a3b8 !important;
+            pointer-events: none !important;
+            transition: color 0.25s ease !important;
+            z-index: 5 !important;
+        }
+
+        body.login form input[type="text"],
+        body.login form input[type="password"] {
+            width: 100% !important;
+            height: 52px !important;
+            background-color: #f8fafc !important;
+            border: 1.5px solid #f1f5f9 !important;
+            border-radius: 99px !important;
+            padding: 0 45px 0 50px !important;
+            font-size: 14.5px !important;
+            font-weight: 500 !important;
+            color: #1e293b !important;
+            box-shadow: none !important;
+            transition: all 0.25s ease !important;
+            outline: none !important;
+            box-sizing: border-box !important;
+        }
+
+        body.login form input[type="text"]::placeholder,
+        body.login form input[type="password"]::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        body.login form input[type="text"]:focus,
+        body.login form input[type="password"]:focus {
+            background-color: #ffffff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14) !important;
+        }
+
+        .input-icon-wrapper:focus-within .input-field-icon {
+            color: #3b82f6 !important;
+        }
+
+        /* Password Toggle Button Styling */
+        .wp-hide-pw {
+            position: absolute !important;
+            right: 18px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            background: none !important;
+            border: none !important;
+            color: #94a3b8 !important;
+            padding: 0 !important;
+            cursor: pointer !important;
+            z-index: 5 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 24px !important;
+            width: 24px !important;
+        }
+
+        /* Submit Button */
+        body.login form p.submit {
+            margin-top: 10px !important;
+        }
+
+        body.login input[type="submit"]#wp-submit {
+            width: 100% !important;
+            height: 52px !important;
+            border-radius: 99px !important;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.8px !important;
+            text-transform: uppercase !important;
+            cursor: pointer !important;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35) !important;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            margin: 0 !important;
+            float: none !important;
+        }
+
+        body.login input[type="submit"]#wp-submit:hover {
+            transform: translateY(-2px) scale(1.01) !important;
+            box-shadow: 0 14px 32px rgba(37, 99, 235, 0.45) !important;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+        }
+
+        body.login input[type="submit"]#wp-submit:active {
+            transform: translateY(0) scale(0.98) !important;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3) !important;
+        }
+
+        .forgetmenot {
+            display: none !important;
+        }
+
+        p#nav, p#backtoblog {
+            text-align: center !important;
+            margin: 16px 0 0 0 !important;
+            padding: 0 !important;
+            font-size: 13px !important;
+        }
+
+        p#nav a, p#backtoblog a {
+            color: #64748b !important;
+            text-decoration: none !important;
+            transition: color 0.2s ease !important;
+            font-weight: 500 !important;
+        }
+
+        p#nav a:hover, p#backtoblog a:hover {
+            color: #2563eb !important;
+        }
+
+        /* Notification Styling */
+        body.login #login_error,
+        body.login .message,
+        body.login .success {
+            border-radius: 14px !important;
+            border-left: 4px solid #3b82f6 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+            margin-bottom: 20px !important;
+            background: #ffffff !important;
+            color: #1e293b !important;
+            padding: 12px 16px !important;
+        }
+
+        body.login #login_error {
+            border-left-color: #ef4444 !important;
+        }
+
+        /* Mobile Responsive Breakpoint */
+        @media (max-width: 768px) {
+            #login {
+                flex-direction: column !important;
+                max-width: 440px !important;
+                border-radius: 24px !important;
+                min-height: auto !important;
+            }
+
+            .login-left-banner {
+                margin: 12px 12px 0 12px;
+                padding: 32px 20px;
+                border-radius: 18px;
+            }
+
+            .login-logo-card {
+                padding: 14px 28px;
+                margin-bottom: 16px;
+            }
+
+            .logo-title-stock, .logo-title-supply {
+                font-size: 26px;
+            }
+
+            .banner-description {
+                font-size: 12.5px;
+            }
+
+            .login-right-container {
+                padding: 32px 24px;
+            }
+
+            .login-form-title {
+                font-size: 26px;
+                margin-bottom: 24px;
+            }
+        }
+    </style>
+    <?php
+}
+add_action('login_head', 'custom_wp_login_head');
+
+function custom_wp_login_footer() {
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginDiv = document.getElementById('login');
+            var loginForm = document.getElementById('loginform');
+            var nav = document.getElementById('nav');
+            var backtoblog = document.getElementById('backtoblog');
+            var loginError = document.getElementById('login_error');
+            var loginMessage = document.querySelector('.message');
+
+            if (loginDiv && loginForm) {
+                // Create left banner
+                var leftBanner = document.createElement('div');
+                leftBanner.className = 'login-left-banner';
+                leftBanner.innerHTML = `
+                    <div class="login-logo-card">
+                        <span class="logo-title-stock">Stock</span>
+                        <span class="logo-title-supply"><span class="logo-sup">Sup</span><span class="logo-ply">ply</span></span>
+                    </div>
+                    <div class="banner-description">
+                        Smart inventory management system. Join us today to easily manage your stock, track inventory, and optimize your entire supply chain!
+                    </div>
+                `;
+
+                // Create right container
+                var rightContainer = document.createElement('div');
+                rightContainer.className = 'login-right-container';
+
+                // Add Title
+                var formTitle = document.createElement('h2');
+                formTitle.className = 'login-form-title';
+                formTitle.textContent = 'Sign in';
+                rightContainer.appendChild(formTitle);
+
+                // Add Messages if exist
+                if (loginError) rightContainer.appendChild(loginError);
+                if (loginMessage) rightContainer.appendChild(loginMessage);
+
+                // Add Form
+                rightContainer.appendChild(loginForm);
+                if (nav) rightContainer.appendChild(nav);
+                if (backtoblog) rightContainer.appendChild(backtoblog);
+
+                // Clear loginDiv and insert left banner & right container
+                loginDiv.innerHTML = '';
+                loginDiv.appendChild(leftBanner);
+                loginDiv.appendChild(rightContainer);
+
+                // Wrap Inputs with Icon Wrappers & Placeholders
+                var usernameInput = document.getElementById('user_login');
+                if (usernameInput) {
+                    usernameInput.placeholder = 'Email';
+                    var pUser = usernameInput.closest('p') || usernameInput.parentElement;
+                    var userWrapper = document.createElement('div');
+                    userWrapper.className = 'input-icon-wrapper';
+                    userWrapper.innerHTML = `<svg class="input-field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>`;
+                    
+                    if (pUser) {
+                        pUser.parentNode.insertBefore(userWrapper, pUser);
+                        userWrapper.appendChild(usernameInput);
+                        pUser.remove();
+                    }
+                }
+
+                var passInput = document.getElementById('user_pass');
+                if (passInput) {
+                    passInput.placeholder = 'Password';
+                    var pPass = passInput.closest('.user-pass-wrap') || passInput.closest('p') || passInput.parentElement;
+                    var passWrapper = document.createElement('div');
+                    passWrapper.className = 'input-icon-wrapper delay-1';
+                    passWrapper.innerHTML = `<svg class="input-field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>`;
+
+                    if (pPass) {
+                        pPass.parentNode.insertBefore(passWrapper, pPass);
+                        passWrapper.appendChild(passInput);
+                        
+                        var toggleBtn = pPass.querySelector('.wp-hide-pw');
+                        if (toggleBtn) passWrapper.appendChild(toggleBtn);
+                        pPass.remove();
+                    }
+                }
+
+                // Permanently destroy Caps Lock notice elements & unbind WP jQuery event
+                var nukeCapslock = function() {
+                    if (window.jQuery) {
+                        try {
+                            jQuery('#user_pass').off('keyup.pwupdate keydown.pwupdate keypress.pwupdate focus.pwupdate blur.pwupdate');
+                            jQuery('.capslock, [class*="capslock"], [id*="capslock"], .dashicons-arrow-up-alt').remove();
+                        } catch(e) {}
+                    }
+                    var caps = document.querySelectorAll('.capslock, [class*="capslock"], [id*="capslock"], .dashicons-arrow-up-alt');
+                    caps.forEach(function(el) {
+                        if (el && el.parentNode) {
+                            el.parentNode.removeChild(el);
+                        }
+                    });
+                };
+                nukeCapslock();
+                setInterval(nukeCapslock, 100);
+
+                // MutationObserver for instant DOM deletion
+                try {
+                    var capsObserver = new MutationObserver(function() {
+                        nukeCapslock();
+                    });
+                    capsObserver.observe(document.body, { childList: true, subtree: true });
+                    if (document.getElementById('login')) {
+                        capsObserver.observe(document.getElementById('login'), { childList: true, subtree: true });
+                    }
+                } catch(e) {}
+
+                // Event listener overrides on password input
+                if (passInput) {
+                    ['keydown', 'keyup', 'keypress', 'focus', 'input', 'blur'].forEach(function(evt) {
+                        passInput.addEventListener(evt, function(e) {
+                            nukeCapslock();
+                        }, true);
+                    });
+                }
+
+                // Custom Submit Button Value
+                var submitBtn = document.getElementById('wp-submit');
+                if (submitBtn) {
+                    submitBtn.value = 'LOGIN';
+                }
+            }
+        });
+    </script>
+    <?php
+}
+add_action('login_footer', 'custom_wp_login_footer');
+
+
 

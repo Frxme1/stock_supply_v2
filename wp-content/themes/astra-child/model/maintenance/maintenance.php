@@ -118,11 +118,11 @@ function device_crud_maintenance()
                     <div>
                         <h3
                             style="margin: 0; font-weight: 800; color: #0f172a; font-size: 1.25rem; letter-spacing: -0.02em;">
-                            รายการอุปกรณ์ที่อยู่ระหว่างการส่งซ่อม (Active Maintenance Devices)
+                            Active Maintenance Devices
                         </h3>
                         <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-                            พบทั้งหมด <strong style="color: #1e40af;"><?= count($all_active_maintenance) ?></strong>
-                            รายการกำลังส่งซ่อมอยู่ในขณะนี้
+                            Total <strong style="color: #1e40af;"><?= count($all_active_maintenance) ?></strong>
+                            item(s) currently in maintenance
                         </span>
                     </div>
                 </div>
@@ -143,64 +143,57 @@ function device_crud_maintenance()
                     foreach ($all_active_maintenance as $idx => $item):
                         $deptAbbr = stock_supply_get_dept_abbr($item->Department ?? '');
                         ?>
-                        <div class="mobile-device-card slide-up">
-                            <!-- Header: Title & Maintenance Status Badge -->
-                            <div class="mobile-device-header">
-                                <div class="mobile-device-title-area">
-                                    <div class="mobile-device-title">
-                                        <?= esc_html($item->Brand) ?>             <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
+                        <div class="mobile-maintenance-card slide-up">
+                            <!-- Header: Title, Category Pill & Status Badge -->
+                            <div class="mobile-maint-header">
+                                <div class="mobile-maint-title-area">
+                                    <div class="mobile-maint-title">
+                                        <?= esc_html($item->Brand) ?> <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
                                     </div>
-                                    <div class="mobile-device-meta">
-                                        <?= esc_html($item->Category) ?> | SN:
-                                        <?= esc_html(!empty($item->SerialNumber) ? $item->SerialNumber : '-') ?>
+                                    <div class="mobile-maint-meta">
+                                        <span class="maint-category-pill"><?= esc_html($item->Category) ?></span>
+                                        <span>SN: <?= esc_html(!empty($item->SerialNumber) ? $item->SerialNumber : '-') ?></span>
                                     </div>
                                 </div>
-                                <div class="status-badge status-maintenance">
-                                    <span class="status-dot"></span>
-                                    Maintenance
+                                <div class="maint-status-badge">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i> Maintenance
                                 </div>
                             </div>
 
-                            <!-- Body: Owner, DeviceID, Repair Date & Reason -->
-                            <div class="mobile-device-body flex-column align-items-start gap-2 pt-2"
-                                style="border-top: 1px dashed #e2e8f0; width: 100%;">
-                                <div class="d-flex justify-content-between align-items-center w-100" style="font-size: 0.88rem;">
-                                    <div class="mobile-device-owner">
-                                        <i class="fa-solid fa-user me-1" style="color: #6366f1;"></i>
-                                        <strong><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></strong>
-                                    </div>
-                                    <div class="mobile-device-id">
-                                        <span class="badge bg-light text-dark border"
-                                            style="font-size: 0.8rem; font-weight: 700;"><?= esc_html($item->DeviceID) ?></span>
-                                    </div>
+                            <!-- Body: Owner, Device ID, Sent Date & Issue -->
+                            <div class="mobile-maint-body">
+                                <div class="maint-info-row">
+                                    <span class="maint-info-label"><i class="fa-solid fa-user" style="color: #6366f1;"></i> Owner</span>
+                                    <span class="maint-info-value"><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></span>
+                                </div>
+                                <div class="maint-info-row">
+                                    <span class="maint-info-label"><i class="fa-solid fa-barcode" style="color: #64748b;"></i> Device ID</span>
+                                    <span class="maint-info-value"><code class="maint-dev-id"><?= esc_html($item->DeviceID) ?></code></span>
+                                </div>
+                                <div class="maint-info-row">
+                                    <span class="maint-info-label"><i class="fa-regular fa-clock" style="color: #d97706;"></i> Sent to Repair</span>
+                                    <span class="maint-info-value" style="color: #d97706;"><?= esc_html(!empty($item->RepairDate) ? date('d M Y, H:i', strtotime($item->RepairDate)) : '-') ?></span>
                                 </div>
 
-                                <div
-                                    style="font-size: 0.82rem; font-weight: 600; color: #d97706; display: flex; align-items: center; gap: 6px;">
-                                    <i class="fa-regular fa-clock"></i> ส่งซ่อมเมื่อ:
-                                    <?= esc_html(!empty($item->RepairDate) ? date('d M Y, H:i', strtotime($item->RepairDate)) : '-') ?>
-                                </div>
-
-                                <div
-                                    style="width: 100%; font-size: 0.84rem; color: #92400e; background: #fffbeb; border: 1px solid #fde047; padding: 10px 12px; border-radius: 12px; font-weight: 600; margin-top: 4px;">
-                                    <div
-                                        style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #b45309; margin-bottom: 2px; font-weight: 700;">
-                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> อาการเสีย / สาเหตุ
+                                <!-- Issue Box -->
+                                <div class="mobile-maint-issue-box">
+                                    <div class="issue-box-title">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Issue / Repair Reason
                                     </div>
-                                    <?= esc_html($item->Details ?: 'ไม่มีการระบุรายละเอียดเพิ่มเติม') ?>
+                                    <div class="issue-box-content">
+                                        <?= esc_html($item->Details ?: 'No additional details specified') ?>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Actions -->
-                            <div class="mobile-device-actions w-100 mt-2">
-                                <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="mobile-btn-action mobile-btn-secondary"
-                                    style="flex: 1; text-decoration: none; text-align: center;">
+                            <div class="mobile-maint-actions">
+                                <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="maint-btn maint-btn-secondary">
                                     <i class="fa-solid fa-magnifying-glass me-1"></i> Details
                                 </a>
                                 <a href="?return_to_owner=<?= esc_attr($item->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"
-                                    class="mobile-btn-action mobile-btn-primary"
-                                    style="flex: 1.3; text-decoration: none; text-align: center;">
-                                    <i class="fa-solid fa-circle-check me-1"></i> คืนให้ผู้ใช้ / ซ่อมเสร็จ
+                                    class="maint-btn maint-btn-primary">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Return / Repair Done
                                 </a>
                             </div>
                         </div>
@@ -233,12 +226,12 @@ function device_crud_maintenance()
                                 <?php if ($is_latest): ?>
                                     <div
                                         style="position: absolute; top: 14px; right: 16px; background: linear-gradient(135deg, #ef4444 0%, #ea580c 100%); color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35); text-transform: uppercase; letter-spacing: 0.5px;">
-                                        <i class="fa-solid fa-fire me-1"></i> เพิ่งส่งซ่อมล่าสุด
+                                        <i class="fa-solid fa-fire me-1"></i> Latest Repair
                                     </div>
                                 <?php elseif ($is_recent): ?>
                                     <div
                                         style="position: absolute; top: 14px; right: 16px; background: linear-gradient(135deg, #f97316 0%, #d97706 100%); color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; box-shadow: 0 3px 8px rgba(249, 115, 22, 0.3);">
-                                        <i class="fa-solid fa-sparkles me-1"></i> ส่งซ่อมสัปดาห์นี้
+                                        <i class="fa-solid fa-sparkles me-1"></i> Repaired This Week
                                     </div>
                                 <?php endif; ?>
 
@@ -282,7 +275,7 @@ function device_crud_maintenance()
                                 <div
                                     style="font-size: 0.83rem; font-weight: 600; color: #d97706; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
                                     <i class="fa-regular fa-clock"></i>
-                                    ส่งซ่อมเมื่อ:
+                                    Sent to Repair:
                                     <?= esc_html(!empty($item->RepairDate) ? date('d M Y, H:i', strtotime($item->RepairDate)) : '-') ?>
                                 </div>
 
@@ -291,21 +284,21 @@ function device_crud_maintenance()
                                     style="font-size: 0.86rem; color: #92400e; background: #fffbeb; border: 1.5px solid #fde047; padding: 12px 14px; border-radius: 14px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
                                     <div
                                         style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #b45309; margin-bottom: 2px; font-weight: 700;">
-                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> อาการเสีย / สาเหตุการส่งซ่อม
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Issue / Repair Reason
                                     </div>
-                                    <?= esc_html($item->Details ?: 'ไม่มีการระบุรายละเอียดเพิ่มเติม') ?>
+                                    <?= esc_html($item->Details ?: 'No additional details specified') ?>
                                 </div>
 
                                 <!-- Action Buttons -->
                                 <div class="d-flex gap-2 justify-content-end pt-2" style="border-top: 1px dashed #e2e8f0;">
                                     <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="btn btn-sm btn-outline-secondary"
                                         style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
-                                        <i class="fa-solid fa-magnifying-glass"></i> รายละเอียด
+                                        <i class="fa-solid fa-magnifying-glass"></i> Details
                                     </a>
                                     <a href="?return_to_owner=<?= esc_attr($item->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"
                                         class="btn btn-sm btn-success"
                                         style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: #16a34a; border-color: #16a34a;">
-                                        <i class="fa-solid fa-circle-check"></i> คืนให้ผู้ใช้ / ซ่อมเสร็จ
+                                        <i class="fa-solid fa-circle-check"></i> Return to User / Repair Completed
                                     </a>
                                 </div>
 
@@ -320,10 +313,10 @@ function device_crud_maintenance()
                             style="width: 64px; height: 64px; border-radius: 50%; background: #eff6ff; color: #1e40af; display: inline-flex; align-items: center; justify-content: center; font-size: 1.85rem; margin-bottom: 16px;">
                             <i class="fa-solid fa-circle-check"></i>
                         </div>
-                        <h4 style="font-weight: 800; color: #0f172a; margin-bottom: 6px;">ไม่มีอุปกรณ์ที่อยู่ระหว่างการซ่อมแซม
+                        <h4 style="font-weight: 800; color: #0f172a; margin-bottom: 6px;">No Devices Currently in Maintenance
                         </h4>
                         <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 0;">
-                            อุปกรณ์ทุกชิ้นในระบบอยู่ในสถานะพร้อมใช้งานหรือถูกใช้งานเรียบร้อยแล้ว</p>
+                            All devices in the system are currently available or actively in use.</p>
                     </div>
                 <?php endif; ?>
             </div>

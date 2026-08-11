@@ -563,24 +563,13 @@
     #advanced-filter-form .search-input-modern,
     input[name="device_search"],
     input[name="history_search"] {
-        padding-left: 2.75rem !important;
-        padding-right: 1rem !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
     }
 
     .search-icon-modern,
     .search-wrapper-modern .search-icon-modern {
-        position: absolute !important;
-        left: 1rem !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        z-index: 5 !important;
-        pointer-events: none !important;
-        font-size: 0.95rem !important;
-        color: #64748b !important;
-    }
-
-    .search-wrapper-modern:focus-within .search-icon-modern {
-        color: #1e40af !important;
+        display: none !important;
     }
 
     /* Action Buttons row in mobile filter */
@@ -732,7 +721,7 @@
     #add-employee-form .form-group:focus-within {
         border-color: #cbd5e1 !important;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
-        transform: translateY(-1px) !important;
+        transform: none !important;
         position: relative !important;
         z-index: 100 !important;
     }
@@ -766,25 +755,55 @@
         box-sizing: border-box !important;
         height: 48px !important;
         border-radius: 14px !important;
-        background: #f8fafc !important;
+        background-color: #f8fafc !important;
         border: 1.5px solid #cbd5e1 !important;
         padding: 0 16px !important;
-        font-size: 0.95rem !important;
+        font-size: 16px !important;
         font-weight: 600 !important;
         color: #0f172a !important;
         box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-        transition: all 0.2s ease !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
 
-    .edit-data-form .form-group select,
-    #edit-device-form .form-group select,
-    #edit-employee-form .form-group select,
-    #add-device-form .form-group select {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
-        background-position: right 0.85rem center !important;
+    .animated-dropdown-wrapper {
+        display: none !important;
+    }
+
+    select,
+    .form-group select,
+    .edit-data-form select,
+    #edit-device-form select,
+    #edit-employee-form select,
+    #add-device-form select {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 50 !important;
+        pointer-events: auto !important;
+        width: 100% !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 14px !important;
+        padding: 0 40px 0 16px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
+        background-position: right 14px center !important;
         background-repeat: no-repeat !important;
-        background-size: 1.25em 1.25em !important;
-        padding-right: 2.5rem !important;
+        background-size: 16px 16px !important;
+        box-sizing: border-box !important;
+        transform: none !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
 
     .edit-data-form .form-group input:focus,
@@ -796,6 +815,7 @@
         border-color: #2563eb !important;
         outline: none !important;
         box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+        transform: none !important;
     }
 
     .edit-data-form .form-group input[disabled],
@@ -911,13 +931,17 @@
     }
 
     .edit-data-form #edit_owner_search_input,
-    #edit-device-form #edit_owner_search_input {
+    #edit-device-form #edit_owner_search_input,
+    #edit_owner_search_input,
+    #owner_search_input {
         height: 48px !important;
         border-radius: 14px !important;
         background: #f8fafc !important;
         border: 1.5px solid #cbd5e1 !important;
         font-weight: 500 !important;
         color: #0f172a !important;
+        padding-left: 38px !important;
+        padding-right: 36px !important;
     }
 
     .edit-data-form #edit_owner_search_popup,
@@ -955,6 +979,195 @@
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+    }
+
+    /* Dedicated Mobile Maintenance Card Styling */
+    .active-maintenance-panel {
+        padding: 16px !important;
+        border-radius: 20px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .mobile-maintenance-card {
+        background: #ffffff !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 20px !important;
+        padding: 16px !important;
+        margin-bottom: 14px !important;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        z-index: 10 !important;
+    }
+
+    .mobile-maint-header {
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        padding-bottom: 12px !important;
+        border-bottom: 1px dashed #e2e8f0 !important;
+        width: 100% !important;
+    }
+
+    .mobile-maint-title-area {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .mobile-maint-title {
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        line-height: 1.35 !important;
+        margin-bottom: 4px !important;
+        word-break: break-word !important;
+    }
+
+    .mobile-maint-meta {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        font-size: 0.78rem !important;
+        color: #64748b !important;
+    }
+
+    .maint-category-pill {
+        background: #f1f5f9 !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        padding: 2px 8px !important;
+        border-radius: 6px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .maint-status-badge {
+        background: #fff7ed !important;
+        color: #c2410c !important;
+        border: 1px solid #ffedd5 !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        padding: 4px 10px !important;
+        border-radius: 9999px !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .mobile-maint-body {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .maint-info-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        font-size: 0.85rem !important;
+    }
+
+    .maint-info-label {
+        color: #64748b !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+
+    .maint-info-value {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        text-align: right !important;
+    }
+
+    .maint-dev-id {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #1e293b !important;
+        padding: 2px 8px !important;
+        border-radius: 6px !important;
+        font-family: monospace !important;
+        font-weight: 700 !important;
+    }
+
+    .mobile-maint-issue-box {
+        background: #fffbeb !important;
+        border: 1px solid #fde047 !important;
+        border-radius: 12px !important;
+        padding: 10px 12px !important;
+        margin-top: 4px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .issue-box-title {
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: #b45309 !important;
+        margin-bottom: 3px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+    }
+
+    .issue-box-content {
+        font-size: 0.84rem !important;
+        font-weight: 600 !important;
+        color: #92400e !important;
+        line-height: 1.4 !important;
+        word-break: break-word !important;
+    }
+
+    .mobile-maint-actions {
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: 4px !important;
+        width: 100% !important;
+    }
+
+    .maint-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 10px 12px !important;
+        border-radius: 12px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .maint-btn-secondary {
+        flex: 1 !important;
+        background: #f1f5f9 !important;
+        color: #334155 !important;
+        border: 1.5px solid #cbd5e1 !important;
+    }
+
+    .maint-btn-primary {
+        flex: 1.4 !important;
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 3px 10px rgba(22, 163, 74, 0.25) !important;
     }
 
     .desktop-only-container {

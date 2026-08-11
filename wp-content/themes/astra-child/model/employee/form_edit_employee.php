@@ -11,6 +11,8 @@ function form_edit_owner($editing = null)
     $departments = $wpdb->get_results("SELECT DepartmentID, DepartmentName FROM Departments");
     $positions = $wpdb->get_results("SELECT PositionID, PositionName FROM Positions");
     $status_emp = $wpdb->get_results("SELECT StatusID, Status_name FROM Status_Employee");
+    $resigned_status_id  = (int) ($wpdb->get_var("SELECT StatusID FROM Status_Employee WHERE LOWER(Status_name) = 'resigned'") ?: 2);
+    $available_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Statuses WHERE LOWER(StatusName) = 'available'") ?: 1);
 
     ob_start();
 
@@ -52,21 +54,63 @@ function form_edit_owner($editing = null)
             $current_user = wp_get_current_user();
             $user_email = $current_user->user_email ?? 'system';
 
+            // If status changed to Resigned, automatically unassign all devices and return to stock
+            if ($statusID === $resigned_status_id) {
+                $assigned_devices = $wpdb->get_results($wpdb->prepare(
+                    "SELECT DeviceID, Model, CategoryID FROM Devices WHERE OwnerID = %d",
+                    $owner_id
+                ));
+
+                if (!empty($assigned_devices)) {
+                    $wpdb->update(
+                        'Devices',
+                        [
+                            'StatusID'           => $available_status_id,
+                            'OwnerID'            => null,
+                            'DepartmentID'       => null,
+                            'ReceiveDate'        => null,
+                            'ReturnDate'         => null,
+                            'RepairDate'         => null,
+                            'PositionID'         => null,
+                            'ExpectedReturnDate' => null,
+                            'LastNotifiedDate'   => null,
+                        ],
+                        ['OwnerID' => $owner_id]
+                    );
+
+                    foreach ($assigned_devices as $dev) {
+                        $safe_category_id = !empty($dev->CategoryID) ? $dev->CategoryID : 1;
+                        $wpdb->insert('History_new', [
+                            'DeviceID'    => $dev->DeviceID,
+                            'Action'      => 'Offboard Return',
+                            'Date'        => current_time('mysql'),
+                            'Description' => "Offboard: Device {$dev->DeviceID} ({$dev->Model}) returned to stock from {$nickname}",
+                            'user_email'  => $user_email,
+                            'CategoryID'  => $safe_category_id,
+                            'Owner'       => $nickname,
+                        ]);
+                    }
+                }
+            }
 
             $firstname = trim($firstname);
-            $lastname = trim($lastname);
+            $lastname  = trim($lastname);
 
             if ($firstname === '' && $lastname === '') {
                 $description = "Updated Employee: {$nickname}";
             } else {
                 $description = "Updated Employee: {$nickname} ({$firstname} {$lastname})";
             }
+
+            $action_label = ($statusID === $resigned_status_id) ? 'Employee Resigned' : 'Update Employee';
+            $action_desc  = ($statusID === $resigned_status_id) ? "Employee resigned: {$nickname}" : $description;
+
             // insert to History_new
             $wpdb->insert('History_new', [
                 'DeviceID'    => 0,
-                'Action'      => 'Update Employee',
+                'Action'      => $action_label,
                 'Date'        => current_time('mysql'),
-                'Description' => $description,
+                'Description' => $action_desc,
                 'user_email'  => $user_email,
                 'CategoryID'  => 1,
                 'Owner'       => $nickname
@@ -288,53 +332,46 @@ function form_edit_owner($editing = null)
 		}
     </style>
 
-        <?php
-        // แสดงปุ่ม Resign เฉพาะพนักงานที่ Status = Active
-        $is_active = false;
-        if (!empty($editing->StatusID)) {
-            $current_status_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT Status_name FROM Status_Employee WHERE StatusID = %d",
-                $editing->StatusID
-            ));
-            $is_active = (strcasecmp(trim($current_status_name ?? ''), 'Active') === 0);
-        }
-        ?>
-        <?php if ($is_active): ?>
-        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #fca5a5; text-align: center;">
-            <p style="color: #9ca3af; font-size: 0.8rem; margin-bottom: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Danger Zone</p>
-            <button type="button"
-                onclick="confirmResign(<?= intval($editing->OwnerID) ?>, '<?= esc_js($editing->Nickname ?? '') ?>', '<?= wp_create_nonce('resign_owner_nonce') ?>')"
-                style="background: #fff7ed; color: #b45309; border: 1.5px solid #fbbf24; border-radius: 999px; padding: 0.5rem 1.75rem; font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;"
-                onmouseover="this.style.background='#fef3c7'; this.style.borderColor='#d97706';"
-                onmouseout="this.style.background='#fff7ed'; this.style.borderColor='#fbbf24';">
-                <i class="fa-solid fa-user-minus"></i> Resign Employee
-            </button>
-        </div>
-        <?php endif; ?>
-
     </form>
 
     <script>
-        function confirmResign(ownerID, nickname, nonce) {
-            Swal.fire({
-                icon: 'warning',
-                title: '⚠️ ยืนยันการ Resign?',
-                html: `<div style="text-align:center;">
-                    <p style="margin-bottom:8px;">พนักงาน <strong style="color:#0f172a;">${nickname}</strong> จะถูกเปลี่ยน Status เป็น <span style="color:#d97706;font-weight:700;">Resigned</span></p>
-                    <p style="color:#64748b; font-size:0.9rem;">อุปกรณ์ที่ถือครองทั้งหมดจะถูกคืนเข้า Stock อัตโนมัติ<br>ข้อมูลพนักงานจะยังคงอยู่ในระบบ ไม่ถูกลบ</p>
-                </div>`,
-                showCancelButton: true,
-                confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> ยืนยัน Resign',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#d97706',
-                cancelButtonColor: '#6b7280',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '<?= esc_url(home_url('/Owner/')) ?>?resign=' + ownerID + '&_wpnonce=' + nonce;
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('edit-employee-form');
+            if (!form) return;
+
+            const statusSelect = form.querySelector('select[name="StatusID"]');
+            const resignedStatusID = <?= json_encode((string)$resigned_status_id) ?>;
+            const nickname = <?= json_encode($editing->Nickname ?? '') ?>;
+            let formConfirmed = false;
+
+            form.addEventListener('submit', function(e) {
+                if (formConfirmed) return;
+
+                const selectedStatus = statusSelect ? statusSelect.value : '';
+                if (selectedStatus === resignedStatusID) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '⚠️ Confirm Resignation?',
+                        html: `<div style="text-align:center;">
+                            <p style="margin-bottom:8px;">Employee <strong style="color:#0f172a;">${nickname}</strong> status will be changed to <span style="color:#d97706;font-weight:700;">Resigned</span></p>
+                            <p style="color:#64748b; font-size:0.9rem;">All assigned devices will be automatically returned to Stock.<br>Employee record will remain in system (soft delete).</p>
+                        </div>`,
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> Confirm Resign',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#d97706',
+                        cancelButtonColor: '#6b7280',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            formConfirmed = true;
+                            form.submit();
+                        }
+                    });
                 }
             });
-        }
+        });
     </script>
 
 

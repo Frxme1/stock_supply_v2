@@ -37,7 +37,7 @@
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'mobile-load-more-btn';
-                    btn.innerHTML = '<i class="fa-solid fa-chevron-down me-2"></i> แสดงเพิ่มเติม (+3)';
+                    btn.innerHTML = '<i class="fa-solid fa-chevron-down me-2"></i> Show More (+3)';
                     
                     btn.addEventListener('click', function () {
                         let count = parseInt(container.getAttribute('data-visible-count') || '3', 10);

@@ -173,8 +173,8 @@ function form_history()
                 white-space: normal;
                 word-break: break-word;
                 letter-spacing: 0.3px;
-                border: 1px solid rgba(0,0,0,0.05);
-                box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
             }
 
             .badge-history::before {
@@ -309,12 +309,14 @@ function form_history()
                 'retired' => ['class' => 'dtl-action-retired', 'icon' => 'fa-circle-xmark'],
                 'audit' => ['class' => 'dtl-action-audit', 'icon' => 'fa-clipboard-check']
             ];
-            
+
             if (!function_exists('dtl_get_action_info_history')) {
-                function dtl_get_action_info_history($action, $map) {
+                function dtl_get_action_info_history($action, $map)
+                {
                     $lower = strtolower($action);
                     foreach ($map as $key => $info) {
-                        if (strpos($lower, $key) !== false) return $info;
+                        if (strpos($lower, $key) !== false)
+                            return $info;
                     }
                     return ['class' => 'dtl-action-default', 'icon' => 'fa-circle'];
                 }
@@ -332,25 +334,26 @@ function form_history()
             $action_counts = [];
             foreach ($rows as $row) {
                 $a = trim($row->Action);
-                if (!isset($action_counts[$a])) $action_counts[$a] = 0;
+                if (!isset($action_counts[$a]))
+                    $action_counts[$a] = 0;
                 $action_counts[$a]++;
             }
             ?>
             <div class="dtl-timeline-wrap active">
                 <!-- Stats -->
                 <?php if (!empty($action_counts)): ?>
-                <div class="dtl-stats">
-                    <div class="dtl-stat-chip">
-                        <i class="fa-solid fa-list-check"></i> Total
-                        <span class="dtl-stat-count"><?= count($rows) ?></span>
+                    <div class="dtl-stats">
+                        <div class="dtl-stat-chip">
+                            <i class="fa-solid fa-list-check"></i> Total
+                            <span class="dtl-stat-count"><?= count($rows) ?></span>
+                        </div>
+                            <?php foreach ($action_counts as $act => $cnt): ?>
+                            <div class="dtl-stat-chip">
+                                        <?= esc_html($act) ?>
+                                <span class="dtl-stat-count"><?= $cnt ?></span>
+                            </div>
+                            <?php endforeach; ?>
                     </div>
-                    <?php foreach ($action_counts as $act => $cnt): ?>
-                    <div class="dtl-stat-chip">
-                        <?= esc_html($act) ?>
-                        <span class="dtl-stat-count"><?= $cnt ?></span>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
                 <?php endif; ?>
 
                 <?php if (empty($rows)): ?>
@@ -359,65 +362,83 @@ function form_history()
                         <p>No history logs found.</p>
                     </div>
                 <?php else: ?>
-                    <?php 
+                    <?php
                     $item_idx = 0;
                     foreach ($grouped as $month => $items): ?>
-                    <div class="dtl-date-group">
-                        <div class="dtl-date-header">
-                            <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
-                        </div>
-                        <div class="dtl-timeline">
-                            <?php foreach ($items as $row):
-                                $info = dtl_get_action_info_history($row->Action, $action_map);
-                                $dt = new DateTime($row->Date);
-                                $isOpen = ($item_idx === 0);
-                                $item_idx++;
-                            ?>
-                            <div class="dtl-node <?= $info['class'] ?> dtl-visible">
-                                <div class="dtl-dot"></div>
-                                <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
-                                    <div class="dtl-card-head">
-                                        <span class="dtl-action-badge">
-                                            <i class="fa-solid <?= $info['icon'] ?>"></i>
-                                            <?= esc_html($row->Action) ?>
-                                        </span>
-                                        <span class="dtl-time">
-                                            <i class="fa-regular fa-clock"></i>
-                                            <?= esc_html($dt->format('d M Y, H:i')) ?>
-                                        </span>
-                                        <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
-                                    </div>
-                                    <div class="dtl-card-body <?= $isOpen ? 'dtl-expanded' : '' ?>">
-                                        <div class="dtl-detail-row">
-                                            <span class="dtl-detail-label">Details</span>
-                                            <span class="dtl-detail-value fw-bold text-dark">
-                                                <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
-                                            </span>
-                                        </div>
-                                        <div class="dtl-detail-row">
-                                            <span class="dtl-detail-label">User</span>
-                                            <span class="dtl-detail-value"><?= esc_html($row->user_email ?: '-') ?></span>
-                                        </div>
-                                        <div class="dtl-detail-row">
-                                            <span class="dtl-detail-label">Owner</span>
-                                            <span class="dtl-detail-value"><?= esc_html($row->Owner ?: '-') ?></span>
-                                        </div>
-                                        <div class="dtl-detail-row mt-2">
-                                            <a href="?view=<?= $row->DeviceID ?>" class="btn btn-sm" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; color: #334155; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05); display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 16px; text-decoration: none;"><i class="fa-solid fa-magnifying-glass" style="font-size: 0.85rem;"></i> View Details</a>
-                                        </div>
-                                        <?php if (!empty($row->Photo)): ?>
-                                        <div class="dtl-detail-row mt-3 pt-3" style="border-top: 1px dashed #e2e8f0; display: block;">
-                                            <img src="<?= esc_url($row->Photo) ?>" class="dtl-photo-thumb"
-                                                 onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>');"
-                                                 title="Click to view full photo" style="width: 100%; max-height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid #cbd5e1;">
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
+                        <div class="dtl-date-group">
+                            <div class="dtl-date-header">
+                                <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
                             </div>
-                            <?php endforeach; ?>
+                            <div class="dtl-timeline">
+                                    <?php foreach ($items as $row):
+                                        $info = dtl_get_action_info_history($row->Action, $action_map);
+                                        $dt = new DateTime($row->Date);
+                                        $isOpen = ($item_idx === 0);
+                                        $item_idx++;
+                                        ?>
+                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible">
+                                        <div class="dtl-dot"></div>
+                                        <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
+                                            <div class="dtl-card-head">
+                                                <span class="dtl-action-badge">
+                                                    <i class="fa-solid <?= $info['icon'] ?>"></i>
+                                                            <?= esc_html($row->Action) ?>
+                                                </span>
+                                                <span class="dtl-time">
+                                                    <i class="fa-regular fa-clock"></i>
+                                                            <?= esc_html($dt->format('d M Y, H:i')) ?>
+                                                </span>
+                                                <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
+                                            </div>
+                                            <div class="dtl-card-body <?= $isOpen ? 'dtl-expanded' : '' ?>">
+                                                <div class="dtl-detail-row">
+                                                    <span class="dtl-detail-label">Details</span>
+                                                    <span class="dtl-detail-value fw-bold text-dark">
+                                                                <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
+                                                    </span>
+                                                </div>
+                                                <div class="dtl-detail-row">
+                                                    <span class="dtl-detail-label">User</span>
+                                                    <span class="dtl-detail-value"><?= esc_html($row->user_email ?: '-') ?></span>
+                                                </div>
+                                                <div class="dtl-detail-row">
+                                                    <span class="dtl-detail-label">Owner</span>
+                                                    <span class="dtl-detail-value"><?= esc_html($row->Owner ?: '-') ?></span>
+                                                </div>
+                                                <div class="dtl-detail-row mt-2">
+                                                    <a href="?view=<?= $row->DeviceID ?>" class="btn btn-sm" style="    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #334155;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 16px;
+    text-decoration: none;
+    margin-left: 5px;
+;"></i> View Details</a>
+                                                </div>
+                                                        <?php if (!empty($row->Photo)): ?>
+                                                    <div class="dtl-detail-row mt-3 pt-3"
+                                                        style="border-top: 1px dashed #e2e8f0; display: block;">
+                                                        <img src="<?= esc_url($row->Photo) ?>" class="dtl-photo-thumb"
+                                                            onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>');"
+                                                            title="Click to view full photo"
+                                                            style="width: 100%; max-height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid #cbd5e1;">
+                                                    </div>
+                                                        <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                            </div>
                         </div>
-                    </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>

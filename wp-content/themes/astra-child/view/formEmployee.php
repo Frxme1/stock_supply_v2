@@ -447,13 +447,6 @@ function form_owner()
                             style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; text-decoration: none;">
                             <i class="fa-solid fa-gear me-1"></i> Edit
                         </a>
-                        <?php if (strcasecmp($row->Status, 'Active') !== 0): ?>
-                            <button type="button" onclick="offboardEmployee(<?= $row->OwnerID ?>, '<?= esc_js($row->Nickname) ?>')"
-                                class="btn btn-sm btn-warning text-dark"
-                                style="border-radius: 8px; font-weight: 700; font-size: 0.8rem; padding: 6px 14px;">
-                                <i class="fa-solid fa-user-xmark me-1"></i> Offboard
-                            </button>
-                        <?php endif; ?>
                         <button type="button"
                             onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"
                             class="btn btn-sm btn-outline-danger"
@@ -526,12 +519,6 @@ function form_owner()
                                     <div class="action-dropdown-header">Actions</div>
                                     <div class="action-dropdown-separator"></div>
                                     <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
-                                    <?php if (strcasecmp($row->Status, 'Active') !== 0): ?>
-                                        <a href="#"
-                                            onclick="offboardEmployee(<?= $row->OwnerID ?>, '<?= esc_js($row->Nickname) ?>'); return false;"
-                                            class="offboard-action-link text-warning"><i class="fa-solid fa-user-xmark"></i>
-                                            Offboard</a>
-                                    <?php endif; ?>
                                     <a href="#"
                                         onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"><i
                                             class="fa-solid fa-trash-can text-danger"></i> Delete</a>
@@ -693,14 +680,14 @@ function form_owner()
         function confirmResign(ownerID, nickname, nonce) {
             Swal.fire({
                 icon: 'warning',
-                title: '⚠️ ยืนยันการ Resign?',
+                title: '⚠️ Confirm Resignation?',
                 html: `<div style="text-align:center;">
-                    <p style="margin-bottom:8px;">พนักงาน <strong style="color:#0f172a;">${nickname}</strong> จะถูกเปลี่ยน Status เป็น <span style="color:#d97706;font-weight:700;">Resigned</span></p>
-                    <p style="color:#64748b; font-size:0.9rem;">อุปกรณ์ที่ถือครองทั้งหมดจะถูกคืนเข้า Stock อัตโนมัติ<br>ข้อมูลพนักงานจะยังคงอยู่ในระบบ ไม่ถูกลบ</p>
+                    <p style="margin-bottom:8px;">Employee <strong style="color:#0f172a;">${nickname}</strong> status will be changed to <span style="color:#d97706;font-weight:700;">Resigned</span></p>
+                    <p style="color:#64748b; font-size:0.9rem;">All assigned devices will be automatically returned to Stock.<br>Employee record will remain in system (soft delete).</p>
                 </div>`,
                 showCancelButton: true,
-                confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> ยืนยัน Resign',
-                cancelButtonText: 'ยกเลิก',
+                confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> Confirm Resign',
+                cancelButtonText: 'Cancel',
                 confirmButtonColor: '#d97706',
                 cancelButtonColor: '#6b7280',
                 reverseButtons: true
@@ -715,11 +702,11 @@ function form_owner()
         function confirmDelete(ownerID, nonce) {
             Swal.fire({
                 icon: 'error',
-                title: '🗑️ ลบพนักงานถาวร?',
-                html: `<p style="color:#64748b;">การลบนี้ <strong style="color:#dc2626;">ไม่สามารถกู้คืนได้</strong><br>ข้อมูลพนักงานจะหายไปจากระบบทั้งหมด</p>`,
+                title: '🗑️ Permanently Delete Employee?',
+                html: `<p style="color:#64748b;">This action <strong style="color:#dc2626;">cannot be undone</strong>.<br>All employee data will be permanently removed.</p>`,
                 showCancelButton: true,
-                confirmButtonText: '<i class="fa-solid fa-trash-can me-1"></i> ลบถาวร',
-                cancelButtonText: 'ยกเลิก',
+                confirmButtonText: '<i class="fa-solid fa-trash-can me-1"></i> Delete Permanently',
+                cancelButtonText: 'Cancel',
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#6b7280',
                 reverseButtons: true

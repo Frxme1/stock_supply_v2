@@ -494,10 +494,29 @@ function device_dashboard()
             try {
                 var targetObj = new URL(targetUrl, window.location.origin);
                 var isSamePath = (targetObj.pathname.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, ''));
+                var params = targetObj.searchParams;
 
-                if (isSamePath && typeof window.loadAjaxContent === 'function' && (document.querySelector('.table-wrapper') || document.querySelector('.table-custom'))) {
+                // Sync all select filter controls with the clicked card's parameters
+                var filterFields = ['filter_status', 'filter_department', 'filter_brand', 'filter_position', 'filter_category'];
+                filterFields.forEach(function(fieldName) {
+                    var selectElem = document.querySelector('select[name="' + fieldName + '"]');
+                    if (selectElem) {
+                        var val = params.get(fieldName) || '';
+                        selectElem.value = val;
+                        selectElem.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+
+                var searchInput = document.querySelector('input[name="device_search"]');
+                if (searchInput) {
+                    var searchVal = params.get('device_search') || '';
+                    searchInput.value = searchVal;
+                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (isSamePath && typeof window.loadAjaxContent === 'function' && (document.querySelector('.table-wrapper') || document.querySelector('.table-custom') || document.querySelector('.table-wrapper-employee'))) {
                     window.loadAjaxContent(targetUrl);
-                    var tableElem = document.getElementById('bulk-action-form') || document.getElementById('device_table') || document.querySelector('.table-wrapper');
+                    var tableElem = document.getElementById('bulk-action-form') || document.getElementById('device_table') || document.querySelector('.table-wrapper') || document.querySelector('.table-wrapper-employee');
                     if (tableElem) {
                         tableElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
@@ -508,6 +527,7 @@ function device_dashboard()
                 window.location.href = targetUrl;
             }
         }
+        window.triggerChartFilter = triggerChartFilter;
 
         function initApexCharts() {
             // Chart 2: Status Overview
