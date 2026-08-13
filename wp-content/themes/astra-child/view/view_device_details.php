@@ -506,7 +506,7 @@ function device_view_details($device_id = null)
                         <p>No history logs found.</p>
                     </div>
                 <?php else: ?>
-                    <?php 
+                    <?php
                     $item_idx = 0;
                     foreach ($grouped as $month => $items): ?>
                         <div class="dtl-date-group">
@@ -577,37 +577,42 @@ function device_view_details($device_id = null)
                     if (!imgUrl) return;
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
-                            title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:6px;"></i> Equipment Condition Photo',
+                            title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:8px;"></i> Equipment Condition Photo',
                             imageUrl: imgUrl,
-                            imageAlt: 'Device Condition Photo',
-                            showCloseButton: true,
+                            imageAlt: 'Equipment Condition Photo',
+                            showCloseButton: false,
                             confirmButtonColor: '#6366f1',
                             confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
-                            customClass: { popup: 'dash-scan-popup' }
+                            customClass: { popup: 'dash-scan-popup dtl-photo-modal' }
                         });
                     } else {
                         let overlay = document.getElementById('photo_lightbox_overlay');
                         if (!overlay) {
                             overlay = document.createElement('div');
                             overlay.id = 'photo_lightbox_overlay';
-                            overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.75); backdrop-filter:blur(4px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.2s ease;';
                             overlay.innerHTML = `
-                                <div style="position:relative; max-width:90vw; max-height:90vh; background:#fff; border-radius:16px; padding:16px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
-                                    <button onclick="document.getElementById('photo_lightbox_overlay').style.opacity='0'; setTimeout(() => document.getElementById('photo_lightbox_overlay').style.display='none', 200);" style="position:absolute; top:-12px; right:-12px; background:#ef4444; color:#fff; border:none; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);">&times;</button>
-                                    <img id="photo_lightbox_img" src="" style="max-width:85vw; max-height:80vh; border-radius:12px; display:block; object-fit:contain;">
+                                <div class="photo-lightbox-card">
+                                    <button class="photo-lightbox-close" title="Close">&times;</button>
+                                    <img id="photo_lightbox_img" class="photo-lightbox-img" src="" alt="Equipment Condition Photo">
                                 </div>
                             `;
-                            overlay.onclick = function (e) {
-                                if (e.target === overlay) {
-                                    overlay.style.opacity = '0';
-                                    setTimeout(() => overlay.style.display = 'none', 200);
-                                }
+                            const closeBtn = overlay.querySelector('.photo-lightbox-close');
+                            const closeModal = function () {
+                                overlay.classList.remove('active');
                             };
+                            closeBtn.onclick = closeModal;
+                            overlay.onclick = function (e) {
+                                if (e.target === overlay) closeModal();
+                            };
+                            document.addEventListener('keydown', function (e) {
+                                if (e.key === 'Escape' && overlay.classList.contains('active')) {
+                                    closeModal();
+                                }
+                            });
                             document.body.appendChild(overlay);
                         }
                         document.getElementById('photo_lightbox_img').src = imgUrl;
-                        overlay.style.display = 'flex';
-                        setTimeout(() => overlay.style.opacity = '1', 10);
+                        overlay.classList.add('active');
                     }
                 };
             </script>

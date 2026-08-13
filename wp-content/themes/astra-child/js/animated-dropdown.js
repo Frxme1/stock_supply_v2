@@ -150,6 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
             select.addEventListener('change', () => {
                 btnText.innerHTML = select.options[select.selectedIndex]?.innerHTML || 'Select...';
                 Array.from(list.children).forEach((child, i) => {
+                    const opt = select.options[i];
+                    if (opt) {
+                        child.style.display = opt.style.display;
+                    }
                     if (i === select.selectedIndex) child.classList.add('selected');
                     else child.classList.remove('selected');
                 });

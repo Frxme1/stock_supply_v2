@@ -29,7 +29,6 @@ function device_crud_monitor()
     $filter_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
     $filter_department = isset($_GET['filter_department']) ? trim($_GET['filter_department']) : '';
 
-
     $where_sql = "WHERE Category = 'Monitor'"; // Filter only monitor devices
 
     if (!empty($search)) {

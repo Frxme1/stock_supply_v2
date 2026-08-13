@@ -48,46 +48,63 @@ if ($category_filter) {
 </div>
 
 <style>
-    /* ===== QR Scanner Compact Bar ===== */
+    /* ===== QR Scanner Component — Mobile FAB & Active State ===== */
     .dash-qr-bar {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 16px 22px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 16px;
+        padding: 16px 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
         position: relative;
+        overflow: hidden;
+    }
+
+    @media (min-width: 769px) {
+        .dash-qr-bar {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        /* เอา display: none ออกเพื่อให้ปุ่ม Scan QR โชว์บนมือถือ */
     }
 
     .dash-qr-scan-btn {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-        padding: 12px 26px;
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        color: #fff;
-        border: none;
-        border-radius: 12px;
+        gap: 12px;
+        padding: 14px 28px;
+        background: #0f172a;
+        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: 1rem;
         cursor: pointer;
-        transition: all 0.25s ease;
-        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-        position: relative;
-        overflow: hidden;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
     }
 
     .dash-qr-scan-btn i {
         font-size: 1.15rem;
+        transition: transform 0.3s ease;
     }
 
     .dash-qr-scan-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
-        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+        background: #1e293b;
+    }
+
+    .dash-qr-scan-btn:hover i {
+        transform: scale(1.1) rotate(-5deg);
     }
 
     .dash-qr-scan-btn:active {
-        transform: translateY(0);
+        transform: translateY(1px) scale(0.98);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
     }
 
     .dash-qr-stop-btn {
@@ -191,7 +208,7 @@ if ($category_filter) {
             });
         }
 
-        // Global document event listener for Start button (Event Delegation guarantees it works even if element loads later)
+        // Global document event listener for Start button
         document.addEventListener('click', function (e) {
             const startBtn = e.target.closest('#dash-btn-start-qr');
             if (startBtn) {
@@ -222,6 +239,8 @@ if ($category_filter) {
 
             if (dashQrBar) {
                 dashQrBar.classList.add('active-scan');
+                dashQrBar.style.display = 'block';
+                dashQrBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
             const originalText = btn.innerHTML;
@@ -244,13 +263,19 @@ if ($category_filter) {
                     dashReaderDiv.style.display = 'none';
                     if (dashQrBar) dashQrBar.classList.remove('active-scan');
                     console.error("Camera Launch Error:", err);
+                    let errText = 'Unable to access camera. Please grant camera permissions in your browser.';
+                    if (!window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                        errText = 'เบราว์เซอร์มือถือต้องใช้ HTTPS เพื่อเปิดกล้อง (SSL Required) หรือกรุณาอนุญาตสิทธิ์การใช้กล้องในการตั้งค่าเบราว์เซอร์';
+                    }
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Camera Access Error',
-                            text: 'Unable to access camera. Please grant camera permissions in your browser.',
+                            title: 'ไม่สามารถเปิดกล้องได้ (Camera Access Error)',
+                            text: errText,
                             confirmButtonColor: '#ef4444'
                         });
+                    } else {
+                        alert(errText);
                     }
                 });
             }

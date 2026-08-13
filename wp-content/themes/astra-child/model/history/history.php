@@ -22,15 +22,20 @@ function form_history()
 
 
     $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
+    $filter_category = isset($_GET['filter_category']) ? trim($_GET['filter_category']) : '';
     $params = [];
+    $where_clauses = [];
 
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
-        $search_sql = "WHERE H.Description LIKE %s OR H.Action LIKE %s OR H.user_email LIKE %s OR H.Owner LIKE %s OR C.CategoryName LIKE %s";
-        $params = array_fill(0, 5, $like);
-    } else {
-        $search_sql = '';
+        $where_clauses[] = "(H.Description LIKE %s OR H.Action LIKE %s OR H.user_email LIKE %s OR H.Owner LIKE %s OR C.CategoryName LIKE %s)";
+        $params = array_merge($params, array_fill(0, 5, $like));
     }
+    if (!empty($filter_category)) {
+        $where_clauses[] = "C.CategoryName = %s";
+        $params[] = $filter_category;
+    }
+    $search_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
     //  COUNT จำนวนข้อมูล
     $total_items = $wpdb->get_var(
@@ -78,6 +83,7 @@ function form_history()
     );
 
     // Suggestion
+    $all_categories = $wpdb->get_col("SELECT DISTINCT CategoryName FROM $table_category WHERE CategoryName != '' ORDER BY CategoryName");
     $suggestions = $wpdb->get_col("SELECT DISTINCT Action FROM $table_history LIMIT 50");
     ob_start();
 
@@ -261,7 +267,7 @@ function form_history()
         <form method="GET" action="" id="advanced-filter-form">
             <?php
             foreach ($_GET as $key => $value) {
-                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                if (!in_array($key, ['device_search', 'filter_category', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
                     if (is_array($value)) {
                         foreach ($value as $v) {
                             echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -286,10 +292,21 @@ function form_history()
                     </datalist>
                 </div>
 
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 180px;">
+                    <select name="filter_category" id="filter_category" class="form-select form-select-sm filter-select-custom staggered-dropdown" style="height: 38px; border-radius: 10px;">
+                        <option value="">All Categories</option>
+                        <?php foreach ($all_categories as $cat): ?>
+                            <option value="<?= esc_attr($cat) ?>" <?= $filter_category == $cat ? 'selected' : '' ?>>
+                                <?= esc_html($cat) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <div class="col-12 col-sm-6 col-md-auto d-flex gap-2">
                     <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
                         Filter</button>
-                    <?php $reset_url = remove_query_arg(['device_search', 'paged']); ?>
+                    <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'paged']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
             </div>
@@ -347,12 +364,12 @@ function form_history()
                             <i class="fa-solid fa-list-check"></i> Total
                             <span class="dtl-stat-count"><?= count($rows) ?></span>
                         </div>
-                            <?php foreach ($action_counts as $act => $cnt): ?>
+                        <?php foreach ($action_counts as $act => $cnt): ?>
                             <div class="dtl-stat-chip">
-                                        <?= esc_html($act) ?>
+                                <?= esc_html($act) ?>
                                 <span class="dtl-stat-count"><?= $cnt ?></span>
                             </div>
-                            <?php endforeach; ?>
+                        <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
 
@@ -370,23 +387,23 @@ function form_history()
                                 <i class="fa-regular fa-calendar"></i> <?= esc_html($month) ?>
                             </div>
                             <div class="dtl-timeline">
-                                    <?php foreach ($items as $row):
-                                        $info = dtl_get_action_info_history($row->Action, $action_map);
-                                        $dt = new DateTime($row->Date);
-                                        $isOpen = ($item_idx === 0);
-                                        $item_idx++;
-                                        ?>
+                                <?php foreach ($items as $row):
+                                    $info = dtl_get_action_info_history($row->Action, $action_map);
+                                    $dt = new DateTime($row->Date);
+                                    $isOpen = ($item_idx === 0);
+                                    $item_idx++;
+                                    ?>
                                     <div class="dtl-node <?= $info['class'] ?> dtl-visible">
                                         <div class="dtl-dot"></div>
                                         <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
                                             <div class="dtl-card-head">
                                                 <span class="dtl-action-badge">
                                                     <i class="fa-solid <?= $info['icon'] ?>"></i>
-                                                            <?= esc_html($row->Action) ?>
+                                                    <?= esc_html($row->Action) ?>
                                                 </span>
                                                 <span class="dtl-time">
                                                     <i class="fa-regular fa-clock"></i>
-                                                            <?= esc_html($dt->format('d M Y, H:i')) ?>
+                                                    <?= esc_html($dt->format('d M Y, H:i')) ?>
                                                 </span>
                                                 <i class="fa-solid fa-chevron-down dtl-expand-icon"></i>
                                             </div>
@@ -394,7 +411,7 @@ function form_history()
                                                 <div class="dtl-detail-row">
                                                     <span class="dtl-detail-label">Details</span>
                                                     <span class="dtl-detail-value fw-bold text-dark">
-                                                                <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
+                                                        <?= wp_kses_post(stock_supply_format_history_description($row->Description, $row->Action, $row->DeviceID)) ?>
                                                     </span>
                                                 </div>
                                                 <div class="dtl-detail-row">
@@ -405,38 +422,25 @@ function form_history()
                                                     <span class="dtl-detail-label">Owner</span>
                                                     <span class="dtl-detail-value"><?= esc_html($row->Owner ?: '-') ?></span>
                                                 </div>
-                                                <div class="dtl-detail-row mt-2">
-                                                    <a href="?view=<?= $row->DeviceID ?>" class="btn btn-sm" style="    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    color: #334155;
-    font-weight: 700;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 16px;
-    text-decoration: none;
-    margin-left: 5px;
-;"></i> View Details</a>
-                                                </div>
-                                                        <?php if (!empty($row->Photo)): ?>
-                                                    <div class="dtl-detail-row mt-3 pt-3"
-                                                        style="border-top: 1px dashed #e2e8f0; display: block;">
-                                                        <img src="<?= esc_url($row->Photo) ?>" class="dtl-photo-thumb"
-                                                            onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>');"
-                                                            title="Click to view full photo"
-                                                            style="width: 100%; max-height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid #cbd5e1;">
+                                                <?php if (!empty($row->Photo)): ?>
+                                                    <div class="dtl-detail-row align-items-center">
+                                                        <span class="dtl-detail-label">Photo</span>
+                                                        <span class="dtl-detail-value">
+                                                            <img src="<?= esc_url($row->Photo) ?>" class="dtl-photo-thumb"
+                                                                onclick="event.stopPropagation(); window.openPhotoModal('<?= esc_url($row->Photo) ?>');"
+                                                                title="Click to view full photo">
+                                                        </span>
                                                     </div>
-                                                        <?php endif; ?>
+                                                <?php endif; ?>
+                                                <div class="dtl-detail-row mt-2 border-0">
+                                                    <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="dtl-view-btn">
+                                                        <i class="fa-solid fa-eye"></i> View Details
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <?php endforeach; ?>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -448,37 +452,42 @@ function form_history()
                 if (!imgUrl) return;
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:6px;"></i> Equipment Condition Photo',
+                        title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:8px;"></i> Equipment Condition Photo',
                         imageUrl: imgUrl,
-                        imageAlt: 'Device Condition Photo',
-                        showCloseButton: true,
+                        imageAlt: 'Equipment Condition Photo',
+                        showCloseButton: false,
                         confirmButtonColor: '#6366f1',
                         confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
-                        customClass: { popup: 'dash-scan-popup' }
+                        customClass: { popup: 'dash-scan-popup dtl-photo-modal' }
                     });
                 } else {
                     let overlay = document.getElementById('photo_lightbox_overlay');
                     if (!overlay) {
                         overlay = document.createElement('div');
                         overlay.id = 'photo_lightbox_overlay';
-                        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.75); backdrop-filter:blur(4px); z-index:99999; display:flex; justify-content:center; align-items:center; opacity:0; transition:opacity 0.2s ease;';
                         overlay.innerHTML = `
-                        <div style="position:relative; max-width:90vw; max-height:90vh; background:#fff; border-radius:16px; padding:16px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
-                            <button onclick="document.getElementById('photo_lightbox_overlay').style.opacity='0'; setTimeout(() => document.getElementById('photo_lightbox_overlay').style.display='none', 200);" style="position:absolute; top:-12px; right:-12px; background:#ef4444; color:#fff; border:none; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);">&times;</button>
-                            <img id="photo_lightbox_img" src="" style="max-width:85vw; max-height:80vh; border-radius:12px; display:block; object-fit:contain;">
-                        </div>
-                    `;
-                        overlay.onclick = function (e) {
-                            if (e.target === overlay) {
-                                overlay.style.opacity = '0';
-                                setTimeout(() => overlay.style.display = 'none', 200);
-                            }
+                            <div class="photo-lightbox-card">
+                                <button class="photo-lightbox-close" title="Close">&times;</button>
+                                <img id="photo_lightbox_img" class="photo-lightbox-img" src="" alt="Equipment Condition Photo">
+                            </div>
+                        `;
+                        const closeBtn = overlay.querySelector('.photo-lightbox-close');
+                        const closeModal = function () {
+                            overlay.classList.remove('active');
                         };
+                        closeBtn.onclick = closeModal;
+                        overlay.onclick = function (e) {
+                            if (e.target === overlay) closeModal();
+                        };
+                        document.addEventListener('keydown', function (e) {
+                            if (e.key === 'Escape' && overlay.classList.contains('active')) {
+                                closeModal();
+                            }
+                        });
                         document.body.appendChild(overlay);
                     }
                     document.getElementById('photo_lightbox_img').src = imgUrl;
-                    overlay.style.display = 'flex';
-                    setTimeout(() => overlay.style.opacity = '1', 10);
+                    overlay.classList.add('active');
                 }
             };
         </script>

@@ -960,12 +960,16 @@ $maintenance_count = $sidebar_badges['maintenance'];
                 e.preventDefault();
                 var pageQrBtn = document.getElementById("dash-btn-start-qr");
                 if (pageQrBtn) {
-                    pageQrBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    var dashQrBar = pageQrBtn.closest('.dash-qr-bar') || document.querySelector('.dash-qr-bar');
+                    if (dashQrBar) {
+                        dashQrBar.classList.add('active-scan');
+                        dashQrBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                     setTimeout(function () {
                         pageQrBtn.click();
-                    }, 300);
+                    }, 100);
                 } else {
-                    window.location.href = "<?php echo esc_url(home_url('/home/?scan=1')); ?>";
+                    window.location.href = "<?php echo esc_url(home_url('/?scan=1')); ?>";
                 }
             });
         }

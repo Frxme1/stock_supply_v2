@@ -1031,6 +1031,14 @@ hr,
         margin-bottom: 30px !important;
     }
 
+    body.page-home h1,
+    body.page-home .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 5px !important;
+    }
+
     body.page-add-device h1,
     body.page-add-device .entry-title {
         font-size: 40px !important;
@@ -2155,16 +2163,17 @@ button,
     #edit-employee-form,
     #add-device-form,
     #add-employee-form {
-        max-width: 100% !important;
-        width: 100% !important;
-        margin: 14px 0 28px 0 !important;
-        padding: 24px 18px !important;
-        box-sizing: border-box !important;
-        border-radius: 28px !important;
-        background: #f8fafc !important;
+        max-width: 100%;
+        width: 100%;
+        margin: 14px 0 28px 0;
+        margin-top: 200px;
+        padding: 24px 18px;
+        box-sizing: border-box;
+        border-radius: 28px;
+        background: #f8fafc;
         /* Matches Website Slate Theme */
-        border: 1.5px solid #e2e8f0 !important;
-        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02) !important;
+        border: 1.5px solid #e2e8f0 !;
+        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02) !;
     }
 
     .edit-data-form h2,

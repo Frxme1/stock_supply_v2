@@ -215,7 +215,105 @@ function device_dashboard()
             <?php endforeach; ?>
         </div>
 
+        <!-- ===== SECTION 2.5: Stock Monitor — Live ===== -->
+        <input type="hidden" id="stock-monitor-ajax-url" value="<?= admin_url('admin-ajax.php') ?>">
 
+        <div class="stock-monitor-section">
+            <!-- Live Header -->
+            <div class="stock-live-header">
+                <div class="stock-live-header-left">
+                    <span class="stock-live-title">Stock Monitor</span>
+                    <span class="stock-live-badge">
+                        <span class="stock-pulse-dot"></span>
+                        Live
+                    </span>
+                    <span class="stock-live-timestamp" id="stock-live-timestamp">Loading...</span>
+                </div>
+                <div class="stock-live-header-right">
+                    <button type="button" class="stock-refresh-btn" id="stock-refresh-btn" title="Refresh now">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category × Status Cards -->
+            <div class="stock-cards-grid">
+                <?php
+                $sm_categories = [
+                    'Monitor'     => ['icon' => 'fa-desktop',  'color' => '#FDB840'],
+                    'Laptop'      => ['icon' => 'fa-laptop',   'color' => '#15A5DA'],
+                    'Accessories' => ['icon' => 'fa-plug',     'color' => '#6ABF57'],
+                ];
+                $sm_statuses = ['Available', 'In Use', 'Maintenance', 'Retired'];
+                $sm_status_colors = [
+                    'Available'   => '#6ABF57',
+                    'In Use'      => '#F05353',
+                    'Maintenance' => '#FDB840',
+                    'Retired'     => '#919191',
+                ];
+
+                foreach ($sm_categories as $cat_name => $cat_cfg):
+                    $cat_slug = strtolower(str_replace(' ', '-', $cat_name));
+                ?>
+                    <div class="stock-category-card" id="stock-card-<?= $cat_slug ?>"
+                         style="--card-accent: <?= $cat_cfg['color'] ?>;">
+                        <div class="stock-card-header">
+                            <div class="stock-card-category">
+                                <div class="stock-card-icon"
+                                     style="background: <?= $cat_cfg['color'] ?>15; color: <?= $cat_cfg['color'] ?>;">
+                                    <i class="fa-solid <?= $cat_cfg['icon'] ?>"></i>
+                                </div>
+                                <span class="stock-card-name"><?= esc_html($cat_name) ?></span>
+                            </div>
+                            <span class="stock-card-total" id="stock-total-<?= $cat_slug ?>">—</span>
+                        </div>
+
+                        <div class="stock-bars-wrap">
+                            <?php foreach ($sm_statuses as $status):
+                                $status_slug = strtolower(str_replace(' ', '-', $status));
+                                $bar_color = $sm_status_colors[$status];
+                            ?>
+                                <div class="stock-bar-row">
+                                    <span class="stock-bar-label"><?= esc_html($status) ?></span>
+                                    <div class="stock-bar-track">
+                                        <div class="stock-bar-fill"
+                                             id="stock-bar-<?= $cat_slug ?>-<?= $status_slug ?>"
+                                             style="width: 0%; background: <?= $bar_color ?>;"></div>
+                                    </div>
+                                    <span class="stock-bar-count"
+                                          id="stock-count-<?= $cat_slug ?>-<?= $status_slug ?>">—</span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- Low-Stock Alert Banner -->
+            <div class="stock-low-alert" id="stock-low-alert">
+                <div class="stock-low-alert-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="stock-low-alert-content">
+                    <div class="stock-low-alert-title">Low Stock Warning</div>
+                    <ul class="stock-low-alert-list" id="stock-low-alert-list"></ul>
+                </div>
+            </div>
+
+            <!-- Total Footer -->
+            <div class="stock-total-footer">
+                Total devices: <strong id="stock-footer-total">—</strong>
+                &nbsp;·&nbsp;
+                Available: <strong id="stock-footer-available">—</strong>
+            </div>
+        </div>
+
+        <!-- ===== QR Scanner Compact Bar ===== -->
+        <?php
+        $qr_details_only = true;
+        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php');
+        ?>
 
         <!-- ===== SECTION 3: Charts ===== -->
         <div class="next-grid-3 mt-4">
@@ -256,19 +354,14 @@ function device_dashboard()
             </div>
 
         </div>
-        <!-- ===== QR Scanner Compact Bar ===== -->
-        <?php
-        $qr_details_only = true;
-        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php');
-        ?>
 
     </div>
 
     <style>
         /* ============================================================
-           device_dashboard — page-specific styles only
-           Shared card/grid/animation styles → dashboard_cards.css
-           ============================================================ */
+               device_dashboard — page-specific styles only
+               Shared card/grid/animation styles → dashboard_cards.css
+               ============================================================ */
 
         /* ---- New Devices Notification Card ---- */
         .new-devices-alert-header {
@@ -287,36 +380,53 @@ function device_dashboard()
         }
 
         .new-devices-alert-icon {
-            width: 42px; height: 42px;
+            width: 42px;
+            height: 42px;
             border-radius: 12px;
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #ffffff;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.1rem;
             flex-shrink: 0;
             animation: bellPulse 2.2s ease-in-out infinite;
         }
 
         @keyframes bellPulse {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            25%       { transform: scale(1.08) rotate(-6deg); }
-            75%       { transform: scale(1.08) rotate(6deg); }
+
+            0%,
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            25% {
+                transform: scale(1.08) rotate(-6deg);
+            }
+
+            75% {
+                transform: scale(1.08) rotate(6deg);
+            }
         }
 
         .new-devices-alert-title {
             font-size: 0.95rem;
             font-weight: 700;
             color: #111827;
-            display: flex; align-items: center; gap: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .new-devices-count-badge {
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #ffffff;
-            font-size: 0.68rem; font-weight: 700;
+            font-size: 0.68rem;
+            font-weight: 700;
             padding: 2px 8px;
             border-radius: 9999px;
-            min-width: 20px; text-align: center;
+            min-width: 20px;
+            text-align: center;
         }
 
         .new-devices-alert-subtitle {
@@ -329,17 +439,28 @@ function device_dashboard()
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
             border-radius: 8px;
-            width: 32px; height: 32px;
-            display: flex; align-items: center; justify-content: center;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #16a34a;
             cursor: pointer;
             transition: all 0.25s ease;
             font-size: 0.8rem;
         }
 
-        .new-devices-toggle-btn:hover { background: #dcfce7; }
-        .new-devices-toggle-btn.expanded i { transform: rotate(180deg); }
-        .new-devices-toggle-btn i { transition: transform 0.3s ease; }
+        .new-devices-toggle-btn:hover {
+            background: #dcfce7;
+        }
+
+        .new-devices-toggle-btn.expanded i {
+            transform: rotate(180deg);
+        }
+
+        .new-devices-toggle-btn i {
+            transition: transform 0.3s ease;
+        }
 
         .new-devices-alert-body {
             max-height: 0;
@@ -359,7 +480,9 @@ function device_dashboard()
             font-size: 0.85rem;
         }
 
-        .new-devices-table thead { background: #f0fdf4; }
+        .new-devices-table thead {
+            background: #f0fdf4;
+        }
 
         .new-devices-table th {
             padding: 0.6rem 1.25rem;
@@ -376,61 +499,85 @@ function device_dashboard()
             padding: 0.65rem 1.25rem;
             border-bottom: 1px solid #f3f4f6;
             color: #374151;
-            border-top: none; border-left: none; border-right: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
         }
 
-        .new-devices-table tbody tr:last-child td { border-bottom: none; }
-        .new-devices-table tbody tr:hover { background: #f0fdf4; }
+        .new-devices-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .new-devices-table tbody tr:hover {
+            background: #f0fdf4;
+        }
 
         .new-device-badge-sm {
             display: inline-block;
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #ffffff;
-            font-size: 0.6rem; font-weight: 800;
+            font-size: 0.6rem;
+            font-weight: 800;
             padding: 1px 6px;
             border-radius: 4px;
             letter-spacing: 0.06em;
             margin-right: 6px;
-            vertical-align: middle; line-height: 1.5;
+            vertical-align: middle;
+            line-height: 1.5;
         }
 
         /* ---- QR Bar ---- */
         .dash-qr-scan-btn {
-            display: inline-flex; align-items: center; gap: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             padding: 10px 22px;
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
             color: #fff;
-            border: none; border-radius: 10px;
-            font-weight: 600; font-size: 0.88rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
         }
 
         .dash-qr-scan-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
         }
 
         .dash-qr-stop-btn {
-            display: inline-flex; align-items: center; gap: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             padding: 10px 22px;
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: #fff;
-            border: none; border-radius: 10px;
-            font-weight: 600; font-size: 0.88rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .dash-qr-stop-btn:hover { background: #dc2626; }
-
-        .dash-qr-hint {
-            color: #94a3b8; font-size: 0.82rem;
-            display: inline-flex; align-items: center; gap: 5px;
+        .dash-qr-stop-btn:hover {
+            background: #dc2626;
         }
 
-        .dash-scan-popup { border-radius: 16px !important; }
+        .dash-qr-hint {
+            color: #94a3b8;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dash-scan-popup {
+            border-radius: 16px !important;
+        }
     </style>
 
     <script>
@@ -498,7 +645,7 @@ function device_dashboard()
 
                 // Sync all select filter controls with the clicked card's parameters
                 var filterFields = ['filter_status', 'filter_department', 'filter_brand', 'filter_position', 'filter_category'];
-                filterFields.forEach(function(fieldName) {
+                filterFields.forEach(function (fieldName) {
                     var selectElem = document.querySelector('select[name="' + fieldName + '"]');
                     if (selectElem) {
                         var val = params.get(fieldName) || '';
@@ -523,7 +670,7 @@ function device_dashboard()
                 } else {
                     window.location.href = targetUrl;
                 }
-            } catch(e) {
+            } catch (e) {
                 window.location.href = targetUrl;
             }
         }

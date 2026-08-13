@@ -120,7 +120,7 @@ function device_form($editing = null)
 		<div class="form-grid">
 			<div class="form-group">
 				<label>Category</label>
-				<select name="CategoryID" id="category_select" required>
+				<select name="CategoryID" id="category_select" class="form-select staggered-dropdown" required>
 					<option value="" style="text-align: center;">-- Select --</option>
 					<?php foreach ($categories as $cat): ?>
 						<option value="<?= $cat->CategoryID ?>" <?= selected($editing->CategoryID ?? '', $cat->CategoryID, false) ?>>
@@ -281,7 +281,7 @@ function device_form($editing = null)
 
 			<div class="form-group">
 				<label>Keyword</label>
-				<select name="KeywordID" id="keyword_select" required>
+				<select name="KeywordID" id="keyword_select" class="form-select staggered-dropdown" required>
 					<option value="" style="text-align: center; margin-top: -12px;">-- Select --</option>
 					<?php foreach ($keywords as $key): ?>
 						<option value="<?= $key->KeywordID ?>" <?= selected($editing->KeywordID ?? '', $key->KeywordID, false) ?>>

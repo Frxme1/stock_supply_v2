@@ -656,7 +656,6 @@
     /* --- Mobile Edit & Add Data Forms (Themed Soft Minimalist / Bento Grid) --- */
     .edit-data-form,
     #edit-device-form,
-    #edit-employee-form,
     #add-device-form,
     #add-employee-form {
         max-width: 100% !important;
@@ -670,6 +669,20 @@
         border: 1.5px solid #e2e8f0 !important;
         box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02) !important;
     }
+
+    #edit-employee-form {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin-left: -20px !important;
+        box-sizing: border-box !important;
+        border-radius: 28px !important;
+        background: #f8fafc !important;
+        /* Matches Website Slate Theme */
+        border: 1.5px solid #e2e8f0 !important;
+        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08),
+            0 4px 14px rgba(0, 0, 0, 0.02) !important;
+    }
+
 
     .edit-data-form h2,
     #edit-device-form h2,

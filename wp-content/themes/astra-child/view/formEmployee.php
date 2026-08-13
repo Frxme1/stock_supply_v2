@@ -131,6 +131,7 @@ function form_owner()
 
     // section search & filter
     $search = isset($_GET['device_search']) ? sanitize_text_field($_GET['device_search']) : '';
+    $filter_category = isset($_GET['filter_category']) ? sanitize_text_field($_GET['filter_category']) : '';
     $filter_dept = isset($_GET['filter_department']) ? sanitize_text_field($_GET['filter_department']) : '';
     $filter_pos = isset($_GET['filter_position']) ? sanitize_text_field($_GET['filter_position']) : '';
     $filter_st = isset($_GET['filter_status']) ? sanitize_text_field($_GET['filter_status']) : '';
@@ -148,6 +149,9 @@ function form_owner()
             $like,
             $like
         );
+    }
+    if (!empty($filter_category)) {
+        $where_clauses[] = $wpdb->prepare("OwnerID IN (SELECT DISTINCT OwnerID FROM DevicesWithNames WHERE Category = %s AND OwnerID IS NOT NULL)", $filter_category);
     }
     if (!empty($filter_dept)) {
         $where_clauses[] = $wpdb->prepare("Department = %s", $filter_dept);
@@ -173,7 +177,7 @@ function form_owner()
     <form method="GET" action="" id="advanced-filter-form" style="margin-bottom: 24px;">
         <?php
         foreach ($_GET as $key => $value) {
-            if (!in_array($key, ['device_search', 'filter_status', 'filter_department', 'filter_position', 'paged'])) {
+            if (!in_array($key, ['device_search', 'filter_category', 'filter_status', 'filter_department', 'filter_position', 'paged'])) {
                 if (is_array($value)) {
                     foreach ($value as $v) {
                         echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -183,10 +187,12 @@ function form_owner()
                 }
             }
         }
+        $filter_category = isset($_GET['filter_category']) ? sanitize_text_field($_GET['filter_category']) : '';
         $filter_status = isset($_GET['filter_status']) ? sanitize_text_field($_GET['filter_status']) : '';
         $filter_dept = isset($_GET['filter_department']) ? sanitize_text_field($_GET['filter_department']) : '';
         $filter_pos = isset($_GET['filter_position']) ? sanitize_text_field($_GET['filter_position']) : '';
 
+        $all_categories = $wpdb->get_col("SELECT DISTINCT Category FROM DevicesWithNames WHERE Category != '' ORDER BY Category");
         $departments = $wpdb->get_col("SELECT DISTINCT Department FROM $table_owner_wn WHERE Department IS NOT NULL AND Department != '' AND Department != '-' ORDER BY Department ASC");
         $positions = $wpdb->get_col("SELECT DISTINCT Position FROM $table_owner_wn WHERE Position IS NOT NULL AND Position != '' ORDER BY Position ASC");
         $statuses = $wpdb->get_col("SELECT DISTINCT Status FROM $table_owner_wn WHERE Status IS NOT NULL AND Status != '' ORDER BY Status ASC");
@@ -334,6 +340,19 @@ function form_owner()
                 </datalist>
             </div>
 
+            <!-- Category Filter -->
+            <div class="filter-field-item" style="min-width: 130px; flex: 1;">
+                <label class="form-label text-secondary small mb-1 fw-bold">Category</label>
+                <select name="filter_category" class="form-select form-select-sm filter-select-custom staggered-dropdown">
+                    <option value="">All Categories</option>
+                    <?php foreach ($all_categories as $cat): ?>
+                        <option value="<?= esc_attr($cat) ?>" <?= $filter_category === $cat ? 'selected' : '' ?>>
+                            <?= esc_html($cat) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
             <!-- Department Filter -->
             <div class="filter-field-item" style="min-width: 140px; flex: 1;">
                 <label class="form-label text-secondary small mb-1 fw-bold">Department</label>
@@ -376,7 +395,7 @@ function form_owner()
                 <button type="submit" class="btn-filter-cyan">
                     <i class="fa-solid fa-filter"></i> Filter
                 </button>
-                <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_department', 'filter_position', 'paged']); ?>
+                <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'filter_status', 'filter_department', 'filter_position', 'paged']); ?>
                 <a href="<?= esc_url($reset_url) ?>" class="btn-reset-underline">Reset</a>
                 <a href="<?= esc_url(home_url('/add-owner/')) ?>" class="btn-add-black" title="Add Employee">
                     <i class="fa-solid fa-user-plus"></i>

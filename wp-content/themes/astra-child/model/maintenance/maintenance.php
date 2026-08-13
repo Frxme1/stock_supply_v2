@@ -25,6 +25,7 @@ function device_crud_maintenance()
 
     // Search filter
     $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
+    $filter_category = isset($_GET['filter_category']) ? trim($_GET['filter_category']) : '';
     $where_sql = "WHERE Status = 'Maintenance'";
 
     if (!empty($search)) {
@@ -40,6 +41,9 @@ function device_crud_maintenance()
             $like
         );
     }
+    if (!empty($filter_category)) {
+        $where_sql .= $wpdb->prepare(" AND Category = %s", $filter_category);
+    }
 
     // Fetch all active maintenance devices matching query
     $all_active_maintenance = $wpdb->get_results("
@@ -48,6 +52,7 @@ function device_crud_maintenance()
         ORDER BY RepairDate DESC, DeviceID DESC
     ");
 
+    $all_categories = $wpdb->get_col("SELECT DISTINCT Category FROM $table_mainten WHERE Category != '' ORDER BY Category");
     $suggestions = $wpdb->get_col("SELECT DISTINCT Brand FROM $table_mainten ORDER BY Category LIMIT 50");
 
     if (!function_exists('formatName')) {
@@ -64,7 +69,7 @@ function device_crud_maintenance()
         <form method="GET" action="" id="advanced-filter-form">
             <?php
             foreach ($_GET as $key => $value) {
-                if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'sort', 'order'])) {
+                if (!in_array($key, ['device_search', 'filter_category', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'sort', 'order'])) {
                     if (is_array($value)) {
                         foreach ($value as $v) {
                             echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -76,10 +81,7 @@ function device_crud_maintenance()
             }
             ?>
             <div class="row align-items-center g-2 mb-4">
-                <label class="col-auto col-form-label font-medium" style="font-weight: 700; color: #1e293b;">Device
-                    Search</label>
-
-                <div class="col-12 col-sm-6 col-md-auto" style="width: 280px;">
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 250px;">
                     <?php
                     $search_placeholder = 'Search Maintenance Device...';
                     $search_list = 'search_suggestions';
@@ -92,11 +94,22 @@ function device_crud_maintenance()
                     </datalist>
                 </div>
 
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 180px;">
+                    <select name="filter_category" id="filter_category" class="form-select form-select-sm filter-select-custom staggered-dropdown" style="border-radius: 10px; height: 38px;">
+                        <option value="">All Categories</option>
+                        <?php foreach ($all_categories as $cat): ?>
+                            <option value="<?= esc_attr($cat) ?>" <?= $filter_category == $cat ? 'selected' : '' ?>>
+                                <?= esc_html($cat) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <div class="col-12 col-sm-6 col-md-auto d-flex gap-2">
                     <button class="btn btn-primary" type="submit"
                         style="background: #1e40af; border-color: #1e40af; font-weight: 700; border-radius: 10px; padding: 8px 18px;"><i
                             class="fa-solid fa-magnifying-glass me-1"></i> Filter</button>
-                    <?php $reset_url = remove_query_arg(['device_search', 'paged', 'sort', 'order']); ?>
+                    <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'paged', 'sort', 'order']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn btn-outline-secondary"
                         style="border-radius: 10px; font-weight: 600; padding: 8px 16px;">Reset</a>
                 </div>

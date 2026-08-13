@@ -257,6 +257,32 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.dtl-view-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #334155;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 16px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.dtl-view-btn:hover {
+    background: #f8fafc;
+    border-color: #6366f1;
+    color: #4f46e5;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.12);
+}
+
 .dtl-expand-icon {
     font-size: 0.7rem;
     color: #cbd5e1;
@@ -479,4 +505,126 @@
         font-size: 0.72rem;
         padding: 4px 10px;
     }
+}
+
+/* ============================================================
+   Photo Lightbox Modal — Clean Non-conflicting Styling
+   ============================================================ */
+
+.swal2-popup.dtl-photo-modal {
+    border-radius: 20px !important;
+    padding: 1.25rem 1.5rem 1.5rem 1.5rem !important;
+    background: #ffffff !important;
+    box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.25) !important;
+    border: 1px solid #e2e8f0 !important;
+    max-width: 520px !important;
+}
+
+.swal2-popup.dtl-photo-modal .swal2-title {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding-bottom: 0.75rem !important;
+    border-bottom: 1px dashed #e2e8f0 !important;
+    margin: 0 0 0.75rem 0 !important;
+}
+
+.swal2-popup.dtl-photo-modal .swal2-image {
+    max-height: 65vh !important;
+    object-fit: contain !important;
+    border-radius: 12px !important;
+    border: 1px solid #cbd5e1 !important;
+    margin: 0.5rem auto 1rem auto !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+.swal2-popup.dtl-photo-modal .swal2-actions {
+    margin-top: 0.5rem !important;
+}
+
+.swal2-popup.dtl-photo-modal .swal2-confirm {
+    border-radius: 8px !important;
+    padding: 8px 20px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Standalone Lightbox Overlay (Fallback) */
+#photo_lightbox_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+#photo_lightbox_overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.photo-lightbox-card {
+    position: relative;
+    max-width: 90vw;
+    max-height: 88vh;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    border: 1px solid #e2e8f0;
+    transform: scale(0.95);
+    transition: transform 0.2s ease;
+}
+
+#photo_lightbox_overlay.active .photo-lightbox-card {
+    transform: scale(1);
+}
+
+.photo-lightbox-close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    background: #ef4444;
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.photo-lightbox-close:hover {
+    transform: scale(1.1);
+    background: #dc2626;
+}
+
+.photo-lightbox-img {
+    max-width: 85vw;
+    max-height: 75vh;
+    border-radius: 12px;
+    display: block;
+    object-fit: contain;
+    border: 1px solid #e2e8f0;
 }

@@ -34,7 +34,6 @@ function device_crud_laptop()
     $filter_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
     $filter_department = isset($_GET['filter_department']) ? trim($_GET['filter_department']) : '';
 
-
     $where_sql = "WHERE Category = 'Laptop'";
 
     if (!empty($search)) {

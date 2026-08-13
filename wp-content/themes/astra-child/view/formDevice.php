@@ -29,6 +29,7 @@ function device_crud()
     // --- ADVANCED FILTER LOGIC ---
     // Get filter parameters
     $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
+    $filter_category = isset($_GET['filter_category']) ? trim($_GET['filter_category']) : '';
     $filter_status = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
     $filter_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
     $filter_department = isset($_GET['filter_department']) ? trim($_GET['filter_department']) : '';
@@ -54,6 +55,9 @@ function device_crud()
             $like
         );
     }
+    if (!empty($filter_category)) {
+        $search_sql .= $wpdb->prepare(" AND Category = %s", $filter_category);
+    }
     if (!empty($filter_status)) {
         $search_sql .= $wpdb->prepare(" AND Status = %s", $filter_status);
     }
@@ -65,6 +69,7 @@ function device_crud()
     }
 
     // Fetch dropdown options
+    $all_categories = $wpdb->get_col("SELECT DISTINCT Category FROM $table_device_wn WHERE Category != '' ORDER BY Category");
     $all_brands = $wpdb->get_col("SELECT DISTINCT Brand FROM $table_device_wn WHERE Brand != '' ORDER BY Brand");
     $all_departments = $wpdb->get_col("SELECT DISTINCT Department FROM $table_device_wn WHERE Department != '' ORDER BY Department");
     // -------------------------------------------
@@ -101,7 +106,7 @@ function device_crud()
                 <form method="GET" action="" id="advanced-filter-form">
                     <?php
                     foreach ($_GET as $key => $value) {
-                        if (!in_array($key, ['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                        if (!in_array($key, ['device_search', 'filter_category', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
                             if (is_array($value)) {
                                 foreach ($value as $v) {
                                     echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -113,12 +118,24 @@ function device_crud()
                     }
                     ?>
                     <div class="row g-2">
-                        <div class="col-12 col-sm-6 col-md-3">
+                        <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Search Text</label>
                             <?php
                             $search_placeholder = 'Search...';
                             include get_stylesheet_directory() . '/view/animated-search.php';
                             ?>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-2">
+                            <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Category</label>
+                            <select name="filter_category" id="filter_category"
+                                class="form-select form-select-sm staggered-dropdown">
+                                <option value="">All Categories</option>
+                                <?php foreach ($all_categories as $cat): ?>
+                                    <option value="<?= esc_attr($cat) ?>" <?= $filter_category == $cat ? 'selected' : '' ?>>
+                                        <?= esc_html($cat) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
                             <label class="form-label mb-1 text-muted" style="font-size: 0.85em;">Status</label>
@@ -157,10 +174,10 @@ function device_crud()
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-auto d-flex align-items-end gap-2" style="width: 200px;">
+                        <div class="col-12 col-sm-6 col-md-auto d-flex align-items-end gap-2" style="width: 180px;">
                             <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
                                 Filter</button>
-                            <?php $reset_url = remove_query_arg(['device_search', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
+                            <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'filter_status', 'filter_brand', 'filter_department', 'paged']); ?>
                             <a href="<?= esc_url($reset_url) ?>#advanced-filter-form" class="btn-reset-modern">Reset</a>
                         </div>
                     </div>
