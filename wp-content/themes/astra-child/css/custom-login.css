@@ -346,7 +346,7 @@ body.login form p {
     z-index: 5 !important;
 }
 
-/* ปุ่มซ่อน/แสดงรหัสผ่าน (ด้านขวา) */
+/* Hide/Show password button (right side) */
 .wp-hide-pw {
     position: absolute !important;
     right: 18px !important;

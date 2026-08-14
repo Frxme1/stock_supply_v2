@@ -37,7 +37,7 @@ function form_history()
     }
     $search_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
-    //  COUNT จำนวนข้อมูล
+    // COUNT total items
     $total_items = $wpdb->get_var(
         $wpdb->prepare("
         SELECT COUNT(*) FROM $table_history AS H
@@ -360,12 +360,12 @@ function form_history()
                 <!-- Stats -->
                 <?php if (!empty($action_counts)): ?>
                     <div class="dtl-stats">
-                        <div class="dtl-stat-chip">
+                        <div class="dtl-stat-chip active" data-filter-action="all" role="button" tabindex="0">
                             <i class="fa-solid fa-list-check"></i> Total
                             <span class="dtl-stat-count"><?= count($rows) ?></span>
                         </div>
                         <?php foreach ($action_counts as $act => $cnt): ?>
-                            <div class="dtl-stat-chip">
+                            <div class="dtl-stat-chip" data-filter-action="<?= esc_attr(strtolower(trim($act))) ?>" role="button" tabindex="0">
                                 <?= esc_html($act) ?>
                                 <span class="dtl-stat-count"><?= $cnt ?></span>
                             </div>
@@ -393,7 +393,7 @@ function form_history()
                                     $isOpen = ($item_idx === 0);
                                     $item_idx++;
                                     ?>
-                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible">
+                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible" data-action="<?= esc_attr(strtolower(trim($row->Action))) ?>">
                                         <div class="dtl-dot"></div>
                                         <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
                                             <div class="dtl-card-head">
@@ -433,7 +433,7 @@ function form_history()
                                                     </div>
                                                 <?php endif; ?>
                                                 <div class="dtl-detail-row mt-2 border-0">
-                                                    <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="dtl-view-btn">
+                                                    <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="dtl-view-btn" style="text-decoration: none !important;">
                                                         <i class="fa-solid fa-eye"></i> View Details
                                                     </a>
                                                 </div>

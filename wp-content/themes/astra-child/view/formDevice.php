@@ -182,8 +182,12 @@ function device_crud()
                         </div>
                     </div>
                 </form>
-            </div>
         </div>
+        
+        <?php
+        $qr_category_filter = '';
+        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php');
+        ?>
 
         <script>
             function toggleDepartment() {

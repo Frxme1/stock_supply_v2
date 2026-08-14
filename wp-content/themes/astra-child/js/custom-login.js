@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="logo-title-supply"><span class="logo-sup">Sup</span><span class="logo-ply">ply</span></span>
         </div>
         <div class="banner-description">
-            ระบบจัดการคลังสินค้าแบบครบวงจร บริหารจัดการสต็อกและติดตามสถานะสินค้าได้อย่างรวดเร็วและแม่นยำ
+            Comprehensive Inventory Management System. Manage stock and track item status quickly and accurately.
         </div>
     `;
 
@@ -43,20 +43,20 @@ document.addEventListener('DOMContentLoaded', function() {
     formSubtitle.className = 'login-form-subtitle';
 
     if (isLostPassword) {
-        formTitle.textContent = 'ลืมรหัสผ่าน';
-        formSubtitle.textContent = 'กรอกชื่อผู้ใช้หรืออีเมลของคุณเพื่อรับลิงก์สำหรับตั้งรหัสผ่านใหม่ทางอีเมล';
+        formTitle.textContent = 'Forgot Password';
+        formSubtitle.textContent = 'Enter your username or email address to receive a password reset link via email.';
     } else if (isResetPass) {
-        formTitle.textContent = 'ตั้งรหัสผ่านใหม่';
-        formSubtitle.textContent = 'กรอกรหัสผ่านใหม่ที่คุณต้องการใช้งานสำหรับบัญชีนี้';
+        formTitle.textContent = 'Reset Password';
+        formSubtitle.textContent = 'Enter the new password you want to use for this account.';
     } else if (isCheckEmail) {
-        formTitle.textContent = 'ตรวจสอบอีเมลของคุณ';
-        formSubtitle.textContent = 'เราได้ส่งลิงก์คำแนะนำสำหรับตั้งรหัสผ่านใหม่ไปที่อีเมลของคุณเรียบร้อยแล้ว';
+        formTitle.textContent = 'Check Your Email';
+        formSubtitle.textContent = 'We have sent password reset instructions to your email address.';
     } else if (isRegister) {
-        formTitle.textContent = 'ลงทะเบียนบัญชี';
-        formSubtitle.textContent = 'กรอกข้อมูลเพื่อลงทะเบียนเข้าใช้งานระบบจัดการสต็อก';
+        formTitle.textContent = 'Register Account';
+        formSubtitle.textContent = 'Enter your details to register for the stock management system.';
     } else {
-        formTitle.textContent = 'เข้าสู่ระบบ';
-        formSubtitle.textContent = 'กรอกข้อมูลบัญชีผู้ใช้ของคุณเพื่อเข้าสู่ระบบจัดการสต็อก';
+        formTitle.textContent = 'Sign In';
+        formSubtitle.textContent = 'Enter your account credentials to sign in to the stock management system.';
     }
 
     rightContainer.appendChild(formTitle);
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 1. Username / Email Input formatting
     var usernameInput = document.getElementById('user_login');
     if (usernameInput) {
-        usernameInput.placeholder = isLostPassword ? 'ชื่อผู้ใช้ หรือ อีเมล' : 'ชื่อผู้ใช้ หรือ อีเมล';
+        usernameInput.placeholder = 'Username or Email';
         var pUser = usernameInput.closest('p') || usernameInput.parentElement;
         var userWrapper = document.createElement('div');
         userWrapper.className = 'input-icon-wrapper';
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Password Input formatting & Show/Hide Toggle
     var passInput = document.getElementById('user_pass') || document.getElementById('pass1');
     if (passInput) {
-        passInput.placeholder = isResetPass ? 'รหัสผ่านใหม่' : 'รหัสผ่าน';
+        passInput.placeholder = isResetPass ? 'New Password' : 'Password';
         var pPass = passInput.closest('.user-pass-wrap') || passInput.closest('p') || passInput.parentElement;
         var passWrapper = document.createElement('div');
         passWrapper.className = 'input-icon-wrapper delay-1';
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. Second Password Input formatting (if resetpassform pass2 exists)
     var pass2Input = document.getElementById('pass2');
     if (pass2Input) {
-        pass2Input.placeholder = 'ยืนยันรหัสผ่านใหม่';
+        pass2Input.placeholder = 'Confirm New Password';
         var pPass2 = pass2Input.closest('.user-pass-wrap') || pass2Input.closest('p') || pass2Input.parentElement;
         var pass2Wrapper = document.createElement('div');
         pass2Wrapper.className = 'input-icon-wrapper delay-2';
@@ -151,13 +151,13 @@ document.addEventListener('DOMContentLoaded', function() {
     var submitBtn = document.getElementById('wp-submit');
     if (submitBtn) {
         if (isLostPassword) {
-            submitBtn.value = 'ส่งลิงก์ตั้งรหัสผ่านใหม่';
+            submitBtn.value = 'Send Reset Link';
         } else if (isResetPass) {
-            submitBtn.value = 'บันทึกรหัสผ่านใหม่';
+            submitBtn.value = 'Save New Password';
         } else if (isRegister) {
-            submitBtn.value = 'สมัครสมาชิก';
+            submitBtn.value = 'Register';
         } else {
-            submitBtn.value = 'เข้าสู่ระบบ';
+            submitBtn.value = 'Sign In';
         }
         var pSubmit = submitBtn.closest('p');
         if (pSubmit) pSubmit.classList.add('input-icon-wrapper', 'delay-2');

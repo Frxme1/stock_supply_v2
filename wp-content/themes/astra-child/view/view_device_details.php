@@ -57,7 +57,7 @@ function device_view_details($device_id = null)
         h.Owner LIKE %s
     )";
 
-        // ไม่รวม CategoryName ถ้าไม่มี
+        // Exclude CategoryName if not present
         $params = array_merge($params, array_fill(0, 5, $like));
     }
 
@@ -65,7 +65,7 @@ function device_view_details($device_id = null)
     $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
     $offset = ($current_page - 1) * $per_page;
 
-    // นับจำนวนทั้งหมด
+    // Count total items
     $sql_count = $wpdb->prepare(
         "SELECT COUNT(*) FROM {$table_history} h $where",
         ...$params
@@ -73,14 +73,14 @@ function device_view_details($device_id = null)
     $total_items = $wpdb->get_var($sql_count);
     $total_pages = ceil($total_items / $per_page);
 
-    // ดึงรายการข้อมูล
+    // Fetch rows
     $sql_rows = $wpdb->prepare(
         "SELECT * FROM {$table_history} h $where ORDER BY h.Date DESC LIMIT %d OFFSET %d",
         ...array_merge($params, [$per_page, $offset])
     );
     $rows = $wpdb->get_results($sql_rows);
 
-    // ดึงคำแนะนำ
+    // Fetch suggestions
     $suggestions = $wpdb->get_col("SELECT DISTINCT StatusName FROM {$table_status} ORDER BY StatusName LIMIT 50");
 
     ob_start();
@@ -485,14 +485,15 @@ function device_view_details($device_id = null)
             ?>
             <div class="dtl-timeline-wrap active">
                 <!-- Stats -->
+                <!-- Stats -->
                 <?php if (!empty($action_counts)): ?>
                     <div class="dtl-stats">
-                        <div class="dtl-stat-chip">
+                        <div class="dtl-stat-chip active" data-filter-action="all" role="button" tabindex="0">
                             <i class="fa-solid fa-list-check"></i> Total
                             <span class="dtl-stat-count"><?= count($rows) ?></span>
                         </div>
                         <?php foreach ($action_counts as $act => $cnt): ?>
-                            <div class="dtl-stat-chip">
+                            <div class="dtl-stat-chip" data-filter-action="<?= esc_attr(strtolower(trim($act))) ?>" role="button" tabindex="0">
                                 <?= esc_html($act) ?>
                                 <span class="dtl-stat-count"><?= $cnt ?></span>
                             </div>
@@ -520,7 +521,7 @@ function device_view_details($device_id = null)
                                     $isOpen = ($item_idx === 0);
                                     $item_idx++;
                                     ?>
-                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible">
+                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible" data-action="<?= esc_attr(strtolower(trim($row->Action))) ?>">
                                         <div class="dtl-dot"></div>
                                         <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
                                             <div class="dtl-card-head">

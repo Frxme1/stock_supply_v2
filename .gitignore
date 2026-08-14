@@ -1,0 +1,19 @@
+# Database backups & SQL dumps
+db_backup_*/
+*.sql
+*.sql.gz
+
+# Temporary and debug files
+*.log
+audit_meta.txt
+qt_meta.txt
+request_debug.txt
+test_output.html
+check.php
+check_table.php
+dump_meta.php
+test_post.php
+
+# OS files
+Thumbs.db
+.DS_Store

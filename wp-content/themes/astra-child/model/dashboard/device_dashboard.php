@@ -309,12 +309,6 @@ function device_dashboard()
             </div>
         </div>
 
-        <!-- ===== QR Scanner Compact Bar ===== -->
-        <?php
-        $qr_details_only = true;
-        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php');
-        ?>
-
         <!-- ===== SECTION 3: Charts ===== -->
         <div class="next-grid-3 mt-4">
 

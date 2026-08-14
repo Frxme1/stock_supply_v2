@@ -28,11 +28,11 @@ function form_owner()
             $owner_fullname = trim($owner_data->FirstName . ' ' . $owner_data->LastName);
             $owner_nickname = $owner_data->Nickname ?? '-';
 
-            // Set StatusID = 2 (Resigned) — Soft Delete, ข้อมูลยังอยู่
+            // Set StatusID = 2 (Resigned) — Soft Delete, data retained
             $resigned_status_id = $wpdb->get_var("SELECT StatusID FROM Status_Employee WHERE Status_name = 'Resigned'");
             $wpdb->update($table_owner, ['StatusID' => $resigned_status_id], ['OwnerID' => $owner_id]);
 
-            // คืนอุปกรณ์ทั้งหมดที่ถือครองกลับเป็น Available
+            // Return all assigned devices back to Available
             $available_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
             $wpdb->update(
                 $table_devices,
@@ -40,7 +40,7 @@ function form_owner()
                 ['OwnerID' => $owner_id]
             );
 
-            // บันทึก History
+            // Log History
             $wpdb->insert('History_new', [
                 'DeviceID' => 0,
                 'Action' => 'Employee Resigned',
@@ -340,18 +340,7 @@ function form_owner()
                 </datalist>
             </div>
 
-            <!-- Category Filter -->
-            <div class="filter-field-item" style="min-width: 130px; flex: 1;">
-                <label class="form-label text-secondary small mb-1 fw-bold">Category</label>
-                <select name="filter_category" class="form-select form-select-sm filter-select-custom staggered-dropdown">
-                    <option value="">All Categories</option>
-                    <?php foreach ($all_categories as $cat): ?>
-                        <option value="<?= esc_attr($cat) ?>" <?= $filter_category === $cat ? 'selected' : '' ?>>
-                            <?= esc_html($cat) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+
 
             <!-- Department Filter -->
             <div class="filter-field-item" style="min-width: 140px; flex: 1;">
@@ -382,7 +371,7 @@ function form_owner()
             <div class="filter-field-item" style="min-width: 140px; flex: 1;">
                 <label class="form-label text-secondary small mb-1 fw-bold">Status</label>
                 <select name="filter_status" class="form-select form-select-sm filter-select-custom staggered-dropdown">
-                    <option value="">All Statuses</option>
+                    <option value="">All Status</option>
                     <?php foreach ($statuses as $st): ?>
                         <option value="<?= esc_attr($st) ?>" <?= $filter_status === $st ? 'selected' : '' ?>><?= esc_html($st) ?>
                         </option>

@@ -217,9 +217,11 @@ body, #content.site-content {
 /* Bottom Sheet Modal for Filters */
 .bottom-sheet {
     position: fixed; 
-    bottom: -100%; 
+    bottom: 0; 
     left: 0; 
     right: 0; 
+    transform: translateY(100%);
+    visibility: hidden;
     background: #ffffff;
     border-top-left-radius: 28px; 
     border-top-right-radius: 28px; 
@@ -227,12 +229,15 @@ body, #content.site-content {
     padding: 28px 24px; 
     padding-bottom: calc(28px + env(safe-area-inset-bottom));
     box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2); 
-    transition: bottom 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s ease;
     max-height: 85vh;
     overflow-y: auto;
+    pointer-events: none;
 }
 .bottom-sheet.open { 
-    bottom: 0 !important; 
+    transform: translateY(0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
 }
 .bottom-sheet-backdrop {
     position: fixed; 

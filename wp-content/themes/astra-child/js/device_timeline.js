@@ -13,6 +13,7 @@
         initViewToggle();
         initCardExpand();
         initScrollReveal();
+        initStatChipFilters();
     }
 
     if (document.readyState === 'loading') {
@@ -113,5 +114,94 @@
                 node.classList.add('dtl-visible');
             });
         }
+    }
+
+    /** Interactive Action Chip Filters */
+    function initStatChipFilters() {
+        const statsContainers = document.querySelectorAll('.dtl-stats');
+        if (!statsContainers.length) return;
+
+        statsContainers.forEach(function (statsWrap) {
+            const timelineWrap = statsWrap.closest('.dtl-timeline-wrap') || statsWrap.parentElement;
+            if (!timelineWrap) return;
+
+            const chips = statsWrap.querySelectorAll('.dtl-stat-chip');
+            if (!chips.length) return;
+
+            // Set first chip (Total) as active by default if none active
+            if (!statsWrap.querySelector('.dtl-stat-chip.active')) {
+                chips[0].classList.add('active');
+            }
+
+            chips.forEach(function (chip) {
+                chip.setAttribute('role', 'button');
+                chip.setAttribute('tabindex', '0');
+
+                function handleChipClick() {
+                    const targetAction = (chip.dataset.filterAction || chip.innerText.replace(/[0-9]/g, '').trim()).toLowerCase();
+                    const isTotal = (targetAction === 'all' || targetAction.indexOf('total') !== -1);
+                    const wasActive = chip.classList.contains('active');
+
+                    // If clicking already active chip (and not total), reset to total
+                    let finalFilter = targetAction;
+                    if (wasActive && !isTotal) {
+                        finalFilter = 'all';
+                    }
+
+                    // Update active state on chips
+                    chips.forEach(function (c) {
+                        const cAction = (c.dataset.filterAction || c.innerText.replace(/[0-9]/g, '').trim()).toLowerCase();
+                        const cIsTotal = (cAction === 'all' || cAction.indexOf('total') !== -1);
+                        if (finalFilter === 'all') {
+                            if (cIsTotal) c.classList.add('active');
+                            else c.classList.remove('active');
+                        } else {
+                            if (cAction === finalFilter) c.classList.add('active');
+                            else c.classList.remove('active');
+                        }
+                    });
+
+                    // Filter nodes
+                    const nodes = timelineWrap.querySelectorAll('.dtl-node');
+                    let visibleCount = 0;
+
+                    nodes.forEach(function (node) {
+                        const nodeAction = (node.dataset.action || (node.querySelector('.dtl-action-badge') ? node.querySelector('.dtl-action-badge').innerText : '')).toLowerCase().trim();
+                        
+                        let matches = (finalFilter === 'all');
+                        if (!matches) {
+                            matches = (nodeAction === finalFilter || nodeAction.indexOf(finalFilter) !== -1 || finalFilter.indexOf(nodeAction) !== -1);
+                        }
+
+                        if (matches) {
+                            node.style.display = '';
+                            node.classList.add('dtl-visible');
+                            visibleCount++;
+                        } else {
+                            node.style.display = 'none';
+                        }
+                    });
+
+                    // Manage date groups visibility
+                    const dateGroups = timelineWrap.querySelectorAll('.dtl-date-group');
+                    dateGroups.forEach(function (group) {
+                        const visibleInGroup = group.querySelectorAll('.dtl-node:not([style*="display: none"])');
+                        if (visibleInGroup.length > 0) {
+                            group.style.display = '';
+                        } else {
+                            group.style.display = 'none';
+                        }
+                    });
+                }
+
+                chip.addEventListener('click', handleChipClick);
+                chip.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleChipClick();
+                    }
+                });
+            });
+        });
     }
 })();

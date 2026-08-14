@@ -68,7 +68,7 @@ if ($category_filter) {
     }
 
     @media (max-width: 768px) {
-        /* เอา display: none ออกเพื่อให้ปุ่ม Scan QR โชว์บนมือถือ */
+        /* Remove display: none to show Scan QR button on mobile */
     }
 
     .dash-qr-scan-btn {
@@ -154,9 +154,33 @@ if ($category_filter) {
         }
     }
 
+    /* Fix global z-index for SweetAlert2 container and backdrop */
+    .swal2-container {
+        z-index: 1000000 !important;
+    }
+
+    .swal2-backdrop-show {
+        background: rgba(15, 23, 42, 0.65) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+    }
+
     .dash-scan-popup {
-        border-radius: 16px !important;
+        border-radius: 20px !important;
         position: relative !important;
+        background: #ffffff !important;
+        padding: 22px 18px !important;
+        box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.35) !important;
+        border: 1px solid #e2e8f0 !important;
+        width: min(94vw, 480px) !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .dash-scan-popup .swal2-html-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
     }
 
     .dash-scan-popup .swal2-close {
@@ -164,11 +188,10 @@ if ($category_filter) {
         right: 14px !important;
         width: 32px !important;
         height: 32px !important;
-        line-height: 32px !important;
-        font-size: 1.2rem !important;
+        font-size: 1.1rem !important;
         color: #64748b !important;
         background: #f1f5f9 !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         border: none !important;
         box-shadow: none !important;
         outline: none !important;
@@ -182,6 +205,22 @@ if ($category_filter) {
     .dash-scan-popup .swal2-close:hover {
         color: #0f172a !important;
         background: #e2e8f0 !important;
+    }
+
+    /* Completely eliminate unpopulated SweetAlert2 default form inputs */
+    .dash-scan-popup select#swal2-select,
+    .dash-scan-popup .swal2-select,
+    .dash-scan-popup .swal2-input,
+    .dash-scan-popup .swal2-file,
+    .dash-scan-popup .swal2-textarea,
+    .dash-scan-popup .swal2-radio,
+    .dash-scan-popup .swal2-checkbox,
+    .dash-scan-popup .swal2-range {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 </style>
 
@@ -265,12 +304,12 @@ if ($category_filter) {
                     console.error("Camera Launch Error:", err);
                     let errText = 'Unable to access camera. Please grant camera permissions in your browser.';
                     if (!window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                        errText = 'เบราว์เซอร์มือถือต้องใช้ HTTPS เพื่อเปิดกล้อง (SSL Required) หรือกรุณาอนุญาตสิทธิ์การใช้กล้องในการตั้งค่าเบราว์เซอร์';
+                        errText = 'Mobile browser requires HTTPS to access camera (SSL Required) or please grant camera permissions in browser settings.';
                     }
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
-                            title: 'ไม่สามารถเปิดกล้องได้ (Camera Access Error)',
+                            title: 'Camera Access Error',
                             text: errText,
                             confirmButtonColor: '#ef4444'
                         });
@@ -356,34 +395,43 @@ if ($category_filter) {
             dashQrScanner = new Html5Qrcode("dash-qr-reader");
 
             const config = {
-                fps: 25, // Increased FPS from 10 to 25 for ultra-fast scanning
+                fps: 20,
                 qrbox: (viewfinderWidth, viewfinderHeight) => {
                     const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
                     return {
-                        width: Math.floor(minEdge * 0.85),
-                        height: Math.floor(minEdge * 0.85)
+                        width: Math.floor(minEdge * 0.92),
+                        height: Math.floor(minEdge * 0.92)
                     };
                 },
+                disableFlip: false,
                 experimentalFeatures: {
                     useBarCodeDetectorIfSupported: true
                 },
                 videoConstraints: {
-                    facingMode: "environment",
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    facingMode: { ideal: "environment" },
+                    width: { min: 640, ideal: 1280, max: 1920 },
+                    height: { min: 480, ideal: 720, max: 1080 },
+                    advanced: [{ focusMode: "continuous" }]
                 }
             };
 
-            if (typeof Html5QrcodeSupportedFormats !== 'undefined' && Html5QrcodeSupportedFormats.QR_CODE !== undefined) {
-                config.formatsToSupport = [Html5QrcodeSupportedFormats.QR_CODE];
+            if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+                config.formatsToSupport = [
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.DATA_MATRIX,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.UPC_A
+                ];
             }
 
             Html5Qrcode.getCameras().then(cameras => {
                 if (cameras && cameras.length > 0) {
                     let cameraId = cameras[0].id;
                     for (let i = 0; i < cameras.length; i++) {
-                        const label = cameras[i].label.toLowerCase();
-                        if (label.includes('back') || label.includes('environment') || label.includes('rear')) {
+                        const label = (cameras[i].label || '').toLowerCase();
+                        if (label.includes('back') || label.includes('environment') || label.includes('rear') || label.includes('0')) {
                             cameraId = cameras[i].id;
                             break;
                         }
@@ -391,7 +439,12 @@ if ($category_filter) {
 
                     dashQrScanner.start(cameraId, config, onDashScanSuccess, () => { })
                         .then(() => { onSuccessStart(); })
-                        .catch(err => { onErrorStart(err); });
+                        .catch(err => {
+                            // Fallback to generic facingMode
+                            dashQrScanner.start({ facingMode: "environment" }, config, onDashScanSuccess, () => { })
+                                .then(() => { onSuccessStart(); })
+                                .catch(err2 => { onErrorStart(err2); });
+                        });
                 } else {
                     dashQrScanner.start({ facingMode: "environment" }, config, onDashScanSuccess, () => { })
                         .then(() => { onSuccessStart(); })
@@ -405,6 +458,11 @@ if ($category_filter) {
         }
 
         function onDashScanSuccess(decodedText) {
+            // Haptic vibration feedback on successful scan
+            if (navigator.vibrate) {
+                try { navigator.vibrate([60]); } catch (e) { }
+            }
+
             const dashReaderDiv = document.getElementById('dash-qr-reader');
             const dashStopBtn = document.getElementById('dash-btn-stop-qr');
             const dashStartBtn = document.getElementById('dash-btn-start-qr');
@@ -531,6 +589,7 @@ if ($category_filter) {
             const qrBar = document.querySelector('.dash-qr-bar');
             const detailsOnly = qrBar ? (qrBar.getAttribute('data-details-only') === 'true') : false;
             window.__lastScannedOwners = dev.all_owners || [];
+            
             const statusMap = {
                 'In Use': { icon: 'fa-circle-xmark', color: '#dc2626', bg: '#fee2e2', label: 'In Use' },
                 'Available': { icon: 'fa-circle-check', color: '#16a34a', bg: '#dcfce7', label: 'Available' },
@@ -539,77 +598,111 @@ if ($category_filter) {
             };
             const st = statusMap[dev.StatusName] || { icon: 'fa-circle-question', color: '#6366f1', bg: '#e0e7ff', label: dev.StatusName };
 
+            // Resolve dynamic category URL
+            const categorySlugMap = {
+                'Laptop': 'laptop',
+                'Monitor': 'monitor',
+                'Accessories': 'accessories'
+            };
+            const catSlug = categorySlugMap[dev.CategoryName] || (dev.CategoryName ? dev.CategoryName.toLowerCase() : 'laptop');
+            const viewDetailUrl = `<?= home_url('/') ?>${catSlug}/?view=${encodeURIComponent(dev.DeviceID)}`;
+
             let htmlContent = `
-        <div style="text-align:left; font-size:0.92rem;">
+        <div style="text-align:left; font-size:0.92rem; box-sizing:border-box;">
             <!-- Header -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding-bottom:14px; border-bottom:2px solid #f1f5f9; padding-right:40px;">
-                <div>
-                    <h3 style="margin:0; color:#0f172a; font-size:1.35rem; font-weight:700;"><i class="fa-solid fa-box-archive" style="color:#6366f1; margin-right:8px;"></i>${dev.DeviceID}</h3>
-                    <div style="color:#64748b; font-size:0.82rem; margin-top:2px;">${dev.CategoryName} &bull; ${dev.BrandName} ${dev.Model}</div>
+            <div style="margin-bottom:16px; padding-bottom:14px; border-bottom:1.5px solid #f1f5f9; padding-right:36px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                    <span style="background:#eff6ff; color:#2563eb; padding:3px 10px; border-radius:8px; font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px; border:1px solid #dbeafe;">
+                        ${dev.CategoryName || 'Device'}
+                    </span>
+                    <span style="background:${st.bg}; color:${st.color}; padding:3px 10px; border-radius:8px; font-weight:700; font-size:0.72rem; display:inline-flex; align-items:center; gap:4px; border:1px solid rgba(0,0,0,0.05);">
+                        <i class="fa-solid ${st.icon}"></i> ${st.label}
+                    </span>
                 </div>
-                <span style="background:${st.bg}; color:${st.color}; padding:6px 14px; border-radius:20px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
-                    <i class="fa-solid ${st.icon}"></i> ${st.label}
-                </span>
+                <h3 style="margin:0 0 2px 0; color:#0f172a; font-size:1.35rem; font-weight:800; letter-spacing:-0.02em; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-cube" style="color:#6366f1; font-size:1.15rem;"></i>
+                    ${dev.DeviceID}
+                </h3>
+                <div style="color:#64748b; font-size:0.85rem; font-weight:500;">
+                    ${dev.BrandName ? `<strong>${dev.BrandName}</strong>` : ''} ${dev.Model || ''}
+                </div>
             </div>
 
-            <!-- Device Info Grid -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:20px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden;">
-                <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-barcode" style="margin-right:4px;"></i>Serial Number</span><strong style="color:#0f172a;">${dev.SerialNumber}</strong></div>
-                <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-user" style="margin-right:4px;"></i>Assigned To</span><strong style="color:#0f172a;">${dev.OwnerName}</strong></div>
-                <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-building" style="margin-right:4px;"></i>Department</span><strong style="color:#0f172a;">${dev.DepartmentName}</strong></div>
-                <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Received Date</span><strong style="color:#0f172a;">${dev.ReceiveDate}</strong></div>
-                <div style="padding:10px 14px;"><span style="color:#94a3b8; font-size:0.78rem; display:block;"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:4px;"></i>Last Repair</span><strong style="color:#0f172a;">${dev.RepairDate}</strong></div>
+            <!-- Device Info Grid (Bento Table) -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:18px; background:#f8fafc; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden;">
+                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-barcode" style="margin-right:4px;"></i>Serial Number</span>
+                    <strong style="color:#0f172a; font-size:0.88rem; word-break:break-all;">${dev.SerialNumber || '-'}</strong>
+                </div>
+                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0;">
+                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-user" style="margin-right:4px;"></i>Assigned To</span>
+                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.OwnerName || '-'}</strong>
+                </div>
+                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-building" style="margin-right:4px;"></i>Department</span>
+                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.DepartmentName || '-'}</strong>
+                </div>
+                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0;">
+                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Received Date</span>
+                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.ReceiveDate || '-'}</strong>
+                </div>
+                <div style="padding:9px 12px; grid-column:span 2; background:#f1f5f9;">
+                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:4px;"></i>Last Repair</span>
+                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.RepairDate || '-'}</strong>
+                </div>
             </div>
 `;
 
             if (!detailsOnly) {
                 htmlContent += `
-                <!-- Quick Actions -->
-                <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem;"><i class="fa-solid fa-bolt" style="color:#6366f1; margin-right:4px;"></i>Quick Actions (Instant Status Change)</div>
+                <!-- Quick Actions Title -->
+                <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-bolt" style="color:#6366f1;"></i> Quick Actions (Instant Status Change)
+                </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             `;
 
                 if (dev.StatusName === 'In Use') {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return', '<i class=\\'fa-solid fa-right-to-bracket\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return Device', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-right-to-bracket" style="margin-right:6px;"></i>Return</button>
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>Repair</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return', '<i class=\\'fa-solid fa-right-to-bracket\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return Device', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.25);"><i class="fa-solid fa-right-to-bracket"></i> Return</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(245,158,11,0.25);"><i class="fa-solid fa-wrench"></i> Repair</button>
                 `;
                 } else if (dev.StatusName === 'Available') {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-hand-holding-hand" style="margin-right:6px;"></i>Assign</button>
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-wrench" style="margin-right:6px;"></i>Repair</button>
+                    <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(99,102,241,0.25);"><i class="fa-solid fa-hand-holding-hand"></i> Assign</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(245,158,11,0.25);"><i class="fa-solid fa-wrench"></i> Repair</button>
                 `;
                 } else if (dev.StatusName === 'Maintenance') {
                     if (dev.OwnerID && dev.OwnerName && dev.OwnerName !== '-') {
                         htmlContent += `
-                        <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return_to_owner', '<i class=\\'fa-solid fa-user-check\\' style=\\'color:#3b82f6; margin-right:6px;\\'></i> Return to Owner', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#3b82f6')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#3b82f6,#2563eb); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-user-check" style="margin-right:6px;"></i>Return to ${dev.OwnerName}</button>
+                        <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return_to_owner', '<i class=\\'fa-solid fa-user-check\\' style=\\'color:#3b82f6; margin-right:6px;\\'></i> Return to Owner', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#3b82f6')" style="background:linear-gradient(135deg,#3b82f6,#2563eb); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(59,130,246,0.25);"><i class="fa-solid fa-user-check"></i> Return to ${dev.OwnerName}</button>
                     `;
                     }
                     htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return to Stock', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>Return to Stock</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return to Stock', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.25);"><i class="fa-solid fa-circle-check"></i> Return to Stock</button>
                 `;
                 } else {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Mark Available', '<i class=\\'fa-solid fa-check\\'></i> Confirm', '#10b981')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>Mark Available</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Mark Available', '<i class=\\'fa-solid fa-check\\'></i> Confirm', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.25);"><i class="fa-solid fa-circle-check"></i> Mark Available</button>
                 `;
                 }
 
                 if (dev.StatusName !== 'Retired') {
                     htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'retired', '<i class=\\'fa-solid fa-box-archive\\' style=\\'color:#475569; margin-right:6px;\\'></i> Retire Device', '<i class=\\'fa-solid fa-box-archive\\'></i> Confirm Retire', '#475569')" class="swal2-confirm swal2-styled" style="background:linear-gradient(135deg,#475569,#334155); color:#ffffff; width:100%; margin:0; padding:10px 12px; font-weight:600; border-radius:10px; font-size:0.85rem;"><i class="fa-solid fa-box-archive" style="margin-right:6px;"></i>Retire</button>
+                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'retired', '<i class=\\'fa-solid fa-box-archive\\' style=\\'color:#64748b; margin-right:6px;\\'></i> Retire Device', '<i class=\\'fa-solid fa-box-archive\\'></i> Confirm Retire', '#64748b')" style="grid-column:span 2; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; width:100%; height:40px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.82rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;"><i class="fa-solid fa-box-archive"></i> Retire Device</button>
                 `;
                 }
 
                 htmlContent += `
                 </div>
                 <div style="margin-top:10px;">
-                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:#f1f5f9; color:#475569; width:100%; margin:0; padding:10px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>View Details & History</a>
+                    <a href="${viewDetailUrl}" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#0f172a; width:100%; height:42px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.85rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Details & History</a>
                 </div>
             `;
             } else {
                 htmlContent += `
                 <div style="margin-top:12px;">
-                    <a href="/stock_supply/laptop/?view=${encodeURIComponent(dev.DeviceID)}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; margin:0; padding:11px 16px; font-weight:600; text-decoration:none; text-align:center; display:block; border-radius:10px; font-size:0.88rem; transition:all 0.2s;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:6px;"></i>View Full Details & History</a>
+                    <a href="${viewDetailUrl}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; height:44px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.88rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Full Details & History</a>
                 </div>
             `;
             }
@@ -620,8 +713,8 @@ if ($category_filter) {
                 html: htmlContent,
                 showConfirmButton: false,
                 showCloseButton: true,
-                width: '560px',
-                padding: '24px',
+                width: 'min(94vw, 480px)',
+                padding: '20px',
                 customClass: { popup: 'dash-scan-popup' }
             });
         }
@@ -665,6 +758,8 @@ if ($category_filter) {
                 denyButtonColor: '#64748b',
                 showCancelButton: false,
                 showCloseButton: false,
+                width: 'min(94vw, 480px)',
+                padding: '20px',
                 customClass: { popup: 'dash-scan-popup' },
                 preConfirm: () => {
                     const photoInput = document.getElementById('swal_qr_action_photo');
@@ -809,6 +904,8 @@ if ($category_filter) {
                 denyButtonColor: '#64748b',
                 showCancelButton: false,
                 showCloseButton: false,
+                width: 'min(94vw, 480px)',
+                padding: '20px',
                 customClass: { popup: 'dash-scan-popup' },
                 didOpen: () => {
                     window.__qrPreviewAssignImage = function (input) {

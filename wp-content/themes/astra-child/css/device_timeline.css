@@ -54,7 +54,6 @@
 
 .dtl-timeline-wrap.active {
     display: block;
-    animation: dtlFadeIn 0.4s ease-out;
 }
 
 .dtl-table-wrap.active {
@@ -257,11 +256,12 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.dtl-view-btn {
+.dtl-view-btn,
+a.dtl-view-btn {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
-    color: #334155;
+    color: #334155 !important;
     font-weight: 700;
     font-size: 0.75rem;
     letter-spacing: 0.5px;
@@ -272,14 +272,20 @@
     justify-content: center;
     gap: 6px;
     padding: 6px 16px;
-    text-decoration: none;
+    text-decoration: none !important;
     transition: all 0.2s ease;
 }
 
-.dtl-view-btn:hover {
+.dtl-view-btn:hover,
+.dtl-view-btn:focus,
+.dtl-view-btn:active,
+a.dtl-view-btn:hover,
+a.dtl-view-btn:focus,
+a.dtl-view-btn:active {
     background: #f8fafc;
     border-color: #6366f1;
-    color: #4f46e5;
+    color: #4f46e5 !important;
+    text-decoration: none !important;
     box-shadow: 0 4px 10px rgba(99, 102, 241, 0.12);
 }
 
@@ -417,18 +423,38 @@
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 0.78rem;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.82rem;
     font-weight: 600;
     color: #475569;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
 }
 
 .dtl-stat-chip:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.dtl-stat-chip.active {
+    background: #1e40af !important;
+    border-color: #1e40af !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(30, 64, 175, 0.28) !important;
+    transform: translateY(-1px);
+}
+
+.dtl-stat-chip.active .dtl-stat-count {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
 }
 
 .dtl-stat-count {
@@ -438,6 +464,7 @@
     border-radius: 6px;
     font-size: 0.72rem;
     font-weight: 700;
+    transition: all 0.2s ease;
 }
 
 /* Empty State */

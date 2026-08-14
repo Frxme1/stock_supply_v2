@@ -1031,6 +1031,14 @@ hr,
         margin-bottom: 30px !important;
     }
 
+    body.page-add-ownerer h1,
+    body.page-add-owner .entry-title {
+        font-size: 40px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        margin-bottom: 30px !important;
+    }
+
     body.page-home h1,
     body.page-home .entry-title {
         font-size: 40px !important;
@@ -1498,6 +1506,10 @@ button,
 .swal2-textarea,
 .search-input-modern {
     text-transform: none !important;
+}
+
+.swal2-popup > select.swal2-select:not(.swal2-select-show):not(:has(option)) {
+    display: none !important;
 }
 
 
@@ -2166,14 +2178,13 @@ button,
         max-width: 100%;
         width: 100%;
         margin: 14px 0 28px 0;
-        margin-top: 200px;
         padding: 24px 18px;
         box-sizing: border-box;
         border-radius: 28px;
         background: #f8fafc;
         /* Matches Website Slate Theme */
-        border: 1.5px solid #e2e8f0 !;
-        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02) !;
+        border: 1.5px solid #e2e8f0;
+        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02);
     }
 
     .edit-data-form h2,
@@ -2330,10 +2341,17 @@ button,
     #edit-device-form .form-group input[disabled],
     #edit-device-form .form-group select[disabled] {
         background-color: #f1f5f9 !important;
-        color: #64748b !important;
-        border-color: #e2e8f0 !important;
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
+        font-weight: 700 !important;
+        border: 1.5px solid #cbd5e1 !important;
         cursor: not-allowed !important;
-        opacity: 0.9 !important;
+        opacity: 1 !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a3 3 0 0 0-3 3v2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3zm1 5V4a1 1 0 0 0-2 0v2h2z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 14px center !important;
+        background-size: 14px 14px !important;
+        padding-right: 38px !important;
     }
 
     /* Pill-Shaped Buttons in Form Actions */

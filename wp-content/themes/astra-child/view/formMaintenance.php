@@ -18,13 +18,15 @@ function form_maintenance($editing = null)
         function show_alert($icon, $title, $html = '', $redirect = '')
         {
             echo "<script>
-                Swal.fire({
-                    icon: '$icon',
-                    title: '$title',
-                    html: `" . $html . "` ,
-                    showConfirmButton: " . ($redirect ? "false" : "true") . ",
-                    timer: " . ($redirect ? "1500" : "null") . "
-                })" . ($redirect ? ".then(() => { window.location.href = '$redirect'; })" : "") . ";
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: '$icon',
+                        title: '$title',
+                        html: `" . $html . "` ,
+                        showConfirmButton: " . ($redirect ? "false" : "true") . ",
+                        timer: " . ($redirect ? "1500" : "null") . "
+                    })" . ($redirect ? ".then(() => { window.location.href = '$redirect'; })" : "") . ";
+                });
             </script>";
         }
     }
@@ -35,8 +37,8 @@ function form_maintenance($editing = null)
             show_alert('error', 'Unauthorized', 'Security check failed.');
             return ob_get_clean();
         }
-        $DeviceID = sanitize_text_field($_POST['DeviceID']);
-        $RepairDate = sanitize_text_field($_POST['RepairDate']);
+        $DeviceID = sanitize_text_field($_POST['DeviceID'] ?? '');
+        $RepairDate = sanitize_text_field($_POST['RepairDate'] ?? current_time('Y-m-d'));
         $SelectedDetails = sanitize_text_field($_POST['Details'] ?? '');
         $OtherDetails = sanitize_text_field($_POST['OtherDetails'] ?? '');
 
@@ -54,7 +56,7 @@ function form_maintenance($editing = null)
         }
 
         $device_info = $wpdb->get_row($wpdb->prepare(
-            "SELECT user_email, CategoryID, OwnerID FROM $table_device WHERE DeviceID = %s",
+            "SELECT user_email, CategoryID, OwnerID, Model, BrandID FROM $table_device WHERE DeviceID = %s",
             $DeviceID
         ));
 
@@ -82,13 +84,13 @@ function form_maintenance($editing = null)
         $inserted = $wpdb->insert(
             $table_maintenance,
             [
-                'DeviceID' => $DeviceID,
+                'DeviceID'   => $DeviceID,
                 'RepairDate' => $RepairDate,
-                'Details' => $Details,
+                'Details'    => $Details,
                 'user_email' => $user_email,
-                'Photo' => $photo_url,
-                'CreatedAt' => current_time('mysql'),
-                'UpdatedAt' => current_time('mysql'),
+                'Photo'      => $photo_url,
+                'CreatedAt'  => current_time('mysql'),
+                'UpdatedAt'  => current_time('mysql'),
             ],
             ['%s', '%s', '%s', '%s', '%s', '%s', '%s']
         );
@@ -108,9 +110,12 @@ function form_maintenance($editing = null)
         // Update device status
         $updated = $wpdb->update(
             $table_device,
-            ['StatusID' => $status_id],
+            [
+                'StatusID'   => $status_id,
+                'RepairDate' => $RepairDate
+            ],
             ['DeviceID' => $DeviceID],
-            ['%d'],
+            ['%d', '%s'],
             ['%s']
         );
 
@@ -133,17 +138,17 @@ function form_maintenance($editing = null)
 
         // Insert history
         $wpdb->insert('History_new', [
-            'DeviceID' => $DeviceID,
-            'Action' => 'Maintenance',
-            'Date' => current_time('mysql'),
-            'Description' => "Device ID {$DeviceID} set to Maintenance.",
-            'user_email' => $user_email,
-            'CategoryID' => $device_info->CategoryID ?? null,
-            'Owner' => $owner_nickname,
-            'Photo' => $photo_url
+            'DeviceID'    => $DeviceID,
+            'Action'      => 'Maintenance',
+            'Date'        => current_time('mysql'),
+            'Description' => "Device ID {$DeviceID} set to Maintenance. Reason: {$Details}",
+            'user_email'  => $user_email,
+            'CategoryID'  => $device_info->CategoryID ?? null,
+            'Owner'       => $owner_nickname,
+            'Photo'       => $photo_url
         ]);
 
-        // ส่งอีเมลแจ้งเตือน
+        // Send email notification
         if (function_exists('stock_supply_send_email') && !empty($device_info->OwnerID)) {
             stock_supply_send_email('Maintenance', $DeviceID, $device_info->OwnerID, $Details);
         }
@@ -152,306 +157,1084 @@ function form_maintenance($editing = null)
         return ob_get_clean();
     }
 
-    // Load data for form (ensure CategoryName, Model, etc. are included)
-    if ($editing && !isset($editing->CategoryName)) {
+    // Load data for form
+    if (!$editing) {
+        $req_device_id = sanitize_text_field($_GET['maintenance'] ?? $_GET['DeviceID'] ?? $_GET['id'] ?? '');
+        if ($req_device_id) {
+            $editing = $wpdb->get_row($wpdb->prepare("
+                SELECT d.*, c.CategoryName, b.BrandName, m.RepairDate, m.Details
+                FROM {$table_device} d
+                LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+                LEFT JOIN Brands b ON d.BrandID = b.BrandID
+                LEFT JOIN Maintenance m ON d.DeviceID = m.DeviceID
+                WHERE d.DeviceID = %s
+                ORDER BY m.MaintenanceID DESC
+                LIMIT 1
+            ", $req_device_id));
+        }
+    } elseif ($editing && !isset($editing->CategoryName)) {
         $editing = $wpdb->get_row($wpdb->prepare("
-        SELECT d.*, c.CategoryName, b.BrandName
-        FROM Devices d
-        LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
-        LEFT JOIN Brands b ON d.BrandID = b.BrandID
-        WHERE d.DeviceID = %s
-    ", $editing->DeviceID));
+            SELECT d.*, c.CategoryName, b.BrandName
+            FROM {$table_device} d
+            LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+            LEFT JOIN Brands b ON d.BrandID = b.BrandID
+            WHERE d.DeviceID = %s
+        ", $editing->DeviceID));
     }
 
+    $maint_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'") ?: 3);
+    $is_in_maintenance = ($editing && isset($editing->StatusID) && (int)$editing->StatusID === $maint_status_id);
+    $dateValue = ($is_in_maintenance && !empty($editing->RepairDate)) ? date('Y-m-d', strtotime($editing->RepairDate)) : current_time('Y-m-d');
+    $details_val = $is_in_maintenance ? ($editing->Details ?? '') : '';
+    $other_text = '';
+    $known_options = [
+        'Screen Issue',
+        'Battery Issue',
+        'Power Issue',
+        'Keyboard / Mouse Issue',
+        'Hardware Upgrade',
+        'Software Issue'
+    ];
 
-    $dateValue = !empty($editing->RepairDate) ? date('Y-m-d', strtotime($editing->RepairDate)) : '';
+    if (!empty($details_val) && !in_array($details_val, $known_options)) {
+        if (strpos($details_val, 'Others - ') === 0) {
+            $other_text = substr($details_val, strlen('Others - '));
+        } elseif (strpos($details_val, 'อื่นๆ / Others - ') === 0) {
+            $other_text = substr($details_val, strlen('อื่นๆ / Others - '));
+        } elseif ($details_val !== 'Others' && $details_val !== 'อื่นๆ / Others') {
+            $other_text = $details_val;
+        }
+    }
     ?>
 
-    <form class="form-maintenance" method="POST" enctype="multipart/form-data">
-        <?php wp_nonce_field('update_maintenance_nonce', '_maint_nonce'); ?>
-        <h2>Form Maintenance</h2>
-        <div class="mt-4 mb-4">
-            <h5 style="font-weight: 600; color: #374151;">Device Information</h5>
-        </div>
-        <div class="form-grid">
+    <!-- Main Responsive Maintenance Form Component -->
+    <div id="maintenance-form-wrapper" class="maintenance-bento-wrapper">
+        <!-- Desktop Ambient Glow Orbs -->
+        <div class="maint-glow-orb maint-glow-1 desktop-only-el"></div>
+        <div class="maint-glow-orb maint-glow-2 desktop-only-el"></div>
 
-            <div class="form-group">
-                <label>Device ID</label>
-                <input type="text" name="DeviceID" value="<?= esc_attr($editing->DeviceID ?? '') ?>" required readonly>
+        <!-- Desktop Sleek Header Bar -->
+        <div class="maint-header-bar desktop-only-el">
+            <div class="maint-header-left">
+                <div class="maint-icon-badge">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                    <br>
+                    <p class="maint-header-subtitle">
+                        Record Equipment Service, Diagnostic Notes & Hardware Repair Log
+                    </p>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label>Brand</label>
-                <input type="text" value="<?= esc_attr($editing->BrandName ?? '') ?>" readonly disabled>
-            </div>
-
-
-            <div class="form-group">
-                <label>Category</label>
-                <input type="text" value="<?= esc_attr($editing->CategoryName ?? '') ?>" readonly disabled>
-            </div>
-
-            <div class="form-group">
-                <label>Model</label>
-                <input type="text" value="<?= esc_attr($editing->Model ?? '') ?>" readonly disabled>
-            </div>
-
-            <div class="form-group">
-                <label>Serial Number</label>
-                <input type="text" value="<?= esc_attr($editing->SerialNumber ?? '') ?>" readonly disabled>
-            </div>
-
-        </div>
-
-        <div class="mt-4 mb-4">
-            <h5 style="font-weight: 600; color: #374151;">Maintenance</h5>
-        </div>
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Repair Date</label>
-                <input type="date" name="RepairDate" value="<?= esc_attr($dateValue) ?>" required>
-            </div>
-
-        </div>
-
-        <?php
-        $details_val = $editing->Details ?? '';
-        $is_other = false;
-        $other_text = '';
-        $known_options = [
-            'Screen Issue',
-            'Battery Issue',
-            'Power Issue',
-            'Keyboard / Mouse Issue',
-            'Hardware Upgrade',
-            'Software Issue'
-        ];
-
-        if (!empty($details_val) && !in_array($details_val, $known_options)) {
-            $is_other = true;
-            if (strpos($details_val, 'Others - ') === 0) {
-                $other_text = substr($details_val, strlen('Others - '));
-            } elseif (strpos($details_val, 'อื่นๆ / Others - ') === 0) {
-                $other_text = substr($details_val, strlen('อื่นๆ / Others - '));
-            } elseif ($details_val !== 'Others' && $details_val !== 'อื่นๆ / Others') {
-                $other_text = $details_val;
-            }
-        }
-        ?>
-
-        <div class="form-group" style="margin-top: 1.5rem;">
-            <label>Details (Maintenance Reason)</label>
-            <select name="Details">
-                <option value="" selected>-- Select Maintenance Reason --</option>
-                <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false) ? 'selected' : '' ?>>Screen Issue</option>
-                <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false) ? 'selected' : '' ?>>Battery Issue</option>
-                <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false) ? 'selected' : '' ?>>Power Issue</option>
-                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Keyboard') !== false || strpos($details_val, 'Mouse') !== false || strpos($details_val, 'Input Device') !== false) ? 'selected' : '' ?>>Keyboard / Mouse Issue</option>
-                <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false) ? 'selected' : '' ?>>Hardware Upgrade</option>
-                <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false) ? 'selected' : '' ?>>Software Issue</option>
-            </select>
-        </div>
-
-        <div class="form-group" id="other-details-group" style="margin-top: 1rem;">
-            <label>Additional Details / Custom Reason</label>
-            <input type="text" name="OtherDetails" id="OtherDetails" placeholder="Specify additional details or custom reason..."
-                value="<?= esc_attr($other_text) ?>">
-        </div>
-
-        <div class="form-group" style="margin-top: 1.5rem;">
-            <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 6px;">
-                <i class="fa-solid fa-camera" style="color: #6366f1; margin-right: 4px;"></i> Condition Photo (Camera / Upload)
-            </label>
-            <input type="file" name="photo" accept="image/*" capture="environment" onchange="if(this.files && this.files[0]){ const r=new FileReader(); r.onload=e=>{ document.getElementById('maint_photo_img').src=e.target.result; document.getElementById('maint_photo_wrap').style.display='block'; }; r.readAsDataURL(this.files[0]); }" style="width:100%; padding:10px; border:1px dashed #cbd5e1; border-radius:10px; background:#ffffff;">
-            <div id="maint_photo_wrap" style="display:none; margin-top:10px;">
-                <img id="maint_photo_img" src="" style="max-height:140px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            <div class="maint-header-badge">
+                <span class="maint-pulse-dot"></span>
+                <span>MAINTENANCE SERVICE</span>
             </div>
         </div>
 
-        <div class="form-actions">
-            <button type="button" class="btn btn-danger border rounded-pill"
-                onclick="window.history.back();">Cancel</button>
-            <button type="submit" class="btn btn-success border rounded-pill" style="background-color: #6ABF57"
-                name="update_device">Maintenance</button>
-        </div>
-    </form>
+        <form method="POST" action="" id="maintenance-device-form" class="maint-main-form" enctype="multipart/form-data">
+            <?php wp_nonce_field('update_maintenance_nonce', '_maint_nonce'); ?>
 
+            <!-- Mobile Only Header -->
+            <div class="maint-mobile-header mobile-only-el">
+                <h2>Form Maintenance</h2>
+            </div>
+
+            <!-- Desktop & Mobile 2-Column Bento Layout Grid -->
+            <div class="maint-layout-grid">
+                <!-- Left Column: Form Fields -->
+                <div class="maint-form-card">
+                    
+                    <!-- Section 1: Device Information -->
+                    <div class="maint-section-divider">
+                        <span class="maint-section-title"><i class="fa-solid fa-circle-info me-1"></i> Device Information</span>
+                    </div>
+
+                    <div class="maint-fields-grid">
+                        <!-- Device ID -->
+                        <div class="maint-field-group">
+                            <label for="maint_device_id">
+                                <i class="fa-solid fa-fingerprint maint-field-icon desktop-only-el"></i>
+                                Device ID
+                            </label>
+                            <input type="text" name="DeviceID" id="maint_device_id"
+                                value="<?= esc_attr($editing->DeviceID ?? '') ?>" required readonly class="input-readonly">
+                        </div>
+
+                        <!-- Brand -->
+                        <div class="maint-field-group">
+                            <label for="maint_brand">
+                                <i class="fa-solid fa-building maint-field-icon desktop-only-el"></i>
+                                Brand
+                            </label>
+                            <input type="text" id="maint_brand"
+                                value="<?= esc_attr($editing->BrandName ?? '—') ?>" readonly disabled class="input-readonly">
+                        </div>
+
+                        <!-- Category -->
+                        <div class="maint-field-group">
+                            <label for="maint_category">
+                                <i class="fa-solid fa-shapes maint-field-icon desktop-only-el"></i>
+                                Category
+                            </label>
+                            <input type="text" id="maint_category"
+                                value="<?= esc_attr($editing->CategoryName ?? '—') ?>" readonly disabled class="input-readonly">
+                        </div>
+
+                        <!-- Model -->
+                        <div class="maint-field-group">
+                            <label for="maint_model">
+                                <i class="fa-solid fa-laptop maint-field-icon desktop-only-el"></i>
+                                Model
+                            </label>
+                            <input type="text" id="maint_model"
+                                value="<?= esc_attr($editing->Model ?? '—') ?>" readonly disabled class="input-readonly">
+                        </div>
+
+                        <!-- Serial Number (Full Width Span 2) -->
+                        <div class="maint-field-group maint-span-2">
+                            <label for="maint_sn">
+                                <i class="fa-solid fa-barcode maint-field-icon desktop-only-el"></i>
+                                Serial Number
+                            </label>
+                            <input type="text" id="maint_sn"
+                                value="<?= esc_attr($editing->SerialNumber ?? '—') ?>" readonly disabled class="input-readonly">
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Maintenance Details -->
+                    <div class="maint-section-divider mt-4">
+                        <span class="maint-section-title"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Maintenance Details</span>
+                    </div>
+
+                    <div class="maint-fields-grid">
+                        <!-- Repair Date -->
+                        <div class="maint-field-group">
+                            <label for="maint_date">
+                                <i class="fa-solid fa-calendar-day maint-field-icon desktop-only-el"></i>
+                                Repair Date <span class="maint-req">*</span>
+                            </label>
+                            <input type="date" name="RepairDate" id="maint_date" value="<?= esc_attr($dateValue) ?>" required>
+                        </div>
+
+                        <!-- Maintenance Reason Select -->
+                        <div class="maint-field-group">
+                            <label for="maint_reason_select">
+                                <i class="fa-solid fa-triangle-exclamation maint-field-icon desktop-only-el"></i>
+                                Reason / Issue <span class="maint-req">*</span>
+                            </label>
+                            <select name="Details" id="maint_reason_select" required>
+                                <option value="">-- Select Maintenance Reason --</option>
+                                <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false) ? 'selected' : '' ?>>Screen Issue</option>
+                                <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false) ? 'selected' : '' ?>>Battery Issue</option>
+                                <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false) ? 'selected' : '' ?>>Power Issue</option>
+                                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Keyboard') !== false || strpos($details_val, 'Mouse') !== false) ? 'selected' : '' ?>>Keyboard / Mouse Issue</option>
+                                <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false) ? 'selected' : '' ?>>Hardware Upgrade</option>
+                                <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false) ? 'selected' : '' ?>>Software Issue</option>
+                                <option value="Other Issue" <?= ($other_text || strpos($details_val, 'Other') !== false) ? 'selected' : '' ?>>Other Issue (Custom)</option>
+                            </select>
+                        </div>
+
+                        <!-- Additional Details (Full Width Span 2) -->
+                        <div class="maint-field-group maint-span-2" id="other-details-group">
+                            <label for="OtherDetails">
+                                <i class="fa-solid fa-comment-dots maint-field-icon desktop-only-el"></i>
+                                Additional Notes / Custom Reason
+                            </label>
+                            <input type="text" name="OtherDetails" id="OtherDetails"
+                                placeholder="Specify additional diagnostic notes or custom reason..."
+                                value="<?= esc_attr($other_text) ?>" autocomplete="off">
+                        </div>
+
+                        <!-- Condition Photo Upload (Full Width Span 2) -->
+                        <div class="maint-field-group maint-span-2">
+                            <label for="maint_photo">
+                                <i class="fa-solid fa-camera maint-field-icon desktop-only-el"></i>
+                                Condition Photo (Camera / Upload)
+                            </label>
+                            <div class="maint-photo-upload-wrap">
+                                <input type="file" name="photo" id="maint_photo" accept="image/*" capture="environment">
+                                <div id="maint_photo_preview_box" class="maint-photo-preview-box" style="display:none;">
+                                    <img id="maint_photo_img" src="" alt="Condition Photo Preview">
+                                    <span class="maint-photo-preview-badge">Attached</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="maint-form-actions">
+                        <button type="button" onclick="window.history.back();" class="maint-btn-cancel">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Cancel
+                        </button>
+                        <button type="submit" name="update_device" class="maint-btn-submit">
+                            <span class="maint-shine desktop-only-el"></span>
+                            <i class="fa-solid fa-wrench me-1"></i>
+                            <span>Save Maintenance</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Interactive Hardware Maintenance Badge Card (Desktop Only) -->
+                <div class="maint-preview-column desktop-only-el">
+                    <div class="maint-badge-card" id="interactive-preview-card">
+                        <div class="maint-badge-glow"></div>
+
+                        <!-- Top Bar -->
+                        <div class="maint-badge-top">
+                            <span class="maint-badge-tag"><i class="fa-solid fa-wrench me-1"></i> SERVICE TICKET</span>
+                            <span class="maint-badge-status" id="preview-maint-status-badge">
+                                <span class="maint-status-dot" id="preview-maint-status-dot"></span>
+                                <span>Maintenance</span>
+                            </span>
+                        </div>
+
+                        <!-- Device Avatar / Photo Visualizer -->
+                        <div class="maint-avatar-box">
+                            <div class="maint-avatar-halo"></div>
+                            <div class="maint-avatar-circle" id="preview-maint-icon">
+                                <i class="fa-solid fa-screwdriver-wrench"></i>
+                            </div>
+                            <img id="preview-maint-uploaded-img" src="" style="display:none; width: 80px; height: 80px; border-radius: 16px; object-fit: cover; border: 2px solid rgba(245, 158, 11, 0.6); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); z-index: 1; margin-bottom: 0.5rem;">
+                            <div class="maint-id-pill" id="preview-maint-device-id">
+                                <?= esc_html($editing->DeviceID ?? 'DEV-XXXX') ?>
+                            </div>
+                        </div>
+
+                        <!-- Details Specs Box -->
+                        <div class="maint-details-box">
+                            <div class="maint-preview-name" id="preview-maint-model">
+                                <?= esc_html($editing->Model ?: 'Hardware Equipment') ?>
+                            </div>
+                            <div class="maint-preview-brand" id="preview-maint-brand">
+                                <?= esc_html(($editing->BrandName ?? '') . ' ' . ($editing->CategoryName ?? '')) ?: 'Device Details' ?>
+                            </div>
+
+                            <div class="maint-meta-grid">
+                                <div class="maint-meta-item">
+                                    <span class="maint-meta-label"><i class="fa-solid fa-calendar-day me-1"></i> SERVICE DATE</span>
+                                    <span class="maint-meta-val" id="preview-maint-date">
+                                        <?= esc_html($dateValue ?: date('Y-m-d')) ?>
+                                    </span>
+                                </div>
+                                <div class="maint-meta-item">
+                                    <span class="maint-meta-label"><i class="fa-solid fa-barcode me-1"></i> SERIAL NO.</span>
+                                    <span class="maint-meta-val" id="preview-maint-sn">
+                                        <?= esc_html($editing->SerialNumber ?: '—') ?>
+                                    </span>
+                                </div>
+                                <div class="maint-meta-item maint-span-2" style="border-top: 1px dashed rgba(255, 255, 255, 0.1); padding-top: 6px; margin-top: 4px;">
+                                    <span class="maint-meta-label"><i class="fa-solid fa-triangle-exclamation me-1"></i> ISSUE / REASON</span>
+                                    <span class="maint-meta-val" id="preview-maint-reason" style="color: #fbbf24; font-weight: 700;">
+                                        <?= esc_html($details_val ?: 'Select or enter reason') ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- Scoped Modern Stylesheet -->
     <style>
-        /* Next.js Inspired Form UI */
-        form {
-            max-width: 650px;
-            margin: 40px auto;
-            margin-top: 10px;
-            background: #ffffff;
-            padding: 2.5rem;
-            border-radius: 16px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            animation: formFadeIn 0.5s ease-out forwards;
+        /* Unbind Page Container Constraints */
+        .page-maintenance .fl-builder-content,
+        .page-maintenance .fl-row,
+        .page-maintenance .fl-row-content,
+        .page-maintenance .fl-col-group,
+        .page-maintenance .fl-col,
+        .page-maintenance .fl-col-content,
+        .page-maintenance .ast-container,
+        .page-maintenance #primary,
+        .page-maintenance .entry-content {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
         }
 
-        @keyframes formFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        form h2 {
-            font-weight: 700;
-            color: #111827;
-            letter-spacing: -0.025em;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 0;
+        #maintenance-form-wrapper {
             position: relative;
-        }
-
-        .form-group label {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 6px;
-            transition: color 0.2s ease;
-        }
-
-        .form-group:focus-within label {
-            color: #3b82f6;
-        }
-
-        /* Unified Input and Select Styling */
-        .form-group input,
-        .form-group select {
             width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.5rem 1rem 2rem 1rem;
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             box-sizing: border-box;
-            height: 44px;
-            /* Ensure uniform height */
-            padding: 0.5rem 1rem;
-            font-size: 0.95rem;
-            color: #111827;
-            background-color: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            appearance: none;
-            /* For custom select arrow */
         }
 
-        /* Select specific - Custom Arrow */
-        .form-group select {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.75rem center;
-            background-repeat: no-repeat;
-            background-size: 1.25em 1.25em;
-            cursor: pointer;
-        }
-
-        /* Hover and Focus States */
-        .form-group input:hover:not([readonly]):not([disabled]),
-        .form-group select:hover:not([readonly]):not([disabled]) {
-            border-color: #9ca3af;
-        }
-
-        .form-group input:focus:not([readonly]):not([disabled]),
-        .form-group select:focus:not([readonly]):not([disabled]) {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-            transform: translateY(-1px);
-        }
-
-        /* Click Animation for Select (Active state) */
-        .form-group select:active:not([disabled]) {
-            transform: scale(0.98);
-        }
-
-        /* Readonly/Disabled Input Styling */
-        .form-group input[readonly],
-        .form-group input[disabled],
-        .form-group select[disabled] {
-            background-color: #f9fafb !important;
-            color: #6b7280 !important;
-            cursor: not-allowed !important;
-            border-color: #e5e7eb !important;
-            box-shadow: none !important;
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 2.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #f3f4f6;
-        }
-
-        .form-actions button {
-            padding: 0.6rem 2rem;
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: 0.025em;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-
-        .form-actions button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .form-actions button:active {
-            transform: translateY(0);
-        }
-
-        @media (max-width: 640px) {
-            .form-grid {
-                grid-template-columns: 1fr;
+        /* --- DESKTOP STYLES (Screen > 768px) --- */
+        @media (min-width: 769px) {
+            #maintenance-form-wrapper .mobile-only-el {
+                display: none !important;
             }
 
-            form {
-                margin: 20px;
+            #maintenance-form-wrapper .desktop-only-el {
+                display: flex !important;
+            }
+
+            #maintenance-form-wrapper .maint-glow-orb {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(80px);
+                pointer-events: none;
+                z-index: 0;
+                opacity: 0.35;
+            }
+
+            #maintenance-form-wrapper .maint-glow-1 {
+                top: -20px;
+                left: 15%;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, rgba(245, 158, 11, 0.22) 0%, transparent 70%);
+            }
+
+            #maintenance-form-wrapper .maint-glow-2 {
+                bottom: 20px;
+                right: 10%;
+                width: 320px;
+                height: 320px;
+                background: radial-gradient(circle, rgba(234, 88, 12, 0.18) 0%, transparent 70%);
+            }
+
+            #maintenance-form-wrapper .maint-header-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(226, 232, 240, 0.9);
+                border-radius: 18px;
+                padding: 1rem 1.5rem;
+                margin-bottom: 1.25rem;
+                box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
+                position: relative;
+                z-index: 1;
+                animation: maintSlideDown 0.4s ease-out forwards;
+            }
+
+            #maintenance-form-wrapper .maint-header-left {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+
+            #maintenance-form-wrapper .maint-icon-badge {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffffff;
+                font-size: 1.3rem;
+                box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+                flex-shrink: 0;
+            }
+
+            #maintenance-form-wrapper .maint-header-subtitle {
+                margin: 3px 0 0 0;
+                font-size: 0.85rem;
+                color: #64748b;
+            }
+
+            #maintenance-form-wrapper .maint-header-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 5px 14px;
+                background: rgba(245, 158, 11, 0.1);
+                color: #d97706;
+                border-radius: 999px;
+                font-size: 0.78rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            #maintenance-form-wrapper .maint-pulse-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background-color: #f59e0b;
+                box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+                animation: maintDotPulse 2s infinite;
+            }
+
+            #maintenance-form-wrapper .maint-main-form {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #maintenance-form-wrapper .maint-layout-grid {
+                display: grid;
+                grid-template-columns: 1.35fr 0.95fr;
+                gap: 1.75rem;
+                position: relative;
+                z-index: 1;
+                align-items: stretch;
+            }
+
+            #maintenance-form-wrapper .maint-form-card {
+                background: #ffffff;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 20px;
+                padding: 1.75rem 2rem;
+                box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
+                animation: maintCardFadeIn 0.4s ease-out forwards;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            #maintenance-form-wrapper .maint-section-divider {
+                display: flex;
+                align-items: center;
+                margin-bottom: 1rem;
+                padding-bottom: 0.4rem;
+                border-bottom: 1.5px solid #f1f5f9;
+            }
+
+            #maintenance-form-wrapper .maint-section-title {
+                font-size: 0.88rem;
+                font-weight: 800;
+                color: #334155;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            #maintenance-form-wrapper .maint-fields-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1.1rem 1.25rem !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-group {
+                display: flex !important;
+                flex-direction: column !important;
+                margin-bottom: 0 !important;
+            }
+
+            #maintenance-form-wrapper .maint-span-2 {
+                grid-column: span 2 !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-group label {
+                font-size: 0.85rem !important;
+                font-weight: 700 !important;
+                color: #1e293b !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                margin-bottom: 6px !important;
+                letter-spacing: -0.01em !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-icon {
+                color: #ea580c;
+                font-size: 0.85rem;
+            }
+
+            #maintenance-form-wrapper .maint-req {
+                color: #ef4444;
+                font-weight: bold;
+            }
+
+            #maintenance-form-wrapper .maint-field-group input,
+            #maintenance-form-wrapper .maint-field-group select {
+                width: 100% !important;
+                height: 46px !important;
+                padding: 0 16px !important;
+                font-size: 0.95rem !important;
+                font-weight: 500 !important;
+                color: #0f172a !important;
+                background-color: #ffffff !important;
+                border: 1.5px solid #cbd5e1 !important;
+                border-radius: 12px !important;
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                box-sizing: border-box !important;
+                appearance: none;
+            }
+
+            #maintenance-form-wrapper .input-readonly,
+            #maintenance-form-wrapper input[readonly],
+            #maintenance-form-wrapper input:disabled,
+            #maintenance-form-wrapper select:disabled {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+                -webkit-text-fill-color: #0f172a !important;
+                font-weight: 700 !important;
+                border: 1.5px solid #cbd5e1 !important;
+                cursor: not-allowed !important;
+                opacity: 1 !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a3 3 0 0 0-3 3v2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3zm1 5V4a1 1 0 0 0-2 0v2h2z'/%3E%3C/svg%3E") !important;
+                background-repeat: no-repeat !important;
+                background-position: right 14px center !important;
+                background-size: 14px 14px !important;
+                padding-right: 38px !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-group select {
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+                background-position: right 0.85rem center !important;
+                background-repeat: no-repeat !important;
+                background-size: 1.1em 1.1em !important;
+                padding-right: 2.4rem !important;
+                cursor: pointer;
+            }
+
+            #maintenance-form-wrapper .maint-field-group input:hover:not([readonly]):not([disabled]),
+            #maintenance-form-wrapper .maint-field-group select:hover:not([readonly]):not([disabled]) {
+                border-color: #94a3b8 !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-group input:focus:not([readonly]):not([disabled]),
+            #maintenance-form-wrapper .maint-field-group select:focus:not([readonly]):not([disabled]) {
+                background-color: #ffffff !important;
+                border-color: #ea580c !important;
+                outline: none !important;
+                box-shadow: 0 0 0 3.5px rgba(234, 88, 12, 0.16) !important;
+            }
+
+            #maintenance-form-wrapper .maint-photo-upload-wrap {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            #maintenance-form-wrapper .maint-photo-upload-wrap input[type="file"] {
+                padding: 10px 14px !important;
+                height: auto !important;
+                border: 1.5px dashed #cbd5e1 !important;
+                background: #f8fafc !important;
+                border-radius: 12px !important;
+                cursor: pointer;
+            }
+
+            #maintenance-form-wrapper .maint-photo-preview-box {
+                position: relative;
+                display: inline-block;
+                max-width: 140px;
+            }
+
+            #maintenance-form-wrapper .maint-photo-preview-box img {
+                width: 100%;
+                height: 90px;
+                object-fit: cover;
+                border-radius: 10px;
+                border: 1.5px solid #e2e8f0;
+            }
+
+            #maintenance-form-wrapper .maint-photo-preview-badge {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                background: #10b981;
+                color: #ffffff;
+                font-size: 0.65rem;
+                font-weight: 700;
+                padding: 2px 6px;
+                border-radius: 4px;
+            }
+
+            #maintenance-form-wrapper .maint-form-actions {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 1.5rem !important;
+                margin-top: 1.75rem !important;
+                padding-top: 1.5rem !important;
+                border-top: 1.5px dashed #f1f5f9 !important;
+            }
+
+            #maintenance-form-wrapper .maint-btn-cancel {
+                padding: 0.65rem 2.2rem !important;
+                font-size: 0.95rem !important;
+                font-weight: 700 !important;
+                background: #dc2626 !important;
+                border: none !important;
+                color: #ffffff !important;
+                border-radius: 9999px !important;
+                box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35) !important;
+                transition: all 0.2s ease !important;
+                cursor: pointer !important;
+            }
+
+            #maintenance-form-wrapper .maint-btn-cancel:hover {
+                background: #b91c1c !important;
+                transform: translateY(-2px) !important;
+                box-shadow: 0 6px 18px rgba(220, 38, 38, 0.45) !important;
+                color: #ffffff !important;
+            }
+
+            #maintenance-form-wrapper .maint-btn-submit {
+                position: relative;
+                overflow: hidden;
+                padding: 0.65rem 2.4rem !important;
+                font-size: 0.95rem !important;
+                font-weight: 700 !important;
+                background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%) !important;
+                border: none !important;
+                color: #ffffff !important;
+                border-radius: 9999px !important;
+                box-shadow: 0 6px 20px -4px rgba(234, 88, 12, 0.4) !important;
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                cursor: pointer !important;
+            }
+
+            #maintenance-form-wrapper .maint-btn-submit:hover {
+                transform: translateY(-2px) !important;
+                color: #ffffff !important;
+                box-shadow: 0 8px 25px -4px rgba(234, 88, 12, 0.5) !important;
+            }
+
+            #maintenance-form-wrapper .maint-shine {
+                position: absolute;
+                top: -50%;
+                left: -60%;
+                width: 40%;
+                height: 200%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+                transform: rotate(25deg);
+                animation: maintShineSweep 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* Preview Badge Column */
+            #maintenance-form-wrapper .maint-preview-column {
+                display: flex !important;
+                flex-direction: column !important;
+                animation: maintCardFadeIn 0.5s ease-out forwards;
+            }
+
+            #maintenance-form-wrapper .maint-badge-card {
+                position: relative;
+                height: 100%;
+                background: linear-gradient(145deg, #0f172a 0%, #1c1917 100%);
+                border-radius: 20px;
                 padding: 1.5rem;
+                color: #ffffff;
+                box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.35);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
+
+            #maintenance-form-wrapper .maint-badge-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                z-index: 1;
+            }
+
+            #maintenance-form-wrapper .maint-badge-tag {
+                font-size: 0.72rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: #fdba74;
+                background: rgba(253, 186, 116, 0.12);
+                padding: 4px 10px;
+                border-radius: 6px;
+                border: 1px solid rgba(253, 186, 116, 0.25);
+            }
+
+            #maintenance-form-wrapper .maint-badge-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                padding: 4px 12px;
+                border-radius: 999px;
+                color: #fbbf24;
+                background: rgba(245, 158, 11, 0.15);
+                border: 1px solid rgba(245, 158, 11, 0.35);
+            }
+
+            #maintenance-form-wrapper .maint-status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #f59e0b;
+                box-shadow: 0 0 8px #f59e0b;
+            }
+
+            #maintenance-form-wrapper .maint-avatar-box {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 1.25rem 0;
+                z-index: 1;
+            }
+
+            #maintenance-form-wrapper .maint-avatar-halo {
+                position: absolute;
+                width: 110px;
+                height: 110px;
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(234, 88, 12, 0.4) 0%, transparent 70%);
+                filter: blur(14px);
+                z-index: 0;
+            }
+
+            #maintenance-form-wrapper .maint-avatar-circle {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
+                box-shadow: 0 0 30px rgba(234, 88, 12, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffffff;
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+                z-index: 1;
+            }
+
+            #maintenance-form-wrapper .maint-id-pill {
+                font-size: 1.1rem;
+                font-weight: 800;
+                letter-spacing: 0.05em;
+                color: #fed7aa;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                padding: 4px 18px;
+                border-radius: 10px;
+                backdrop-filter: blur(8px);
+                z-index: 1;
+            }
+
+            #maintenance-form-wrapper .maint-details-box {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 14px;
+                padding: 1rem 1.25rem;
+                backdrop-filter: blur(12px);
+                z-index: 1;
+            }
+
+            #maintenance-form-wrapper .maint-preview-name {
+                font-size: 1.15rem;
+                font-weight: 800;
+                color: #ffffff;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #maintenance-form-wrapper .maint-preview-brand {
+                font-size: 0.82rem;
+                color: #fb923c;
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+            }
+
+            #maintenance-form-wrapper .maint-meta-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                padding-top: 8px;
+            }
+
+            #maintenance-form-wrapper .maint-meta-item {
+                display: flex;
+                flex-direction: column;
+            }
+
+            #maintenance-form-wrapper .maint-meta-label {
+                font-size: 0.68rem;
+                color: #a8a29e;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                margin-bottom: 2px;
+            }
+
+            #maintenance-form-wrapper .maint-meta-val {
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: #f5f5f4;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        /* --- MOBILE STYLES (Screen <= 768px) --- */
+        @media (max-width: 768px) {
+            #maintenance-form-wrapper {
+                padding: 0 4px 2rem 4px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            #maintenance-form-wrapper .desktop-only-el {
+                display: none !important;
+            }
+
+            #maintenance-form-wrapper .mobile-only-el {
+                display: block !important;
+            }
+
+            #maintenance-form-wrapper .maint-mobile-header {
+                margin-bottom: 1rem !important;
+                text-align: center !important;
+            }
+
+            #maintenance-form-wrapper .maint-mobile-header h2 {
+                font-size: 1.5rem !important;
+                font-weight: 800 !important;
+                color: #0f172a !important;
+                margin: 0 !important;
+            }
+
+            #maintenance-form-wrapper .maint-layout-grid {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            #maintenance-form-wrapper .maint-form-card {
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+
+            #maintenance-form-wrapper .maint-section-divider {
+                display: flex;
+                align-items: center;
+                margin: 1.25rem 0 0.75rem 0;
+                padding-bottom: 0.4rem;
+                border-bottom: 1.5px solid #e2e8f0;
+            }
+
+            #maintenance-form-wrapper .maint-section-title {
+                font-size: 0.85rem;
+                font-weight: 800;
+                color: #475569;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            #maintenance-form-wrapper .maint-fields-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 14px !important;
+                width: 100% !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-group {
+                background: #ffffff !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 20px !important;
+                padding: 16px 18px !important;
+                box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+                margin-bottom: 0 !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-group label {
+                font-size: 0.78rem !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.06em !important;
+                color: #475569 !important;
+                margin-bottom: 8px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+            }
+
+            #maintenance-form-wrapper .maint-field-group input,
+            #maintenance-form-wrapper .maint-field-group select {
+                width: 100% !important;
+                box-sizing: border-box !important;
+                height: 48px !important;
+                border-radius: 14px !important;
+                background-color: #f8fafc !important;
+                border: 1.5px solid #cbd5e1 !important;
+                padding: 0 16px !important;
+                font-size: 16px !important;
+                font-weight: 600 !important;
+                color: #0f172a !important;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+            }
+
+            #maintenance-form-wrapper .input-readonly,
+            #maintenance-form-wrapper input[readonly],
+            #maintenance-form-wrapper input:disabled,
+            #maintenance-form-wrapper select:disabled {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+                -webkit-text-fill-color: #0f172a !important;
+                font-weight: 700 !important;
+                border: 1.5px solid #cbd5e1 !important;
+                cursor: not-allowed !important;
+                opacity: 1 !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a3 3 0 0 0-3 3v2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3zm1 5V4a1 1 0 0 0-2 0v2h2z'/%3E%3C/svg%3E") !important;
+                background-repeat: no-repeat !important;
+                background-position: right 14px center !important;
+                background-size: 14px 14px !important;
+                padding-right: 38px !important;
+            }
+
+            #maintenance-form-wrapper .maint-photo-upload-wrap input[type="file"] {
+                padding: 10px !important;
+                height: auto !important;
+                border-radius: 12px !important;
+                background: #ffffff !important;
+                border: 1.5px dashed #cbd5e1 !important;
+            }
+
+            #maintenance-form-wrapper .maint-form-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 12px !important;
+                margin-top: 24px !important;
+                padding-top: 18px !important;
+                border-top: 1px solid #f1f5f9 !important;
+            }
+
+            #maintenance-form-wrapper .maint-btn-cancel,
+            #maintenance-form-wrapper .maint-btn-submit {
+                flex: 1 1 0 !important;
+                width: 100% !important;
+                height: 50px !important;
+                font-size: 16px !important;
+                font-weight: 700 !important;
+                border-radius: 9999px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border: none !important;
+                color: #ffffff !important;
+            }
+
+            #maintenance-form-wrapper .maint-btn-cancel {
+                background: #dc2626 !important;
+            }
+
+            #maintenance-form-wrapper .maint-btn-submit {
+                background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%) !important;
+            }
+        }
+
+        /* Animations */
+        @keyframes maintSlideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes maintCardFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes maintDotPulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        @keyframes maintShineSweep {
+            0% { left: -60%; }
+            20%, 100% { left: 140%; }
         }
     </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const detailsSelect = document.querySelector('select[name="Details"]');
+            const dateInput = document.getElementById('maint_date');
+            const reasonSelect = document.getElementById('maint_reason_select');
             const otherInput = document.getElementById('OtherDetails');
+            const photoInput = document.getElementById('maint_photo');
 
-            if (detailsSelect && otherInput) {
-                detailsSelect.addEventListener('change', function () {
-                    if (this.value) {
-                        otherInput.placeholder = 'Specify additional details regarding ' + this.value + ' (if any)...';
+            const pDate = document.getElementById('preview-maint-date');
+            const pReason = document.getElementById('preview-maint-reason');
+            const pPhotoImg = document.getElementById('preview-maint-uploaded-img');
+            const pIcon = document.getElementById('preview-maint-icon');
+
+            function syncMaintenancePreview() {
+                if (pDate && dateInput) {
+                    pDate.textContent = dateInput.value || '<?= esc_js($dateValue) ?>';
+                }
+                if (pReason) {
+                    let sel = (reasonSelect && reasonSelect.selectedIndex > 0) ? reasonSelect.options[reasonSelect.selectedIndex].text : '';
+                    let oth = (otherInput ? otherInput.value.trim() : '');
+                    if (sel && oth) {
+                        pReason.textContent = sel + ' - ' + oth;
+                    } else if (oth) {
+                        pReason.textContent = oth;
+                    } else if (sel) {
+                        pReason.textContent = sel;
                     } else {
-                        otherInput.placeholder = 'Specify additional details or custom reason...';
+                        pReason.textContent = 'Select or enter reason';
+                    }
+                }
+            }
+
+            if (reasonSelect) {
+                reasonSelect.addEventListener('change', function () {
+                    if (otherInput) {
+                        if (this.value === 'Other Issue') {
+                            otherInput.placeholder = 'Please specify the custom maintenance issue details...';
+                            otherInput.focus();
+                        } else if (this.value) {
+                            otherInput.placeholder = 'Specify additional details regarding ' + this.value + ' (optional)...';
+                        } else {
+                            otherInput.placeholder = 'Specify additional diagnostic notes or custom reason...';
+                        }
+                    }
+                    syncMaintenancePreview();
+                });
+            }
+
+            if (otherInput) otherInput.addEventListener('input', syncMaintenancePreview);
+            if (dateInput) dateInput.addEventListener('change', syncMaintenancePreview);
+
+            if (photoInput) {
+                photoInput.addEventListener('change', function () {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const prevWrap = document.getElementById('maint_photo_preview_box');
+                            const prevImg = document.getElementById('maint_photo_img');
+                            if (prevWrap && prevImg) {
+                                prevImg.src = e.target.result;
+                                prevWrap.style.display = 'inline-block';
+                            }
+                            if (pPhotoImg && pIcon) {
+                                pPhotoImg.src = e.target.result;
+                                pPhotoImg.style.display = 'block';
+                                pIcon.style.display = 'none';
+                            }
+                        };
+                        reader.readAsDataURL(this.files[0]);
                     }
                 });
             }
+
+            syncMaintenancePreview();
         });
     </script>
 
     <?php
     return ob_get_clean();
 }
+
 add_shortcode('form_maintenance', 'form_maintenance');

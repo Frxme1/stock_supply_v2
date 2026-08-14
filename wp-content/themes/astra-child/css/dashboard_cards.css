@@ -60,14 +60,14 @@
     background: var(--dc-bg);
     border: 1px solid var(--dc-border);
     border-radius: var(--dc-radius);
-    padding: 1.5rem;
+    padding: 1.25rem 1.5rem;
     box-shadow: var(--dc-shadow);
-    transition: box-shadow 0.28s ease, transform 0.28s ease, border-color 0.28s ease;
+    transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
     position: relative;
     overflow: hidden;
 }
 
-/* Top accent line — subtle gradient that brightens on hover */
+/* Top accent line */
 .next-card::before {
     content: '';
     position: absolute;
@@ -75,20 +75,20 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.0), transparent);
+    background: transparent;
     border-radius: var(--dc-radius) var(--dc-radius) 0 0;
-    transition: background 0.35s ease;
+    transition: background 0.15s ease;
     pointer-events: none;
 }
 
 .next-card:hover {
-    border-color: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.25);
     box-shadow: var(--dc-shadow-hover);
-    transform: translateY(-5px);
+    transform: translateY(-2px);
 }
 
 .next-card:hover::before {
-    background: linear-gradient(90deg, transparent 10%, rgba(99, 102, 241, 0.55) 50%, transparent 90%);
+    background: linear-gradient(90deg, transparent 10%, rgba(99, 102, 241, 0.6) 50%, transparent 90%);
 }
 
 /* Clickable cards */
@@ -97,7 +97,7 @@
 }
 
 .clickable-card:active {
-    transform: translateY(-2px) scale(0.99);
+    transform: translateY(0) scale(0.99);
 }
 
 /* ============================================================
@@ -540,5 +540,127 @@
 
     .next-legend-wrap {
         width: 100%;
+    }
+}
+
+/* ============================================================
+   DESKTOP LUXURY ENHANCEMENTS & MICRO-ANIMATIONS (Screen >= 769px)
+   ============================================================ */
+@media (min-width: 769px) {
+    .next-card {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.85);
+        border-radius: 18px;
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Light Beam Shine Effect on Hover */
+    .next-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -120%;
+        width: 80%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), rgba(99, 102, 241, 0.08), transparent);
+        transform: skewX(-25deg);
+        transition: all 0.75s ease;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .next-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 38px -8px rgba(99, 102, 241, 0.14), 0 6px 16px -2px rgba(15, 23, 42, 0.05);
+        border-color: rgba(99, 102, 241, 0.28);
+    }
+
+    .next-card:hover::after {
+        left: 160%;
+    }
+
+    .next-card:hover .next-number,
+    .next-card:hover .next-number-md {
+        transform: scale(1.02);
+    }
+
+    .next-card .next-number,
+    .next-card .next-number-md {
+        display: inline-block;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .next-icon-wrapper {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+    }
+
+    .next-card:hover .next-icon-wrapper {
+        transform: scale(1.15) rotate(-6deg);
+        box-shadow: 0 8px 22px rgba(99, 102, 241, 0.22);
+    }
+
+    .next-icon-wrapper-sm {
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+    }
+
+    .next-card:hover .next-icon-wrapper-sm {
+        transform: scale(1.18);
+    }
+
+    /* Radar ring effect for desktop status dot */
+    .next-status-dot {
+        position: relative;
+    }
+
+    .next-status-dot::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        border-radius: 50%;
+        background: inherit;
+        opacity: 0.4;
+        animation: radarRing 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes radarRing {
+        0% {
+            transform: scale(0.9);
+            opacity: 0.7;
+        }
+        70% {
+            transform: scale(2.2);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(2.4);
+            opacity: 0;
+        }
+    }
+
+    /* Stock Monitor Desktop Cards */
+    .stock-category-card {
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease !important;
+    }
+
+    .stock-category-card:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 16px 32px -6px rgba(15, 23, 42, 0.09) !important;
+        border-color: var(--card-accent) !important;
+    }
+
+    .stock-refresh-btn {
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .stock-refresh-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 18px rgba(99, 102, 241, 0.25) !important;
     }
 }

@@ -294,7 +294,7 @@ function handle_device_actions()
                         'Owner'       => $owner_nickname ?? '-'
                     ]);
 
-                    // ส่งอีเมลแจ้งเตือน
+                    // Send email notification
                     if (function_exists('stock_supply_send_email') && $device_info->OwnerID) {
                         stock_supply_send_email('Return', $device_id, $device_info->OwnerID);
                     }
@@ -365,7 +365,7 @@ function handle_device_actions()
                 ['DeviceID' => $device_id]
             );
 
-            // เพิ่มข้อมูลลง History_new ถ้าอัปเดตผ่าน
+            // Insert into History_new if update succeeded
             if ($updated !== false) {
                 $owner_nickname = null;
                 if (!empty($device_info->OwnerID)) {
@@ -375,7 +375,7 @@ function handle_device_actions()
                     ));
                 }
 
-                // fallback หากไม่มีค่า (เนื่องจาก NOT NULL)
+                // Fallback if missing (due to NOT NULL constraint)
                     $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : null;
                 $safe_owner       = $owner_nickname ?? '-';
 
@@ -469,7 +469,7 @@ function handle_device_actions()
                         ['DeviceID' => $device_id]
                     );
 
-                    // ส่งอีเมลแจ้งเตือน
+                    // Send email notification
                     if (function_exists('stock_supply_send_email')) {
                         stock_supply_send_email('Return_to_Owner', $device_id, $device_info->OwnerID);
                     }
@@ -518,14 +518,14 @@ function handle_device_actions()
         $retired_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Retired'");
 
         if ($retired_status_id) {
-            // ดึงข้อมูล Device
+            // Fetch Device info
             $device_info = $wpdb->get_row($wpdb->prepare(
                 "SELECT OwnerID, CategoryID FROM $table_devices WHERE DeviceID = %s",
                 $device_id
             ));
 
             if ($device_info) {
-                // อัปเดตสถานะเป็น Retired
+                // Update status to Retired
                 $update_data = [
                     'StatusID'     => $retired_status_id,
                     'OwnerID'      => null,
@@ -539,7 +539,7 @@ function handle_device_actions()
                 $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
 
                 if ($updated !== false) {
-                    // เตรียมข้อมูล History
+                    // Prepare History data
                     $owner_nickname = null;
                     if (!empty($device_info->OwnerID)) {
                         $owner_nickname = $wpdb->get_var($wpdb->prepare(
@@ -551,7 +551,7 @@ function handle_device_actions()
                     $current_user = wp_get_current_user();
                     $user_email = $current_user->user_email ?? 'unknown@domain.com';
 
-                    // fallback ค่าที่จำเป็น (เพราะ NOT NULL)
+                    // Fallback value if required (due to NOT NULL)
                         $safe_category_id = !empty($device_info->CategoryID) ? $device_info->CategoryID : null;
                     $safe_owner       = $owner_nickname ?? '-';
 
@@ -609,7 +609,7 @@ function handle_device_actions()
             }
         }
 
-        // กรณีล้มเหลว
+        // Failure case
         echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
         echo "<script>
         Swal.fire({
@@ -629,14 +629,14 @@ function handle_device_actions()
         $lost_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Lost'");
 
         if ($lost_status_id) {
-            // ดึงข้อมูล Device
+            // Fetch Device info
             $device_info = $wpdb->get_row($wpdb->prepare(
                 "SELECT OwnerID, CategoryID FROM $table_devices WHERE DeviceID = %s",
                 $device_id
             ));
 
             if ($device_info) {
-                // อัปเดตสถานะเป็น Lost
+                // Update status to Lost
                 $update_data = [
                     'StatusID'     => $lost_status_id,
                     'OwnerID'      => null,
@@ -650,7 +650,7 @@ function handle_device_actions()
                 $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
 
                 if ($updated !== false) {
-                    // เตรียมข้อมูล History
+                    // Prepare History data
                     $owner_nickname = null;
                     if (!empty($device_info->OwnerID)) {
                         $owner_nickname = $wpdb->get_var($wpdb->prepare(

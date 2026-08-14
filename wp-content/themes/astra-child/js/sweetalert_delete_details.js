@@ -7,7 +7,7 @@ function confirmDeleteHis(HistoryID, nonce) {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed && HistoryID) {
-            // แปลง URL ปัจจุบันโดยไม่ล้าง query อื่น ๆ
+            // Convert current URL without clearing other query parameters
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('delete', HistoryID);
             if (nonce) {

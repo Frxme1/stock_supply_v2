@@ -40,24 +40,30 @@ define('CHILD_THEME_ASTRA_CHILD_VERSION', '1.0.0');
 // Enqueue styles
 function child_enqueue_styles()
 {
-    wp_enqueue_style('astra-child-theme-css', get_stylesheet_directory_uri() . '/style.css', array('astra-theme-css'), filemtime(get_stylesheet_directory() . '/style.css'), 'all');
-    wp_enqueue_script('aos-global', get_stylesheet_directory_uri() . '/js/aos_global.js', [], filemtime(get_stylesheet_directory() . '/js/aos_global.js'), true);
+    $theme_dir = get_stylesheet_directory();
+    $theme_uri = get_stylesheet_directory_uri();
+
+    wp_enqueue_style('astra-child-theme-css', $theme_uri . '/style.css', array('astra-theme-css'), file_exists($theme_dir . '/style.css') ? filemtime($theme_dir . '/style.css') : CHILD_THEME_ASTRA_CHILD_VERSION, 'all');
 
     // Enqueue mobile app CSS
-    $mobile_css_path = get_stylesheet_directory() . '/css/mobile_app.css';
-    $mobile_css_version = file_exists($mobile_css_path) ? filemtime($mobile_css_path) : '1.0';
-    wp_enqueue_style('mobile-app-css', get_stylesheet_directory_uri() . '/css/mobile_app.css', array(), $mobile_css_version, 'all');
+    $mobile_css_path = $theme_dir . '/css/mobile_app.css';
+    $mobile_css_version = file_exists($mobile_css_path) ? filemtime($mobile_css_path) : CHILD_THEME_ASTRA_CHILD_VERSION;
+    wp_enqueue_style('mobile-app-css', $theme_uri . '/css/mobile_app.css', array(), $mobile_css_version, 'all');
 
     // Enqueue AJAX Filter & Reset JS
-    $ajax_js_path = get_stylesheet_directory() . '/js/ajax_filter_reset.js';
-    wp_enqueue_script('ajax-filter-reset', get_stylesheet_directory_uri() . '/js/ajax_filter_reset.js', array(), time(), true);
+    $ajax_js_path = $theme_dir . '/js/ajax_filter_reset.js';
+    $ajax_js_version = file_exists($ajax_js_path) ? filemtime($ajax_js_path) : CHILD_THEME_ASTRA_CHILD_VERSION;
+    wp_enqueue_script('ajax-filter-reset', $theme_uri . '/js/ajax_filter_reset.js', array('jquery'), $ajax_js_version, true);
 
     // Enqueue Device Timeline CSS and JS globally
-    wp_enqueue_style('device-timeline-css', get_stylesheet_directory_uri() . '/css/device_timeline.css', array(), time(), 'all');
-    wp_enqueue_script('device-timeline-js', get_stylesheet_directory_uri() . '/js/device_timeline.js', array(), time(), true);
+    $dtl_css_path = $theme_dir . '/css/device_timeline.css';
+    $dtl_js_path  = $theme_dir . '/js/device_timeline.js';
+    wp_enqueue_style('device-timeline-css', $theme_uri . '/css/device_timeline.css', array(), file_exists($dtl_css_path) ? filemtime($dtl_css_path) : CHILD_THEME_ASTRA_CHILD_VERSION, 'all');
+    wp_enqueue_script('device-timeline-js', $theme_uri . '/js/device_timeline.js', array('jquery'), file_exists($dtl_js_path) ? filemtime($dtl_js_path) : CHILD_THEME_ASTRA_CHILD_VERSION, true);
 
     // Enqueue Mobile Load More JS
-    wp_enqueue_script('mobile-load-more-js', get_stylesheet_directory_uri() . '/js/mobile_load_more.js', array(), time(), true);
+    $mlm_js_path = $theme_dir . '/js/mobile_load_more.js';
+    wp_enqueue_script('mobile-load-more-js', $theme_uri . '/js/mobile_load_more.js', array('jquery'), file_exists($mlm_js_path) ? filemtime($mlm_js_path) : CHILD_THEME_ASTRA_CHILD_VERSION, true);
 }
 add_action('wp_enqueue_scripts', 'child_enqueue_styles', 15);
 
@@ -89,7 +95,7 @@ function add_pwa_service_worker()
 }
 add_action('wp_footer', 'add_pwa_service_worker');
 if (has_post_thumbnail()) {
-    the_post_thumbnail('full'); // หรือขนาดอื่น ๆ เช่น 'medium', 'large'
+    the_post_thumbnail('full'); // Or other sizes like 'medium', 'large'
 }
 
 
@@ -489,7 +495,8 @@ function enqueue_action_menu_styles()
 add_action('wp_enqueue_scripts', 'enqueue_action_menu_styles');
 
 
-// Particles Background Component
+// Particles Background Component (Disabled for performance optimization)
+/*
 function enqueue_particles_background()
 {
     wp_enqueue_script(
@@ -501,6 +508,7 @@ function enqueue_particles_background()
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_particles_background');
+*/
 
 // Animated Dropdown Component
 function enqueue_animated_dropdown()
@@ -620,7 +628,6 @@ function load_sweetalert_delete_details_script()
     }
     wp_enqueue_script('sweetalert_delete_details', get_stylesheet_directory_uri() . '/js/sweetalert_delete_details.js', array('sweetalert2'), null, true);
     wp_enqueue_script('sweetalert_retire', get_stylesheet_directory_uri() . '/js/sweetalert_retire.js', array('sweetalert2'), '1.1', true);
-    wp_enqueue_script('ajax_filter_reset', get_stylesheet_directory_uri() . '/js/ajax_filter_reset.js', array(), time(), true);
 }
 add_action('wp_enqueue_scripts', 'load_sweetalert_delete_details_script');
 
@@ -674,7 +681,7 @@ add_filter('the_content', 'show_featured_image_before_content');
 
 //     foreach ( $meta_keys as $key ) {
 //         register_post_meta( 'post', $key, [
-//             'show_in_rest' => true,   // เปิดให้ REST API ใช้
+//             'show_in_rest' => true,   // Enable REST API access
 //             'single' => true,
 //             'type' => 'string',
 //         ]);
