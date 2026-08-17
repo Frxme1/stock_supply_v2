@@ -226,91 +226,14 @@
 
 
 
-    /* Aurora Background Effect */
-    :root {
-        --aurora-white: #ffffff;
-        --aurora-black: #000000;
-        --aurora-transparent: transparent;
-        --aurora-blue-500: #3b82f6;
-        --aurora-indigo-300: #a5b4fc;
-        --aurora-blue-300: #93c5fd;
-        --aurora-violet-200: #ddd6fe;
-        --aurora-blue-400: #60a5fa;
-    }
-
     body,
     .site,
     #page,
     #content,
     .site-content {
-        background-color: transparent !important;
-    }
-
-    .aurora-background {
-        position: fixed;
-        inset: 0;
-        overflow: hidden;
-        z-index: -1;
-        pointer-events: none;
-        background-color: #f8fafc;
-        /* base color */
-    }
-
-    .aurora-effect {
-        position: absolute;
-        inset: -10px;
-        opacity: 0.35;
-        will-change: transform;
-        --white-gradient: repeating-linear-gradient(100deg, var(--aurora-white) 0%, var(--aurora-white) 7%, var(--aurora-transparent) 10%, var(--aurora-transparent) 12%, var(--aurora-white) 16%);
-        --dark-gradient: repeating-linear-gradient(100deg, var(--aurora-black) 0%, var(--aurora-black) 7%, var(--aurora-transparent) 10%, var(--aurora-transparent) 12%, var(--aurora-black) 16%);
-        --aurora: repeating-linear-gradient(100deg, var(--aurora-blue-500) 10%, var(--aurora-indigo-300) 15%, var(--aurora-blue-300) 20%, var(--aurora-violet-200) 25%, var(--aurora-blue-400) 30%);
-
-        background-image: var(--white-gradient), var(--aurora);
-        background-size: 300% 200%;
-        background-position: 50% 50%, 50% 50%;
-        filter: blur(20px) invert(100%);
-        mask-image: radial-gradient(ellipse at 100% 0%, black 10%, var(--aurora-transparent) 70%);
-        -webkit-mask-image: radial-gradient(ellipse at 100% 0%, black 10%, var(--aurora-transparent) 70%);
-    }
-
-    .aurora-effect::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background-image: var(--white-gradient), var(--aurora);
-        background-size: 200% 100%;
-        animation: animate-aurora 60s linear infinite;
-        background-attachment: fixed;
-        mix-blend-mode: difference;
-    }
-
-    @keyframes animate-aurora {
-        from {
-            background-position: 50% 50%, 50% 50%;
-        }
-
-        to {
-            background-position: 350% 50%, 350% 50%;
-        }
-    }
-
-    body.dark-mode .aurora-background {
-        background-color: #18181b;
-    }
-
-    body.dark-mode .aurora-effect {
-        background-image: var(--dark-gradient), var(--aurora);
-        filter: blur(10px) invert(0%);
-    }
-
-    body.dark-mode .aurora-effect::after {
-        background-image: var(--dark-gradient), var(--aurora);
+        background-color: #f8fafc !important;
     }
 </style>
-
-<div class="aurora-background">
-    <div class="aurora-effect"></div>
-</div>
 
 </body>
 

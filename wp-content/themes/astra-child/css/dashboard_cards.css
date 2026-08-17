@@ -1,22 +1,19 @@
 /* ============================================================
-   SHARED DASHBOARD CARDS — Modern Light Theme
+   SHARED DASHBOARD CARDS — Modern Enterprise Theme
    Used by: device, laptop, monitor, accessories, maintenance dashboards
-   Design: Clean white surface + indigo-violet accent system
+   Design: Clean white surface + Slate & Royal Blue accent system
    ============================================================ */
 
-/* ---- Google Fonts ---- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 :root {
-    --dc-radius: 16px;
+    --dc-radius: 12px;
     --dc-bg: #ffffff;
-    --dc-border: rgba(99, 102, 241, 0.08);
-    --dc-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
-    --dc-shadow-hover: 0 8px 32px rgba(99, 102, 241, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+    --dc-border: #e2e8f0;
+    --dc-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --dc-shadow-hover: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
     --dc-gap: 1.25rem;
     --dc-text: #0f172a;
     --dc-text-sec: #475569;
-    --dc-text-muted: #94a3b8;
+    --dc-text-muted: #64748b;
     --dc-surface-muted: #f8fafc;
     --dc-progress-bg: #f1f5f9;
 }
@@ -25,7 +22,8 @@
    DASHBOARD WRAPPER
    ============================================================ */
 .next-dashboard {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Thonburi", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
     color: var(--dc-text);
     background: transparent !important;
     padding-bottom: 2rem;
@@ -662,5 +660,337 @@
     .stock-refresh-btn:hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px rgba(99, 102, 241, 0.25) !important;
+    }
+}
+
+/* ============================================================
+   HOME COMMAND DECK
+   Mobile-first shortcuts for field work. Scoped to /home only.
+   ============================================================ */
+.home-dashboard {
+    --home-surface: #f6f8fb;
+    --home-text: #0f172a;
+    --home-muted: #64748b;
+    --home-border: #e2e8f0;
+}
+
+.home-command-deck {
+    display: none;
+    margin-bottom: 1.5rem;
+}
+
+.home-command-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.home-command-eyebrow {
+    margin: 0 0 0.25rem;
+    color: #4f46e5;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.home-command-heading h1,
+.home-dashboard-section-heading h2 {
+    margin: 0;
+    color: var(--home-text);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.home-command-heading h1 {
+    font-size: clamp(1.45rem, 4vw, 2rem);
+    line-height: 1.1;
+}
+
+.home-command-subtitle {
+    margin: 0.4rem 0 0;
+    color: var(--home-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.home-command-context {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    place-items: center;
+    border: 1px solid #dbe3ff;
+    border-radius: 14px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 1rem;
+}
+
+.home-command-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.home-command-card {
+    position: relative;
+    display: grid;
+    min-height: 104px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    overflow: hidden;
+    padding: 1rem;
+    border: 1px solid var(--home-border);
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.035);
+    color: var(--home-text);
+    text-decoration: none;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.home-command-card::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background: var(--command-accent);
+    content: '';
+}
+
+.home-command-card:hover {
+    border-color: var(--command-accent);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    color: var(--home-text);
+    transform: translateY(-2px);
+}
+
+.home-command-card:active {
+    transform: translateY(0);
+}
+
+.home-command-card:focus-visible {
+    outline: 3px solid rgba(79, 70, 229, 0.28);
+    outline-offset: 3px;
+}
+
+.home-command-card__icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--command-icon-bg);
+    color: var(--command-accent);
+    font-size: 1rem;
+}
+
+.home-command-card__copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.25rem;
+}
+
+.home-command-card__label,
+.home-command-card__description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-command-card__label {
+    font-size: 0.92rem;
+    font-weight: 750;
+    line-height: 1.25;
+}
+
+.home-command-card__description {
+    color: var(--home-muted);
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+.home-command-card__arrow {
+    align-self: start;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    transition: transform 180ms ease, color 180ms ease;
+}
+
+.home-command-card:hover .home-command-card__arrow {
+    color: var(--command-accent);
+    transform: translate(2px, -2px);
+}
+
+.home-command-card__badge {
+    position: absolute;
+    top: 0.65rem;
+    right: 1.9rem;
+    min-width: 1.35rem;
+    padding: 0.2rem 0.35rem;
+    border-radius: 999px;
+    background: #fffbeb;
+    color: #b45309;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+}
+
+.home-command-card.is-primary {
+    --command-accent: #4f46e5;
+    --command-icon-bg: rgba(255, 255, 255, 0.16);
+    border-color: #4f46e5;
+    background: #4f46e5;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.2);
+}
+
+.home-command-card.is-primary:hover,
+.home-command-card.is-primary:focus-visible {
+    color: #ffffff;
+}
+
+.home-command-card.is-primary .home-command-card__description,
+.home-command-card.is-primary .home-command-card__arrow {
+    color: rgba(255, 255, 255, 0.76);
+}
+
+.home-command-card.is-primary:hover .home-command-card__arrow {
+    color: #ffffff;
+}
+
+.home-command-card.is-indigo {
+    --command-accent: #6366f1;
+    --command-icon-bg: #eef2ff;
+}
+
+.home-command-card.is-amber {
+    --command-accent: #d97706;
+    --command-icon-bg: #fffbeb;
+}
+
+.home-command-card.is-teal {
+    --command-accent: #0f766e;
+    --command-icon-bg: #f0fdfa;
+}
+
+.home-command-card.is-slate {
+    --command-accent: #475569;
+    --command-icon-bg: #f1f5f9;
+}
+
+.home-command-card.is-blue {
+    --command-accent: #2563eb;
+    --command-icon-bg: #eff6ff;
+}
+
+.home-dashboard-section-heading {
+    display: none;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 1.75rem 0 0.85rem;
+}
+
+.home-dashboard-section-heading h2 {
+    font-size: 1.05rem;
+    line-height: 1.25;
+}
+
+.home-dashboard-section-heading a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    color: #4f46e5;
+    font-size: 0.78rem;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.home-dashboard-section-heading a:hover {
+    color: #3730a3;
+}
+
+.home-dashboard-section-heading a:focus-visible {
+    border-radius: 6px;
+    outline: 3px solid rgba(79, 70, 229, 0.28);
+    outline-offset: 3px;
+}
+
+@media (max-width: 1024px) {
+    .home-command-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .home-dashboard {
+        background: var(--home-surface) !important;
+        border: 0;
+        border-radius: 0;
+        margin: 0 0 1rem;
+        padding: 1rem 0.75rem calc(5.5rem + env(safe-area-inset-bottom));
+    }
+
+    .home-command-deck {
+        display: block;
+    }
+
+    .home-command-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+    }
+
+    .home-command-card {
+        min-height: 98px;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.6rem;
+        padding: 0.85rem 0.75rem;
+    }
+
+    .home-command-card__icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    .home-command-card__label {
+        font-size: 0.84rem;
+    }
+
+    .home-command-card__description {
+        font-size: 0.7rem;
+    }
+
+    .home-command-card__arrow {
+        position: absolute;
+        right: 0.7rem;
+        bottom: 0.7rem;
+    }
+
+    .home-command-card__badge {
+        top: 0.55rem;
+        right: 0.7rem;
+    }
+
+    .home-dashboard-section-heading {
+        display: flex;
+        margin-top: 1.5rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-command-card,
+    .home-command-card__arrow {
+        transition: none;
     }
 }

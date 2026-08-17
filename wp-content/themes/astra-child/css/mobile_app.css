@@ -676,14 +676,13 @@
     #edit-employee-form {
         max-width: 100% !important;
         width: 100% !important;
-        margin-left: -20px !important;
+        margin: 14px 0 28px 0 !important;
+        padding: 24px 18px !important;
         box-sizing: border-box !important;
-        border-radius: 28px !important;
-        background: #f8fafc !important;
-        /* Matches Website Slate Theme */
-        border: 1.5px solid #e2e8f0 !important;
-        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08),
-            0 4px 14px rgba(0, 0, 0, 0.02) !important;
+        border-radius: 20px !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
     }
 
 

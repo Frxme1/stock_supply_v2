@@ -3,6 +3,33 @@ Theme Name: Astra Child
 Template: astra
 */
 
+/* ============================================================
+   Apple OS Typography (SF Pro / Apple System Font Stack)
+   ============================================================ */
+:root {
+    --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Thonburi", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-apple-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html,
+body,
+input,
+select,
+optgroup,
+textarea,
+button,
+.ast-container,
+.site-content,
+.entry-content,
+#primary,
+.next-dashboard,
+.table-wrapper {
+    font-family: var(--font-apple) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
 /* Custom Table Styles - Modern & Clear Global Override */
 
 /* Table Containers */

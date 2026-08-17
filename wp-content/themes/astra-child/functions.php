@@ -37,6 +37,26 @@ add_filter('body_class', function ($classes) {
 define('CHILD_THEME_ASTRA_CHILD_VERSION', '1.0.0');
 
 
+// Enqueue Google Fonts with high priority
+function stock_supply_enqueue_core_fonts()
+{
+    wp_enqueue_style(
+        'stock-supply-google-fonts',
+        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+        [],
+        null
+    );
+}
+add_action('wp_enqueue_scripts', 'stock_supply_enqueue_core_fonts', 5);
+
+// Font preconnect for faster rendering
+function stock_supply_add_font_preconnect()
+{
+    echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
+    echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+}
+add_action('wp_head', 'stock_supply_add_font_preconnect', 1);
+
 // Enqueue styles
 function child_enqueue_styles()
 {
@@ -57,7 +77,7 @@ function child_enqueue_styles()
 
     // Enqueue Device Timeline CSS and JS globally
     $dtl_css_path = $theme_dir . '/css/device_timeline.css';
-    $dtl_js_path  = $theme_dir . '/js/device_timeline.js';
+    $dtl_js_path = $theme_dir . '/js/device_timeline.js';
     wp_enqueue_style('device-timeline-css', $theme_uri . '/css/device_timeline.css', array(), file_exists($dtl_css_path) ? filemtime($dtl_css_path) : CHILD_THEME_ASTRA_CHILD_VERSION, 'all');
     wp_enqueue_script('device-timeline-js', $theme_uri . '/js/device_timeline.js', array('jquery'), file_exists($dtl_js_path) ? filemtime($dtl_js_path) : CHILD_THEME_ASTRA_CHILD_VERSION, true);
 
@@ -196,18 +216,6 @@ require_once get_stylesheet_directory() . '/view/formDevice.php';
 require_once get_stylesheet_directory() . '/view/formEmployee.php';
 require_once get_stylesheet_directory() . '/view/formMaintenance.php';
 require_once get_stylesheet_directory() . '/view/view_device_details.php';
-
-// require Models & Shortcodes
-require_once get_stylesheet_directory() . '/model/laptop/laptop.php';
-require_once get_stylesheet_directory() . '/model/monitor/monitor.php';
-require_once get_stylesheet_directory() . '/model/accessories/accessories.php';
-require_once get_stylesheet_directory() . '/model/maintenance/maintenance.php';
-require_once get_stylesheet_directory() . '/model/history/history.php';
-require_once get_stylesheet_directory() . '/model/employee/form_add_employee.php';
-require_once get_stylesheet_directory() . '/model/employee/form_edit_employee.php';
-require_once get_stylesheet_directory() . '/model/device/device_form_add.php';
-require_once get_stylesheet_directory() . '/model/device/edit-device.php';
-require_once get_stylesheet_directory() . '/model/device/receive-device.php';
 
 // Cleanup: Delete Quick Transfer page if it exists
 add_action('init', function () {
@@ -1646,17 +1654,33 @@ function stock_supply_ajax_get_employee_devices()
         ORDER BY c.CategoryName ASC, d.DeviceID ASC
     ", $owner_id));
 
-    // Also get owner info
-    $owner = $wpdb->get_row($wpdb->prepare(
-        "SELECT Nickname, FirstName, LastName FROM Owners WHERE OwnerID = %d",
-        $owner_id
-    ));
+    // Get comprehensive owner info
+    $owner = $wpdb->get_row($wpdb->prepare("
+        SELECT o.OwnerID, o.Nickname, o.FirstName, o.LastName, o.Email,
+               d.DepartmentName,
+               p.PositionName,
+               se.Status_name AS StatusName
+        FROM Owners o
+        LEFT JOIN Departments d ON o.DepartmentID = d.DepartmentID
+        LEFT JOIN Positions p   ON o.PositionID   = p.PositionID
+        LEFT JOIN Status_Employee se ON o.StatusID = se.StatusID
+        WHERE o.OwnerID = %d
+    ", $owner_id));
+
+    $full_name = $owner ? trim(($owner->FirstName ?? '') . ' ' . ($owner->LastName ?? '')) : '';
 
     wp_send_json_success([
         'devices' => $devices ?: [],
         'owner' => $owner ? [
-            'nickname' => $owner->Nickname,
-            'full_name' => trim($owner->FirstName . ' ' . $owner->LastName),
+            'owner_id' => $owner->OwnerID,
+            'nickname' => $owner->Nickname ?: '-',
+            'first_name' => $owner->FirstName ?: '',
+            'last_name' => $owner->LastName ?: '',
+            'full_name' => $full_name ?: ($owner->Nickname ?: '-'),
+            'email' => $owner->Email ?: '',
+            'department' => $owner->DepartmentName ?: '-',
+            'position' => $owner->PositionName ?: '-',
+            'status' => $owner->StatusName ?: 'Active',
         ] : null,
         'count' => count($devices ?: []),
     ]);
@@ -1664,7 +1688,7 @@ function stock_supply_ajax_get_employee_devices()
 add_action('wp_ajax_get_employee_devices', 'stock_supply_ajax_get_employee_devices');
 
 /**
- * AJAX: Offboard employee — unassign ALL devices and return to stock.
+ * AJAX: Offboard employee — unassign ALL devices, return to stock, and optionally mark employee as Resigned.
  */
 function stock_supply_ajax_offboard_employee()
 {
@@ -1675,23 +1699,25 @@ function stock_supply_ajax_offboard_employee()
 
     global $wpdb;
     $owner_id = isset($_POST['owner_id']) ? intval($_POST['owner_id']) : 0;
+    $set_resigned = !isset($_POST['set_resigned']) || $_POST['set_resigned'] === '1' || $_POST['set_resigned'] === 'true';
 
     if ($owner_id <= 0) {
         wp_send_json_error(['message' => 'Invalid Owner ID']);
     }
 
-    // Get available status
-    $available_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
-    if (!$available_status_id) {
-        wp_send_json_error(['message' => 'Available status not found in database']);
-    }
+    // Get available status ID for devices
+    $available_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'") ?: 1);
+
+    // Get resigned status ID for employee
+    $resigned_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Status_Employee WHERE LOWER(Status_name) = 'resigned'") ?: 2);
 
     // Get owner info for history
-    $owner_nickname = $wpdb->get_var($wpdb->prepare(
-        "SELECT Nickname FROM Owners WHERE OwnerID = %d",
+    $owner_info = $wpdb->get_row($wpdb->prepare(
+        "SELECT Nickname, FirstName, LastName FROM Owners WHERE OwnerID = %d",
         $owner_id
     ));
-    $safe_owner = $owner_nickname ?: '-';
+    $safe_owner = $owner_info ? ($owner_info->Nickname ?: '-') : '-';
+    $owner_fullname = $owner_info ? trim($owner_info->FirstName . ' ' . $owner_info->LastName) : '';
 
     // Get all devices assigned to this owner
     $devices = $wpdb->get_results($wpdb->prepare(
@@ -1699,17 +1725,52 @@ function stock_supply_ajax_offboard_employee()
         $owner_id
     ));
 
-    if (empty($devices)) {
-        wp_send_json_error(['message' => 'No devices found for this employee']);
-    }
-
     $current_user = wp_get_current_user();
-    $user_email = $current_user->user_email ?? 'unknown@domain.com';
-    $return_date = current_time('Y-m-d');
-    $success_count = 0;
-    $errors = [];
+    $user_email = $current_user->user_email ?? 'system';
 
     $wpdb->query('START TRANSACTION');
+
+    // Case 1: No devices currently assigned
+    if (empty($devices)) {
+        if ($set_resigned) {
+            $owner_updated = $wpdb->update(
+                'Owners',
+                ['StatusID' => $resigned_status_id],
+                ['OwnerID' => $owner_id]
+            );
+
+            if ($owner_updated !== false) {
+                $wpdb->insert('History_new', [
+                    'DeviceID' => 0,
+                    'Action' => 'Employee Resigned',
+                    'Date' => current_time('mysql'),
+                    'Description' => 'Employee resigned: ' . $safe_owner . ($owner_fullname ? ' (' . $owner_fullname . ')' : ''),
+                    'user_email' => $user_email,
+                    'CategoryID' => 1,
+                    'Owner' => $safe_owner,
+                ]);
+
+                $wpdb->query('COMMIT');
+                wp_send_json_success([
+                    'message' => "Employee '{$safe_owner}' has been marked as Resigned (0 devices assigned).",
+                    'success_count' => 0,
+                    'error_count' => 0,
+                    'error_ids' => [],
+                ]);
+            } else {
+                $wpdb->query('ROLLBACK');
+                wp_send_json_error(['message' => 'Failed to update employee status']);
+            }
+        } else {
+            $wpdb->query('ROLLBACK');
+            wp_send_json_error(['message' => 'No devices found for this employee']);
+        }
+        return;
+    }
+
+    // Case 2: Employee has 1+ devices
+    $success_count = 0;
+    $errors = [];
 
     foreach ($devices as $dev) {
         $updated = $wpdb->update(
@@ -1729,7 +1790,7 @@ function stock_supply_ajax_offboard_employee()
         );
 
         if ($updated !== false) {
-            $safe_category_id = !empty($dev->CategoryID) ? $dev->CategoryID : null;
+            $safe_category_id = !empty($dev->CategoryID) ? $dev->CategoryID : 1;
 
             $wpdb->insert('History_new', [
                 'DeviceID' => $dev->DeviceID,
@@ -1746,22 +1807,51 @@ function stock_supply_ajax_offboard_employee()
         }
     }
 
-    if ($success_count > 0 && empty($errors)) {
-        $wpdb->query('COMMIT');
-    } elseif ($success_count > 0) {
-        // Partial success — still commit what worked
-        $wpdb->query('COMMIT');
-    } else {
-        $wpdb->query('ROLLBACK');
-        wp_send_json_error(['message' => 'Failed to update any devices']);
+    if ($set_resigned) {
+        $owner_updated = $wpdb->update(
+            'Owners',
+            ['StatusID' => $resigned_status_id],
+            ['OwnerID' => $owner_id]
+        );
+
+        if ($owner_updated !== false) {
+            $wpdb->insert('History_new', [
+                'DeviceID' => 0,
+                'Action' => 'Employee Resigned',
+                'Date' => current_time('mysql'),
+                'Description' => 'Employee resigned: ' . $safe_owner . ($owner_fullname ? ' (' . $owner_fullname . ')' : ''),
+                'user_email' => $user_email,
+                'CategoryID' => 1,
+                'Owner' => $safe_owner,
+            ]);
+        } else {
+            $errors[] = 'owner_status';
+        }
     }
 
-    wp_send_json_success([
-        'message' => "Successfully returned {$success_count} device(s) to stock.",
-        'success_count' => $success_count,
-        'error_count' => count($errors),
-        'error_ids' => $errors,
-    ]);
+    if ($success_count > 0 && empty($errors)) {
+        $wpdb->query('COMMIT');
+        $msg = $set_resigned
+            ? "Successfully marked {$safe_owner} as Resigned and returned {$success_count} device(s) to stock."
+            : "Successfully returned {$success_count} device(s) to stock.";
+        wp_send_json_success([
+            'message' => $msg,
+            'success_count' => $success_count,
+            'error_count' => 0,
+            'error_ids' => [],
+        ]);
+    } elseif ($success_count > 0) {
+        $wpdb->query('COMMIT');
+        wp_send_json_success([
+            'message' => "Partially completed: returned {$success_count} device(s) to stock.",
+            'success_count' => $success_count,
+            'error_count' => count($errors),
+            'error_ids' => $errors,
+        ]);
+    } else {
+        $wpdb->query('ROLLBACK');
+        wp_send_json_error(['message' => 'Failed to offboard employee devices']);
+    }
 }
 add_action('wp_ajax_offboard_employee', 'stock_supply_ajax_offboard_employee');
 

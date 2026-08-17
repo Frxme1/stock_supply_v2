@@ -112,6 +112,12 @@ function form_owner()
 
 
 
+    // form add
+    if (isset($_GET['add'])) {
+        echo form_add_owner();
+        return;
+    }
+
     // form edit
     if (isset($_GET['edit'])) {
         $edit_id = sanitize_text_field($_GET['edit']);
@@ -210,28 +216,26 @@ function form_owner()
             }
 
             .btn-filter-cyan {
-                height: 38px;
-                background: #00a8ff !important;
+                background-color: #0f172a !important;
                 color: #ffffff !important;
-                font-weight: 700;
-                font-size: 0.875rem;
-                border: none;
-                border-radius: 8px;
-                padding: 0 18px;
+                border: none !important;
+                border-radius: 8px !important;
+                font-size: 0.85rem !important;
+                padding: 8px 16px !important;
+                font-weight: 600 !important;
+                transition: all 0.2s ease !important;
+                box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                gap: 6px;
-                box-shadow: 0 2px 6px rgba(0, 168, 255, 0.25);
-                transition: all 0.2s ease;
-                cursor: pointer;
-                text-decoration: none !important;
+                gap: 8px;
+                height: 40px !important;
             }
 
-            .btn-filter-cyan:hover {
-                background: #0097e6 !important;
-                color: #ffffff !important;
+            .btn-filter-modern:hover {
+                background-color: #1e293b !important;
                 transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2) !important;
             }
 
             .btn-reset-underline {
@@ -402,13 +406,13 @@ function form_owner()
                 $statusClass = (strcasecmp($row->Status, 'Active') === 0) ? 'status-available' : 'status-inuse';
                 ?>
                 <div class="mobile-device-card slide-up" style="background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    padding: 18px;
-    margin-bottom: 14px;
-    width: 110%;
-    margin-left: -20px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);">
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    width: 100%;
+    margin-left: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
                     <!-- Header: Nickname & Status -->
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                         <div>
@@ -684,26 +688,9 @@ function form_owner()
 
     <!-- Employee Action Scripts -->
     <script>
-        // Resign confirmation dialog
+        // Resign confirmation dialog - routes to offboardEmployee
         function confirmResign(ownerID, nickname, nonce) {
-            Swal.fire({
-                icon: 'warning',
-                title: '⚠️ Confirm Resignation?',
-                html: `<div style="text-align:center;">
-                    <p style="margin-bottom:8px;">Employee <strong style="color:#0f172a;">${nickname}</strong> status will be changed to <span style="color:#d97706;font-weight:700;">Resigned</span></p>
-                    <p style="color:#64748b; font-size:0.9rem;">All assigned devices will be automatically returned to Stock.<br>Employee record will remain in system (soft delete).</p>
-                </div>`,
-                showCancelButton: true,
-                confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> Confirm Resign',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#d97706',
-                cancelButtonColor: '#6b7280',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '?resign=' + ownerID + '&_wpnonce=' + nonce;
-                }
-            });
+            offboardEmployee(ownerID, nickname);
         }
 
         // Delete confirmation dialog
@@ -711,12 +698,12 @@ function form_owner()
             Swal.fire({
                 icon: 'error',
                 title: '🗑️ Permanently Delete Employee?',
-                html: `<p style="color:#64748b;">This action <strong style="color:#dc2626;">cannot be undone</strong>.<br>All employee data will be permanently removed.</p>`,
+                html: `<p style="color:#64748b; font-size:0.95rem;">This action <strong style="color:#dc2626;">cannot be undone</strong>.<br>All employee data will be permanently removed.</p>`,
                 showCancelButton: true,
                 confirmButtonText: '<i class="fa-solid fa-trash-can me-1"></i> Delete Permanently',
                 cancelButtonText: 'Cancel',
                 confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
+                cancelButtonColor: '#64748b',
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -724,23 +711,21 @@ function form_owner()
                 }
             });
         }
-    </script>
 
-    <!-- Offboard Employee JavaScript -->
-    <script>
+        // Offboard & Resign Employee JavaScript
         function offboardEmployee(ownerID, nickname) {
             const ajaxUrl = '<?= admin_url("admin-ajax.php") ?>';
             const ajaxNonce = '<?= wp_create_nonce("stock_supply_ajax_nonce") ?>';
 
             // Step 1: Show loading
             Swal.fire({
-                title: 'Loading devices...',
-                text: 'Fetching equipment assigned to ' + nickname,
+                title: 'Loading employee details...',
+                text: 'Checking assigned equipment for ' + nickname,
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
 
-            // Step 2: AJAX — get devices
+            // Step 2: AJAX — get devices and employee details
             const formData = new FormData();
             formData.append('action', 'get_employee_devices');
             formData.append('nonce', ajaxNonce);
@@ -751,41 +736,125 @@ function form_owner()
                 .then(result => {
                     if (!result.success) {
                         Swal.fire({
-                            icon: 'info',
-                            title: 'No Devices Found',
-                            html: '<p style="color:#64748b;">"<strong>' + nickname + '</strong>" does not have any assigned devices.</p>',
-                            confirmButtonColor: '#1976D2'
+                            icon: 'error',
+                            title: 'Error',
+                            text: result.data ? result.data.message : 'Could not fetch employee details.',
+                            confirmButtonColor: '#4f46e5'
                         });
                         return;
                     }
 
-                    const devices = result.data.devices;
-                    const owner = result.data.owner;
-                    const count = result.data.count;
+                    const devices = result.data.devices || [];
+                    const owner = result.data.owner || {};
+                    const count = result.data.count || 0;
+                    const displayName = owner.full_name || nickname;
+                    const displayNick = owner.nickname || nickname;
+                    const displayDept = owner.department || '-';
 
+                    // Case A: 0 devices assigned
                     if (count === 0) {
+                        const noDeviceModalHtml = `
+                        <div class="offboard-modal-container">
+                            <div class="offboard-employee-info">
+                                <div class="offboard-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                    <i class="fa-solid fa-user-large"></i>
+                                </div>
+                                <div class="offboard-emp-details">
+                                    <div class="offboard-emp-name">${displayName}</div>
+                                    <div class="offboard-emp-nick">@${displayNick} • ${displayDept}</div>
+                                </div>
+                                <div class="offboard-device-count" style="border: 1px solid #e2e8f0;">
+                                    <span class="offboard-count-num" style="color: #64748b;">0</span>
+                                    <span class="offboard-count-label">devices</span>
+                                </div>
+                            </div>
+                            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #e2e8f0; margin-top: 10px;">
+                                <p style="margin: 0; color: #334155; font-size: 0.95rem; font-weight: 500;">
+                                    This employee currently has <strong style="color: #0f172a;">no assigned devices</strong>.
+                                </p>
+                                <p style="margin: 8px 0 0; color: #64748b; font-size: 0.85rem;">
+                                    Employee status will be changed to <span style="color: #d97706; font-weight: 700;">Resigned</span>.
+                                </p>
+                            </div>
+                        </div>`;
+
                         Swal.fire({
-                            icon: 'info',
-                            title: 'No Devices Found',
-                            html: '<p style="color:#64748b;">"<strong>' + nickname + '</strong>" does not have any assigned devices.</p>',
-                            confirmButtonColor: '#1976D2'
+                            title: '⚠️ Confirm Resignation?',
+                            html: noDeviceModalHtml,
+                            width: 580,
+                            showCancelButton: true,
+                            confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> Confirm Resign',
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#d97706',
+                            cancelButtonColor: '#64748b',
+                            customClass: {
+                                popup: 'offboard-swal-popup',
+                                confirmButton: 'offboard-confirm-btn',
+                            },
+                            reverseButtons: true
+                        }).then((confirmResult) => {
+                            if (!confirmResult.isConfirmed) return;
+
+                            Swal.fire({
+                                title: 'Processing resignation...',
+                                allowOutsideClick: false,
+                                didOpen: () => Swal.showLoading()
+                            });
+
+                            const offboardData = new FormData();
+                            offboardData.append('action', 'offboard_employee');
+                            offboardData.append('nonce', ajaxNonce);
+                            offboardData.append('owner_id', ownerID);
+                            offboardData.append('set_resigned', '1');
+
+                            fetch(ajaxUrl, { method: 'POST', body: offboardData })
+                                .then(res => res.json())
+                                .then(offResult => {
+                                    if (offResult.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Resignation Recorded',
+                                            html: '<p>' + offResult.data.message + '</p>',
+                                            showConfirmButton: false,
+                                            timer: 1800
+                                        }).then(() => {
+                                            window.location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Resign Failed',
+                                            text: offResult.data ? offResult.data.message : 'An error occurred.',
+                                            confirmButtonColor: '#4f46e5'
+                                        });
+                                    }
+                                })
+                                .catch(() => {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Network Error',
+                                        text: 'Could not connect to the server.',
+                                        confirmButtonColor: '#4f46e5'
+                                    });
+                                });
                         });
                         return;
                     }
 
-                    // Step 3: Build device table HTML
+                    // Case B: 1+ devices assigned — Build full device table HTML
                     let tableRows = '';
                     devices.forEach((d, i) => {
                         tableRows += `
                         <tr class="offboard-row">
                             <td class="offboard-td-num">${i + 1}</td>
-                            <td class="offboard-td-id">${d.DeviceID}</td>
-                            <td class="offboard-td-model">${d.Model || '-'}</td>
+                            <td class="offboard-td-id">#${d.DeviceID}</td>
+                            <td class="offboard-td-model"><strong>${d.Model || '-'}</strong></td>
                             <td class="offboard-td-cat">
                                 <span class="offboard-cat-badge">${d.CategoryName || '-'}</span>
                             </td>
+                            <td class="offboard-td-sn">${d.SerialNumber || '-'}</td>
                             <td class="offboard-td-status">
-                                <span class="offboard-status-badge">${d.StatusName || '-'}</span>
+                                <span class="offboard-status-badge">${d.StatusName || 'In Use'}</span>
                             </td>
                         </tr>`;
                     });
@@ -797,14 +866,20 @@ function form_owner()
                                 <i class="fa-solid fa-user-large"></i>
                             </div>
                             <div class="offboard-emp-details">
-                                <div class="offboard-emp-name">${owner ? owner.full_name : nickname}</div>
-                                <div class="offboard-emp-nick">${owner ? owner.nickname : ''}</div>
+                                <div class="offboard-emp-name">${displayName}</div>
+                                <div class="offboard-emp-nick">@${displayNick} • ${displayDept}</div>
                             </div>
                             <div class="offboard-device-count">
                                 <span class="offboard-count-num">${count}</span>
                                 <span class="offboard-count-label">device${count > 1 ? 's' : ''}</span>
                             </div>
                         </div>
+
+                        <div class="offboard-warning-banner">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>Resigning this employee will automatically return all <strong>${count} assigned device(s)</strong> back to Available Stock.</span>
+                        </div>
+
                         <div class="offboard-table-wrap">
                             <table class="offboard-device-table">
                                 <thead>
@@ -813,6 +888,7 @@ function form_owner()
                                         <th>Device ID</th>
                                         <th>Model</th>
                                         <th>Category</th>
+                                        <th>Serial No</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -821,16 +897,16 @@ function form_owner()
                         </div>
                     </div>`;
 
-                    // Step 4: Show confirmation modal
+                    // Step 3: Show confirmation modal
                     Swal.fire({
-                        title: 'Offboard Employee',
+                        title: '⚠️ Confirm Resignation & Offboard Devices',
                         html: modalHtml,
-                        width: 700,
+                        width: 740,
                         showCancelButton: true,
-                        confirmButtonText: '<i class="fa-solid fa-rotate-left"></i> Unassign All & Return to Stock',
+                        confirmButtonText: '<i class="fa-solid fa-rotate-left me-1"></i> Confirm Resign & Return Devices',
                         cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#D32F2F',
-                        cancelButtonColor: '#6b7280',
+                        confirmButtonColor: '#dc2626',
+                        cancelButtonColor: '#64748b',
                         customClass: {
                             popup: 'offboard-swal-popup',
                             confirmButton: 'offboard-confirm-btn',
@@ -839,10 +915,10 @@ function form_owner()
                     }).then((confirmResult) => {
                         if (!confirmResult.isConfirmed) return;
 
-                        // Step 5: Execute offboard
+                        // Step 4: Execute offboard
                         Swal.fire({
-                            title: 'Processing...',
-                            text: 'Returning ' + count + ' device(s) to stock',
+                            title: 'Processing Offboard...',
+                            text: 'Returning ' + count + ' device(s) to stock and marking as Resigned',
                             allowOutsideClick: false,
                             didOpen: () => Swal.showLoading()
                         });
@@ -851,6 +927,7 @@ function form_owner()
                         offboardData.append('action', 'offboard_employee');
                         offboardData.append('nonce', ajaxNonce);
                         offboardData.append('owner_id', ownerID);
+                        offboardData.append('set_resigned', '1');
 
                         fetch(ajaxUrl, { method: 'POST', body: offboardData })
                             .then(res => res.json())
@@ -870,26 +947,26 @@ function form_owner()
                                         icon: 'error',
                                         title: 'Offboard Failed',
                                         text: offResult.data ? offResult.data.message : 'An error occurred.',
-                                        confirmButtonColor: '#1976D2'
+                                        confirmButtonColor: '#4f46e5'
                                     });
                                 }
                             })
-                            .catch(err => {
+                            .catch(() => {
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Network Error',
                                     text: 'Could not connect to the server.',
-                                    confirmButtonColor: '#1976D2'
+                                    confirmButtonColor: '#4f46e5'
                                 });
                             });
                     });
                 })
-                .catch(err => {
+                .catch(() => {
                     Swal.fire({
                         icon: 'error',
                         title: 'Network Error',
                         text: 'Could not connect to the server.',
-                        confirmButtonColor: '#1976D2'
+                        confirmButtonColor: '#4f46e5'
                     });
                 });
         }

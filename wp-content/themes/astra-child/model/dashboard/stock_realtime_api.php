@@ -64,9 +64,9 @@ function stock_realtime_data_handler()
         if ($avail < $threshold) {
             $total_in_cat = array_sum($by_category_status[$cat]);
             $low_stock_alerts[] = [
-                'category'  => $cat,
+                'category' => $cat,
                 'available' => $avail,
-                'total'     => $total_in_cat,
+                'total' => $total_in_cat,
                 'threshold' => $threshold,
             ];
         }
@@ -76,11 +76,11 @@ function stock_realtime_data_handler()
     $total = $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
 
     wp_send_json_success([
-        'by_status'          => $by_status,
+        'by_status' => $by_status,
         'by_category_status' => $by_category_status,
-        'low_stock_alerts'   => $low_stock_alerts,
-        'total'              => intval($total),
-        'timestamp'          => current_time('c'),
+        'low_stock_alerts' => $low_stock_alerts,
+        'total' => intval($total),
+        'timestamp' => current_time('c'),
     ]);
 }
 

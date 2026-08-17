@@ -67,6 +67,53 @@ function device_dashboard()
         'Retired' => home_url('/home/?filter_status=Retired'),
     ];
 
+    // Mobile-first command deck: common field actions in one tap.
+    $quick_menu = [
+        [
+            'label' => 'Scan QR',
+            'description' => 'Find a device fast',
+            'icon' => 'fa-qrcode',
+            'url' => home_url('/?scan=1'),
+            'tone' => 'is-primary',
+        ],
+        [
+            'label' => 'Add Device',
+            'description' => 'Register new stock',
+            'icon' => 'fa-plus',
+            'url' => home_url('/add-device/'),
+            'tone' => 'is-indigo',
+        ],
+        [
+            'label' => 'Maintenance',
+            'description' => 'Review devices',
+            'icon' => 'fa-screwdriver-wrench',
+            'url' => home_url('/maintenance/'),
+            'tone' => 'is-amber',
+            'badge' => (int) ($summary_map['Maintenance'] ?? 0),
+        ],
+        [
+            'label' => 'Employees',
+            'description' => 'Manage assignments',
+            'icon' => 'fa-users',
+            'url' => home_url('/owner/'),
+            'tone' => 'is-teal',
+        ],
+        [
+            'label' => 'History',
+            'description' => 'Track activity',
+            'icon' => 'fa-clock-rotate-left',
+            'url' => home_url('/history/'),
+            'tone' => 'is-slate',
+        ],
+        [
+            'label' => 'All Devices',
+            'description' => 'Browse inventory',
+            'icon' => 'fa-boxes-stacked',
+            'url' => home_url('/home/'),
+            'tone' => 'is-blue',
+        ],
+    ];
+
     // Query recently added devices (within 7 days)
     $new_devices_days = 7;
     $new_devices = $wpdb->get_results($wpdb->prepare(
@@ -86,7 +133,42 @@ function device_dashboard()
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-    <div class="next-dashboard">
+    <div class="next-dashboard home-dashboard">
+
+        <!-- ===== COMMAND DECK: IMPORTANT MENU ===== -->
+        <section class="home-command-deck" aria-labelledby="home-command-title">
+            <div class="home-command-heading">
+                <div>
+                    <p class="home-command-eyebrow">Stock Supply</p>
+                    <h1 id="home-command-title">What do you need to do?</h1>
+                    <p class="home-command-subtitle">Quick access for work on the floor.</p>
+                </div>
+                <span class="home-command-context" aria-hidden="true">
+                    <i class="fa-solid fa-cube"></i>
+                </span>
+            </div>
+
+            <nav class="home-command-grid" aria-label="Important actions">
+                <?php foreach ($quick_menu as $item): ?>
+                    <a class="home-command-card <?= esc_attr($item['tone']) ?>" href="<?= esc_url($item['url']) ?>"
+                        aria-label="<?= esc_attr($item['label'] . ': ' . $item['description']) ?>">
+                        <span class="home-command-card__icon" aria-hidden="true">
+                            <i class="fa-solid <?= esc_attr($item['icon']) ?>"></i>
+                        </span>
+                        <span class="home-command-card__copy">
+                            <span class="home-command-card__label"><?= esc_html($item['label']) ?></span>
+                            <span class="home-command-card__description"><?= esc_html($item['description']) ?></span>
+                        </span>
+                        <?php if (!empty($item['badge'])): ?>
+                            <span class="home-command-card__badge" aria-label="<?= esc_attr($item['badge']) ?> devices">
+                                <?= esc_html($item['badge'] > 99 ? '99+' : $item['badge']) ?>
+                            </span>
+                        <?php endif; ?>
+                        <i class="fa-solid fa-arrow-up-right-from-square home-command-card__arrow" aria-hidden="true"></i>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+        </section>
 
         <?php if ($new_devices_count > 0): ?>
             <!-- ===== NEW DEVICES NOTIFICATION CARD ===== -->
@@ -141,6 +223,14 @@ function device_dashboard()
         <?php endif; ?>
 
         <!-- ===== SECTION 1: Category Summary Cards ===== -->
+        <div class="home-dashboard-section-heading">
+            <div>
+                <p class="home-command-eyebrow">Inventory</p>
+                <h2>Browse by category</h2>
+            </div>
+            <a href="<?= esc_url(home_url('/home/')) ?>">View all <i class="fa-solid fa-arrow-right"
+                    aria-hidden="true"></i></a>
+        </div>
         <div class="next-grid">
             <?php
             $delay = 0;
@@ -241,27 +331,27 @@ function device_dashboard()
             <div class="stock-cards-grid">
                 <?php
                 $sm_categories = [
-                    'Monitor'     => ['icon' => 'fa-desktop',  'color' => '#FDB840'],
-                    'Laptop'      => ['icon' => 'fa-laptop',   'color' => '#15A5DA'],
-                    'Accessories' => ['icon' => 'fa-plug',     'color' => '#6ABF57'],
+                    'Monitor' => ['icon' => 'fa-desktop', 'color' => '#FDB840'],
+                    'Laptop' => ['icon' => 'fa-laptop', 'color' => '#15A5DA'],
+                    'Accessories' => ['icon' => 'fa-plug', 'color' => '#6ABF57'],
                 ];
                 $sm_statuses = ['Available', 'In Use', 'Maintenance', 'Retired'];
                 $sm_status_colors = [
-                    'Available'   => '#6ABF57',
-                    'In Use'      => '#F05353',
+                    'Available' => '#6ABF57',
+                    'In Use' => '#F05353',
                     'Maintenance' => '#FDB840',
-                    'Retired'     => '#919191',
+                    'Retired' => '#919191',
                 ];
 
                 foreach ($sm_categories as $cat_name => $cat_cfg):
                     $cat_slug = strtolower(str_replace(' ', '-', $cat_name));
-                ?>
+                    ?>
                     <div class="stock-category-card" id="stock-card-<?= $cat_slug ?>"
-                         style="--card-accent: <?= $cat_cfg['color'] ?>;">
+                        style="--card-accent: <?= $cat_cfg['color'] ?>;">
                         <div class="stock-card-header">
                             <div class="stock-card-category">
                                 <div class="stock-card-icon"
-                                     style="background: <?= $cat_cfg['color'] ?>15; color: <?= $cat_cfg['color'] ?>;">
+                                    style="background: <?= $cat_cfg['color'] ?>15; color: <?= $cat_cfg['color'] ?>;">
                                     <i class="fa-solid <?= $cat_cfg['icon'] ?>"></i>
                                 </div>
                                 <span class="stock-card-name"><?= esc_html($cat_name) ?></span>
@@ -273,16 +363,14 @@ function device_dashboard()
                             <?php foreach ($sm_statuses as $status):
                                 $status_slug = strtolower(str_replace(' ', '-', $status));
                                 $bar_color = $sm_status_colors[$status];
-                            ?>
+                                ?>
                                 <div class="stock-bar-row">
                                     <span class="stock-bar-label"><?= esc_html($status) ?></span>
                                     <div class="stock-bar-track">
-                                        <div class="stock-bar-fill"
-                                             id="stock-bar-<?= $cat_slug ?>-<?= $status_slug ?>"
-                                             style="width: 0%; background: <?= $bar_color ?>;"></div>
+                                        <div class="stock-bar-fill" id="stock-bar-<?= $cat_slug ?>-<?= $status_slug ?>"
+                                            style="width: 0%; background: <?= $bar_color ?>;"></div>
                                     </div>
-                                    <span class="stock-bar-count"
-                                          id="stock-count-<?= $cat_slug ?>-<?= $status_slug ?>">—</span>
+                                    <span class="stock-bar-count" id="stock-count-<?= $cat_slug ?>-<?= $status_slug ?>">—</span>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -353,9 +441,9 @@ function device_dashboard()
 
     <style>
         /* ============================================================
-               device_dashboard — page-specific styles only
-               Shared card/grid/animation styles → dashboard_cards.css
-               ============================================================ */
+                   device_dashboard — page-specific styles only
+                   Shared card/grid/animation styles → dashboard_cards.css
+                   ============================================================ */
 
         /* ---- New Devices Notification Card ---- */
         .new-devices-alert-header {

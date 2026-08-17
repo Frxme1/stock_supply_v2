@@ -493,7 +493,8 @@ function device_view_details($device_id = null)
                             <span class="dtl-stat-count"><?= count($rows) ?></span>
                         </div>
                         <?php foreach ($action_counts as $act => $cnt): ?>
-                            <div class="dtl-stat-chip" data-filter-action="<?= esc_attr(strtolower(trim($act))) ?>" role="button" tabindex="0">
+                            <div class="dtl-stat-chip" data-filter-action="<?= esc_attr(strtolower(trim($act))) ?>" role="button"
+                                tabindex="0">
                                 <?= esc_html($act) ?>
                                 <span class="dtl-stat-count"><?= $cnt ?></span>
                             </div>
@@ -521,7 +522,8 @@ function device_view_details($device_id = null)
                                     $isOpen = ($item_idx === 0);
                                     $item_idx++;
                                     ?>
-                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible" data-action="<?= esc_attr(strtolower(trim($row->Action))) ?>">
+                                    <div class="dtl-node <?= $info['class'] ?> dtl-visible"
+                                        data-action="<?= esc_attr(strtolower(trim($row->Action))) ?>">
                                         <div class="dtl-dot"></div>
                                         <div class="dtl-card <?= $isOpen ? 'dtl-open' : '' ?>">
                                             <div class="dtl-card-head">

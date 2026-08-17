@@ -392,7 +392,13 @@ function device_crud_monitor()
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block"
                                                         style="font-size: 0.85em;">Position</span>
-                                                    <strong><?= formatName($row->Position ?? '-') ?></strong>
+                                                    <?php
+                                                    $pos_display = $row->Position ?? '';
+                                                    if (empty($pos_display) && !empty($row->Owner) && preg_match('/\((.*?)\)$/', $row->Owner, $matches)) {
+                                                        $pos_display = $matches[1];
+                                                    }
+                                                    ?>
+                                                    <strong><?= formatName(!empty($pos_display) ? $pos_display : '-') ?></strong>
                                                 </div>
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
                                                     <span class="text-muted d-block" style="font-size: 0.85em;">Receive

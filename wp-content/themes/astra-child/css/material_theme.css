@@ -1,29 +1,25 @@
 /* ============================================================
-   Material Design Theme for Device Management System
-   Inspired by Google Material UI (MUI) Design Language
+   Enterprise Design Theme for Device Management System
+   Clean Slate & Royal Blue System
    ============================================================ */
-
-/* ---- Google Fonts: Inter, Prompt, Outfit & Roboto ---- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
 
 /* ============================================================
-   1. CSS VARIABLES — Material Design Color Palette
+   1. CSS VARIABLES — Enterprise Color Palette
    ============================================================ */
 :root {
-    /* ======= Modern Indigo-Violet Accent System ======= */
-    /* Primary: Indigo 500 (modern, distinct from generic blue) */
-    --md-primary: #6366f1;
-    --md-primary-light: #818cf8;
-    --md-primary-dark: #4f46e5;
-    --md-primary-surface: rgba(99, 102, 241, 0.08);
+    /* ======= Enterprise Blue Accent System ======= */
+    --md-primary: #2563eb;
+    --md-primary-light: #60a5fa;
+    --md-primary-dark: #1d4ed8;
+    --md-primary-surface: rgba(37, 99, 235, 0.08);
 
-    /* Secondary: Violet 500 */
-    --md-secondary: #8b5cf6;
-    --md-secondary-light: #a78bfa;
+    /* Secondary: Slate 600 */
+    --md-secondary: #475569;
+    --md-secondary-light: #64748b;
 
     /* Gradient accent — used for CTAs, active states */
-    --md-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    --md-gradient-glow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    --md-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    --md-gradient-glow: 0 4px 12px rgba(37, 99, 235, 0.25);
 
     /* Error / Success / Warning */
     --md-error: #ef4444;
@@ -232,6 +228,11 @@ html body .site-content>.ast-container {
         padding-left: 16px !important;
         padding-right: 16px !important;
     }
+
+    .ast-separate-container #primary,
+    #primary {
+        margin-top: -50px !important;
+    }
 }
 
 /* Remove Astra Theme white content box borders and padding */
@@ -266,1656 +267,910 @@ html body article[id^="post-"] {
 .ast-separate-container .site-main {
     background-color: transparent !important;
     box-shadow: none !important;
-}
 
-/* Remove any page-level white box */
-.page .entry-content,
-.single .entry-content {
-    background-color: transparent !important;
-}
+    html body #primary,
+    html body #main {
+        background-color: transparent !important;
+    }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.entry-title,
-.section-title,
-.next-section-title,
-.vd-title,
-.vd-history-title,
-.card-title,
-.modal-title,
-.page-title,
-.site-title {
-    font-family: 'Inter', 'Prompt', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-weight: 500;
-    color: var(--md-text-primary);
-    letter-spacing: -0.01em;
-}
+    /* Headings */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .section-title,
+    .next-section-title,
+    .vd-title,
+    .vd-history-title,
+    .card-title,
+    .modal-title,
+    .page-title,
+    .site-title {
+        font-family: var(--font-apple, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Thonburi", "Segoe UI", Roboto, sans-serif) !important;
+        font-weight: 600;
+        color: var(--md-text-primary);
+        letter-spacing: -0.01em;
+    }
 
-h1 {
-    font-size: 40px;
-    font-weight: 700;
-}
+    h1 {
+        font-size: 40px;
+        font-weight: 700;
+    }
 
-h2 {
-    font-size: 1.5rem;
-}
+    h2 {
+        font-size: 1.5rem;
+    }
 
-h3 {
-    font-size: 1.25rem;
-}
+    h3 {
+        font-size: 1.25rem;
+    }
 
-h4 {
-    font-size: 1.125rem;
-}
+    h4 {
+        font-size: 1.125rem;
+    }
 
-p,
-span,
-label,
-td,
-th,
-li,
-a {
-    font-family: 'Roboto', sans-serif !important;
-}
+    p,
+    span,
+    label,
+    td,
+    th,
+    li,
+    a {
+        font-family: var(--font-apple, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Thonburi", "Segoe UI", Roboto, sans-serif) !important;
+    }
 
-a {
-    color: var(--md-primary);
-    text-decoration: none;
-    transition: color 0.2s var(--md-transition);
-}
+    a {
+        color: var(--md-primary);
+        text-decoration: none;
+        transition: color 0.2s var(--md-transition);
+    }
 
-a:hover {
-    color: var(--md-primary-dark);
-}
+    a:hover {
+        color: var(--md-primary-dark);
+    }
 
 
-/* ============================================================
+    /* ============================================================
    3. BUTTONS — Material Contained, Outlined, Text
    ============================================================ */
 
-/* --- Contained Buttons (default .btn) --- */
-.btn {
-    font-family: 'Inter', 'Roboto', sans-serif !important;
-    font-weight: 600;
-    font-size: 0.875rem;
-    letter-spacing: 0.01em;
-    text-transform: none;
-    border-radius: var(--md-radius-md) !important;
-    padding: 8px 20px;
-    border: none;
-    box-shadow: var(--md-shadow-1);
-    transition: all 0.22s var(--md-transition);
-    position: relative;
-    overflow: hidden;
-}
+    /* --- Contained Buttons (default .btn) --- */
+    .btn {
+        font-family: var(--font-apple, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Thonburi", "Segoe UI", Roboto, sans-serif) !important;
+        font-weight: 600;
+        font-size: 0.875rem;
+        letter-spacing: 0.01em;
+        text-transform: none;
+        border-radius: var(--md-radius-md) !important;
+        padding: 8px 20px;
+        border: none;
+        box-shadow: var(--md-shadow-1);
+        transition: all 0.22s var(--md-transition);
+        position: relative;
+        overflow: hidden;
+    }
 
-.btn:hover {
-    box-shadow: var(--md-shadow-2);
-    transform: translateY(-2px);
-}
+    .btn:hover {
+        box-shadow: var(--md-shadow-2);
+        transform: translateY(-2px);
+    }
 
-.btn:active {
-    transform: translateY(0);
-    box-shadow: var(--md-shadow-1);
-}
+    .btn:active {
+        transform: translateY(0);
+        box-shadow: var(--md-shadow-1);
+    }
 
-/* Ripple Effect */
-.btn::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.35);
-    transform: translate(-50%, -50%);
-    transition: width 0.5s var(--md-transition), height 0.5s var(--md-transition), opacity 0.5s;
-    opacity: 0;
-}
+    /* Ripple Effect */
+    .btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.35);
+        transform: translate(-50%, -50%);
+        transition: width 0.5s var(--md-transition), height 0.5s var(--md-transition), opacity 0.5s;
+        opacity: 0;
+    }
 
-.btn:active::after {
-    width: 300px;
-    height: 300px;
-    opacity: 1;
-    transition: 0s;
-}
+    .btn:active::after {
+        width: 300px;
+        height: 300px;
+        opacity: 1;
+        transition: 0s;
+    }
 
-/* Primary Button — Gradient */
-.btn-primary,
-.btn-info {
-    background: var(--md-gradient) !important;
-    border-color: transparent !important;
-    color: #fff !important;
-    box-shadow: var(--md-shadow-indigo) !important;
-}
+    /* Primary Button — Modern Dark Slate (matching .btn-filter-modern) */
+    .btn-primary,
+    .btn-info {
+        background-color: #0f172a !important;
+        border: none !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        padding: 8px 16px !important;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
+        transition: all 0.2s ease !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
 
-.btn-primary:hover,
-.btn-info:hover {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
-    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.45) !important;
-    transform: translateY(-2px);
-}
+    .btn-primary:hover,
+    .btn-info:hover {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2) !important;
+    }
 
-/* Success Button */
-.btn-success {
-    background: linear-gradient(135deg, #10b981, #059669) !important;
-    border-color: transparent !important;
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3) !important;
-}
+    .btn-primary:active,
+    .btn-info:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
+    }
 
-/* Danger Button */
-.btn-danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-    border-color: transparent !important;
-    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25) !important;
-}
+    /* Success Button */
+    .btn-success {
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        border-color: transparent !important;
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3) !important;
+    }
 
-/* Warning Button */
-.btn-warning {
-    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-    border-color: transparent !important;
-    color: #fff !important;
-    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25) !important;
-}
+    /* Danger Button */
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        border-color: transparent !important;
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25) !important;
+    }
 
-/* Outlined Buttons */
-.btn-outline-primary {
-    color: var(--md-primary) !important;
-    border: 1.5px solid var(--md-primary) !important;
-    background: transparent !important;
-    box-shadow: none;
-}
+    /* Warning Button */
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+        border-color: transparent !important;
+        color: #fff !important;
+        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25) !important;
+    }
 
-.btn-outline-primary:hover {
-    background: var(--md-primary-surface) !important;
-    box-shadow: none;
-    transform: translateY(-1px);
-}
+    /* Outlined Buttons */
+    .btn-outline-primary {
+        color: var(--md-primary) !important;
+        border: 1.5px solid var(--md-primary) !important;
+        background: transparent !important;
+        box-shadow: none;
+    }
 
-/* Rounded Pill Override */
-.btn.rounded-pill {
-    border-radius: var(--md-radius-pill) !important;
-}
+    .btn-outline-primary:hover {
+        background: var(--md-primary-surface) !important;
+        box-shadow: none;
+        transform: translateY(-1px);
+    }
 
-/* Small Button */
-.btn-sm {
-    font-size: 0.8125rem;
-    padding: 6px 14px;
-}
+    /* Rounded Pill Override */
+    .btn.rounded-pill {
+        border-radius: var(--md-radius-pill) !important;
+    }
+
+    /* Small Button */
+    .btn-sm {
+        font-size: 0.8125rem;
+        padding: 6px 14px;
+    }
 
 
-/* ============================================================
+    /* ============================================================
    4. FORM CONTROLS — Material Outlined Inputs
    ============================================================ */
-.form-control,
-.form-select {
-    font-family: 'Roboto', sans-serif !important;
-    font-size: 0.9375rem;
-    border: 1px solid var(--md-divider) !important;
-    border-radius: var(--md-radius-sm) !important;
-    padding: 10px 14px;
-    background-color: var(--md-surface);
-    color: var(--md-text-primary);
-    transition: border-color 0.2s var(--md-transition), box-shadow 0.2s var(--md-transition);
-    box-shadow: none !important;
-}
+    .form-control,
+    .form-select {
+        font-family: 'Roboto', sans-serif !important;
+        font-size: 0.9375rem;
+        border: 1px solid var(--md-divider) !important;
+        border-radius: var(--md-radius-sm) !important;
+        padding: 10px 14px;
+        background-color: var(--md-surface);
+        color: var(--md-text-primary);
+        transition: border-color 0.2s var(--md-transition), box-shadow 0.2s var(--md-transition);
+        box-shadow: none !important;
+    }
 
-.form-control:focus,
-.form-select:focus {
-    border-color: var(--md-primary) !important;
-    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2) !important;
-    outline: none;
-}
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--md-primary) !important;
+        box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2) !important;
+        outline: none;
+    }
 
-.form-control::placeholder {
-    color: var(--md-text-disabled);
-    font-weight: 400;
-}
+    .form-control::placeholder {
+        color: var(--md-text-disabled);
+        font-weight: 400;
+    }
 
-/* Labels */
-.form-label,
-.col-form-label,
-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--md-text-secondary);
-    margin-bottom: 6px;
-}
+    /* Labels */
+    .form-label,
+    .col-form-label,
+    label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--md-text-secondary);
+        margin-bottom: 6px;
+    }
 
-/* Select Dropdown Arrow */
-select,
-.form-select,
-.staggered-dropdown {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 14px center !important;
-    background-size: 16px 16px !important;
-    padding-right: 40px !important;
-}
+    /* Select Dropdown Arrow */
+    select,
+    .form-select,
+    .staggered-dropdown {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 14px center !important;
+        background-size: 16px 16px !important;
+        padding-right: 40px !important;
+    }
 
-/* Custom form-group-input Override for Material look */
-.form-group-input input,
-.form-group-input select {
-    border-radius: var(--md-radius-sm) !important;
-    border: 1px solid rgba(0, 0, 0, 0.23) !important;
-    transition: border-color 0.2s var(--md-transition);
-}
+    /* Custom form-group-input Override for Material look */
+    .form-group-input input,
+    .form-group-input select {
+        border-radius: var(--md-radius-sm) !important;
+        border: 1px solid rgba(0, 0, 0, 0.23) !important;
+        transition: border-color 0.2s var(--md-transition);
+    }
 
-.form-group-input input:focus,
-.form-group-input select:focus {
-    border-color: var(--md-primary) !important;
-    border-width: 2px !important;
-    box-shadow: none !important;
-}
+    .form-group-input input:focus,
+    .form-group-input select:focus {
+        border-color: var(--md-primary) !important;
+        border-width: 2px !important;
+        box-shadow: none !important;
+    }
 
-.form-group-input label {
-    font-weight: 500;
-    color: var(--md-text-secondary);
-    font-size: 0.875rem;
-}
+    .form-group-input label {
+        font-weight: 500;
+        color: var(--md-text-secondary);
+        font-size: 0.875rem;
+    }
 
-/* Checkbox — Material Style */
-input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--md-primary);
-    cursor: pointer;
-    border-radius: 2px;
-}
+    /* Checkbox — Material Style */
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--md-primary);
+        cursor: pointer;
+        border-radius: 2px;
+    }
 
 
-/* ============================================================
+    /* ============================================================
    5. DATA TABLE — Material Design
    ============================================================ */
-.table {
-    border-collapse: separate;
-    border-spacing: 0;
-    border: none !important;
-    background: transparent;
-    border-radius: var(--md-radius-md);
-    overflow: visible;
-    box-shadow: var(--md-shadow-1);
-}
-
-.table> :not(caption)>*>* {
-    border-bottom: 1px solid var(--md-divider) !important;
-    border-top: none !important;
-}
-
-/* Header */
-.table .table-secondary,
-.table tr.table-secondary {
-    background-color: var(--md-surface) !important;
-}
-
-.table .table-secondary th,
-.table tr.table-secondary th {
-    background-color: var(--md-surface) !important;
-    color: var(--md-text-secondary) !important;
-    font-weight: 500 !important;
-    font-size: 0.8125rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 14px 16px !important;
-    border-bottom: 2px solid var(--md-divider) !important;
-    white-space: nowrap;
-}
-
-/* Body Rows */
-.table td {
-    padding: 12px 16px !important;
-    font-size: 0.875rem;
-    color: var(--md-text-primary);
-    vertical-align: middle;
-}
-
-.table tbody tr {
-    transition: background-color 0.15s var(--md-transition);
-}
-
-.table tbody tr:hover {
-    background-color: var(--md-primary-surface) !important;
-}
-
-/* Remove bordered table default borders */
-.table-bordered {
-    border: none !important;
-}
-
-.table-bordered> :not(caption)>* {
-    border-width: 0 !important;
-}
-
-.table-bordered> :not(caption)>*>* {
-    border-width: 0 0 1px 0 !important;
-    border-color: var(--md-divider) !important;
-}
-
-
-/* ============================================================
-   6. DASHBOARD CARDS — Modern Elevated
-   ============================================================ */
-.device-dashboard {
-    background-color: transparent !important;
-}
-
-.card-status {
-    border-radius: var(--md-radius-lg) !important;
-    box-shadow: var(--md-shadow-2) !important;
-    border: 1px solid rgba(99, 102, 241, 0.06);
-    transition: box-shadow 0.3s var(--md-transition), transform 0.3s var(--md-transition), border-color 0.3s;
-    padding: 22px !important;
-    animation: pageEntrance 0.4s var(--md-transition) both;
-}
-
-.card-status:hover {
-    box-shadow: var(--md-shadow-3) !important;
-    transform: translateY(-5px);
-    border-color: rgba(99, 102, 241, 0.15);
-}
-
-.card-title {
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
-    opacity: 0.75;
-}
-
-.card-icon {
-    font-size: 2.25rem !important;
-    opacity: 0.5 !important;
-}
-
-.card-count {
-    font-size: 1.1rem !important;
-    font-weight: 400;
-}
-
-.progress-bar {
-    background: rgba(255, 255, 255, 0.2) !important;
-    border-radius: var(--md-radius-pill) !important;
-    height: 5px !important;
-}
-
-.progress-fill {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border-radius: var(--md-radius-pill) !important;
-    transition: width 0.8s var(--md-transition);
-}
-
-.percent-text {
-    font-size: 0.8125rem !important;
-    font-weight: 500;
-    color: var(--md-text-secondary) !important;
-}
-
-
-/* ============================================================
-   7. DASHBOARD SUMMARY CARDS
-   ============================================================ */
-.all-device-summary-container {
-    gap: 20px;
-}
-
-.all-device-summary {
-    background-color: var(--md-surface) !important;
-    border-radius: var(--md-radius-lg) !important;
-    box-shadow: var(--md-shadow-1);
-    padding: 28px 20px !important;
-    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition), border-color 0.3s;
-    border: 1px solid rgba(99, 102, 241, 0.07);
-    animation: pageEntrance 0.45s var(--md-transition) both;
-}
-
-.all-device-summary:hover {
-    box-shadow: var(--md-shadow-2);
-    transform: translateY(-3px);
-    border-color: rgba(99, 102, 241, 0.16);
-}
-
-.all-device-summary h4 {
-    font-size: 0.8rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--md-text-muted) !important;
-    font-weight: 600 !important;
-    margin-bottom: 12px;
-}
-
-.all-device-summary h3 {
-    font-size: 2rem !important;
-    font-weight: 700 !important;
-    color: var(--md-text-primary) !important;
-    letter-spacing: -0.02em;
-}
-
-/* Circle Chart */
-.circle-chart {
-    width: 80px;
-    height: 80px;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.circle-bg {
-    stroke: rgba(99, 102, 241, 0.1) !important;
-    stroke-width: 3.5;
-}
-
-
-
-/* ============================================================
-   9. PAGINATION — Modern
-   ============================================================ */
-.pagination {
-    gap: 4px;
-}
-
-.pagination .page-item .page-link {
-    font-family: 'Inter', 'Roboto', sans-serif !important;
-    font-weight: 600;
-    font-size: 0.8125rem;
-    color: var(--md-text-secondary);
-    background-color: transparent;
-    border: none !important;
-    border-radius: 8px !important;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    margin: 0 2px;
-    transition: all 0.2s var(--md-transition);
-}
-
-.pagination .page-item .page-link:hover {
-    background-color: var(--md-primary-surface);
-    color: var(--md-primary);
-    transform: translateY(-1px);
-}
-
-.pagination .page-item.active .page-link {
-    background: var(--md-gradient) !important;
-    color: #fff !important;
-    box-shadow: var(--md-shadow-indigo);
-}
-
-.pagination .page-item.disabled .page-link {
-    color: var(--md-text-muted);
-    background: transparent;
-}
-
-/* Previous / Next buttons — wider rounded rect */
-.pagination .page-item:first-child .page-link,
-.pagination .page-item:last-child .page-link {
-    width: auto;
-    border-radius: var(--md-radius-md) !important;
-    padding: 0 16px;
-    font-size: 0.8rem;
-    letter-spacing: 0.01em;
-}
-
-
-/* ============================================================
-   10. FORM PAGES — Material Paper Surface
-   ============================================================ */
-.container-fluid {
-    background-color: transparent;
-}
-
-
-
-
-
-/* Form Card */
-form {
-    font-family: 'Roboto', sans-serif !important;
-}
-
-.form-grid {
-    gap: 20px;
-}
-
-
-/* ============================================================
-   11. RECEIVE DEVICE & MAINTENANCE FORMS — Material Paper
-   ============================================================ */
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-actions {
-    margin-top: 28px;
-}
-
-.form-actions .btn {
-    min-width: 120px;
-}
-
-
-/* ============================================================
-   12. SWEETALERT2 — Modern Override
-   ============================================================ */
-.swal2-popup {
-    font-family: 'Roboto', sans-serif !important;
-    border-radius: 24px !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
-    padding: 2.5rem !important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
-}
-
-.swal2-title {
-    font-family: 'Roboto', sans-serif !important;
-    font-weight: 700 !important;
-    font-size: 1.5rem !important;
-    color: #1e293b !important;
-    margin-bottom: 0.5rem !important;
-}
-
-.swal2-html-container {
-    font-family: 'Roboto', sans-serif !important;
-    color: #64748b !important;
-    font-size: 1rem !important;
-    line-height: 1.6 !important;
-}
-
-.swal2-icon {
-    border: none !important;
-}
-
-.swal2-styled.swal2-confirm {
-    background: var(--md-gradient) !important;
-    border-radius: var(--md-radius-pill) !important;
-    font-weight: 600 !important;
-    text-transform: none !important;
-    letter-spacing: 0.3px !important;
-    box-shadow: var(--md-shadow-indigo) !important;
-    padding: 12px 32px !important;
-    transition: all 0.25s ease !important;
-}
-
-.swal2-styled.swal2-confirm:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 32px rgba(99, 102, 241, 0.45) !important;
-}
-
-.swal2-styled.swal2-cancel {
-    background: #f8fafc !important;
-    color: #ef4444 !important;
-    border: 1px solid #fee2e2 !important;
-    border-radius: 50px !important;
-    font-weight: 600 !important;
-    text-transform: none !important;
-    padding: 12px 32px !important;
-    transition: all 0.3s ease !important;
-}
-
-.swal2-styled.swal2-cancel:hover {
-    background: #fee2e2 !important;
-    transform: translateY(-2px);
-}
-
-.swal2-input {
-    border-radius: 12px !important;
-    border: 2px solid #e2e8f0 !important;
-    padding: 14px 20px !important;
-    font-size: 1rem !important;
-    color: #334155 !important;
-    transition: all 0.3s ease !important;
-    box-shadow: none !important;
-    margin-top: 1.5rem !important;
-    margin-left: -2px;
-}
-
-.swal2-input:focus {
-    border-color: var(--md-primary) !important;
-    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.15) !important;
-}
-
-
-/* ============================================================
-   13. SCROLLBAR — Indigo Accent
-   ============================================================ */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.25);
-    border-radius: var(--md-radius-pill);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.5);
-}
-
-
-/* ============================================================
-   14. GENERAL UTILITIES & OVERRIDES
-   ============================================================ */
-
-/* MUI-like Chips for Status */
-td .status-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: var(--md-radius-pill);
-    font-size: 0.8125rem;
-    font-weight: 500;
-}
-
-/* MUI-like Dividers */
-hr,
-.divider {
-    border-color: var(--md-divider);
-    opacity: 1;
-}
-
-/* Card hover subtle scale */
-.card {
-    border: 1px solid rgba(99, 102, 241, 0.06);
-    border-radius: var(--md-radius-lg) !important;
-    transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition), border-color 0.3s;
-}
-
-.card:hover {
-    box-shadow: var(--md-shadow-3) !important;
-    transform: translateY(-4px);
-    border-color: rgba(99, 102, 241, 0.14);
-}
-
-/* Table wrapper with modern surface */
-.table-responsive-xxl {
-    background: var(--md-surface);
-    border-radius: var(--md-radius-lg);
-    box-shadow: var(--md-shadow-1);
-    overflow: visible;
-    border: 1px solid rgba(99, 102, 241, 0.07);
-}
-
-/* Stagger animation for table rows */
-.next-table-row:nth-child(1) {
-    animation-delay: 0.02s;
-}
-
-.next-table-row:nth-child(2) {
-    animation-delay: 0.04s;
-}
-
-.next-table-row:nth-child(3) {
-    animation-delay: 0.06s;
-}
-
-.next-table-row:nth-child(4) {
-    animation-delay: 0.08s;
-}
-
-.next-table-row:nth-child(5) {
-    animation-delay: 0.10s;
-}
-
-.next-table-row:nth-child(6) {
-    animation-delay: 0.12s;
-}
-
-.next-table-row:nth-child(7) {
-    animation-delay: 0.14s;
-}
-
-.next-table-row:nth-child(8) {
-    animation-delay: 0.16s;
-}
-
-.next-table-row:nth-child(9) {
-    animation-delay: 0.18s;
-}
-
-.next-table-row:nth-child(10) {
-    animation-delay: 0.20s;
-}
-
-/* Responsive Web Application Adjustments */
-@media (max-width: 1024px) {
-    .app-content {
-        padding: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-
-    /* Push content down for Mobile Top Bar & leave space at bottom for Mobile Bottom Nav */
-    #content.site-content {
-        margin-left: 0 !important;
-        margin-top: 56px !important;
-        padding-bottom: 84px !important;
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border: none !important;
+        background: transparent;
+        border-radius: var(--md-radius-md);
+        overflow: visible;
+        box-shadow: var(--md-shadow-1);
     }
 
-    .app-content {
-        padding: 14px 10px 84px !important;
+    .table> :not(caption)>*>* {
+        border-bottom: 1px solid var(--md-divider) !important;
+        border-top: none !important;
     }
 
-    /* Page Header Adjustment */
-    h1,
-    h1.entry-title,
-    h1[itemprop="headline"],
-    .entry-title,
-    .title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: -50px !important;
+    /* Header */
+    .table .table-secondary,
+    .table tr.table-secondary {
+        background-color: var(--md-surface) !important;
     }
 
-    body.page-owner h1,
-    body.page-owner .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 30px !important;
-    }
-
-    body.page-add-ownerer h1,
-    body.page-add-owner .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 30px !important;
-    }
-
-    body.page-home h1,
-    body.page-home .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 5px !important;
-    }
-
-    body.page-add-device h1,
-    body.page-add-device .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 30px !important;
-    }
-
-    body.page-history h1,
-    body.page-history .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 0px !important;
-    }
-
-    body.page-monitor h1,
-    body.page-monitor .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 30px !important;
-    }
-
-    body.page-laptop h1,
-    body.page-laptop .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 30px !important;
-    }
-
-    body.page-maintenance h1,
-    body.page-maintenance .entry-title {
-        font-size: 40px !important;
-        margin-top: 0 !important;
-        margin-left: 0 !important;
-        margin-bottom: 30px !important;
-    }
-
-
-    /* Search Bar & Filter Row Stack */
-    .row.align-items-center.g-2 {
-        padding: 12px;
-        flex-direction: column;
-        align-items: stretch !important;
-        gap: 10px !important;
-    }
-
-    .row.align-items-center.g-2>[class*="col"] {
-        width: 100% !important;
-    }
-
-    .row.align-items-center.g-2 .btn,
-    .row.align-items-center.g-2 .form-control,
-    .row.align-items-center.g-2 .form-select {
-        width: 100% !important;
-    }
-
-    /* Tables & Cards Responsive */
     .table .table-secondary th,
     .table tr.table-secondary th {
-        font-size: 0.75rem;
-        padding: 10px 8px !important;
-    }
-
-    .table td {
-        padding: 10px 8px !important;
+        background-color: var(--md-surface) !important;
+        color: var(--md-text-secondary) !important;
+        font-weight: 500 !important;
         font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 14px 16px !important;
+        border-bottom: 2px solid var(--md-divider) !important;
+        white-space: nowrap;
     }
 
-    .all-device-summary {
-        padding: 16px 14px !important;
+    /* Body Rows */
+    .table td {
+        padding: 12px 16px !important;
+        font-size: 0.875rem;
+        color: var(--md-text-primary);
+        vertical-align: middle;
     }
 
-    /* Bulk actions toolbar per page */
-    #bulk-action-form-device>.d-flex,
-    #bulk-action-form-laptop>.d-flex,
-    #bulk-action-form-monitor>.d-flex,
-    #bulk-action-form-acc>.d-flex {
-        flex-wrap: wrap;
-        gap: 8px !important;
+    .table tbody tr {
+        transition: background-color 0.15s var(--md-transition);
     }
-}
 
-@media (max-width: 480px) {
+    .table tbody tr:hover {
+        background-color: var(--md-primary-surface) !important;
+    }
+
+    /* Remove bordered table default borders */
+    .table-bordered {
+        border: none !important;
+    }
+
+    .table-bordered> :not(caption)>* {
+        border-width: 0 !important;
+    }
+
+    .table-bordered> :not(caption)>*>* {
+        border-width: 0 0 1px 0 !important;
+        border-color: var(--md-divider) !important;
+    }
+
+
+    /* ============================================================
+   6. DASHBOARD CARDS — Modern Elevated
+   ============================================================ */
+    .device-dashboard {
+        background-color: transparent !important;
+    }
+
     .card-status {
-        padding: 14px !important;
+        border-radius: var(--md-radius-lg) !important;
+        box-shadow: var(--md-shadow-2) !important;
+        border: 1px solid rgba(99, 102, 241, 0.06);
+        transition: box-shadow 0.3s var(--md-transition), transform 0.3s var(--md-transition), border-color 0.3s;
+        padding: 22px !important;
+        animation: pageEntrance 0.4s var(--md-transition) both;
+    }
+
+    .card-status:hover {
+        box-shadow: var(--md-shadow-3) !important;
+        transform: translateY(-5px);
+        border-color: rgba(99, 102, 241, 0.15);
+    }
+
+    .card-title {
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+        opacity: 0.75;
     }
 
     .card-icon {
-        font-size: 1.8rem !important;
+        font-size: 2.25rem !important;
+        opacity: 0.5 !important;
+    }
+
+    .card-count {
+        font-size: 1.1rem !important;
+        font-weight: 400;
+    }
+
+    .progress-bar {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-radius: var(--md-radius-pill) !important;
+        height: 5px !important;
+    }
+
+    .progress-fill {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border-radius: var(--md-radius-pill) !important;
+        transition: width 0.8s var(--md-transition);
+    }
+
+    .percent-text {
+        font-size: 0.8125rem !important;
+        font-weight: 500;
+        color: var(--md-text-secondary) !important;
+    }
+
+
+    /* ============================================================
+   7. DASHBOARD SUMMARY CARDS
+   ============================================================ */
+    .all-device-summary-container {
+        gap: 20px;
+    }
+
+    .all-device-summary {
+        background-color: var(--md-surface) !important;
+        border-radius: var(--md-radius-lg) !important;
+        box-shadow: var(--md-shadow-1);
+        padding: 28px 20px !important;
+        transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition), border-color 0.3s;
+        border: 1px solid rgba(99, 102, 241, 0.07);
+        animation: pageEntrance 0.45s var(--md-transition) both;
+    }
+
+    .all-device-summary:hover {
+        box-shadow: var(--md-shadow-2);
+        transform: translateY(-3px);
+        border-color: rgba(99, 102, 241, 0.16);
+    }
+
+    .all-device-summary h4 {
+        font-size: 0.8rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--md-text-muted) !important;
+        font-weight: 600 !important;
+        margin-bottom: 12px;
+    }
+
+    .all-device-summary h3 {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        color: var(--md-text-primary) !important;
+        letter-spacing: -0.02em;
+    }
+
+    /* Circle Chart */
+    .circle-chart {
+        width: 80px;
+        height: 80px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .circle-bg {
+        stroke: rgba(99, 102, 241, 0.1) !important;
+        stroke-width: 3.5;
+    }
+
+
+
+    /* ============================================================
+   9. PAGINATION — Modern
+   ============================================================ */
+    .pagination {
+        gap: 4px;
     }
 
     .pagination .page-item .page-link {
-        width: 30px;
-        height: 30px;
-        font-size: 0.75rem;
+        font-family: 'Inter', 'Roboto', sans-serif !important;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        color: var(--md-text-secondary);
+        background-color: transparent;
+        border: none !important;
+        border-radius: 8px !important;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: 0 2px;
+        transition: all 0.2s var(--md-transition);
     }
-}
+
+    .pagination .page-item .page-link:hover {
+        background-color: var(--md-primary-surface);
+        color: var(--md-primary);
+        transform: translateY(-1px);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--md-gradient) !important;
+        color: #fff !important;
+        box-shadow: var(--md-shadow-indigo);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: var(--md-text-muted);
+        background: transparent;
+    }
+
+    /* Previous / Next buttons — wider rounded rect */
+    .pagination .page-item:first-child .page-link,
+    .pagination .page-item:last-child .page-link {
+        width: auto;
+        border-radius: var(--md-radius-md) !important;
+        padding: 0 16px;
+        font-size: 0.8rem;
+        letter-spacing: 0.01em;
+    }
 
 
-/* ============================================================
+    /* ============================================================
+   10. FORM PAGES — Material Paper Surface
+   ============================================================ */
+    .container-fluid {
+        background-color: transparent;
+    }
+
+
+
+
+
+    /* Form Card */
+    form {
+        font-family: 'Roboto', sans-serif !important;
+    }
+
+    .form-grid {
+        gap: 20px;
+    }
+
+
+    /* ============================================================
+   11. RECEIVE DEVICE & MAINTENANCE FORMS — Material Paper
+   ============================================================ */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-actions {
+        margin-top: 28px;
+    }
+
+    .form-actions .btn {
+        min-width: 120px;
+    }
+
+
+    /* ============================================================
+   12. SWEETALERT2 — Modern Override
+   ============================================================ */
+    .swal2-popup {
+        font-family: 'Roboto', sans-serif !important;
+        border-radius: 24px !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
+        padding: 2.5rem !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .swal2-title {
+        font-family: 'Roboto', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 1.5rem !important;
+        color: #1e293b !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .swal2-html-container {
+        font-family: 'Roboto', sans-serif !important;
+        color: #64748b !important;
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+    }
+
+    .swal2-icon {
+        border: none !important;
+    }
+
+    .swal2-styled.swal2-confirm {
+        background: var(--md-gradient) !important;
+        border-radius: var(--md-radius-pill) !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+        letter-spacing: 0.3px !important;
+        box-shadow: var(--md-shadow-indigo) !important;
+        padding: 12px 32px !important;
+        transition: all 0.25s ease !important;
+    }
+
+    .swal2-styled.swal2-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 32px rgba(99, 102, 241, 0.45) !important;
+    }
+
+    .swal2-styled.swal2-cancel {
+        background: #f8fafc !important;
+        color: #ef4444 !important;
+        border: 1px solid #fee2e2 !important;
+        border-radius: 50px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+        padding: 12px 32px !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .swal2-styled.swal2-cancel:hover {
+        background: #fee2e2 !important;
+        transform: translateY(-2px);
+    }
+
+    .swal2-input {
+        border-radius: 12px !important;
+        border: 2px solid #e2e8f0 !important;
+        padding: 14px 20px !important;
+        font-size: 1rem !important;
+        color: #334155 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: none !important;
+        margin-top: 1.5rem !important;
+        margin-left: -2px;
+    }
+
+    .swal2-input:focus {
+        border-color: var(--md-primary) !important;
+        box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.15) !important;
+    }
+
+
+    /* ============================================================
+   13. SCROLLBAR — Indigo Accent
+   ============================================================ */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.25);
+        border-radius: var(--md-radius-pill);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.5);
+    }
+
+
+    /* ============================================================
+   14. GENERAL UTILITIES & OVERRIDES
+   ============================================================ */
+
+    /* MUI-like Chips for Status */
+    td .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: var(--md-radius-pill);
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+
+    /* MUI-like Dividers */
+    hr,
+    .divider {
+        border-color: var(--md-divider);
+        opacity: 1;
+    }
+
+    /* Card hover subtle scale */
+    .card {
+        border: 1px solid rgba(99, 102, 241, 0.06);
+        border-radius: var(--md-radius-lg) !important;
+        transition: box-shadow 0.3s var(--md-transition), transform 0.25s var(--md-transition), border-color 0.3s;
+    }
+
+    .card:hover {
+        box-shadow: var(--md-shadow-3) !important;
+        transform: translateY(-4px);
+        border-color: rgba(99, 102, 241, 0.14);
+    }
+
+    /* Table wrapper with modern surface */
+    .table-responsive-xxl {
+        background: var(--md-surface);
+        border-radius: var(--md-radius-lg);
+        box-shadow: var(--md-shadow-1);
+        overflow: visible;
+        border: 1px solid rgba(99, 102, 241, 0.07);
+    }
+
+    /* Stagger animation for table rows */
+    .next-table-row:nth-child(1) {
+        animation-delay: 0.02s;
+    }
+
+    .next-table-row:nth-child(2) {
+        animation-delay: 0.04s;
+    }
+
+    .next-table-row:nth-child(3) {
+        animation-delay: 0.06s;
+    }
+
+    .next-table-row:nth-child(4) {
+        animation-delay: 0.08s;
+    }
+
+    .next-table-row:nth-child(5) {
+        animation-delay: 0.10s;
+    }
+
+    .next-table-row:nth-child(6) {
+        animation-delay: 0.12s;
+    }
+
+    .next-table-row:nth-child(7) {
+        animation-delay: 0.14s;
+    }
+
+    .next-table-row:nth-child(8) {
+        animation-delay: 0.16s;
+    }
+
+    .next-table-row:nth-child(9) {
+        animation-delay: 0.18s;
+    }
+
+    .next-table-row:nth-child(10) {
+        animation-delay: 0.20s;
+    }
+
+    /* Responsive Web Application Adjustments */
+    @media (max-width: 1024px) {
+        .app-content {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 768px) {
+
+        /* Push content down for Mobile Top Bar & leave space at bottom for Mobile Bottom Nav */
+        #content.site-content {
+            margin-left: 0 !important;
+            margin-top: 56px !important;
+            padding-bottom: 84px !important;
+        }
+
+        .app-content {
+            padding: 14px 10px 84px !important;
+        }
+
+        /* Page Header Adjustment */
+        h1,
+        h1.entry-title,
+        h1[itemprop="headline"],
+        .entry-title,
+        .title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 0px !important;
+        }
+
+        body.page-owner h1,
+        body.page-owner .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 30px !important;
+        }
+
+        body.page-add-ownerer h1,
+        body.page-add-owner .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 30px !important;
+        }
+
+        body.page-home h1,
+        body.page-home .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 5px !important;
+        }
+
+        body.page-add-device h1,
+        body.page-add-device .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 30px !important;
+        }
+
+        body.page-history h1,
+        body.page-history .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 0px !important;
+        }
+
+        body.page-monitor h1,
+        body.page-monitor .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 30px !important;
+        }
+
+        body.page-laptop h1,
+        body.page-laptop .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 30px !important;
+        }
+
+        body.page-maintenance h1,
+        body.page-maintenance .entry-title {
+            font-size: 40px !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            margin-bottom: 30px !important;
+        }
+
+
+        /* Search Bar & Filter Row Stack */
+        .row.align-items-center.g-2 {
+            padding: 12px;
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 10px !important;
+        }
+
+        .row.align-items-center.g-2>[class*="col"] {
+            width: 100% !important;
+        }
+
+        .row.align-items-center.g-2 .btn,
+        .row.align-items-center.g-2 .form-control,
+        .row.align-items-center.g-2 .form-select {
+            width: 100% !important;
+        }
+
+        /* Tables & Cards Responsive */
+        .table .table-secondary th,
+        .table tr.table-secondary th {
+            font-size: 0.75rem;
+            padding: 10px 8px !important;
+        }
+
+        .table td {
+            padding: 10px 8px !important;
+            font-size: 0.8125rem;
+        }
+
+        .all-device-summary {
+            padding: 16px 14px !important;
+        }
+
+        /* Bulk actions toolbar per page */
+        #bulk-action-form-device>.d-flex,
+        #bulk-action-form-laptop>.d-flex,
+        #bulk-action-form-monitor>.d-flex,
+        #bulk-action-form-acc>.d-flex {
+            flex-wrap: wrap;
+            gap: 8px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .card-status {
+            padding: 14px !important;
+        }
+
+        .card-icon {
+            font-size: 1.8rem !important;
+        }
+
+        .pagination .page-item .page-link {
+            width: 30px;
+            height: 30px;
+            font-size: 0.75rem;
+        }
+    }
+
+
+    /* ============================================================
    15. ANIMATION KEYFRAMES
    ============================================================ */
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.device-dashboard,
-.all-device-summary-container,
-.table-responsive-xxl,
-#bulk-action-form-device,
-#bulk-action-form-laptop,
-#bulk-action-form-monitor,
-#bulk-action-form-acc {
-    animation: pageEntrance 0.4s var(--md-transition) both;
-    max-width: 200%;
-}
-
-/* Subtle page load fade-in for containers */
-@keyframes fadeInPage {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.container-fluid {
-    animation: fadeInPage 0.35s ease-out;
-}
-
-/* ============================================================
-   16. CUSTOM DASHBOARD LAYOUT (App Dashboard Template)
-   ============================================================ */
-.app-container {
-    display: flex;
-    min-height: 100vh;
-    background-color: transparent !important;
-}
-
-.custom-sidebar {
-    width: 260px;
-    background-color: var(--md-surface);
-    border-right: 1px solid var(--md-divider);
-    box-shadow: var(--md-shadow-1);
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-    z-index: 1000;
-}
-
-.custom-sidebar .sidebar-logo {
-    padding: 24px;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--md-primary);
-    border-bottom: 1px solid var(--md-divider);
-    text-align: center;
-    letter-spacing: 0.5px;
-}
-
-.material-nav-list {
-    list-style: none;
-    padding: 16px 0;
-    margin: 0;
-}
-
-.material-nav-list li {
-    margin: 4px 16px;
-}
-
-.material-nav-list li a {
-    display: block;
-    padding: 12px 16px;
-    color: var(--md-text-secondary);
-    text-decoration: none;
-    border-radius: var(--md-radius-md);
-    font-weight: 500;
-    transition: all 0.2s var(--md-transition);
-}
-
-.material-nav-list li a:hover {
-    background-color: var(--md-primary-surface);
-    color: var(--md-primary);
-}
-
-.material-nav-list li.current-menu-item a {
-    background-color: var(--md-primary);
-    color: #fff;
-    box-shadow: var(--md-shadow-1);
-}
-
-.app-content {
-    flex-grow: 1;
-    padding: 32px;
-    overflow-x: hidden;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .app-container {
-        flex-direction: column;
-    }
-
-    .custom-sidebar {
-        width: 100%;
-        height: auto;
-    }
-}
-
-/* ============================================================
-   16. SHADCN/UI DATA TABLE OVERRIDES
-   ============================================================ */
-
-/* Table wrapper — rounded-md border */
-.table-responsive-xl.rounded {
-    border: 1px solid hsl(240 5.9% 90%);
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: hsl(0 0% 100%);
-}
-
-/* Remove Bootstrap's default double borders */
-.table-responsive-xl.rounded .table-bordered {
-    border: none !important;
-}
-
-.table-responsive-xl.rounded .table-bordered th,
-.table-responsive-xl.rounded .table-bordered td {
-    border-left: none !important;
-    border-right: none !important;
-    border-top: none !important;
-    border-bottom: 1px solid hsl(240 5.9% 90%) !important;
-}
-
-/* Last row has no bottom border */
-.table-responsive-xl.rounded .table-bordered tbody tr:last-child td {
-    border-bottom: none !important;
-}
-
-/* Table header — shadcn style (h-10, muted foreground, no heavy bg) */
-.table-responsive-xl.rounded thead.table-secondary {
-    background-color: transparent !important;
-}
-
-.table-responsive-xl.rounded thead.table-secondary th {
-    background-color: transparent !important;
-    color: hsl(240 3.8% 46.1%) !important;
-    /* text-muted-foreground */
-    font-weight: 500 !important;
-    font-size: 13px;
-    height: 40px;
-    padding: 0 16px !important;
-    vertical-align: middle;
-    text-align: left;
-    letter-spacing: 0;
-    white-space: nowrap;
-    border-bottom: 1px solid hsl(240 5.9% 90%) !important;
-}
-
-/* Center checkbox columns */
-.table-responsive-xl.rounded thead.table-secondary th:first-child,
-.table-responsive-xl.rounded tbody td:first-child {
-    text-align: center !important;
-    width: 40px;
-}
-
-/* Table body rows — transition-colors, hover:bg-muted/50 */
-.table-responsive-xl.rounded tbody tr {
-    transition: background-color 0.15s ease;
-}
-
-.table-responsive-xl.rounded tbody tr:hover {
-    background-color: hsl(240 4.8% 95.9% / 0.5) !important;
-    /* muted/50 */
-}
-
-/* Table body cells — p-4 align-middle */
-.table-responsive-xl.rounded tbody td {
-    padding: 12px 16px !important;
-    vertical-align: middle;
-    font-size: 14px;
-    color: hsl(240 10% 3.9%);
-}
-
-/* shadcn-style checkbox */
-.table-responsive-xl.rounded input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    border: 1px solid hsl(240 5.9% 10%);
-    border-radius: 4px;
-    background-color: transparent;
-    cursor: pointer;
-    position: relative;
-    transition: background-color 0.1s ease, border-color 0.1s ease;
-    vertical-align: middle;
-}
-
-.table-responsive-xl.rounded input[type="checkbox"]:checked {
-    background-color: hsl(240 5.9% 10%);
-    /* primary */
-    border-color: hsl(240 5.9% 10%);
-}
-
-.table-responsive-xl.rounded input[type="checkbox"]:checked::after {
-    content: '✓';
-    display: block;
-    color: #fff;
-    font-size: 11px;
-    text-align: center;
-    line-height: 16px;
-}
-
-.table-responsive-xl.rounded input[type="checkbox"]:focus-visible {
-    outline: 2px solid hsl(240 5% 64.9%);
-    outline-offset: 2px;
-}
-
-/* ============================================================
-   17. SHADCN/UI BUTTON OVERRIDES
-   ============================================================ */
-
-/* Outline buttons (like shadcn Button variant="outline") */
-.btn-outline-secondary {
-    background-color: transparent !important;
-    border: 1px solid hsl(240 5.9% 90%) !important;
-    color: hsl(240 5.9% 10%) !important;
-    border-radius: 6px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    transition: background-color 0.15s ease, color 0.15s ease !important;
-    box-shadow: none !important;
-}
-
-.btn-outline-secondary:hover {
-    background-color: hsl(240 4.8% 95.9%) !important;
-    color: hsl(240 5.9% 10%) !important;
-}
-
-/* Primary button (like shadcn Button variant="default") */
-.btn-primary {
-    background-color: hsl(240 5.9% 10%) !important;
-    border-color: hsl(240 5.9% 10%) !important;
-    color: hsl(0 0% 98%) !important;
-    border-radius: 6px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    box-shadow: none !important;
-    transition: background-color 0.15s ease !important;
-}
-
-.btn-primary:hover {
-    background-color: hsl(240 5.9% 10% / 0.9) !important;
-}
-
-/* Success button (Import CSV) */
-.btn-success {
-    background-color: hsl(240 5.9% 10%) !important;
-    border-color: hsl(240 5.9% 10%) !important;
-    color: hsl(0 0% 98%) !important;
-    border-radius: 6px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    box-shadow: none !important;
-}
-
-.btn-success:hover {
-    background-color: hsl(240 5.9% 10% / 0.9) !important;
-}
-
-/* Secondary button (Export CSV) — shadcn variant="secondary" */
-.btn-secondary {
-    background-color: hsl(240 4.8% 95.9%) !important;
-    border-color: hsl(240 4.8% 95.9%) !important;
-    color: hsl(240 5.9% 10%) !important;
-    border-radius: 6px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    box-shadow: none !important;
-}
-
-.btn-secondary:hover {
-    background-color: hsl(240 4.8% 95.9% / 0.8) !important;
-}
-
-/* ============================================================
-   18. SHADCN/UI FORM INPUT OVERRIDES
-   ============================================================ */
-
-/* Input & Select — shadcn style */
-.form-select,
-.form-control {
-    border: 1px solid hsl(240 5.9% 90%) !important;
-    border-radius: 6px !important;
-    background-color: hsl(0 0% 100%) !important;
-    font-size: 14px !important;
-    height: 36px !important;
-    padding: 6px 12px !important;
-    color: hsl(240 10% 3.9%) !important;
-    box-shadow: none !important;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-.form-select:focus,
-.form-control:focus {
-    border-color: hsl(240 5% 64.9%) !important;
-    box-shadow: 0 0 0 2px hsl(240 5% 64.9% / 0.2) !important;
-    outline: none !important;
-}
-
-/* Placeholder color */
-.form-control::placeholder {
-    color: hsl(240 3.8% 46.1%);
-}
-
-/* ============================================================
-   19. GLOBAL TEXT TRANSFORM RESET (Prevent forced Capitalize / Uppercase)
-   ============================================================ */
-input,
-textarea,
-select,
-option,
-button,
-.form-control,
-.form-select,
-.table-custom td,
-.table-custom th,
-.table-wrapper table td,
-.table-wrapper table th,
-.next-table td,
-.next-table th,
-.next-table-wrapper table td,
-.next-table-wrapper table th,
-.table-responsive table td,
-.table-responsive table th,
-.swal2-input,
-.swal2-select,
-.swal2-textarea,
-.search-input-modern {
-    text-transform: none !important;
-}
-
-.swal2-popup > select.swal2-select:not(.swal2-select-show):not(:has(option)) {
-    display: none !important;
-}
-
-
-/* ============================================================
-   OFFBOARD EMPLOYEE — Modal & Table Styles
-   ============================================================ */
-
-/* SweetAlert2 popup override for offboard */
-.offboard-swal-popup {
-    border-radius: var(--md-radius-xl) !important;
-    padding: 1.5rem !important;
-}
-
-.offboard-swal-popup .swal2-title {
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-weight: 600;
-    font-size: 1.25rem;
-    color: var(--md-text-primary);
-}
-
-/* Container */
-.offboard-modal-container {
-    text-align: left;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-/* Employee Info Header */
-.offboard-employee-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    border-radius: var(--md-radius-lg);
-    margin-bottom: 1rem;
-}
-
-.offboard-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--md-primary);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
-}
-
-.offboard-emp-details {
-    flex: 1;
-    min-width: 0;
-}
-
-.offboard-emp-name {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--md-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.offboard-emp-nick {
-    font-size: 0.8rem;
-    color: var(--md-text-secondary);
-    margin-top: 2px;
-}
-
-.offboard-device-count {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #fff;
-    border-radius: var(--md-radius-md);
-    padding: 0.5rem 1rem;
-    box-shadow: var(--md-shadow-1);
-    flex-shrink: 0;
-}
-
-.offboard-count-num {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--md-error);
-    line-height: 1.2;
-}
-
-.offboard-count-label {
-    font-size: 0.7rem;
-    color: var(--md-text-secondary);
-    text-transform: uppercase;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-}
-
-/* Table Wrapper */
-.offboard-table-wrap {
-    max-height: 320px;
-    overflow-y: auto;
-    border: 1px solid var(--md-divider);
-    border-radius: var(--md-radius-md);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
-}
-
-.offboard-table-wrap::-webkit-scrollbar {
-    width: 6px;
-}
-
-.offboard-table-wrap::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.offboard-table-wrap::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 3px;
-}
-
-/* Device Table */
-.offboard-device-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-
-.offboard-device-table thead {
-    background: #f5f5f5;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-
-.offboard-device-table th {
-    padding: 0.6rem 0.75rem;
-    font-weight: 600;
-    color: var(--md-text-secondary);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 2px solid var(--md-divider);
-    text-align: left;
-    white-space: nowrap;
-}
-
-.offboard-device-table td {
-    padding: 0.55rem 0.75rem;
-    color: var(--md-text-primary);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    vertical-align: middle;
-}
-
-.offboard-row {
-    transition: background-color 0.15s ease;
-}
-
-.offboard-row:hover {
-    background-color: var(--md-primary-surface);
-}
-
-.offboard-row:last-child td {
-    border-bottom: none;
-}
-
-/* Table Cell Variants */
-.offboard-td-num {
-    width: 36px;
-    text-align: center;
-    color: var(--md-text-disabled);
-    font-weight: 500;
-}
-
-.offboard-td-id {
-    font-family: 'Roboto Mono', 'Consolas', monospace;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--md-primary);
-}
-
-.offboard-td-model {
-    font-weight: 500;
-    max-width: 180px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Badges */
-.offboard-cat-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    background: #e8eaf6;
-    color: #3949ab;
-    border-radius: var(--md-radius-pill);
-    white-space: nowrap;
-}
-
-.offboard-status-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    background: #e8f5e9;
-    color: #2e7d32;
-    border-radius: var(--md-radius-pill);
-    white-space: nowrap;
-}
-
-/* Confirm Button */
-.offboard-confirm-btn {
-    font-weight: 600 !important;
-    letter-spacing: 0.02em;
-    padding: 0.6rem 1.25rem !important;
-    font-size: 0.875rem !important;
-    border-radius: var(--md-radius-md) !important;
-    transition: all 0.2s ease !important;
-}
-
-.offboard-confirm-btn:hover {
-    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.35) !important;
-    transform: translateY(-1px);
-}
-
-/* Offboard link in dropdown */
-.offboard-action-link {
-    color: #c62828 !important;
-}
-
-.offboard-action-link:hover {
-    background-color: rgba(198, 40, 40, 0.08) !important;
-    color: #b71c1c !important;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-    .offboard-employee-info {
-        flex-wrap: wrap;
-        gap: 0.75rem;
-    }
-
-    .offboard-device-count {
-        flex-direction: row;
-        gap: 0.4rem;
-        padding: 0.4rem 0.75rem;
-    }
-
-    .offboard-count-num {
-        font-size: 1.1rem;
-    }
-
-    .offboard-td-model {
-        max-width: 100px;
-    }
-
-    .offboard-swal-popup {
-        width: 95vw !important;
-        padding: 1rem !important;
-    }
-}
-
-
-/* ============================================================
-   MOBILE CARD VIEW — Device Tables → Cards on ≤768px
-   Converts table rows to card-based layout for mobile
-   ============================================================ */
-
-@media (max-width: 992px) {
-
-    .ast-separate-container #primary,
-    .ast-separate-container.ast-left-sidebar #primary,
-    .ast-separate-container.ast-right-sidebar #primary {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        margin-top: -50px !important;
-    }
-}
-
-
-@media (max-width: 768px) {
-
-    /* --- Hide desktop-only elements --- */
-    .table-custom thead,
-    .table-wrapper thead {
-        display: none !important;
-    }
-
-    /* Hide static QR bar on mobile when not active */
-    .dash-qr-bar:not(.active-scan) {
-        display: none !important;
-    }
-
-    /* Show active camera QR scanner on mobile */
-    .dash-qr-bar.active-scan {
-        display: block !important;
-        margin: 12px 0 20px 0 !important;
-        padding: 16px !important;
-        border-radius: 16px !important;
-        background: #ffffff !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
-        border: 1.5px solid #6366f1 !important;
-        z-index: 9990 !important;
-    }
-
-    /* Hide bulk action bar on mobile */
-    .table-custom+.d-flex,
-    form>.d-flex:has(select[name="bulk_action"]) {
-        display: none !important;
-    }
-
-    /* --- Table → Card Conversion (Global Shared Base Rule) --- */
-    .table-custom,
-    .table-wrapper table {
-        border-collapse: separate !important;
-        border-spacing: 0 12px !important;
-        border: none !important;
-        margin-top: -40px !important;
-        margin-left: -40px !important;
-        margin-right: 0 !important;
-        width: 150% !important;
-        max-width: 130% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* --- Page-Specific Table Overrides (Target each page table independently) --- */
-    .table-wrapper-employee table {
-        width: 100% !important;
-        margin-top: 12px !important;
-        margin-left: -22px !important;
-    }
-
-    .table-wrapper-laptop table {
-        width: 120% !important;
-        margin-left: -10px;
-    }
-
-    .table-wrapper-monitor table {
-        width: 100% !important;
-    }
-
-    .table-wrapper-accessories table {
-        width: 100% !important;
-    }
-
-    .table-wrapper-history table {
-        width: 100% !important;
-    }
-
-    .table-wrapper-details table {
-        width: 100% !important;
-        margin-top: 12px !important;
-        margin-left: -60px !important;
-    }
-
-    .table-custom tbody,
-    .table-wrapper tbody {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        width: 100% !important;
-    }
-
-    .table-custom tbody tr,
-    .table-wrapper tbody tr {
-        display: flex !important;
-        flex-wrap: wrap;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        box-sizing: border-box !important;
-        background: #ffffff;
-        border: 1px solid #e5e7eb !important;
-        border-radius: 13px !important;
-        padding: 0 !important;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-        transition: box-shadow 0.2s ease, transform 0.2s ease;
-        position: relative;
-        overflow: visible !important;
-        white-space: normal !important;
-
-        animation: mobileCardFadeIn 0.35s ease-out forwards;
-    }
-
-    .table-custom tbody tr:hover,
-    .table-custom tbody tr:focus-within,
-    .table-custom tbody tr:has(.show),
-    .table-custom tbody tr:has([aria-expanded="true"]),
-    .table-wrapper tbody tr:hover,
-    .table-wrapper tbody tr:focus-within,
-    .table-wrapper tbody tr:has(.show),
-    .table-wrapper tbody tr:has([aria-expanded="true"]) {
-        z-index: 1000 !important;
-    }
-
-    .table-custom tbody tr:active {
-        transform: scale(0.99);
-    }
-
-    @keyframes mobileCardFadeIn {
+    @keyframes slideUp {
         from {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(20px);
         }
 
         to {
@@ -1924,776 +1179,1582 @@ button,
         }
     }
 
-    /* --- Card Cells → Rows --- */
-    .table-custom tbody td,
-    .table-wrapper tbody td {
-        display: flex !important;
-        align-items: center;
-        width: 100% !important;
-        min-width: 0 !important;
-        padding: 8px 16px !important;
-        border-radius: 13px !important;
-        border: none !important;
-        border-bottom: 1px solid #f3f4f6 !important;
-        font-size: 0.875rem;
-        text-align: left !important;
-        white-space: normal !important;
-
-        box-sizing: border-box;
+    .device-dashboard,
+    .all-device-summary-container,
+    .table-responsive-xxl,
+    #bulk-action-form-device,
+    #bulk-action-form-laptop,
+    #bulk-action-form-monitor,
+    #bulk-action-form-acc {
+        animation: pageEntrance 0.4s var(--md-transition) both;
+        max-width: 200%;
     }
 
-    .table-custom tbody td:last-child,
-    .table-wrapper tbody td:last-child {
-        border-bottom: none !important;
+    /* Subtle page load fade-in for containers */
+    @keyframes fadeInPage {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    /* --- Data Labels (::before pseudo) --- */
-    .table-custom tbody td[data-label]::before,
-    .table-wrapper tbody td[data-label]::before {
-        content: attr(data-label);
-        display: inline-block;
-        min-width: 100px;
-        flex-shrink: 0;
-        font-weight: 600;
-        font-size: 0.78rem;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        margin-right: 12px;
+    .container-fluid {
+        animation: fadeInPage 0.35s ease-out;
     }
 
-    /* --- Stacked View for Long Text Fields --- */
-    .table-custom tbody td[data-label="Reason / Details"],
-    .table-wrapper tbody td[data-label="Reason / Details"] {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        padding-top: 12px !important;
-        padding-bottom: 12px !important;
+    /* ============================================================
+   16. CUSTOM DASHBOARD LAYOUT (App Dashboard Template)
+   ============================================================ */
+    .app-container {
+        display: flex;
+        min-height: 100vh;
+        background-color: transparent !important;
     }
 
-    .table-custom tbody td[data-label="Reason / Details"]::before,
-    .table-wrapper tbody td[data-label="Reason / Details"]::before {
-        width: 100% !important;
-        margin-right: 0;
-        margin-bottom: 6px;
-    }
-
-    /* --- Card Header: Checkbox + ID --- */
-    .table-custom tbody td.mobile-card-checkbox,
-    .table-wrapper tbody td.mobile-card-checkbox {
-        display: none !important;
-    }
-
-    .table-custom tbody td[data-label="ID"],
-    .table-wrapper tbody td[data-label="ID"] {
-        background: #f8fafc;
-        border-bottom: 2px solid #e5e7eb !important;
-        padding: 10px 16px !important;
-        font-weight: 700;
-        font-size: 0.95rem;
-        color: var(--md-primary, #1976D2);
-        order: -2;
-    }
-
-    .table-custom tbody td[data-label="ID"]::before,
-    .table-wrapper tbody td[data-label="ID"]::before {
-        display: none;
-    }
-
-    /* --- Device Info row --- */
-    .table-custom tbody td[data-label="Device Info"],
-    .table-wrapper tbody td[data-label="Device Info"] {
+    .custom-sidebar {
+        width: 260px;
+        background-color: var(--md-surface);
+        border-right: 1px solid var(--md-divider);
+        box-shadow: var(--md-shadow-1);
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        z-index: 1000;
     }
 
-    .table-custom tbody td[data-label="Device Info"]::before,
-    .table-wrapper tbody td[data-label="Device Info"]::before {
-        margin-bottom: 2px;
+    .custom-sidebar .sidebar-logo {
+        padding: 24px;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--md-primary);
+        border-bottom: 1px solid var(--md-divider);
+        text-align: center;
+        letter-spacing: 0.5px;
     }
 
-    /* --- Status Badge in card --- */
-    .table-custom tbody td[data-label="Status"],
-    .table-wrapper tbody td[data-label="Status"] {
-        padding: 10px 16px !important;
+    .material-nav-list {
+        list-style: none;
+        padding: 16px 0;
+        margin: 0;
     }
 
-    /* --- Action Column: Card footer --- */
-    .table-custom tbody td[data-label="Action"],
-    .table-wrapper tbody td[data-label="Action"] {
-        background: #f8fafc;
-        border-top: 1px solid #e5e7eb !important;
+    .material-nav-list li {
+        margin: 4px 16px;
+    }
+
+    .material-nav-list li a {
+        display: block;
+        padding: 12px 16px;
+        color: var(--md-text-secondary);
+        text-decoration: none;
+        border-radius: var(--md-radius-md);
+        font-weight: 500;
+        transition: all 0.2s var(--md-transition);
+    }
+
+    .material-nav-list li a:hover {
+        background-color: var(--md-primary-surface);
+        color: var(--md-primary);
+    }
+
+    .material-nav-list li.current-menu-item a {
+        background-color: var(--md-primary);
+        color: #fff;
+        box-shadow: var(--md-shadow-1);
+    }
+
+    .app-content {
+        flex-grow: 1;
+        padding: 32px;
+        overflow-x: hidden;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .app-container {
+            flex-direction: column;
+        }
+
+        .custom-sidebar {
+            width: 100%;
+            height: auto;
+        }
+    }
+
+    /* ============================================================
+   16. SHADCN/UI DATA TABLE OVERRIDES
+   ============================================================ */
+
+    /* Table wrapper — rounded-md border */
+    .table-responsive-xl.rounded {
+        border: 1px solid hsl(240 5.9% 90%);
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: hsl(0 0% 100%);
+    }
+
+    /* Remove Bootstrap's default double borders */
+    .table-responsive-xl.rounded .table-bordered {
+        border: none !important;
+    }
+
+    .table-responsive-xl.rounded .table-bordered th,
+    .table-responsive-xl.rounded .table-bordered td {
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        border-bottom: 1px solid hsl(240 5.9% 90%) !important;
+    }
+
+    /* Last row has no bottom border */
+    .table-responsive-xl.rounded .table-bordered tbody tr:last-child td {
         border-bottom: none !important;
-        justify-content: flex-end;
-        padding: 8px 12px !important;
-        order: 999;
     }
 
-    .table-custom tbody td[data-label="Action"]::before,
-    .table-wrapper tbody td[data-label="Action"]::before {
-        display: none;
+    /* Table header — shadcn style (h-10, muted foreground, no heavy bg) */
+    .table-responsive-xl.rounded thead.table-secondary {
+        background-color: transparent !important;
     }
 
-    /* Hide the expand button on mobile (data is already visible) */
-    .table-custom tbody td[data-label="Action"] .btn-outline-secondary,
-    .table-wrapper tbody td[data-label="Action"] .btn-outline-secondary {
-        display: none !important;
+    .table-responsive-xl.rounded thead.table-secondary th {
+        background-color: transparent !important;
+        color: hsl(240 3.8% 46.1%) !important;
+        /* text-muted-foreground */
+        font-weight: 500 !important;
+        font-size: 13px;
+        height: 40px;
+        padding: 0 16px !important;
+        vertical-align: middle;
+        text-align: left;
+        letter-spacing: 0;
+        white-space: nowrap;
+        border-bottom: 1px solid hsl(240 5.9% 90%) !important;
     }
 
-    /* Style action dots button on mobile */
-    .table-custom tbody td[data-label="Action"] .action-btn,
-    .table-wrapper tbody td[data-label="Action"] .action-btn {
-        font-size: 1.4rem;
-        padding: 4px 12px;
-        color: #374151;
+    /* Center checkbox columns */
+    .table-responsive-xl.rounded thead.table-secondary th:first-child,
+    .table-responsive-xl.rounded tbody td:first-child {
+        text-align: center !important;
+        width: 40px;
     }
 
-    /* --- Collapse/Details Row --- */
-    .table-custom tbody tr[id^="details-"],
-    .table-wrapper tbody tr[id^="details-"] {
-        display: none !important;
+    /* Table body rows — transition-colors, hover:bg-muted/50 */
+    .table-responsive-xl.rounded tbody tr {
+        transition: background-color 0.15s ease;
     }
 
-    /* --- NEW badge adjustment --- */
-    .new-device-badge {
-        font-size: 0.65rem !important;
-        padding: 1px 6px !important;
+    .table-responsive-xl.rounded tbody tr:hover {
+        background-color: hsl(240 4.8% 95.9% / 0.5) !important;
+        /* muted/50 */
+    }
+
+    /* Table body cells — p-4 align-middle */
+    .table-responsive-xl.rounded tbody td {
+        padding: 12px 16px !important;
+        vertical-align: middle;
+        font-size: 14px;
+        color: hsl(240 10% 3.9%);
+    }
+
+    /* shadcn-style checkbox */
+    .table-responsive-xl.rounded input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border: 1px solid hsl(240 5.9% 10%);
+        border-radius: 4px;
+        background-color: transparent;
+        cursor: pointer;
+        position: relative;
+        transition: background-color 0.1s ease, border-color 0.1s ease;
         vertical-align: middle;
     }
 
-    /* --- Filter Bar Mobile Enhancement --- */
-    #advanced-filter-form .row.g-2 {
-        gap: 8px !important;
+    .table-responsive-xl.rounded input[type="checkbox"]:checked {
+        background-color: hsl(240 5.9% 10%);
+        /* primary */
+        border-color: hsl(240 5.9% 10%);
     }
 
-    #advanced-filter-form .col-12 {
-        padding: 0 !important;
+    .table-responsive-xl.rounded input[type="checkbox"]:checked::after {
+        content: '✓';
+        display: block;
+        color: #fff;
+        font-size: 11px;
+        text-align: center;
+        line-height: 16px;
     }
 
-    #advanced-filter-form .form-label {
-        font-size: 0.78rem !important;
-        margin-bottom: 2px !important;
+    .table-responsive-xl.rounded input[type="checkbox"]:focus-visible {
+        outline: 2px solid hsl(240 5% 64.9%);
+        outline-offset: 2px;
     }
 
-    #advanced-filter-form .form-select-sm {
-        font-size: 0.85rem !important;
-        padding: 8px 12px !important;
-        border-radius: 10px !important;
-        border: 1.5px solid #e5e7eb !important;
-        background-color: #fafafa !important;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
+    /* ============================================================
+   17. SHADCN/UI BUTTON OVERRIDES
+   ============================================================ */
 
-    #advanced-filter-form .search-input-modern,
-    .search-input-modern {
-        font-size: 0.85rem !important;
-        padding-left: 2.75rem !important;
-        padding-right: 1rem !important;
-        border-radius: 10px !important;
-        border: 1.5px solid #e5e7eb !important;
-        background-color: #fafafa !important;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    #advanced-filter-form .form-select-sm:focus,
-    #advanced-filter-form .search-input-modern:focus {
-        border-color: var(--md-primary, #1976D2) !important;
-        box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12) !important;
-        background-color: #fff !important;
-    }
-
-    .btn-filter-modern {
-        border-radius: 10px !important;
-        font-size: 0.85rem !important;
-        padding: 8px 16px !important;
-        font-weight: 600 !important;
-    }
-
-    .btn-reset-modern {
-        border-radius: 10px !important;
-        font-size: 0.85rem !important;
-        padding: 8px 12px !important;
-    }
-
-    /* --- Table wrapper adjustments --- */
-    .table-wrapper {
-        overflow: visible !important;
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        background: transparent !important;
-    }
-
-    /* --- Action dropdown mobile adjustments --- */
-    .action-menu {
-        position: relative !important;
-    }
-
-    .dropdown-menu.action-dropdown {
-        position: absolute !important;
-        right: 0 !important;
-        left: auto !important;
-        top: 100% !important;
-        bottom: auto !important;
-        transform: none !important;
-        width: max-content !important;
-        min-width: 170px !important;
-        max-width: 250px !important;
-        z-index: 99999 !important;
-        border-radius: 12px !important;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18) !important;
-        border: 1px solid #e5e7eb !important;
-        background: #ffffff !important;
-        margin-top: 4px !important;
-        padding: 6px 0 !important;
-    }
-
-    /* --- Device info styling on mobile --- */
-    .device-title,
-    .table-custom tbody td strong {
-        font-size: 0.9rem !important;
-        word-break: break-word;
-    }
-
-    .device-subtitle,
-    .table-custom tbody td small {
-        font-size: 0.78rem !important;
-        word-break: break-all;
-    }
-
-    /* --- Print labels bar hide on mobile per page --- */
-    #bulk-action-form-device>.d-flex,
-    #bulk-action-form-laptop>.d-flex,
-    #bulk-action-form-monitor>.d-flex,
-    #bulk-action-form-acc>.d-flex {
-        display: none !important;
-    }
-
-    /* --- Mobile Edit & Add Data Forms (Themed Soft Minimalist / Bento Grid) --- */
-    .edit-data-form,
-    #edit-device-form,
-    #edit-employee-form,
-    #add-device-form,
-    #add-employee-form {
-        max-width: 100%;
-        width: 100%;
-        margin: 14px 0 28px 0;
-        padding: 24px 18px;
-        box-sizing: border-box;
-        border-radius: 28px;
-        background: #f8fafc;
-        /* Matches Website Slate Theme */
-        border: 1.5px solid #e2e8f0;
-        box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02);
-    }
-
-    .edit-data-form h2,
-    #edit-device-form h2,
-    #edit-employee-form h2,
-    #add-device-form h2,
-    #add-employee-form h2 {
-        font-size: 1.35rem !important;
-        font-weight: 800 !important;
-        color: #0f172a !important;
-        letter-spacing: -0.02em !important;
-        margin-bottom: 20px !important;
-        text-align: center !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 8px !important;
-    }
-
-    /* Card-Based Layout / Bento Grid for form fields on mobile */
-    .edit-data-form .form-grid,
-    #edit-device-form .form-grid,
-    #edit-employee-form .form-grid,
-    #add-device-form .form-grid,
-    #add-employee-form .form-grid {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 14px !important;
-        width: 100% !important;
-    }
-
-    .edit-data-form .form-group,
-    #edit-device-form .form-group,
-    #edit-employee-form .form-group,
-    #add-device-form .form-group,
-    #add-employee-form .form-group {
-        background: #ffffff !important;
-        border: 1.5px solid #e2e8f0 !important;
-        border-radius: 20px !important;
-        padding: 16px 18px !important;
-        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
-        margin-bottom: 0 !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
-    }
-
-    .edit-data-form .form-group:focus-within,
-    #edit-device-form .form-group:focus-within,
-    #edit-employee-form .form-group:focus-within,
-    #add-device-form .form-group:focus-within,
-    #add-employee-form .form-group:focus-within {
-        border-color: #cbd5e1 !important;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
-        transform: none !important;
-        position: relative !important;
-        z-index: 100 !important;
-    }
-
-    .edit-data-form .form-group label,
-    #edit-device-form .form-group label,
-    #edit-employee-form .form-group label,
-    #add-device-form .form-group label,
-    #add-employee-form .form-group label {
-        font-size: 0.78rem !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.06em !important;
-        color: #475569 !important;
-        margin-bottom: 8px !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-    }
-
-    .edit-data-form .form-group input,
-    .edit-data-form .form-group select,
-    .edit-data-form .form-group textarea,
-    #edit-device-form .form-group input,
-    #edit-device-form .form-group select,
-    #edit-employee-form .form-group input,
-    #edit-employee-form .form-group select,
-    #add-device-form .form-group input,
-    #add-device-form .form-group select {
-        width: 100% !important;
-        box-sizing: border-box !important;
-        height: 48px !important;
-        border-radius: 14px !important;
-        background-color: #f8fafc !important;
-        border: 1.5px solid #cbd5e1 !important;
-        padding: 0 16px !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        color: #0f172a !important;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-        touch-action: manipulation !important;
-        -webkit-tap-highlight-color: transparent !important;
-    }
-
-
-    .animated-dropdown-wrapper {
-        display: none !important;
-    }
-
-    select,
-    .form-group select,
-    .edit-data-form select,
-    #edit-device-form select,
-    #edit-employee-form select,
-    #add-device-form select {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        position: relative !important;
-        z-index: 50 !important;
-        pointer-events: auto !important;
-        width: 100% !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        background-color: #ffffff !important;
-        border: 1.5px solid #cbd5e1 !important;
-        border-radius: 14px !important;
-        padding: 0 40px 0 16px !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        color: #0f172a !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
-        -moz-appearance: none !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
-        background-position: right 14px center !important;
-        background-repeat: no-repeat !important;
-        background-size: 16px 16px !important;
-        box-sizing: border-box !important;
-        transform: none !important;
-        touch-action: manipulation !important;
-        -webkit-tap-highlight-color: transparent !important;
-    }
-
-    .edit-data-form .form-group input:focus,
-    .edit-data-form .form-group select:focus,
-    .edit-data-form .form-group textarea:focus,
-    #edit-device-form .form-group input:focus,
-    #edit-device-form .form-group select:focus {
-        background: #ffffff !important;
-        border-color: #2563eb !important;
-        outline: none !important;
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
-        transform: none !important;
-    }
-
-    .edit-data-form .form-group input[disabled],
-    .edit-data-form .form-group select[disabled],
-    .edit-data-form .form-group input[readonly],
-    #edit-device-form .form-group input[disabled],
-    #edit-device-form .form-group select[disabled] {
-        background-color: #f1f5f9 !important;
-        color: #0f172a !important;
-        -webkit-text-fill-color: #0f172a !important;
-        font-weight: 700 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        cursor: not-allowed !important;
-        opacity: 1 !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a3 3 0 0 0-3 3v2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3zm1 5V4a1 1 0 0 0-2 0v2h2z'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-position: right 14px center !important;
-        background-size: 14px 14px !important;
-        padding-right: 38px !important;
-    }
-
-    /* Pill-Shaped Buttons in Form Actions */
-    .edit-data-form .form-actions,
-    #edit-device-form .form-actions,
-    #edit-employee-form .form-actions,
-    #add-device-form .form-actions,
-    #add-employee-form .form-actions {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 12px !important;
-        margin-top: 24px !important;
-        padding-top: 18px !important;
-        border-top: 1.5px dashed #e2e8f0 !important;
-        width: 100% !important;
-    }
-
-    .edit-data-form .form-actions button,
-    .edit-data-form .form-actions .btn,
-    #edit-device-form .form-actions button,
-    #edit-employee-form .form-actions button,
-    #add-device-form .form-actions button,
-    #add-employee-form .form-actions button {
-        flex: 1 !important;
-        height: 52px !important;
-        border-radius: 9999px !important;
-        /* Pill-shaped button */
-        font-size: 1rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.02em !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 8px !important;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
-        padding: 0 20px !important;
-        box-sizing: border-box !important;
-    }
-
-    /* Primary/Submit Pill Button */
-    .edit-data-form .form-actions button[type="submit"],
-    .edit-data-form .form-actions .btn-success,
-    #edit-device-form .form-actions button[type="submit"],
-    #edit-employee-form .form-actions button[type="submit"],
-    #add-device-form .form-actions button[type="submit"] {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-        color: #ffffff !important;
-        border: none !important;
-        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28) !important;
-    }
-
-    .edit-data-form .form-actions button[type="submit"]:active,
-    .edit-data-form .form-actions .btn-success:active {
-        transform: scale(0.96) !important;
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
-    }
-
-    /* Cancel Pill Button */
-    .edit-data-form .form-actions button[type="button"],
-    .edit-data-form .form-actions .btn-danger,
-    .edit-data-form .form-actions .btn-secondary,
-    #edit-device-form .form-actions button[type="button"],
-    #edit-employee-form .form-actions button[type="button"] {
-        background: #f1f5f9 !important;
-        color: #334155 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        box-shadow: none !important;
-    }
-
-    .edit-data-form .form-actions button[type="button"]:active,
-    .edit-data-form .form-actions .btn-danger:active {
-        background: #e2e8f0 !important;
-        transform: scale(0.96) !important;
-    }
-
-    /* Fixed z-index stacking for Owner group and floating popups */
-    .edit-data-form .form-group#owner-group,
-    #edit-device-form .form-group#owner-group {
-        position: relative !important;
-        z-index: 80 !important;
-    }
-
-    #website_edit_owner_search_wrap,
-    #website_owner_search_wrap {
-        position: relative !important;
-        z-index: 100 !important;
-    }
-
-    /* Sub-components: Add Brand & Owner Search on Mobile */
-    .edit-data-form #btn-edit-add-new-brand,
-    #edit-device-form #btn-edit-add-new-brand {
-        border-radius: 9999px !important;
-        background: #f8fafc !important;
-        border: 1.5px dashed #cbd5e1 !important;
-        color: #334155 !important;
-        font-weight: 700 !important;
-        padding: 10px 18px !important;
-        margin-top: 10px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
-    }
-
-    .edit-data-form #edit_owner_search_input,
-    #edit-device-form #edit_owner_search_input,
-    #edit_owner_search_input,
-    #owner_search_input {
-        height: 48px !important;
-        border-radius: 14px !important;
-        background: #f8fafc !important;
-        border: 1.5px solid #cbd5e1 !important;
+    /* Outline buttons (like shadcn Button variant="outline") */
+    .btn-outline-secondary {
+        background-color: transparent !important;
+        border: 1px solid hsl(240 5.9% 90%) !important;
+        color: hsl(240 5.9% 10%) !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
         font-weight: 500 !important;
-        color: #0f172a !important;
-        padding-left: 38px !important;
-        padding-right: 36px !important;
+        transition: background-color 0.15s ease, color 0.15s ease !important;
+        box-shadow: none !important;
     }
 
-    .edit-data-form #edit_owner_search_popup,
-    #edit-device-form #edit_owner_search_popup,
-    #owner_search_popup {
-        border-radius: 18px !important;
-        border: 1.5px solid #cbd5e1 !important;
-        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.15) !important;
-        background: #ffffff !important;
-        z-index: 999999 !important;
+    .btn-outline-secondary:hover {
+        background-color: hsl(240 4.8% 95.9%) !important;
+        color: hsl(240 5.9% 10%) !important;
     }
 
-    /* --- Device View Details & History Timeline on Mobile --- */
-    .view-details-container,
-    .vd-history-section,
-    .dtl-history-timeline-wrapper {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        width: 100% !important;
+    /* Primary button */
+    .btn-primary {
+        background-color: #0f172a !important;
+        border: none !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        padding: 8px 16px !important;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
+        transition: all 0.2s ease !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
-    .dtl-timeline-wrap,
-    .dtl-timeline-wrap.active {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+    .btn-primary:hover {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2) !important;
     }
 
-    .dtl-timeline {
-        display: block !important;
-        position: relative !important;
+    /* Success button (Import CSV) */
+    .btn-success {
+        background-color: hsl(240 5.9% 10%) !important;
+        border-color: hsl(240 5.9% 10%) !important;
+        color: hsl(0 0% 98%) !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
     }
 
-    .dtl-node {
-        display: block !important;
-        opacity: 1 !important;
-        transform: none !important;
-        visibility: visible !important;
+    .btn-success:hover {
+        background-color: hsl(240 5.9% 10% / 0.9) !important;
     }
 
-    .dtl-card {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+    /* Secondary button (Export CSV) — shadcn variant="secondary" */
+    .btn-secondary {
+        background-color: hsl(240 4.8% 95.9%) !important;
+        border-color: hsl(240 4.8% 95.9%) !important;
+        color: hsl(240 5.9% 10%) !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
     }
-}
 
-/* ============================================================
+    .btn-secondary:hover {
+        background-color: hsl(240 4.8% 95.9% / 0.8) !important;
+    }
+
+    /* ============================================================
+   18. SHADCN/UI FORM INPUT OVERRIDES
+   ============================================================ */
+
+    /* Input & Select — shadcn style */
+    .form-select,
+    .form-control {
+        border: 1px solid hsl(240 5.9% 90%) !important;
+        border-radius: 6px !important;
+        background-color: hsl(0 0% 100%) !important;
+        font-size: 14px !important;
+        height: 36px !important;
+        padding: 6px 12px !important;
+        color: hsl(240 10% 3.9%) !important;
+        box-shadow: none !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+    .form-select:focus,
+    .form-control:focus {
+        border-color: hsl(240 5% 64.9%) !important;
+        box-shadow: 0 0 0 2px hsl(240 5% 64.9% / 0.2) !important;
+        outline: none !important;
+    }
+
+    /* Placeholder color */
+    .form-control::placeholder {
+        color: hsl(240 3.8% 46.1%);
+    }
+
+    /* ============================================================
+   19. GLOBAL TEXT TRANSFORM RESET (Prevent forced Capitalize / Uppercase)
+   ============================================================ */
+    input,
+    textarea,
+    select,
+    option,
+    button,
+    .form-control,
+    .form-select,
+    .table-custom td,
+    .table-custom th,
+    .table-wrapper table td,
+    .table-wrapper table th,
+    .next-table td,
+    .next-table th,
+    .next-table-wrapper table td,
+    .next-table-wrapper table th,
+    .table-responsive table td,
+    .table-responsive table th,
+    .swal2-input,
+    .swal2-select,
+    .swal2-textarea,
+    .search-input-modern {
+        text-transform: none !important;
+    }
+
+    .swal2-popup>select.swal2-select:not(.swal2-select-show):not(:has(option)) {
+        display: none !important;
+    }
+
+
+    /* ============================================================
+   OFFBOARD EMPLOYEE — Modal & Table Styles
+   ============================================================ */
+
+    /* SweetAlert2 popup override for offboard */
+    .offboard-swal-popup {
+        border-radius: var(--md-radius-xl) !important;
+        padding: 1.5rem !important;
+    }
+
+    .offboard-swal-popup .swal2-title {
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-weight: 600;
+        font-size: 1.25rem;
+        color: var(--md-text-primary);
+    }
+
+    /* Container */
+    .offboard-modal-container {
+        text-align: left;
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* Employee Info Header */
+    .offboard-employee-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-radius: var(--md-radius-lg);
+        margin-bottom: 1rem;
+    }
+
+    .offboard-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--md-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+    }
+
+    .offboard-emp-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .offboard-emp-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--md-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .offboard-emp-nick {
+        font-size: 0.8rem;
+        color: var(--md-text-secondary);
+        margin-top: 2px;
+    }
+
+    .offboard-device-count {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #fff;
+        border-radius: var(--md-radius-md);
+        padding: 0.5rem 1rem;
+        box-shadow: var(--md-shadow-1);
+        flex-shrink: 0;
+    }
+
+    .offboard-count-num {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--md-error);
+        line-height: 1.2;
+    }
+
+    .offboard-count-label {
+        font-size: 0.7rem;
+        color: var(--md-text-secondary);
+        text-transform: uppercase;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+    }
+
+    /* Table Wrapper */
+    .offboard-table-wrap {
+        max-height: 320px;
+        overflow-y: auto;
+        border: 1px solid var(--md-divider);
+        border-radius: var(--md-radius-md);
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    }
+
+    .offboard-table-wrap::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .offboard-table-wrap::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .offboard-table-wrap::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.15);
+        border-radius: 3px;
+    }
+
+    /* Device Table */
+    .offboard-device-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .offboard-device-table thead {
+        background: #f5f5f5;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .offboard-device-table th {
+        padding: 0.6rem 0.75rem;
+        font-weight: 600;
+        color: var(--md-text-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 2px solid var(--md-divider);
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .offboard-device-table td {
+        padding: 0.55rem 0.75rem;
+        color: var(--md-text-primary);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        vertical-align: middle;
+    }
+
+    .offboard-row {
+        transition: background-color 0.15s ease;
+    }
+
+    .offboard-row:hover {
+        background-color: var(--md-primary-surface);
+    }
+
+    .offboard-row:last-child td {
+        border-bottom: none;
+    }
+
+    /* Table Cell Variants */
+    .offboard-td-num {
+        width: 36px;
+        text-align: center;
+        color: var(--md-text-disabled);
+        font-weight: 500;
+    }
+
+    .offboard-td-id {
+        font-family: var(--font-apple-mono, "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, monospace);
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--md-primary);
+    }
+
+    .offboard-td-model {
+        font-weight: 500;
+        max-width: 180px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Warning Banner */
+    .offboard-warning-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: var(--md-radius-md);
+        margin-bottom: 1rem;
+        color: #92400e;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .offboard-warning-banner i {
+        font-size: 1.1rem;
+        color: #d97706;
+        flex-shrink: 0;
+    }
+
+    /* Badges */
+    .offboard-cat-badge {
+        display: inline-block;
+        padding: 3px 9px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #eef2ff;
+        color: #4f46e5;
+        border-radius: var(--md-radius-pill);
+        white-space: nowrap;
+    }
+
+    .offboard-status-badge {
+        display: inline-block;
+        padding: 3px 9px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #ecfdf5;
+        color: #059669;
+        border-radius: var(--md-radius-pill);
+        white-space: nowrap;
+    }
+
+    .offboard-td-sn {
+        font-family: var(--font-apple-mono, "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, monospace);
+        font-size: 0.78rem;
+        color: var(--md-text-secondary);
+    }
+
+    /* Confirm Button */
+    .offboard-confirm-btn {
+        font-weight: 600 !important;
+        letter-spacing: 0.02em;
+        padding: 0.6rem 1.25rem !important;
+        font-size: 0.875rem !important;
+        border-radius: var(--md-radius-md) !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .offboard-confirm-btn:hover {
+        box-shadow: 0 4px 12px rgba(211, 47, 47, 0.35) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Offboard link in dropdown */
+    .offboard-action-link {
+        color: #c62828 !important;
+    }
+
+    .offboard-action-link:hover {
+        background-color: rgba(198, 40, 40, 0.08) !important;
+        color: #b71c1c !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+        .offboard-employee-info {
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .offboard-device-count {
+            flex-direction: row;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+        }
+
+        .offboard-count-num {
+            font-size: 1.1rem;
+        }
+
+        .offboard-td-model {
+            max-width: 100px;
+        }
+
+        .offboard-swal-popup {
+            width: 95vw !important;
+            padding: 1rem !important;
+        }
+    }
+
+
+    /* ============================================================
+   MOBILE CARD VIEW — Device Tables → Cards on ≤768px
+   Converts table rows to card-based layout for mobile
+   ============================================================ */
+
+    @media (max-width: 992px) {
+
+        .ast-separate-container #primary,
+        .ast-separate-container.ast-left-sidebar #primary,
+        .ast-separate-container.ast-right-sidebar #primary {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin-top: -50px !important;
+        }
+    }
+
+
+    @media (max-width: 768px) {
+
+        /* --- Hide desktop-only elements --- */
+        .table-custom thead,
+        .table-wrapper thead {
+            display: none !important;
+        }
+
+        /* Hide static QR bar on mobile when not active */
+        .dash-qr-bar:not(.active-scan) {
+            display: none !important;
+        }
+
+        /* Show active camera QR scanner on mobile */
+        .dash-qr-bar.active-scan {
+            display: block !important;
+            margin: 12px 0 20px 0 !important;
+            padding: 16px !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+            border: 1.5px solid #6366f1 !important;
+            z-index: 9990 !important;
+        }
+
+        /* Hide bulk action bar on mobile */
+        .table-custom+.d-flex,
+        form>.d-flex:has(select[name="bulk_action"]) {
+            display: none !important;
+        }
+
+        /* --- Table → Card Conversion (Global Shared Base Rule) --- */
+        .table-custom,
+        .table-wrapper table {
+            border-collapse: separate !important;
+            border-spacing: 0 12px !important;
+            border: none !important;
+            margin-top: -40px !important;
+            margin-left: -40px !important;
+            margin-right: 0 !important;
+            width: 150% !important;
+            max-width: 130% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* --- Page-Specific Table Overrides (Target each page table independently) --- */
+        .table-wrapper-employee table {
+            width: 100% !important;
+            margin-top: 12px !important;
+            margin-left: -22px !important;
+        }
+
+        .table-wrapper-laptop table {
+            width: 120% !important;
+            margin-left: -10px;
+        }
+
+        .table-wrapper-monitor table {
+            width: 100% !important;
+        }
+
+        .table-wrapper-accessories table {
+            width: 100% !important;
+        }
+
+        .table-wrapper-history table {
+            width: 100% !important;
+        }
+
+        .table-wrapper-details table {
+            width: 100% !important;
+            margin-top: 12px !important;
+            margin-left: -60px !important;
+        }
+
+        .table-custom tbody,
+        .table-wrapper tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            width: 100% !important;
+        }
+
+        .table-custom tbody tr,
+        .table-wrapper tbody tr {
+            display: flex !important;
+            flex-wrap: wrap;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            box-sizing: border-box !important;
+            background: #ffffff;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 13px !important;
+            padding: 0 !important;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            position: relative;
+            overflow: visible !important;
+            white-space: normal !important;
+
+            animation: mobileCardFadeIn 0.35s ease-out forwards;
+        }
+
+        .table-custom tbody tr:hover,
+        .table-custom tbody tr:focus-within,
+        .table-custom tbody tr:has(.show),
+        .table-custom tbody tr:has([aria-expanded="true"]),
+        .table-wrapper tbody tr:hover,
+        .table-wrapper tbody tr:focus-within,
+        .table-wrapper tbody tr:has(.show),
+        .table-wrapper tbody tr:has([aria-expanded="true"]) {
+            z-index: 1000 !important;
+        }
+
+        .table-custom tbody tr:active {
+            transform: scale(0.99);
+        }
+
+        @keyframes mobileCardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Card Cells → Rows --- */
+        .table-custom tbody td,
+        .table-wrapper tbody td {
+            display: flex !important;
+            align-items: center;
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 8px 16px !important;
+            border-radius: 13px !important;
+            border: none !important;
+            border-bottom: 1px solid #f3f4f6 !important;
+            font-size: 0.875rem;
+            text-align: left !important;
+            white-space: normal !important;
+
+            box-sizing: border-box;
+        }
+
+        .table-custom tbody td:last-child,
+        .table-wrapper tbody td:last-child {
+            border-bottom: none !important;
+        }
+
+        /* --- Data Labels (::before pseudo) --- */
+        .table-custom tbody td[data-label]::before,
+        .table-wrapper tbody td[data-label]::before {
+            content: attr(data-label);
+            display: inline-block;
+            min-width: 100px;
+            flex-shrink: 0;
+            font-weight: 600;
+            font-size: 0.78rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-right: 12px;
+        }
+
+        /* --- Stacked View for Long Text Fields --- */
+        .table-custom tbody td[data-label="Reason / Details"],
+        .table-wrapper tbody td[data-label="Reason / Details"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            padding-top: 12px !important;
+            padding-bottom: 12px !important;
+        }
+
+        .table-custom tbody td[data-label="Reason / Details"]::before,
+        .table-wrapper tbody td[data-label="Reason / Details"]::before {
+            width: 100% !important;
+            margin-right: 0;
+            margin-bottom: 6px;
+        }
+
+        /* --- Card Header: Checkbox + ID --- */
+        .table-custom tbody td.mobile-card-checkbox,
+        .table-wrapper tbody td.mobile-card-checkbox {
+            display: none !important;
+        }
+
+        .table-custom tbody td[data-label="ID"],
+        .table-wrapper tbody td[data-label="ID"] {
+            background: #f8fafc;
+            border-bottom: 2px solid #e5e7eb !important;
+            padding: 10px 16px !important;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--md-primary, #1976D2);
+            order: -2;
+        }
+
+        .table-custom tbody td[data-label="ID"]::before,
+        .table-wrapper tbody td[data-label="ID"]::before {
+            display: none;
+        }
+
+        /* --- Device Info row --- */
+        .table-custom tbody td[data-label="Device Info"],
+        .table-wrapper tbody td[data-label="Device Info"] {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .table-custom tbody td[data-label="Device Info"]::before,
+        .table-wrapper tbody td[data-label="Device Info"]::before {
+            margin-bottom: 2px;
+        }
+
+        /* --- Status Badge in card --- */
+        .table-custom tbody td[data-label="Status"],
+        .table-wrapper tbody td[data-label="Status"] {
+            padding: 10px 16px !important;
+        }
+
+        /* --- Action Column: Card footer --- */
+        .table-custom tbody td[data-label="Action"],
+        .table-wrapper tbody td[data-label="Action"] {
+            background: #f8fafc;
+            border-top: 1px solid #e5e7eb !important;
+            border-bottom: none !important;
+            justify-content: flex-end;
+            padding: 8px 12px !important;
+            order: 999;
+        }
+
+        .table-custom tbody td[data-label="Action"]::before,
+        .table-wrapper tbody td[data-label="Action"]::before {
+            display: none;
+        }
+
+        /* Hide the expand button on mobile (data is already visible) */
+        .table-custom tbody td[data-label="Action"] .btn-outline-secondary,
+        .table-wrapper tbody td[data-label="Action"] .btn-outline-secondary {
+            display: none !important;
+        }
+
+        /* Style action dots button on mobile */
+        .table-custom tbody td[data-label="Action"] .action-btn,
+        .table-wrapper tbody td[data-label="Action"] .action-btn {
+            font-size: 1.4rem;
+            padding: 4px 12px;
+            color: #374151;
+        }
+
+        /* --- Collapse/Details Row --- */
+        .table-custom tbody tr[id^="details-"],
+        .table-wrapper tbody tr[id^="details-"] {
+            display: none !important;
+        }
+
+        /* --- NEW badge adjustment --- */
+        .new-device-badge {
+            font-size: 0.65rem !important;
+            padding: 1px 6px !important;
+            vertical-align: middle;
+        }
+
+        /* --- Filter Bar Mobile Enhancement --- */
+        #advanced-filter-form .row.g-2 {
+            gap: 8px !important;
+        }
+
+        #advanced-filter-form .col-12 {
+            padding: 0 !important;
+        }
+
+        #advanced-filter-form .form-label {
+            font-size: 0.78rem !important;
+            margin-bottom: 2px !important;
+        }
+
+        #advanced-filter-form .form-select-sm {
+            font-size: 0.85rem !important;
+            padding: 8px 12px !important;
+            border-radius: 10px !important;
+            border: 1.5px solid #e5e7eb !important;
+            background-color: #fafafa !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #advanced-filter-form .search-input-modern,
+        .search-input-modern {
+            font-size: 0.85rem !important;
+            padding-left: 2.75rem !important;
+            padding-right: 1rem !important;
+            border-radius: 10px !important;
+            border: 1.5px solid #e5e7eb !important;
+            background-color: #fafafa !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #advanced-filter-form .form-select-sm:focus,
+        #advanced-filter-form .search-input-modern:focus {
+            border-color: var(--md-primary, #1976D2) !important;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12) !important;
+            background-color: #fff !important;
+        }
+
+        .btn-filter-modern {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-size: 0.85rem !important;
+            padding: 8px 16px !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px !important;
+        }
+
+        .btn-reset-modern {
+            border-radius: 10px !important;
+            font-size: 0.85rem !important;
+            padding: 8px 12px !important;
+        }
+
+        /* --- Table wrapper adjustments --- */
+        .table-wrapper {
+            overflow: visible !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        /* --- Action dropdown mobile adjustments --- */
+        .action-menu {
+            position: relative !important;
+        }
+
+        .dropdown-menu.action-dropdown {
+            position: absolute !important;
+            right: 0 !important;
+            left: auto !important;
+            top: 100% !important;
+            bottom: auto !important;
+            transform: none !important;
+            width: max-content !important;
+            min-width: 170px !important;
+            max-width: 250px !important;
+            z-index: 99999 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18) !important;
+            border: 1px solid #e5e7eb !important;
+            background: #ffffff !important;
+            margin-top: 4px !important;
+            padding: 6px 0 !important;
+        }
+
+        /* --- Device info styling on mobile --- */
+        .device-title,
+        .table-custom tbody td strong {
+            font-size: 0.9rem !important;
+            word-break: break-word;
+        }
+
+        .device-subtitle,
+        .table-custom tbody td small {
+            font-size: 0.78rem !important;
+            word-break: break-all;
+        }
+
+        /* --- Print labels bar hide on mobile per page --- */
+        #bulk-action-form-device>.d-flex,
+        #bulk-action-form-laptop>.d-flex,
+        #bulk-action-form-monitor>.d-flex,
+        #bulk-action-form-acc>.d-flex {
+            display: none !important;
+        }
+
+        /* --- Mobile Edit & Add Data Forms (Themed Soft Minimalist / Bento Grid) --- */
+        .edit-data-form,
+        #edit-device-form,
+        #edit-employee-form,
+        #add-device-form,
+        #add-employee-form {
+            max-width: 100%;
+            width: 100%;
+            margin: 14px 0 28px 0;
+            padding: 24px 18px;
+            box-sizing: border-box;
+            border-radius: 28px;
+            background: #f8fafc;
+            /* Matches Website Slate Theme */
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(0, 0, 0, 0.02);
+        }
+
+        .edit-data-form h2,
+        #edit-device-form h2,
+        #edit-employee-form h2,
+        #add-device-form h2,
+        #add-employee-form h2 {
+            font-size: 1.35rem !important;
+            font-weight: 800 !important;
+            color: #0f172a !important;
+            letter-spacing: -0.02em !important;
+            margin-bottom: 20px !important;
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+        }
+
+        /* Card-Based Layout / Bento Grid for form fields on mobile */
+        .edit-data-form .form-grid,
+        #edit-device-form .form-grid,
+        #edit-employee-form .form-grid,
+        #add-device-form .form-grid,
+        #add-employee-form .form-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 14px !important;
+            width: 100% !important;
+        }
+
+        .edit-data-form .form-group,
+        #edit-device-form .form-group,
+        #edit-employee-form .form-group,
+        #add-device-form .form-group,
+        #add-employee-form .form-group {
+            background: #ffffff !important;
+            border: 1.5px solid #e2e8f0 !important;
+            border-radius: 20px !important;
+            padding: 16px 18px !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+            margin-bottom: 0 !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+        }
+
+        .edit-data-form .form-group:focus-within,
+        #edit-device-form .form-group:focus-within,
+        #edit-employee-form .form-group:focus-within,
+        #add-device-form .form-group:focus-within,
+        #add-employee-form .form-group:focus-within {
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+            transform: none !important;
+            position: relative !important;
+            z-index: 100 !important;
+        }
+
+        .edit-data-form .form-group label,
+        #edit-device-form .form-group label,
+        #edit-employee-form .form-group label,
+        #add-device-form .form-group label,
+        #add-employee-form .form-group label {
+            font-size: 0.78rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.06em !important;
+            color: #475569 !important;
+            margin-bottom: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .edit-data-form .form-group input,
+        .edit-data-form .form-group select,
+        .edit-data-form .form-group textarea,
+        #edit-device-form .form-group input,
+        #edit-device-form .form-group select,
+        #edit-employee-form .form-group input,
+        #edit-employee-form .form-group select,
+        #add-device-form .form-group input,
+        #add-device-form .form-group select {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            height: 48px !important;
+            border-radius: 14px !important;
+            background-color: #f8fafc !important;
+            border: 1.5px solid #cbd5e1 !important;
+            padding: 0 16px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            color: #0f172a !important;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+
+        .animated-dropdown-wrapper {
+            display: none !important;
+        }
+
+        select,
+        .form-group select,
+        .edit-data-form select,
+        #edit-device-form select,
+        #edit-employee-form select,
+        #add-device-form select {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 50 !important;
+            pointer-events: auto !important;
+            width: 100% !important;
+            height: 48px !important;
+            min-height: 48px !important;
+            background-color: #ffffff !important;
+            border: 1.5px solid #cbd5e1 !important;
+            border-radius: 14px !important;
+            padding: 0 40px 0 16px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            color: #0f172a !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
+            background-position: right 14px center !important;
+            background-repeat: no-repeat !important;
+            background-size: 16px 16px !important;
+            box-sizing: border-box !important;
+            transform: none !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .edit-data-form .form-group input:focus,
+        .edit-data-form .form-group select:focus,
+        .edit-data-form .form-group textarea:focus,
+        #edit-device-form .form-group input:focus,
+        #edit-device-form .form-group select:focus {
+            background: #ffffff !important;
+            border-color: #2563eb !important;
+            outline: none !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+            transform: none !important;
+        }
+
+        .edit-data-form .form-group input[disabled],
+        .edit-data-form .form-group select[disabled],
+        .edit-data-form .form-group input[readonly],
+        #edit-device-form .form-group input[disabled],
+        #edit-device-form .form-group select[disabled] {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            font-weight: 700 !important;
+            border: 1.5px solid #cbd5e1 !important;
+            cursor: not-allowed !important;
+            opacity: 1 !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a3 3 0 0 0-3 3v2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3zm1 5V4a1 1 0 0 0-2 0v2h2z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 14px center !important;
+            background-size: 14px 14px !important;
+            padding-right: 38px !important;
+        }
+
+        /* Pill-Shaped Buttons in Form Actions */
+        .edit-data-form .form-actions,
+        #edit-device-form .form-actions,
+        #edit-employee-form .form-actions,
+        #add-device-form .form-actions,
+        #add-employee-form .form-actions {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 12px !important;
+            margin-top: 24px !important;
+            padding-top: 18px !important;
+            border-top: 1.5px dashed #e2e8f0 !important;
+            width: 100% !important;
+        }
+
+        .edit-data-form .form-actions button,
+        .edit-data-form .form-actions .btn,
+        #edit-device-form .form-actions button,
+        #edit-employee-form .form-actions button,
+        #add-device-form .form-actions button,
+        #add-employee-form .form-actions button {
+            flex: 1 !important;
+            height: 52px !important;
+            border-radius: 9999px !important;
+            /* Pill-shaped button */
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.02em !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+            padding: 0 20px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Primary/Submit Pill Button */
+        .edit-data-form .form-actions button[type="submit"],
+        .edit-data-form .form-actions .btn-success,
+        #edit-device-form .form-actions button[type="submit"],
+        #edit-employee-form .form-actions button[type="submit"],
+        #add-device-form .form-actions button[type="submit"] {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28) !important;
+        }
+
+        .edit-data-form .form-actions button[type="submit"]:active,
+        .edit-data-form .form-actions .btn-success:active {
+            transform: scale(0.96) !important;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+        }
+
+        /* Cancel Pill Button */
+        .edit-data-form .form-actions button[type="button"],
+        .edit-data-form .form-actions .btn-danger,
+        .edit-data-form .form-actions .btn-secondary,
+        #edit-device-form .form-actions button[type="button"],
+        #edit-employee-form .form-actions button[type="button"] {
+            background: #f1f5f9 !important;
+            color: #334155 !important;
+            border: 1.5px solid #cbd5e1 !important;
+            box-shadow: none !important;
+        }
+
+        .edit-data-form .form-actions button[type="button"]:active,
+        .edit-data-form .form-actions .btn-danger:active {
+            background: #e2e8f0 !important;
+            transform: scale(0.96) !important;
+        }
+
+        /* Fixed z-index stacking for Owner group and floating popups */
+        .edit-data-form .form-group#owner-group,
+        #edit-device-form .form-group#owner-group {
+            position: relative !important;
+            z-index: 80 !important;
+        }
+
+        #website_edit_owner_search_wrap,
+        #website_owner_search_wrap {
+            position: relative !important;
+            z-index: 100 !important;
+        }
+
+        /* Sub-components: Add Brand & Owner Search on Mobile */
+        .edit-data-form #btn-edit-add-new-brand,
+        #edit-device-form #btn-edit-add-new-brand {
+            border-radius: 9999px !important;
+            background: #f8fafc !important;
+            border: 1.5px dashed #cbd5e1 !important;
+            color: #334155 !important;
+            font-weight: 700 !important;
+            padding: 10px 18px !important;
+            margin-top: 10px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+        }
+
+        .edit-data-form #edit_owner_search_input,
+        #edit-device-form #edit_owner_search_input,
+        #edit_owner_search_input,
+        #owner_search_input {
+            height: 48px !important;
+            border-radius: 14px !important;
+            background: #f8fafc !important;
+            border: 1.5px solid #cbd5e1 !important;
+            font-weight: 500 !important;
+            color: #0f172a !important;
+            padding-left: 38px !important;
+            padding-right: 36px !important;
+        }
+
+        .edit-data-form #edit_owner_search_popup,
+        #edit-device-form #edit_owner_search_popup,
+        #owner_search_popup {
+            border-radius: 18px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.15) !important;
+            background: #ffffff !important;
+            z-index: 999999 !important;
+        }
+
+        /* --- Device View Details & History Timeline on Mobile --- */
+        .view-details-container,
+        .vd-history-section,
+        .dtl-history-timeline-wrapper {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+        }
+
+        .dtl-timeline-wrap,
+        .dtl-timeline-wrap.active {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .dtl-timeline {
+            display: block !important;
+            position: relative !important;
+        }
+
+        .dtl-node {
+            display: block !important;
+            opacity: 1 !important;
+            transform: none !important;
+            visibility: visible !important;
+        }
+
+        .dtl-card {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+    }
+
+    /* ============================================================
    Quick Swap Device Modal & Dropdown Styling
    ============================================================ */
-.quick-swap-popup {
-    border-radius: 20px !important;
-    padding: 1.5rem !important;
-    max-width: 520px !important;
-}
+    .quick-swap-popup {
+        border-radius: 20px !important;
+        padding: 1.5rem !important;
+        max-width: 520px !important;
+    }
 
-.quick-swap-popup .swal2-title {
-    font-size: 1.35rem !important;
-    font-weight: 700 !important;
-    color: #d97706 !important;
-    margin-bottom: 12px !important;
-}
+    .quick-swap-popup .swal2-title {
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        color: #d97706 !important;
+        margin-bottom: 12px !important;
+    }
 
-.action-dropdown a.text-warning {
-    color: #d97706 !important;
-}
+    .action-dropdown a.text-warning {
+        color: #d97706 !important;
+    }
 
-.action-dropdown a.text-warning:hover {
-    background-color: #fffbe6 !important;
-    color: #b45309 !important;
-}
+    .action-dropdown a.text-warning:hover {
+        background-color: #fffbe6 !important;
+        color: #b45309 !important;
+    }
 
-/* ============================================================
+    /* ============================================================
    Modern Premium Multi-Filter Styling (Global/Desktop & Mobile)
    ============================================================ */
 
-#advanced-filter-form {
-    background: #ffffff;
-    padding: 16px 20px;
-    border-radius: 12px;
-    max-width: 120%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e5e7eb;
-    margin-bottom: 24px;
-}
+    #advanced-filter-form {
+        background: #ffffff;
+        padding: 16px 20px;
+        border-radius: 12px;
+        max-width: 120%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 24px;
+    }
 
-#advanced-filter-form .form-label {
-    font-size: 0.75rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-    color: #64748b;
-    margin-bottom: 8px !important;
-    display: block;
-}
+    #advanced-filter-form .form-label {
+        font-size: 0.75rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 8px !important;
+        display: block;
+    }
 
-/* Premium Filter Button */
-.btn-filter-modern {
-    background-color: #0f172a !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-size: 0.85rem !important;
-    padding: 8px 16px !important;
-    font-weight: 600 !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 40px !important;
-}
+    /* Premium Filter Button */
+    .btn-filter-modern {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        padding: 8px 16px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 40px !important;
+    }
 
-.btn-filter-modern:hover {
-    background-color: #1e293b !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2) !important;
-}
+    .btn-filter-modern:hover {
+        background-color: #1e293b !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2) !important;
+    }
 
-.btn-filter-modern:active {
-    transform: translateY(0);
-}
+    .btn-filter-modern:active {
+        transform: translateY(0);
+    }
 
-/* Premium Reset Button */
-.btn-reset-modern {
-    background-color: #ffffff !important;
-    color: #475569 !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
-    font-size: 0.85rem !important;
-    padding: 8px 16px !important;
-    font-weight: 600 !important;
-    text-decoration: none !important;
-    transition: all 0.2s ease !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px !important;
-}
+    /* Premium Reset Button */
+    .btn-reset-modern {
+        background-color: #ffffff !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        padding: 8px 16px !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 40px !important;
+    }
 
-.btn-reset-modern:hover {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-    border-color: #94a3b8 !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
-}
+    .btn-reset-modern:hover {
+        background-color: #f8fafc !important;
+        color: #0f172a !important;
+        border-color: #94a3b8 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+    }
 
-/* Inputs & Animated Dropdowns */
-#advanced-filter-form .form-select-sm,
-#advanced-filter-form .search-input-modern,
-#advanced-filter-form .animated-dropdown-btn {
-    font-size: 0.85rem !important;
-    padding: 8px 12px !important;
-    border-radius: 8px !important;
-    border: 1.5px solid #e2e8f0 !important;
-    background-color: #f8fafc !important;
-    transition: all 0.2s ease !important;
-    color: #1e293b !important;
-    height: 40px !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.01) !important;
-}
+    /* Inputs & Animated Dropdowns */
+    #advanced-filter-form .form-select-sm,
+    #advanced-filter-form .search-input-modern,
+    #advanced-filter-form .animated-dropdown-btn {
+        font-size: 0.85rem !important;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+        border: 1.5px solid #e2e8f0 !important;
+        background-color: #f8fafc !important;
+        transition: all 0.2s ease !important;
+        color: #1e293b !important;
+        height: 40px !important;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.01) !important;
+    }
 
-#advanced-filter-form .animated-dropdown-btn {
-    padding: 0 12px !important;
-    /* Flex alignment */
-}
+    #advanced-filter-form .animated-dropdown-btn {
+        padding: 0 12px !important;
+        /* Flex alignment */
+    }
 
-#advanced-filter-form .form-select-sm:focus,
-#advanced-filter-form .search-input-modern:focus,
-#advanced-filter-form .animated-dropdown-btn:focus,
-#advanced-filter-form .animated-dropdown-btn[aria-expanded="true"] {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.01) !important;
-    background-color: #ffffff !important;
-}
+    #advanced-filter-form .form-select-sm:focus,
+    #advanced-filter-form .search-input-modern:focus,
+    #advanced-filter-form .animated-dropdown-btn:focus,
+    #advanced-filter-form .animated-dropdown-btn[aria-expanded="true"] {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.01) !important;
+        background-color: #ffffff !important;
+    }
 
-/* ============================================================
+    /* ============================================================
    INDEPENDENT BULK ACTION FORM STYLES (PER PAGE)
    ============================================================ */
 
-/* 1. All Devices Page */
-#bulk-action-form-device {
-    margin-bottom: 16px;
-}
+    /* 1. All Devices Page */
+    #bulk-action-form-device {
+        margin-bottom: 16px;
+    }
 
-#bulk-action-form-device>.d-flex {
-    align-items: center;
-}
+    #bulk-action-form-device>.d-flex {
+        align-items: center;
+    }
 
-/* 2. Laptop Page */
-#bulk-action-form-laptop {
-    margin-bottom: 16px;
-}
+    /* 2. Laptop Page */
+    #bulk-action-form-laptop {
+        margin-bottom: 16px;
+    }
 
-#bulk-action-form-laptop>.d-flex {
-    align-items: center;
-}
+    #bulk-action-form-laptop>.d-flex {
+        align-items: center;
+    }
 
-/* 3. Monitor Page */
-#bulk-action-form-monitor {
-    margin-bottom: 16px;
-}
+    /* 3. Monitor Page */
+    #bulk-action-form-monitor {
+        margin-bottom: 16px;
+    }
 
-#bulk-action-form-monitor>.d-flex {
-    align-items: center;
-}
+    #bulk-action-form-monitor>.d-flex {
+        align-items: center;
+    }
 
-/* 4. Accessories Page */
-#bulk-action-form-acc {
-    margin-bottom: 16px;
-}
+    /* 4. Accessories Page */
+    #bulk-action-form-acc {
+        margin-bottom: 16px;
+    }
 
-#bulk-action-form-acc>.d-flex {
-    align-items: center;
-}
+    #bulk-action-form-acc>.d-flex {
+        align-items: center;
+    }
 
 
-#advanced-filter-form .search-input-modern {
-    padding-left: 12px !important;
-}
+    #advanced-filter-form .search-input-modern {
+        padding-left: 12px !important;
+    }
 
-/* Hide magnifying glass search icon */
-#advanced-filter-form i.fa-search,
-#advanced-filter-form i.fa-magnifying-glass,
-#advanced-filter-form .search-icon-modern,
-.search-wrapper-modern .search-icon-modern,
-.search-icon-modern {
-    display: none !important;
+    /* Hide magnifying glass search icon */
+    #advanced-filter-form i.fa-search,
+    #advanced-filter-form i.fa-magnifying-glass,
+    #advanced-filter-form .search-icon-modern,
+    .search-wrapper-modern .search-icon-modern,
+    .search-icon-modern {
+        display: none !important;
+    }
 }

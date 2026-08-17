@@ -1,32 +1,67 @@
 /**
  * Universal AJAX Filter, Reset & Pagination System (No Page Reload)
- * Includes iOS Spinner Loading Overlay
+ * Includes iOS Spinner Loading Overlay & Mobile Top Progress Bar
  * Stock Supply Theme
  */
 
-// 1. Inject iOS Spinner & Overlay Styles
+// 1. Inject iOS Spinner, Overlay & Mobile Top Bar Styles
 if (!document.getElementById('ajax-filter-reset-styles')) {
     const style = document.createElement('style');
     style.id = 'ajax-filter-reset-styles';
     style.textContent = `
-        /* Table / List Container Overlay Base */
+        /* Mobile & Desktop Universal Top Progress Bar (Apple / YouTube Style) */
+        #ajax-top-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3.5px;
+            width: 0%;
+            background: linear-gradient(90deg, #2563eb, #38bdf8, #0ea5e9, #60a5fa);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8), 0 0 6px rgba(37, 99, 235, 0.6);
+            z-index: 99999999;
+            pointer-events: none;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            border-radius: 0 3px 3px 0;
+        }
+
+        #ajax-top-progress-bar.running {
+            width: 78%;
+            transition: width 0.85s cubic-bezier(0.1, 0.5, 0.1, 1);
+        }
+
+        #ajax-top-progress-bar.finished {
+            width: 100%;
+            transition: width 0.15s ease-out;
+        }
+
+        #ajax-top-progress-bar.fade-out {
+            opacity: 0;
+            transition: opacity 0.25s ease-out;
+        }
+
+        /* Table / Mobile List Container Overlay Base */
         .table-loading-container {
             position: relative !important;
         }
 
+        .mobile-only-container.table-loading-container {
+            min-height: 220px !important;
+        }
+
         .table-loading-overlay-blur {
-            opacity: 0.35 !important;
+            opacity: 0.4 !important;
+            filter: blur(1px) !important;
             pointer-events: none !important;
-            transition: opacity 0.22s ease !important;
+            transition: opacity 0.22s ease, filter 0.22s ease !important;
         }
 
         /* iOS Spinner Overlay Card */
         .ios-spinner-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -46,7 +81,7 @@ if (!document.getElementById('ajax-filter-reset-styles')) {
             background: rgba(255, 255, 255, 0.95);
             padding: 14px 24px;
             border-radius: 16px;
-            box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(0, 0, 0, 0.06);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -62,7 +97,7 @@ if (!document.getElementById('ajax-filter-reset-styles')) {
         .ios-spinner-text {
             font-size: 0.88rem;
             font-weight: 600;
-            color: #334155;
+            color: #1e293b;
             letter-spacing: -0.2px;
         }
 
@@ -82,7 +117,7 @@ if (!document.getElementById('ajax-filter-reset-styles')) {
             position: absolute;
             height: 20%;
             width: 8%;
-            background-color: #334155;
+            background-color: #0f172a;
             border-radius: 1px;
             animation: spinner-blade 1s linear infinite;
             will-change: opacity;
@@ -104,83 +139,172 @@ if (!document.getElementById('ajax-filter-reset-styles')) {
         .spinner-blade:nth-child(12) { transform: rotate(330deg) translateY(-130%); animation-delay: -0.75s; }
 
         @keyframes spinner-blade {
-            0% { opacity: 0.85; }
+            0% { opacity: 0.9; }
             50% { opacity: 0.25; }
             100% { opacity: 0.25; }
+        }
+
+        /* Button Loading state */
+        .btn-filter-loading {
+            pointer-events: none !important;
+            opacity: 0.8 !important;
+            position: relative !important;
         }
     `;
     document.head.appendChild(style);
 }
 
 /**
- * Get target list/table container across ALL pages (Never picks entire page wrapper)
+ * Top Progress Bar Controller
  */
-function getTargetContainer(docObj) {
-    const root = docObj || document;
-    return root.querySelector('.table-wrapper') ||
-           root.querySelector('.table-custom') ||
-           root.querySelector('.table-wrapper-employee') ||
-           root.querySelector('.active-maintenance-panel') ||
-           root.querySelector('.dtl-history-timeline-wrapper') ||
-           root.querySelector('.mobile-only-container') ||
-           root.querySelector('#bulk-action-form') ||
-           root.querySelector('#bulk-action-form-monitor') ||
-           root.querySelector('.card-body');
+function startTopProgressBar() {
+    let bar = document.getElementById('ajax-top-progress-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'ajax-top-progress-bar';
+        document.body.appendChild(bar);
+    }
+    bar.className = '';
+    bar.style.width = '18%';
+    bar.style.opacity = '1';
+    void bar.offsetWidth; // Force reflow
+    bar.classList.add('running');
+}
+
+function finishTopProgressBar() {
+    const bar = document.getElementById('ajax-top-progress-bar');
+    if (!bar) return;
+    bar.classList.remove('running');
+    bar.classList.add('finished');
+    setTimeout(() => {
+        bar.classList.add('fade-out');
+        setTimeout(() => {
+            bar.style.width = '0%';
+            bar.className = '';
+        }, 300);
+    }, 200);
 }
 
 /**
- * Show iOS Spinner Overlay inside target container
+ * Button Loading state switcher
  */
-function showIosSpinner(container) {
-    if (!container) return;
-    container.classList.add('table-loading-container', 'table-loading-overlay-blur');
-    
-    let overlay = container.querySelector('.ios-spinner-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.className = 'ios-spinner-overlay';
-        overlay.innerHTML = `
-            <div class="ios-spinner-card">
-                <div class="ios-spinner lg">
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                    <div class="spinner-blade"></div>
-                </div>
-                <span class="ios-spinner-text">Loading...</span>
-            </div>
-        `;
-        container.appendChild(overlay);
+function setFilterButtonsLoading(isLoading) {
+    const btns = document.querySelectorAll('.btn-filter-modern, .btn-filter-cyan, #mobileBottomSheet button[type="submit"], #advanced-filter-form button[type="submit"], .ajax-filter-form button[type="submit"]');
+    btns.forEach(btn => {
+        if (isLoading) {
+            if (!btn.getAttribute('data-original-html')) {
+                btn.setAttribute('data-original-html', btn.innerHTML);
+            }
+            btn.classList.add('btn-filter-loading');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Filtering...';
+        } else {
+            btn.classList.remove('btn-filter-loading');
+            const orig = btn.getAttribute('data-original-html');
+            if (orig) {
+                btn.innerHTML = orig;
+                btn.removeAttribute('data-original-html');
+            }
+        }
+    });
+}
+
+/**
+ * Get target list/table containers across ALL pages (Handles both Desktop & Mobile Views)
+ */
+function getTargetContainers(docObj) {
+    const root = docObj || document;
+    const isMobile = window.innerWidth <= 768;
+    const containers = [];
+
+    // 1. Mobile specific card containers
+    if (isMobile) {
+        const mobileCons = root.querySelectorAll('.mobile-only-container');
+        if (mobileCons.length > 0) {
+            mobileCons.forEach(c => containers.push(c));
+        }
     }
-    
-    // Force reflow
-    void overlay.offsetWidth;
-    overlay.classList.add('show');
+
+    // 2. Desktop & standard table wrappers
+    if (containers.length === 0) {
+        const desktopWrapper = root.querySelector('.table-wrapper') ||
+                               root.querySelector('.table-custom') ||
+                               root.querySelector('.table-wrapper-employee') ||
+                               root.querySelector('.active-maintenance-panel') ||
+                               root.querySelector('.dtl-history-timeline-wrapper') ||
+                               root.querySelector('#bulk-action-form') ||
+                               root.querySelector('#bulk-action-form-monitor') ||
+                               root.querySelector('.card-body');
+        if (desktopWrapper) {
+            containers.push(desktopWrapper);
+        }
+    }
+
+    // Fallback if still empty
+    if (containers.length === 0) {
+        const anyMobile = root.querySelector('.mobile-only-container');
+        if (anyMobile) containers.push(anyMobile);
+    }
+
+    return containers;
+}
+
+/**
+ * Show iOS Spinner Overlay inside target containers
+ */
+function showIosSpinner(containers) {
+    const list = Array.isArray(containers) ? containers : [containers];
+    list.filter(Boolean).forEach(container => {
+        container.classList.add('table-loading-container', 'table-loading-overlay-blur');
+        
+        let overlay = container.querySelector('.ios-spinner-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'ios-spinner-overlay';
+            overlay.innerHTML = `
+                <div class="ios-spinner-card">
+                    <div class="ios-spinner lg">
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                        <div class="spinner-blade"></div>
+                    </div>
+                    <span class="ios-spinner-text">Loading data...</span>
+                </div>
+            `;
+            container.appendChild(overlay);
+        }
+        
+        // Force reflow
+        void overlay.offsetWidth;
+        overlay.classList.add('show');
+    });
 }
 
 /**
  * Hide iOS Spinner Overlay
  */
-function hideIosSpinner(container) {
-    if (!container) return;
-    container.classList.remove('table-loading-overlay-blur');
-    const overlay = container.querySelector('.ios-spinner-overlay');
-    if (overlay) {
-        overlay.classList.remove('show');
-        setTimeout(() => {
-            if (overlay && overlay.parentNode) {
-                overlay.parentNode.removeChild(overlay);
-            }
-        }, 250);
-    }
+function hideIosSpinner(containers) {
+    const list = Array.isArray(containers) ? containers : [containers];
+    list.filter(Boolean).forEach(container => {
+        container.classList.remove('table-loading-overlay-blur');
+        const overlay = container.querySelector('.ios-spinner-overlay');
+        if (overlay) {
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                if (overlay && overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+            }, 250);
+        }
+    });
 }
 
 /**
@@ -290,15 +414,22 @@ function isResetButton(element) {
 }
 
 /**
- * Core AJAX Content Loader with iOS Spinner
+ * Core AJAX Content Loader with iOS Spinner, Mobile Progress Bar & Button States
  */
 async function loadAjaxContent(targetUrl, formToClear = null) {
     const cleanUrl = getCleanUrl(targetUrl);
-    const tableContainer = getTargetContainer(document);
+    const containers = getTargetContainers(document);
 
-    if (tableContainer) {
-        showIosSpinner(tableContainer);
+    // 1. Start Top Progress Bar
+    startTopProgressBar();
+
+    // 2. Show iOS Spinner overlay on visible desktop/mobile containers
+    if (containers.length > 0) {
+        showIosSpinner(containers);
     }
+
+    // 3. Set Filter Buttons to loading state
+    setFilterButtonsLoading(true);
 
     if (formToClear) {
         clearFormInputs(formToClear);
@@ -352,15 +483,14 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
                 }
             }
 
-            // 1. Replace Table / List Container Content
-            const newContainer = getTargetContainer(doc);
-            const currentContainer = getTargetContainer(document);
-
-            if (newContainer && currentContainer) {
-                currentContainer.innerHTML = newContainer.innerHTML;
+            // 1. Replace Desktop Table Container Content
+            const newDesktop = doc.querySelector('.table-wrapper') || doc.querySelector('.table-custom') || doc.querySelector('.table-wrapper-employee');
+            const currentDesktop = document.querySelector('.table-wrapper') || document.querySelector('.table-custom') || document.querySelector('.table-wrapper-employee');
+            if (newDesktop && currentDesktop) {
+                currentDesktop.innerHTML = newDesktop.innerHTML;
             }
 
-            // 1.5 Replace Mobile Cards Content (.mobile-only-container) if present separately
+            // 1.5 Replace Mobile Cards Content (.mobile-only-container)
             const newMobiles = doc.querySelectorAll('.mobile-only-container');
             const currentMobiles = document.querySelectorAll('.mobile-only-container');
             if (newMobiles.length > 0 && currentMobiles.length === newMobiles.length) {
@@ -368,6 +498,15 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
                     currentMobiles[i].innerHTML = newMobiles[i].innerHTML;
                 }
             }
+
+            // 1.6 Replace other specialized panels (Maintenance, History, etc.)
+            const newMaint = doc.querySelector('.active-maintenance-panel');
+            const curMaint = document.querySelector('.active-maintenance-panel');
+            if (newMaint && curMaint) curMaint.innerHTML = newMaint.innerHTML;
+
+            const newTimeline = doc.querySelector('.dtl-history-timeline-wrapper');
+            const curTimeline = document.querySelector('.dtl-history-timeline-wrapper');
+            if (newTimeline && curTimeline) curTimeline.innerHTML = newTimeline.innerHTML;
 
             if (typeof window.initMobileLoadMore === 'function') {
                 window.initMobileLoadMore();
@@ -404,9 +543,11 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
     } catch (err) {
         console.error('AJAX Load Warning:', err);
     } finally {
-        if (tableContainer) {
-            hideIosSpinner(tableContainer);
+        finishTopProgressBar();
+        if (containers.length > 0) {
+            hideIosSpinner(containers);
         }
+        setFilterButtonsLoading(false);
     }
 }
 

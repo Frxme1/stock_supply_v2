@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-function receive_device()
+function receive_device($device = null)
 {
     ob_start();
     global $wpdb;
@@ -12,13 +12,14 @@ function receive_device()
     $table_owners = 'Owners';
     $table_history = 'History_new';
 
-    $departments = $wpdb->get_results("SELECT DepartmentID, DepartmentName FROM Departments");
-    $positions = $wpdb->get_results("SELECT PositionID, PositionName FROM Positions");
+    $departments = $wpdb->get_results("SELECT DepartmentID, DepartmentName FROM Departments ORDER BY DepartmentName ASC");
+    $positions = $wpdb->get_results("SELECT PositionID, PositionName FROM Positions ORDER BY PositionName ASC");
 
     $owners_data = $wpdb->get_results("
-        SELECT o.OwnerID, o.Nickname, o.FirstName, o.LastName, o.DepartmentID, o.PositionID, d.DepartmentName
+        SELECT o.OwnerID, o.Nickname, o.FirstName, o.LastName, o.DepartmentID, o.PositionID, d.DepartmentName, p.PositionName
         FROM $table_owners o
         LEFT JOIN Departments d ON o.DepartmentID = d.DepartmentID
+        LEFT JOIN Positions p ON o.PositionID = p.PositionID
         WHERE (o.StatusID = 1 OR o.StatusID IS NULL OR o.StatusID = (SELECT StatusID FROM Status_employee WHERE Status_name = 'Active' LIMIT 1))
         ORDER BY o.Nickname ASC
     ");
@@ -26,95 +27,133 @@ function receive_device()
     $device_data = null;
     $date_value = date('Y-m-d');
 
-    if (isset($_GET['DeviceID'])) {
-        $device_id = sanitize_text_field($_GET['DeviceID']);
-        $device_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $device_id));
+    // 1. Check if passed via controller parameter
+    if (is_object($device) && !empty($device->DeviceID)) {
+        $device_data = $device;
+    } elseif (is_string($device) && !empty($device)) {
+        $device_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", sanitize_text_field($device)));
     }
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_device'])) {
+    // 2. Check query string parameters (?receive=, ?DeviceID=, ?device_id=, ?id=)
+    if (!$device_data) {
+        $target_device_id = '';
+        if (!empty($_GET['receive'])) {
+            $target_device_id = sanitize_text_field($_GET['receive']);
+        } elseif (!empty($_GET['DeviceID'])) {
+            $target_device_id = sanitize_text_field($_GET['DeviceID']);
+        } elseif (!empty($_GET['device_id'])) {
+            $target_device_id = sanitize_text_field($_GET['device_id']);
+        } elseif (!empty($_GET['id'])) {
+            $target_device_id = sanitize_text_field($_GET['id']);
+        }
+
+        if (!empty($target_device_id)) {
+            $device_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $target_device_id));
+        }
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_device']) || isset($_POST['_rcv_nonce']))) {
         if (!is_user_logged_in() || !isset($_POST['_rcv_nonce']) || !wp_verify_nonce($_POST['_rcv_nonce'], 'receive_device_nonce')) {
             echo '<p style="color:red;">Security check failed.</p>';
             return ob_get_clean();
         }
 
-        $device_id = sanitize_text_field($_POST['DeviceID']);
-        $owner_id = intval($_POST['OwnerID']);
-        $receive_date = sanitize_text_field($_POST['ReceiveDate']);
+        $device_id = sanitize_text_field($_POST['DeviceID'] ?? '');
+        $owner_id = intval($_POST['OwnerID'] ?? 0);
+        $receive_date = !empty($_POST['ReceiveDate']) ? sanitize_text_field($_POST['ReceiveDate']) : current_time('Y-m-d');
 
-        $owner_row = $wpdb->get_row($wpdb->prepare("SELECT DepartmentID, PositionID FROM $table_owners WHERE OwnerID = %d", $owner_id));
-        $department_id = $owner_row ? $owner_row->DepartmentID : null;
-        $position_id = $owner_row ? $owner_row->PositionID : null;
-
-        $in_use_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'");
-
-        // Photo upload handling
-        $photo_url = '';
-        if (!empty($_FILES['photo']['name'])) {
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
-            require_once(ABSPATH . 'wp-admin/includes/image.php');
-            require_once(ABSPATH . 'wp-admin/includes/media.php');
-            $attachment_id = media_handle_upload('photo', 0);
-            if (!is_wp_error($attachment_id)) {
-                $photo_url = wp_get_attachment_url($attachment_id);
-            }
-        }
-
-        $update_data = [
-            'OwnerID' => $owner_id,
-            'DepartmentID' => $department_id,
-            'PositionID' => $position_id,
-            'ReceiveDate' => $receive_date,
-            'StatusID' => $in_use_status_id,
-            'ReturnDate' => null,
-            'RepairDate' => null,
-            'UpdatedAt' => current_time('mysql'),
-        ];
-        $update_format = ['%d', '%d', '%d', '%s', '%d', null, null, '%s'];
-
-        $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id], $update_format, ['%s']);
-
-        if ($updated !== false) {
-            $owner_nickname = $wpdb->get_var($wpdb->prepare("SELECT Nickname FROM $table_owners WHERE OwnerID = %d", $owner_id));
-            $dev_info = $wpdb->get_row($wpdb->prepare("SELECT CategoryID FROM $table_devices WHERE DeviceID = %s", $device_id));
-
-            $desc = "Device assigned to " . ($owner_nickname ?: 'Employee #' . $owner_id);
-            if ($photo_url) {
-                $desc .= " | Photo: " . $photo_url;
-            }
-
-            $current_user = wp_get_current_user();
-            $wpdb->insert($table_history, [
-                'DeviceID' => $device_id,
-                'Action' => 'Assign Device',
-                'Date' => current_time('mysql'),
-                'Description' => $desc,
-                'user_email' => $current_user->user_email ?? '',
-                'CategoryID' => $dev_info->CategoryID ?? null,
-                'Owner' => $owner_nickname ?: '-'
-            ]);
-
+        if (empty($device_id) || empty($owner_id)) {
             echo "<script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Device Assigned Successfully!',
-                    text: 'Device {$device_id} assigned to " . esc_js($owner_nickname) . "',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    window.location.href = '" . esc_url(home_url('/home/')) . "';
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Required Fields',
+                        text: 'Please select both a Device and an Employee to assign.',
+                        confirmButtonColor: '#0f172a'
+                    });
                 });
             </script>";
         } else {
-            echo "<script>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Assignment Failed',
-                    text: '" . esc_js($wpdb->last_error) . "'
-                });
-            </script>";
-        }
+            $owner_row = $wpdb->get_row($wpdb->prepare("SELECT DepartmentID, PositionID, Nickname FROM $table_owners WHERE OwnerID = %d", $owner_id));
+            $department_id = $owner_row ? $owner_row->DepartmentID : null;
+            $position_id = $owner_row ? $owner_row->PositionID : null;
+            $owner_nickname = $owner_row ? $owner_row->Nickname : ('Employee #' . $owner_id);
 
-        $device_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $device_id));
+            $in_use_status_id = intval($wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'In Use'"));
+
+            // Photo upload handling
+            $photo_url = '';
+            if (!empty($_FILES['photo']['name'])) {
+                require_once(ABSPATH . 'wp-admin/includes/file.php');
+                require_once(ABSPATH . 'wp-admin/includes/image.php');
+                require_once(ABSPATH . 'wp-admin/includes/media.php');
+                $attachment_id = media_handle_upload('photo', 0);
+                if (!is_wp_error($attachment_id)) {
+                    $photo_url = wp_get_attachment_url($attachment_id);
+                }
+            }
+
+            $update_data = [
+                'OwnerID'      => $owner_id,
+                'DepartmentID' => $department_id,
+                'PositionID'   => $position_id,
+                'ReceiveDate'  => $receive_date,
+                'StatusID'     => $in_use_status_id,
+                'ReturnDate'   => null,
+                'RepairDate'   => null,
+                'UpdatedAt'    => current_time('mysql'),
+            ];
+
+            $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
+
+            if ($updated !== false) {
+                $dev_info = $wpdb->get_row($wpdb->prepare("SELECT CategoryID FROM $table_devices WHERE DeviceID = %s", $device_id));
+
+                $desc = "Device assigned to " . ($owner_nickname ?: 'Employee #' . $owner_id);
+                if ($photo_url) {
+                    $desc .= " | Photo: " . $photo_url;
+                }
+
+                $current_user = wp_get_current_user();
+                $wpdb->insert($table_history, [
+                    'DeviceID'    => $device_id,
+                    'Action'      => 'Assign Device',
+                    'Date'        => current_time('mysql'),
+                    'Description' => $desc,
+                    'user_email'  => $current_user->user_email ?? '',
+                    'CategoryID'  => $dev_info->CategoryID ?? null,
+                    'Owner'       => $owner_nickname ?: '-'
+                ]);
+
+                $redirect_url = home_url('/home/?view=' . urlencode($device_id));
+
+                echo "<script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Device Assigned Successfully!',
+                            text: 'Device " . esc_js($device_id) . " assigned to " . esc_js($owner_nickname) . "',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.href = '" . esc_url($redirect_url) . "';
+                        });
+                    });
+                </script>";
+            } else {
+                echo "<script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Assignment Failed',
+                            text: '" . esc_js($wpdb->last_error) . "'
+                        });
+                    });
+                </script>";
+            }
+
+            $device_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $device_id));
+        }
     }
 
     $device_model_name = '';
@@ -181,7 +220,10 @@ function receive_device()
 
         <form method="POST" action="" enctype="multipart/form-data" id="receive-device-form" class="edit-data-form add-device-main-form">
             <?php wp_nonce_field('receive_device_nonce', '_rcv_nonce'); ?>
-            <input type="hidden" name="DeviceID" value="<?= esc_attr($device_data->DeviceID ?? '') ?>">
+            <input type="hidden" name="update_device" value="1">
+            <?php if (!empty($device_data->DeviceID)): ?>
+                <input type="hidden" name="DeviceID" id="hidden_device_id" value="<?= esc_attr($device_data->DeviceID) ?>">
+            <?php endif; ?>
 
             <!-- Mobile Only Header -->
             <div class="mobile-only-header">
@@ -232,7 +274,7 @@ function receive_device()
                                     style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12); z-index: 99999; padding: 4px;">
                                 </div>
                             </div>
-                            <input type="hidden" name="OwnerID" id="OwnerID" value="" required>
+                            <input type="hidden" name="OwnerID" id="OwnerID" value="">
                         </div>
 
                         <!-- Department (Auto-filled) -->
@@ -965,9 +1007,10 @@ function receive_device()
                 {
                     id: <?= intval($o->OwnerID) ?>,
                     name: <?= json_encode(trim($o->Nickname)) ?>,
-                    deptId: <?= json_encode($o->DepartmentID) ?>,
-                    posId: <?= json_encode($o->PositionID) ?>,
-                    deptName: <?= json_encode($o->DepartmentName ?? '') ?>
+                    deptId: <?= json_encode(!empty($o->DepartmentID) ? strval($o->DepartmentID) : '') ?>,
+                    posId: <?= json_encode(!empty($o->PositionID) ? strval($o->PositionID) : '') ?>,
+                    deptName: <?= json_encode($o->DepartmentName ?? '') ?>,
+                    posName: <?= json_encode($o->PositionName ?? '') ?>
                 },
             <?php endforeach; ?>
         ];
@@ -994,7 +1037,7 @@ function receive_device()
             const term = query.toLowerCase().trim();
 
             const filtered = ownerDataList.filter(o => {
-                return !term || o.name.toLowerCase().includes(term) || o.deptName.toLowerCase().includes(term);
+                return !term || o.name.toLowerCase().includes(term) || o.deptName.toLowerCase().includes(term) || o.posName.toLowerCase().includes(term);
             });
 
             if (filtered.length === 0) {
@@ -1002,12 +1045,16 @@ function receive_device()
             } else {
                 let html = '';
                 filtered.forEach(o => {
-                    const deptBadge = o.deptName ? `<span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 600;">${o.deptName}</span>` : '';
-                    const displayName = o.name + (o.deptName ? ` (${o.deptName})` : '');
+                    const deptBadge = o.deptName ? `<span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 600; margin-right: 4px;">${o.deptName}</span>` : '';
+                    const posBadge = o.posName ? `<span style="font-size: 0.75rem; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; font-weight: 600;">${o.posName}</span>` : '';
+                    const displayName = o.name + (o.deptName || o.posName ? ` (${[o.deptName, o.posName].filter(Boolean).join(' • ')})` : '');
                     html += `
                         <div class="owner-item-row" onclick="selectOwnerItem(${o.id}, '${displayName.replace(/'/g, "\\'")}')" style="padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='transparent';">
                             <span style="font-weight: 600; color: #0f172a;"><i class="fa-solid fa-user me-2" style="color: #64748b; font-size: 0.8rem;"></i>${o.name}</span>
-                            ${deptBadge}
+                            <div>
+                                ${deptBadge}
+                                ${posBadge}
+                            </div>
                         </div>
                     `;
                 });
@@ -1036,8 +1083,12 @@ function receive_device()
 
             const found = ownerDataList.find(o => String(o.id) === String(ownerId));
             if (found) {
-                if (deptSelect) deptSelect.value = found.deptId ? String(found.deptId) : '';
-                if (posSelect) posSelect.value = found.posId ? String(found.posId) : '';
+                if (deptSelect) {
+                    deptSelect.value = (found.deptId !== null && found.deptId !== undefined && found.deptId !== '') ? String(found.deptId) : '';
+                }
+                if (posSelect) {
+                    posSelect.value = (found.posId !== null && found.posId !== undefined && found.posId !== '') ? String(found.posId) : '';
+                }
             } else {
                 if (deptSelect) deptSelect.value = '';
                 if (posSelect) posSelect.value = '';
@@ -1049,6 +1100,55 @@ function receive_device()
             const popup = document.getElementById('owner_search_popup');
             if (wrap && popup && !wrap.contains(e.target)) {
                 popup.style.display = 'none';
+            }
+        });
+
+        // Form submit validation
+        document.addEventListener('DOMContentLoaded', function () {
+            const rcvForm = document.getElementById('receive-device-form');
+            if (rcvForm) {
+                rcvForm.addEventListener('submit', function (e) {
+                    const ownerInput = document.getElementById('OwnerID');
+                    const hiddenDev = document.getElementById('hidden_device_id');
+                    const selectDev = document.getElementById('select_device_id');
+                    const deviceVal = hiddenDev ? hiddenDev.value.trim() : (selectDev ? selectDev.value.trim() : '');
+                    const ownerVal = ownerInput ? ownerInput.value.trim() : '';
+
+                    if (!deviceVal) {
+                        e.preventDefault();
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Device Required',
+                                text: 'Please choose an available device to assign.',
+                                confirmButtonColor: '#0f172a'
+                            });
+                        } else {
+                            alert('Please choose an available device to assign.');
+                        }
+                        return false;
+                    }
+
+                    if (!ownerVal) {
+                        e.preventDefault();
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Assignee Required',
+                                text: 'Please search and select an employee from the list.',
+                                confirmButtonColor: '#0f172a'
+                            });
+                        } else {
+                            alert('Please search and select an employee.');
+                        }
+                        const searchInput = document.getElementById('owner_search_input');
+                        if (searchInput) {
+                            searchInput.focus();
+                            openOwnerSearchPopup();
+                        }
+                        return false;
+                    }
+                });
             }
         });
     </script>
