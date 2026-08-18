@@ -71,18 +71,7 @@ function device_crud_laptop()
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_device_wn $where_sql");
     $total_pages = ceil($total_items / $page);
 
-    // Dynamic sorting
-    $sort_by = isset($_GET['sort_by']) ? trim($_GET['sort_by']) : 'newest';
-    $order_sql = "ORDER BY UpdatedAt DESC";
-    if ($sort_by === 'oldest') {
-        $order_sql = "ORDER BY UpdatedAt ASC";
-    } elseif ($sort_by === 'brand_asc') {
-        $order_sql = "ORDER BY Brand ASC, Model ASC";
-    } elseif ($sort_by === 'id_asc') {
-        $order_sql = "ORDER BY DeviceID ASC";
-    }
-
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $where_sql $order_sql LIMIT $page OFFSET $offset");
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $where_sql ORDER BY UpdatedAt DESC LIMIT $page OFFSET $offset");
 
 
 
@@ -410,8 +399,7 @@ function device_crud_laptop()
                                         <div class="p-3 bg-light text-start m-2 rounded border">
                                             <div class="row">
                                                 <div class="col-sm-3 mb-2 mb-sm-0">
-                                                    <span class="text-muted d-block"
-                                                        style="font-size: 0.85em;">Position</span>
+                                                    <span class="text-muted d-block" style="font-size: 0.85em;">Position</span>
                                                     <?php
                                                     $pos_display = $row->Position ?? '';
                                                     if (empty($pos_display) && !empty($row->Owner) && preg_match('/\((.*?)\)$/', $row->Owner, $matches)) {
