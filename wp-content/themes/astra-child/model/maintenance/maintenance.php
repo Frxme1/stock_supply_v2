@@ -145,7 +145,7 @@ function device_crud_maintenance()
                         style="background: #1e40af; border-color: #1e40af; font-weight: 700; border-radius: 10px; padding: 8px 18px;"><i
                             class="fa-solid fa-magnifying-glass me-1"></i> Filter</button>
                     <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'paged', 'sort', 'order']); ?>
-                    <a href="<?= esc_url($reset_url) ?>" class="btn btn-outline-secondary"
+                    <a href="<?= esc_url($reset_url) ?>" class="btn btn-outline-secondary btn-reset-modern"
                         style="border-radius: 10px; font-weight: 600; padding: 8px 16px;">Reset</a>
                 </div>
             </div>

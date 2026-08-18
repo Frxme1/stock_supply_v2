@@ -389,7 +389,7 @@ function form_owner()
                     <i class="fa-solid fa-filter"></i> Filter
                 </button>
                 <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'filter_status', 'filter_department', 'filter_position', 'paged']); ?>
-                <a href="<?= esc_url($reset_url) ?>" class="btn-reset-underline">Reset</a>
+                <a href="<?= esc_url($reset_url) ?>" class="btn-reset-underline btn-reset-modern">Reset</a>
                 <a href="<?= esc_url(home_url('/add-owner/')) ?>" class="btn-add-black" title="Add Employee">
                     <i class="fa-solid fa-user-plus"></i>
                 </a>
