@@ -133,7 +133,159 @@ function device_dashboard()
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-    <div class="next-dashboard home-dashboard">
+    <?php
+    /* ===================================================
+       MOBILE HOME DASHBOARD — shown only on mobile
+       Desktop sees .next-dashboard below (unchanged)
+       =================================================== */
+    $avail_count    = $summary_map['Available']    ?? 0;
+    $inuse_count    = $summary_map['In Use']        ?? 0;
+    $maint_count    = $summary_map['Maintenance']   ?? 0;
+    $retired_count  = $summary_map['Retired']       ?? 0;
+
+    // Recent devices for "รายการล่าสุด"
+    $recent_devices = $wpdb->get_results("
+        SELECT DeviceID, Brand, Model, Category, Status, UpdatedAt
+        FROM $table_device_wn
+        ORDER BY UpdatedAt DESC
+        LIMIT 5
+    ");
+    ?>
+
+    <!-- ===== MOBILE HOME DASHBOARD ===== -->
+    <div class="mh-root mobile-only-container" id="mh-dashboard">
+
+        <!-- Top Bar -->
+        <div class="mh-topbar">
+            <div class="mh-topbar-left">
+                <div class="mh-topbar-logo">
+                    <img src="<?php echo get_stylesheet_directory_uri(); ?>/images/cropped-Icon-TBS.png" alt="Logo" width="28" height="28">
+                </div>
+                <div>
+                    <div class="mh-topbar-title">Stock Supply</div>
+                    <div class="mh-topbar-sub">จัดการสต็อก ง่าย ครบ จบในแอพเดียว</div>
+                </div>
+            </div>
+            <a href="<?= esc_url(home_url('/history/')); ?>" class="mh-notif-btn" aria-label="ประวัติ">
+                <i class="fa-solid fa-bell"></i>
+                <?php if ($new_devices_count > 0): ?>
+                    <span class="mh-notif-dot"></span>
+                <?php endif; ?>
+            </a>
+        </div>
+
+        <!-- Hero Summary Card -->
+        <a href="<?= esc_url(home_url('/home/')); ?>" class="mh-hero-card" aria-label="ดูสินค้าทั้งหมด">
+            <div class="mh-hero-left">
+                <div class="mh-hero-icon-wrap">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <div>
+                    <div class="mh-hero-label">สินค้าทั้งหมด</div>
+                    <div class="mh-hero-count count-up-mh" data-count="<?= (int)$total_devices ?>"><?= number_format((int)$total_devices) ?></div>
+                    <div class="mh-hero-sub">รายการ</div>
+                </div>
+            </div>
+            <div class="mh-hero-arrow">
+                <i class="fa-solid fa-chevron-right"></i>
+            </div>
+        </a>
+
+        <!-- ภาพรวมสต็อก — 2×2 Grid -->
+        <div class="mh-section-header">
+            <span class="mh-section-title">ภาพรวมสต็อก</span>
+        </div>
+        <div class="mh-stat-grid">
+            <a href="<?= esc_url(home_url('/home/')); ?>" class="mh-stat-card mh-stat-blue" aria-label="สินค้าทั้งหมด">
+                <div class="mh-stat-icon"><i class="fa-solid fa-chart-simple"></i></div>
+                <div class="mh-stat-val count-up-mh" data-count="<?= (int)$total_devices ?>"><?= number_format((int)$total_devices) ?></div>
+                <div class="mh-stat-label">สินค้าทั้งหมด</div>
+            </a>
+            <a href="<?= esc_url(home_url('/home/?filter_status=Available')); ?>" class="mh-stat-card mh-stat-green" aria-label="สินค้าพร้อมใช้">
+                <div class="mh-stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="mh-stat-val count-up-mh" data-count="<?= (int)$avail_count ?>"><?= number_format((int)$avail_count) ?></div>
+                <div class="mh-stat-label">สินค้าพร้อมใช้</div>
+            </a>
+            <a href="<?= esc_url(home_url('/maintenance/')); ?>" class="mh-stat-card mh-stat-amber" aria-label="สินค้าซ่อมบำรุง">
+                <div class="mh-stat-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                <div class="mh-stat-val count-up-mh" data-count="<?= (int)$maint_count ?>"><?= number_format((int)$maint_count) ?></div>
+                <div class="mh-stat-label">สินค้าซ่อมบำรุง</div>
+            </a>
+            <a href="<?= esc_url(home_url('/home/?filter_status=Retired')); ?>" class="mh-stat-card mh-stat-red" aria-label="สินค้าหมด">
+                <div class="mh-stat-icon"><i class="fa-solid fa-ban"></i></div>
+                <div class="mh-stat-val count-up-mh" data-count="<?= (int)($inuse_count + $retired_count) ?>"><?= number_format((int)($inuse_count + $retired_count)) ?></div>
+                <div class="mh-stat-label">สินค้าหมด/ใช้งาน</div>
+            </a>
+        </div>
+
+        <!-- เมนูลัด — 4 module buttons -->
+        <div class="mh-section-header">
+            <span class="mh-section-title">เมนูลัด</span>
+        </div>
+        <div class="mh-module-grid">
+            <a href="<?= esc_url(home_url('/add-device/')); ?>" class="mh-module-btn" aria-label="เพิ่มสินค้า">
+                <div class="mh-module-icon mh-mod-blue"><i class="fa-solid fa-plus"></i></div>
+                <span>เพิ่มสินค้า</span>
+            </a>
+            <a href="<?= esc_url(home_url('/home/?action=receive')); ?>" class="mh-module-btn" aria-label="รับเข้า">
+                <div class="mh-module-icon mh-mod-green"><i class="fa-solid fa-arrow-down-to-bracket"></i></div>
+                <span>รับเข้า</span>
+            </a>
+            <a href="<?= esc_url(home_url('/home/?action=return')); ?>" class="mh-module-btn" aria-label="เบิกออก">
+                <div class="mh-module-icon mh-mod-indigo"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                <span>เบิกออก</span>
+            </a>
+            <a href="<?= esc_url(home_url('/?scan=1')); ?>" class="mh-module-btn" aria-label="สแกนบาร์โค้ด">
+                <div class="mh-module-icon mh-mod-slate"><i class="fa-solid fa-barcode"></i></div>
+                <span>สแกนบาร์โค้ด</span>
+            </a>
+        </div>
+
+        <!-- รายการล่าสุด -->
+        <div class="mh-section-header">
+            <span class="mh-section-title">รายการล่าสุด</span>
+            <a href="<?= esc_url(home_url('/home/')); ?>" class="mh-section-more">ทั้งหมด</a>
+        </div>
+        <div class="mh-recent-list">
+            <?php foreach ($recent_devices as $rd):
+                $cat_icon = 'fa-box';
+                $cat_color = '#64748b';
+                if ($rd->Category === 'Monitor')     { $cat_icon = 'fa-desktop';  $cat_color = '#FDB840'; }
+                elseif ($rd->Category === 'Laptop')  { $cat_icon = 'fa-laptop';   $cat_color = '#15A5DA'; }
+                elseif ($rd->Category === 'Accessories') { $cat_icon = 'fa-keyboard'; $cat_color = '#6ABF57'; }
+
+                $rd_status_class = 'mh-badge-grey';
+                $rd_status_label = esc_html($rd->Status);
+                if ($rd->Status === 'Available')   { $rd_status_class = 'mh-badge-green'; }
+                elseif ($rd->Status === 'In Use')  { $rd_status_class = 'mh-badge-red'; }
+                elseif ($rd->Status === 'Maintenance') { $rd_status_class = 'mh-badge-amber'; }
+
+                $cat_slug = strtolower($rd->Category);
+                $detail_url = home_url('/' . $cat_slug . '/?view=' . urlencode($rd->DeviceID));
+                $time_diff = human_time_diff(strtotime($rd->UpdatedAt), current_time('timestamp')) . ' ที่แล้ว';
+            ?>
+            <a href="<?= esc_url($detail_url); ?>" class="mh-recent-item" aria-label="<?= esc_attr($rd->Brand . ' ' . $rd->Model) ?>">
+                <div class="mh-recent-icon" style="background: <?= $cat_color ?>18; color: <?= $cat_color ?>;">
+                    <i class="fa-solid <?= $cat_icon ?>"></i>
+                </div>
+                <div class="mh-recent-info">
+                    <div class="mh-recent-name"><?= esc_html($rd->Brand . ' ' . $rd->Model) ?></div>
+                    <div class="mh-recent-meta"><?= esc_html($rd->Category) ?> · <?= $time_diff ?></div>
+                </div>
+                <div class="mh-recent-right">
+                    <span class="mh-badge <?= $rd_status_class ?>"><?= $rd_status_label ?></span>
+                    <i class="fa-solid fa-chevron-right mh-recent-arrow"></i>
+                </div>
+            </a>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Bottom padding for mobile nav -->
+        <div style="height: 20px;"></div>
+    </div>
+    <!-- ===== END MOBILE HOME DASHBOARD ===== -->
+
+    <div class="next-dashboard home-dashboard desktop-only-container">
 
         <!-- ===== COMMAND DECK: IMPORTANT MENU ===== -->
         <section class="home-command-deck" aria-labelledby="home-command-title">
@@ -827,6 +979,34 @@ function device_dashboard()
         } else {
             initNextDashboard();
         }
+
+        // ---- Mobile Home Dashboard: count-up for .count-up-mh ----
+        (function () {
+            function mhCountUp() {
+                const els = document.querySelectorAll('.count-up-mh');
+                if (!els.length) return;
+                const duration = 900;
+                const easeOut = p => 1 - Math.pow(1 - p, 4);
+                els.forEach(el => {
+                    const target = parseInt(el.getAttribute('data-count') || '0', 10);
+                    if (!target) { el.textContent = '0'; return; }
+                    let startTime = null;
+                    const step = ts => {
+                        if (!startTime) startTime = ts;
+                        const prog = Math.min((ts - startTime) / duration, 1);
+                        el.textContent = Math.floor(easeOut(prog) * target).toLocaleString();
+                        if (prog < 1) requestAnimationFrame(step);
+                        else el.textContent = target.toLocaleString();
+                    };
+                    requestAnimationFrame(step);
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', mhCountUp);
+            } else {
+                mhCountUp();
+            }
+        })();
     </script>
 
 
