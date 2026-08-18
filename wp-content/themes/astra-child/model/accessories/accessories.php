@@ -68,7 +68,19 @@ function device_crud_acc_sories()
     // Fetch Device Data
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_device_wn $search_sql");
     $total_pages = ceil($total_items / $page);
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY UpdatedAt DESC LIMIT $page OFFSET $offset");
+
+    // Dynamic sorting
+    $sort_by = isset($_GET['sort_by']) ? trim($_GET['sort_by']) : 'newest';
+    $order_sql = "ORDER BY UpdatedAt DESC";
+    if ($sort_by === 'oldest') {
+        $order_sql = "ORDER BY UpdatedAt ASC";
+    } elseif ($sort_by === 'brand_asc') {
+        $order_sql = "ORDER BY Brand ASC, Model ASC";
+    } elseif ($sort_by === 'id_asc') {
+        $order_sql = "ORDER BY DeviceID ASC";
+    }
+
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql $order_sql LIMIT $page OFFSET $offset");
     // -------------------------------------------
 
     if (!function_exists('formatName')) {

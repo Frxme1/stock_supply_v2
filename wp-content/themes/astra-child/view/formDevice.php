@@ -79,9 +79,19 @@ function device_crud()
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_device_wn $search_sql");
     $total_pages = ceil($total_items / $page);
 
+    // Dynamic sorting
+    $sort_by = isset($_GET['sort_by']) ? trim($_GET['sort_by']) : 'newest';
+    $order_sql = "ORDER BY UpdatedAt DESC";
+    if ($sort_by === 'oldest') {
+        $order_sql = "ORDER BY UpdatedAt ASC";
+    } elseif ($sort_by === 'brand_asc') {
+        $order_sql = "ORDER BY Brand ASC, Model ASC";
+    } elseif ($sort_by === 'id_asc') {
+        $order_sql = "ORDER BY DeviceID ASC";
+    }
 
-    // Fetch current page of device records (default by latest updated)
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY UpdatedAt DESC LIMIT $page OFFSET $offset");
+    // Fetch current page of device records
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql $order_sql LIMIT $page OFFSET $offset");
 
 
 
@@ -256,31 +266,6 @@ function device_crud()
                 <button type="button" class="btn btn-primary btn-sm"
                     style="border-radius: 8px; font-weight: 600; padding: 6px 16px;" onclick="handleBulkAction('device')">
                     <i class="fa-solid fa-print"></i> Print Labels
-                </button>
-            </div>
-
-            <div class="mobile-only-container">
-                <!-- Mobile Header / Quick Actions -->
-                <div class="quick-action-grid">
-                    <a href="javascript:void(0);" onclick="openAddDeviceBottomSheet()" class="quick-action-card receive"
-                        style="grid-column: span 2;">
-                        <div class="quick-action-icon"><i class="fa-solid fa-plus"></i></div>
-                        <div class="quick-action-title">Add Device</div>
-                    </a>
-                    <a href="<?= home_url('/maintenance/') ?>" class="quick-action-card swap">
-                        <div class="quick-action-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                        <div class="quick-action-title">Maintenance</div>
-                    </a>
-                    <a href="<?= home_url('/history/') ?>" class="quick-action-card return">
-                        <div class="quick-action-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                        <div class="quick-action-title">History</div>
-                    </a>
-                </div>
-
-                <!-- Mobile Filter Button -->
-                <button type="button" class="mobile-filter-btn" onclick="openBottomSheet()">
-                    <span><i class="fa-solid fa-filter"></i> Filters & Search</span>
-                    <i class="fa-solid fa-chevron-right text-muted"></i>
                 </button>
             </div>
 
@@ -493,79 +478,8 @@ function device_crud()
                 </table>
             </div>
 
-            <!-- Mobile Device Cards -->
-            <div class="mobile-only-container" style="margin-top: 16px;">
-                <?php foreach ($rows as $index => $row): ?>
-                    <?php
-                    $status = $row->Status;
-                    $statusClass = '';
-                    if (strcasecmp($status, 'Available') === 0)
-                        $statusClass = 'status-available';
-                    elseif (strcasecmp($status, 'In Use') === 0)
-                        $statusClass = 'status-inuse';
-                    elseif (strcasecmp($status, 'Maintenance') === 0)
-                        $statusClass = 'status-maintenance';
-                    elseif (strcasecmp($status, 'Retired') === 0)
-                        $statusClass = 'status-retired';
-                    ?>
-                    <div class="mobile-device-card">
-                        <div class="mobile-device-header">
-                            <div class="mobile-device-title-area">
-                                <div class="mobile-device-title"><?= esc_html($row->Brand) ?>
-                                    <?= esc_html(!empty($row->Model) ? $row->Model : '') ?>
-                                </div>
-                                <div class="mobile-device-meta"><?= esc_html($row->Category) ?> | SN:
-                                    <?= esc_html(!empty($row->SerialNumber) ? $row->SerialNumber : '-') ?>
-                                </div>
-                            </div>
-                            <div class="status-badge <?= $statusClass ?>">
-                                <span class="status-dot"></span>
-                                <?= esc_html($status) ?>
-                            </div>
-                        </div>
-                        <div class="mobile-device-body">
-                            <div class="mobile-device-owner">
-                                <i class="fa-solid fa-user"></i>
-                                <?php
-                                $owner = trim($row->Owner ?? '');
-                                $nickname = trim($row->Nickname ?? '');
-                                if ($owner === '' && $nickname === '') {
-                                    echo '-';
-                                } else {
-                                    if ($nickname !== '')
-                                        echo htmlspecialchars($nickname) . ' ';
-                                    if ($owner !== '') {
-                                        preg_match('/\((.*?)\)$/', $owner, $matches);
-                                        $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
-                                        $nameParts = explode(' ', $nameOnly);
-                                        if (count($nameParts) > 1) {
-                                            $lastInitial = strtoupper(mb_substr(end($nameParts), 0, 1)) . '.';
-                                            echo htmlspecialchars($lastInitial);
-                                        }
-                                    }
-                                    $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
-                                    if (!empty($deptAbbr)) {
-                                        echo ' <span class="text-muted small">' . htmlspecialchars($deptAbbr) . '</span>';
-                                    }
-                                }
-                                ?>
-                            </div>
-                            <div class="mobile-device-id"><strong><?= esc_html($row->DeviceID) ?></strong></div>
-                        </div>
-                        <div class="mobile-device-actions">
-                            <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"
-                                    class="mobile-btn-action mobile-btn-secondary"><i class="fa-solid fa-gear"></i> Edit</a>
-                            <?php else: ?>
-                                <a href="?edit=<?= esc_attr($row->DeviceID) ?>" class="mobile-btn-action mobile-btn-secondary"><i
-                                        class="fa-solid fa-gear"></i> Edit</a>
-                            <?php endif; ?>
-                            <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="mobile-btn-action mobile-btn-primary"><i
-                                    class="fa-solid fa-magnifying-glass"></i> View</a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+            <!-- Mobile Device List (Header, Search, Filter Pills & Cards) -->
+            <?php include(get_stylesheet_directory() . '/model/shared/mobile_device_list.php'); ?>
         </form>
 
         <style>
