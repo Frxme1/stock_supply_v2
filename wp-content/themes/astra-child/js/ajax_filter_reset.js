@@ -371,6 +371,12 @@ function clearFormInputs(form) {
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
+    // Close any autocomplete dropdowns
+    document.querySelectorAll('.custom-autocomplete-card').forEach(c => {
+        c.style.display = 'none';
+        c.innerHTML = '';
+    });
+
     // 3. Handle custom department wrapper toggle if function exists
     if (typeof window.toggleDepartment === 'function') {
         window.toggleDepartment();
@@ -391,22 +397,21 @@ function isResetButton(element) {
     if (!btn) return false;
 
     // 1. Check classes on element
-    if (btn.classList) {
-        var classListStr = Array.from(btn.classList).join(' ').toLowerCase();
-        if (classListStr.includes('reset')) {
-            return true;
-        }
+    var classListStr = Array.from(btn.classList || []).join(' ').toLowerCase();
+    if (classListStr.includes('reset') || classListStr.includes('btn-reset-modern') || classListStr.includes('btn-reset-underline')) {
+        return true;
     }
 
     // 2. Check text content (removing special chars and spaces)
     var rawText = (btn.textContent || '').replace(/[^a-zA-Z0-9\u0E00-\u0E7F]/g, '').toLowerCase();
-    if (rawText === 'reset' || rawText === 'รีเซ็ต') {
+    if (rawText === 'reset' || rawText === 'รีเซ็ต' || rawText.includes('reset') || rawText.includes('รีเซ็ต')) {
         return true;
     }
 
-    // 3. Check href parameter or onclick
+    // 3. Check href parameter or id
     var href = btn.getAttribute('href') || '';
-    if (href.includes('remove_query_arg') || href.includes('filter_') || href.includes('device_search')) {
+    var btnId = (btn.id || '').toLowerCase();
+    if (btnId.includes('reset') || href.includes('remove_query_arg') || href.includes('filter_') || href.includes('device_search')) {
         return true;
     }
 
@@ -483,6 +488,22 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
                 }
             }
 
+            // 0.5 Replace Dashboard Summary Cards (.next-dashboard)
+            const newDash = doc.querySelector('.next-dashboard');
+            const curDash = document.querySelector('.next-dashboard');
+            if (newDash && curDash) {
+                curDash.innerHTML = newDash.innerHTML;
+                if (typeof window.initNextDashboardShared === 'function') {
+                    window.initNextDashboardShared();
+                }
+                if (typeof window.initEmpDashboard === 'function') {
+                    window.initEmpDashboard();
+                }
+                if (typeof window.initNextDashboard === 'function') {
+                    window.initNextDashboard();
+                }
+            }
+
             // 1. Replace Desktop Table Container Content
             const newDesktop = doc.querySelector('.table-wrapper') || doc.querySelector('.table-custom') || doc.querySelector('.table-wrapper-employee');
             const currentDesktop = document.querySelector('.table-wrapper') || document.querySelector('.table-custom') || document.querySelector('.table-wrapper-employee');
@@ -491,12 +512,10 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
             }
 
             // 1.5 Replace Mobile Cards Content (.mobile-only-container)
-            const newMobiles = doc.querySelectorAll('.mobile-only-container');
-            const currentMobiles = document.querySelectorAll('.mobile-only-container');
-            if (newMobiles.length > 0 && currentMobiles.length === newMobiles.length) {
-                for (let i = 0; i < newMobiles.length; i++) {
-                    currentMobiles[i].innerHTML = newMobiles[i].innerHTML;
-                }
+            const newMobile = doc.querySelector('.mobile-only-container');
+            const currentMobile = document.querySelector('.mobile-only-container');
+            if (newMobile && currentMobile) {
+                currentMobile.innerHTML = newMobile.innerHTML;
             }
 
             // 1.6 Replace other specialized panels (Maintenance, History, etc.)
@@ -516,11 +535,16 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
             document.querySelectorAll('.dtl-node').forEach(n => n.classList.add('dtl-visible'));
 
             // 2. Replace Pagination Container
-            const newPagination = doc.querySelector('.pagination')?.closest('div, ul') || doc.querySelector('.pagination');
-            const currentPagination = document.querySelector('.pagination')?.closest('div, ul') || document.querySelector('.pagination');
-
-            if (newPagination && currentPagination) {
-                currentPagination.innerHTML = newPagination.innerHTML;
+            const newPagination = doc.querySelector('.pagination');
+            const currentPagination = document.querySelector('.pagination');
+            if (currentPagination) {
+                if (newPagination) {
+                    currentPagination.innerHTML = newPagination.innerHTML;
+                    currentPagination.style.display = '';
+                } else {
+                    currentPagination.innerHTML = '';
+                    currentPagination.style.display = 'none';
+                }
             }
 
             // 3. Update Browser History State silently (no reload)
@@ -538,6 +562,11 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
                 if (sheet) sheet.classList.remove('open');
                 if (backdrop) backdrop.classList.remove('open');
             }
+
+            // 6. Close any open search autocomplete dropdowns
+            document.querySelectorAll('.custom-autocomplete-card').forEach(c => {
+                c.style.display = 'none';
+            });
         }
 
     } catch (err) {

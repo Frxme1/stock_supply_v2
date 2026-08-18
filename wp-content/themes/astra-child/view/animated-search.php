@@ -206,6 +206,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const renderDropdown = (query) => {
             fetchSuggestions();
             const cleanQuery = (query || '').toLowerCase().trim();
+
+            // Do not open dropdown if query is empty or input is not focused
+            if (cleanQuery.length === 0 || document.activeElement !== input) {
+                listCard.style.display = 'none';
+                listCard.innerHTML = '';
+                return;
+            }
+
             const filtered = suggestions.filter(item => item.toLowerCase().includes(cleanQuery));
 
             if (filtered.length === 0) {
@@ -244,7 +252,9 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         input.addEventListener('focus', function() {
-            renderDropdown(this.value);
+            if (this.value.trim().length > 0) {
+                renderDropdown(this.value);
+            }
         });
 
         input.addEventListener('input', function() {
@@ -288,12 +298,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
 
-        // Close when clicking outside
+        // Close when clicking outside or when parent form submits
         document.addEventListener('click', function(e) {
             if (!wrapper.contains(e.target)) {
                 listCard.style.display = 'none';
             }
         });
+
+        const parentForm = input.closest('form');
+        if (parentForm) {
+            parentForm.addEventListener('submit', function() {
+                listCard.style.display = 'none';
+            });
+        }
     });
 });
 </script>
