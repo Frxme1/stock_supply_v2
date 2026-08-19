@@ -1135,6 +1135,7 @@
         margin-top: 4px !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        flex-grow: 1 !important;
     }
 
     .issue-box-title {
@@ -1160,7 +1161,8 @@
     .mobile-maint-actions {
         display: flex !important;
         gap: 8px !important;
-        margin-top: 4px !important;
+        margin-top: auto !important;
+        padding-top: 6px !important;
         width: 100% !important;
     }
 

@@ -273,7 +273,7 @@ function device_crud_maintenance()
                             $delay = min(0.6, $idx * 0.05);
                             ?>
                             <div class="maint-card slide-up"
-                                style="animation-delay: <?= $delay ?>s; background: <?= ($is_latest || $is_recent) ? 'linear-gradient(180deg, #ffffff 0%, #fffbeb 100%)' : '#ffffff' ?>; border: <?= $is_latest ? '2px solid #ea580c' : ($is_recent ? '1.5px solid #f97316' : '1.5px solid #e2e8f0') ?>; border-radius: 20px; padding: 22px; box-shadow: <?= $is_latest ? '0 10px 28px rgba(234, 88, 12, 0.16)' : '0 4px 16px rgba(15, 23, 42, 0.04)' ?>; position: relative; transition: all 0.28s ease; overflow: hidden;"
+                                style="animation-delay: <?= $delay ?>s; background: <?= ($is_latest || $is_recent) ? 'linear-gradient(180deg, #ffffff 0%, #fffbeb 100%)' : '#ffffff' ?>; border: <?= $is_latest ? '2px solid #ea580c' : ($is_recent ? '1.5px solid #f97316' : '1.5px solid #e2e8f0') ?>; border-radius: 20px; padding: 22px; box-shadow: <?= $is_latest ? '0 10px 28px rgba(234, 88, 12, 0.16)' : '0 4px 16px rgba(15, 23, 42, 0.04)' ?>; position: relative; transition: all 0.28s ease; overflow: hidden; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;"
                                 onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 14px 32px rgba(30, 64, 175, 0.12)';"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='<?= $is_latest ? '0 10px 28px rgba(234, 88, 12, 0.16)' : '0 4px 16px rgba(15, 23, 42, 0.04)' ?>';">
 
@@ -350,7 +350,7 @@ function device_crud_maintenance()
 
                                 <!-- Repair Reason / Details Box -->
                                 <div
-                                    style="font-size: 0.86rem; color: #92400e; background: #fffbeb; border: 1.5px solid #fde047; padding: 12px 14px; border-radius: 14px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
+                                    style="font-size: 0.86rem; color: #92400e; background: #fffbeb; border: 1.5px solid #fde047; padding: 12px 14px; border-radius: 14px; font-weight: 600; line-height: 1.45; margin-bottom: 18px; flex-grow: 1;">
                                     <div
                                         style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #b45309; margin-bottom: 2px; font-weight: 700;">
                                         <i class="fa-solid fa-triangle-exclamation me-1"></i> Issue / Repair Reason
@@ -358,8 +358,8 @@ function device_crud_maintenance()
                                     <?= esc_html($item->Details ?: 'No additional details specified') ?>
                                 </div>
 
-                                <!-- Action Buttons -->
-                                <div class="d-flex gap-2 justify-content-end pt-2" style="border-top: 1px dashed #e2e8f0;">
+                                <!-- Action Buttons (Fixed / Pinned to bottom of card) -->
+                                <div class="d-flex gap-2 justify-content-end pt-3 mt-auto" style="border-top: 1px dashed #e2e8f0; width: 100%;">
                                     <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="btn btn-sm btn-outline-secondary"
                                         style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
                                         <i class="fa-solid fa-magnifying-glass"></i> Details
