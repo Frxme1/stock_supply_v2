@@ -67,7 +67,7 @@ function device_crud_maintenance()
         LEFT JOIN Owners o ON d.OwnerID = o.OwnerID
         LEFT JOIN Departments dept ON o.DepartmentID = dept.DepartmentID
         $where_sql
-        ORDER BY COALESCE(m.RepairDate, d.RepairDate) DESC, d.DeviceID DESC
+        ORDER BY COALESCE(m.RepairDate, d.RepairDate) DESC, COALESCE(m.CreatedAt, '1970-01-01 00:00:00') DESC, d.DeviceID DESC
     ");
 
     $all_categories = $wpdb->get_col("SELECT DISTINCT CategoryName FROM Categories WHERE CategoryName != '' ORDER BY CategoryName ASC");
@@ -85,15 +85,17 @@ function device_crud_maintenance()
     if (!function_exists('stock_supply_format_maint_date')) {
         function stock_supply_format_maint_date($repair_date, $created_at = null)
         {
-            if (!empty($created_at) && $created_at !== '0000-00-00 00:00:00') {
-                $ts = strtotime($created_at);
-                $date_str = date('Y-m-d', $ts);
-                if ($date_str === $repair_date) {
-                    return date('d M Y, H:i', $ts);
-                }
-            }
-            if (!empty($repair_date)) {
+            $has_repair = !empty($repair_date) && $repair_date !== '0000-00-00';
+            $has_created = !empty($created_at) && $created_at !== '0000-00-00 00:00:00';
+
+            if ($has_repair && $has_created) {
+                $ts_repair = strtotime($repair_date);
+                $ts_created = strtotime($created_at);
+                return date('d M Y', $ts_repair) . ', ' . date('H:i', $ts_created);
+            } elseif ($has_repair) {
                 return date('d M Y', strtotime($repair_date));
+            } elseif ($has_created) {
+                return date('d M Y, H:i', strtotime($created_at));
             }
             return '-';
         }
@@ -269,7 +271,7 @@ function device_crud_maintenance()
                         $dev_action_nonce = wp_create_nonce('device_action_nonce');
                         foreach ($all_active_maintenance as $idx => $item):
                             $is_latest = ($idx === 0 && empty($search));
-                            $is_recent = !empty($item->RepairDate) && strtotime($item->RepairDate) >= strtotime('-7 days');
+                            $is_recent = !empty($item->RepairDate) && strtotime($item->RepairDate) >= strtotime('-7 days') && strtotime($item->RepairDate) <= (current_time('timestamp') + 86400);
                             $delay = min(0.6, $idx * 0.05);
                             ?>
                             <div class="maint-card slide-up"
@@ -286,12 +288,12 @@ function device_crud_maintenance()
                                 <?php if ($is_latest): ?>
                                     <div
                                         style="position: absolute; top: 14px; right: 16px; background: linear-gradient(135deg, #ef4444 0%, #ea580c 100%); color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35); text-transform: uppercase; letter-spacing: 0.5px;">
-                                        <i class="fa-solid fa-fire me-1"></i> Latest Repair
+                                        <i class="fa-solid fa-fire me-1"></i> Latest Sent
                                     </div>
                                 <?php elseif ($is_recent): ?>
                                     <div
                                         style="position: absolute; top: 14px; right: 16px; background: linear-gradient(135deg, #f97316 0%, #d97706 100%); color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; box-shadow: 0 3px 8px rgba(249, 115, 22, 0.3);">
-                                        <i class="fa-solid fa-sparkles me-1"></i> Repaired This Week
+                                        <i class="fa-solid fa-sparkles me-1"></i> Sent to Repair This Week
                                     </div>
                                 <?php endif; ?>
 
