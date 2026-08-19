@@ -85,17 +85,15 @@ function device_crud_maintenance()
     if (!function_exists('stock_supply_format_maint_date')) {
         function stock_supply_format_maint_date($repair_date, $created_at = null)
         {
-            $has_repair = !empty($repair_date) && $repair_date !== '0000-00-00';
-            $has_created = !empty($created_at) && $created_at !== '0000-00-00 00:00:00';
+            $date_str = (!empty($repair_date) && $repair_date !== '0000-00-00') 
+                ? $repair_date 
+                : ((!empty($created_at) && $created_at !== '0000-00-00 00:00:00') ? $created_at : null);
 
-            if ($has_repair && $has_created) {
-                $ts_repair = strtotime($repair_date);
-                $ts_created = strtotime($created_at);
-                return date('d M Y', $ts_repair) . ', ' . date('H:i', $ts_created);
-            } elseif ($has_repair) {
-                return date('d M Y', strtotime($repair_date));
-            } elseif ($has_created) {
-                return date('d M Y, H:i', strtotime($created_at));
+            if (!empty($date_str)) {
+                $ts = strtotime($date_str);
+                if ($ts !== false) {
+                    return date('d M Y', $ts);
+                }
             }
             return '-';
         }
