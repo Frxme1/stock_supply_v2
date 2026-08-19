@@ -13,7 +13,8 @@
 /* Ghost-style trigger button */
 .action-btn {
     background-color: transparent;
-    color: hsl(240 3.8% 46.1%); /* muted-foreground */
+    color: hsl(240 3.8% 46.1%);
+    /* muted-foreground */
     border: none;
     width: 32px;
     height: 32px;
@@ -26,15 +27,18 @@
     justify-content: center;
     align-items: center;
     padding: 0;
-    padding-bottom: 6px; /* offset for ellipsis baseline */
+    padding-bottom: 6px;
+    /* offset for ellipsis baseline */
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .action-btn:hover,
 .action-btn:focus,
 .action-btn[aria-expanded="true"] {
-    background-color: hsl(240 4.8% 95.9%); /* accent */
-    color: hsl(240 5.9% 10%); /* accent-foreground */
+    background-color: hsl(240 4.8% 95.9%);
+    /* accent */
+    color: hsl(240 5.9% 10%);
+    /* accent-foreground */
 }
 
 .action-btn:active {
@@ -71,6 +75,7 @@
         opacity: 0;
         transform: translateY(-10px) scale(0.95);
     }
+
     100% {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -105,6 +110,7 @@ tr.dropdown-open {
     position: relative;
     z-index: 9999 !important;
 }
+
 .dropdown-menu.action-dropdown a {
     color: #475569;
     padding: 10px 14px;
@@ -149,4 +155,3 @@ tr.dropdown-open {
     color: #3b82f6;
     transform: scale(1.15);
 }
-
