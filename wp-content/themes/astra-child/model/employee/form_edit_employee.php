@@ -160,7 +160,6 @@ function form_edit_owner($editing = null)
                     <i class="fa-solid fa-user-pen"></i>
                 </div>
                 <div>
-                    <h1 class="emp-header-title">Edit Employee Profile</h1>
                     <p class="emp-header-subtitle">Update staff profile information, role & department assignments</p>
                 </div>
             </div>
@@ -217,7 +216,8 @@ function form_edit_owner($editing = null)
                                 First Name
                             </label>
                             <input type="text" name="FirstName" id="emp_edit_firstname"
-                                value="<?= esc_attr($editing->FirstName ?? '') ?>" placeholder="First name" autocomplete="off">
+                                value="<?= esc_attr($editing->FirstName ?? '') ?>" placeholder="First name"
+                                autocomplete="off">
                         </div>
 
                         <div class="emp-field-group">
@@ -226,7 +226,8 @@ function form_edit_owner($editing = null)
                                 Last Name
                             </label>
                             <input type="text" name="LastName" id="emp_edit_lastname"
-                                value="<?= esc_attr($editing->LastName ?? '') ?>" placeholder="Last name" autocomplete="off">
+                                value="<?= esc_attr($editing->LastName ?? '') ?>" placeholder="Last name"
+                                autocomplete="off">
                         </div>
 
                         <!-- Row 3: Email Address (Full Width Span 2) -->
@@ -236,7 +237,8 @@ function form_edit_owner($editing = null)
                                 Email Address
                             </label>
                             <input type="email" name="Email" id="emp_edit_email"
-                                value="<?= esc_attr($editing->Email ?? '') ?>" placeholder="name@company.com" autocomplete="off">
+                                value="<?= esc_attr($editing->Email ?? '') ?>" placeholder="name@company.com"
+                                autocomplete="off">
                         </div>
 
                         <!-- Row 4: Department & Position -->
@@ -967,6 +969,9 @@ function form_edit_owner($editing = null)
                         title: 'Checking equipment...',
                         text: 'Fetching assigned devices for ' + currentNick,
                         allowOutsideClick: false,
+                        showConfirmButton: false,
+                        showCancelButton: false,
+                        showDenyButton: false,
                         didOpen: () => Swal.showLoading()
                     });
 
@@ -984,10 +989,12 @@ function form_edit_owner($editing = null)
                                     icon: 'warning',
                                     title: '⚠️ Confirm Resignation?',
                                     text: 'Status will be updated to Resigned.',
+                                    showConfirmButton: true,
                                     showCancelButton: true,
+                                    showDenyButton: false,
                                     confirmButtonText: 'Confirm & Save',
                                     cancelButtonText: 'Cancel',
-                                    confirmButtonColor: '#d97706',
+                                    confirmButtonColor: '#2563eb',
                                     cancelButtonColor: '#64748b'
                                 }).then(r => {
                                     if (r.isConfirmed) {
@@ -1035,10 +1042,12 @@ function form_edit_owner($editing = null)
                                     title: '⚠️ Confirm Resignation?',
                                     html: noDevHtml,
                                     width: 580,
+                                    showConfirmButton: true,
                                     showCancelButton: true,
+                                    showDenyButton: false,
                                     confirmButtonText: '<i class="fa-solid fa-check me-1"></i> Confirm & Save as Resigned',
                                     cancelButtonText: 'Cancel',
-                                    confirmButtonColor: '#d97706',
+                                    confirmButtonColor: '#2563eb',
                                     cancelButtonColor: '#64748b',
                                     customClass: {
                                         popup: 'offboard-swal-popup',
@@ -1113,11 +1122,13 @@ function form_edit_owner($editing = null)
                             Swal.fire({
                                 title: '⚠️ Confirm Resignation & Offboard Devices',
                                 html: modalHtml,
-                                width: 740,
+                                width: 780,
+                                showConfirmButton: true,
                                 showCancelButton: true,
+                                showDenyButton: false,
                                 confirmButtonText: '<i class="fa-solid fa-rotate-left me-1"></i> Confirm Resign & Return Devices',
                                 cancelButtonText: 'Cancel',
-                                confirmButtonColor: '#dc2626',
+                                confirmButtonColor: '#2563eb',
                                 cancelButtonColor: '#64748b',
                                 customClass: {
                                     popup: 'offboard-swal-popup',

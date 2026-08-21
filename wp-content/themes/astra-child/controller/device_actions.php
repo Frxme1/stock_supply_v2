@@ -308,30 +308,45 @@ function handle_device_actions()
                     $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
 
                     // Redirect 
-                    echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                    echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Return Success</title><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'><style>
+                        body { background: #f8fafc; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                        .swal2-popup { border-radius: 24px !important; padding: 32px 28px !important; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important; max-width: 440px !important; }
+                        .swal2-close { display: none !important; }
+                        @keyframes scaleInCheck { 0% { transform: scale(0.6); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+                        .check-anim { animation: scaleInCheck 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+                    </style></head><body>";
                     echo "<script>
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Return Success!',
+                        html: `
+                            <div class='check-anim' style='width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%; background: #ecfdf5; border: 3.5px solid #10b981; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);'>
+                                <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='#10b981' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'>
+                                    <polyline points='20 6 9 17 4 12'></polyline>
+                                </svg>
+                            </div>
+                            <h2 style='font-size: 1.45rem; font-weight: 800; color: #0f172a; margin: 0 0 8px; letter-spacing: -0.02em;'>Return Success!</h2>
+                            <p style='font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.5;'>Device returned and checked in to inventory.</p>
+                        `,
                         showConfirmButton: false,
+                        showCloseButton: false,
                         timer: 1500
                     }).then(() => {
                         window.location.replace('{$redirect_url}');
                     });
-                </script>";
+                </script></body></html>";
                     exit;
                 }
             }
         }
 
-        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+        echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Updating Device</title><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'><style>body{background:#f8fafc;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}</style></head><body>";
         echo "<script>
         Swal.fire({
             icon: 'error',
             title: 'Return Failed!',
+            text: 'Unable to return device due to a database issue.',
             showConfirmButton: true
         });
-    </script>";
+        </script></body></html>";
         return false;
     }
 
@@ -401,17 +416,31 @@ function handle_device_actions()
         $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/') : home_url('/');
 
         if ($updated !== false && $updated >= 0) {
-            echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+            echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Device Available</title><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'><style>
+                body { background: #f8fafc; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                .swal2-popup { border-radius: 24px !important; padding: 32px 28px !important; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important; max-width: 440px !important; }
+                .swal2-close { display: none !important; }
+                @keyframes scaleInCheck { 0% { transform: scale(0.6); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+                .check-anim { animation: scaleInCheck 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+            </style></head><body>";
             echo "<script>
             Swal.fire({
-                icon: 'success',
-                title: 'Device Available!',
+                html: `
+                    <div class='check-anim' style='width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%; background: #ecfdf5; border: 3.5px solid #10b981; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);'>
+                        <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='#10b981' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'>
+                            <polyline points='20 6 9 17 4 12'></polyline>
+                        </svg>
+                    </div>
+                    <h2 style='font-size: 1.45rem; font-weight: 800; color: #0f172a; margin: 0 0 8px; letter-spacing: -0.02em;'>Device Available!</h2>
+                    <p style='font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.5;'>Device status updated to Available in stock.</p>
+                `,
                 showConfirmButton: false,
+                showCloseButton: false,
                 timer: 1500
             }).then(() => {
                 window.location.replace('{$redirect_url}');
             });
-        </script>";
+            </script></body></html>";
             exit;
         } else {
             echo "<p>Can't Change to Available due to database error.</p>";
@@ -481,29 +510,78 @@ function handle_device_actions()
                 ));
                 $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/?view=' . urlencode($device_id)) : home_url('/?view=' . urlencode($device_id));
 
-                echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+                echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Returned to Owner</title><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'><style>
+                    body { background: #f8fafc; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                    .swal2-popup { border-radius: 24px !important; padding: 32px 28px !important; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important; max-width: 440px !important; }
+                    .swal2-close { display: none !important; }
+                    @keyframes scaleInCheck { 0% { transform: scale(0.6); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+                    .check-anim { animation: scaleInCheck 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+                </style></head><body>";
                 echo "<script>
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Returned to Owner!',
+                    html: `
+                        <div class='check-anim' style='width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%; background: #ecfdf5; border: 3.5px solid #10b981; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);'>
+                            <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='#10b981' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'>
+                                <polyline points='20 6 9 17 4 12'></polyline>
+                            </svg>
+                        </div>
+                        <h2 style='font-size: 1.45rem; font-weight: 800; color: #0f172a; margin: 0 0 8px; letter-spacing: -0.02em;'>Returned to Owner!</h2>
+                        <p style='font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.5;'>Device repaired and returned to employee successfully.</p>
+                    `,
                     showConfirmButton: false,
+                    showCloseButton: false,
                     timer: 1500
                 }).then(() => {
                     window.location.replace('{$redirect_url}');
                 });
-                </script>";
+                </script></body></html>";
                 exit;
             } else {
-                 echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
-                 echo "<script>
-                 Swal.fire({
-                     icon: 'error',
-                     title: 'Failed',
-                     text: 'This device does not have an owner.',
-                     showConfirmButton: true
-                 });
-                 </script>";
-                 exit;
+                // Fallback: If no owner, return to available stock seamlessly
+                $avail_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Available'");
+                $wpdb->delete($table_maintenance, ['DeviceID' => $device_id], ['%s']);
+                $wpdb->update(
+                    $table_devices,
+                    [
+                        'StatusID'     => $avail_status_id,
+                        'RepairDate'   => null,
+                        'OwnerID'      => null
+                    ],
+                    ['DeviceID' => $device_id]
+                );
+
+                $category_slug = $wpdb->get_var($wpdb->prepare(
+                    "SELECT CategoryName FROM Categories WHERE CategoryID = %d",
+                    $device_info->CategoryID ?? 0
+                ));
+                $redirect_url = $category_slug ? home_url('/' . sanitize_title($category_slug) . '/?view=' . urlencode($device_id)) : home_url('/?view=' . urlencode($device_id));
+
+                echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Returned to Stock</title><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'><style>
+                    body { background: #f8fafc; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                    .swal2-popup { border-radius: 24px !important; padding: 32px 28px !important; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important; max-width: 440px !important; }
+                    .swal2-close { display: none !important; }
+                    @keyframes scaleInCheck { 0% { transform: scale(0.6); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+                    .check-anim { animation: scaleInCheck 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+                </style></head><body>";
+                echo "<script>
+                Swal.fire({
+                    html: `
+                        <div class='check-anim' style='width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%; background: #ecfdf5; border: 3.5px solid #10b981; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);'>
+                            <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='#10b981' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'>
+                                <polyline points='20 6 9 17 4 12'></polyline>
+                            </svg>
+                        </div>
+                        <h2 style='font-size: 1.45rem; font-weight: 800; color: #0f172a; margin: 0 0 8px; letter-spacing: -0.02em;'>Returned to Stock!</h2>
+                        <p style='font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.5;'>Device returned to available inventory stock.</p>
+                    `,
+                    showConfirmButton: false,
+                    showCloseButton: false,
+                    timer: 1500
+                }).then(() => {
+                    window.location.replace('{$redirect_url}');
+                });
+                </script></body></html>";
+                exit;
             }
         }
     }

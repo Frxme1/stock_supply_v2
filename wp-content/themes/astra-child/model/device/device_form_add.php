@@ -103,6 +103,16 @@ function device_form($editing = null)
 			break;
 		}
 	}
+
+	$current_brand_name = '';
+	if (!empty($editing->BrandID)) {
+		foreach ($brands as $b) {
+			if ($b->BrandID == $editing->BrandID) {
+				$current_brand_name = $b->BrandName;
+				break;
+			}
+		}
+	}
 	?>
 
 	<script>
@@ -184,50 +194,23 @@ function device_form($editing = null)
 							</div>
 						</div>
 
-						<!-- Brand Select + Add Brand Inline -->
+						<!-- Brand Select (Standard Dropdown) -->
 						<div class="form-group modern-group">
-							<div class="field-header d-flex justify-content-between align-items-center">
-								<label for="brand-select" class="mb-0">
+							<div class="field-header">
+								<label for="brand-select">
 									<i class="fa-solid fa-building field-icon-desktop desktop-only-element"></i>
 									Brand <span class="required-star">*</span>
 								</label>
-								<button type="button" id="btn-add-new-brand-link"
-									class="btn-new-brand-text desktop-only-element" onclick="toggleNewBrandMode()">
-									<i class="fa-solid fa-plus-circle"></i> New Brand
-								</button>
 							</div>
-
-							<div id="brand-select-wrapper">
-								<div class="field-input-wrap">
-									<select name="BrandID" id="brand-select" required onchange="checkBrandSelection(this)">
-										<option value="">-- Select --</option>
-										<?php foreach ($brands as $brand): ?>
-											<option value="<?= $brand->BrandID ?>" <?= selected($editing->BrandID ?? '', $brand->BrandID, false) ?>>
-												<?= esc_html($brand->BrandName) ?>
-											</option>
-										<?php endforeach; ?>
-									</select>
-								</div>
-								<button type="button" id="btn-add-new-brand" class="btn w-100 mt-2 mobile-only-element"
-									style="border: 1.5px dashed #cbd5e1; color: #475569; font-weight: 600; border-radius: 8px; padding: 10px; background: #ffffff; transition: all 0.2s; <?= (!empty($editing->BrandID)) ? 'display: none;' : '' ?>"
-									onclick="toggleNewBrandMode()">
-									<i class="fa-solid fa-plus me-1"></i> Add New Brand
-								</button>
-							</div>
-
-							<!-- New Brand Input Wrapper (Animated Slide-in) -->
-							<div id="new_brand_wrapper" class="new-brand-wrapper-box" style="display: none;">
-								<div class="new-brand-top-bar">
-									<span class="new-brand-title">
-										<i class="fa-solid fa-sparkles text-primary me-1"></i> Create New Brand
-									</span>
-									<button type="button" class="btn-cancel-brand" onclick="cancelNewBrandMode()"
-										title="Cancel">
-										<i class="fa-solid fa-xmark"></i> Cancel
-									</button>
-								</div>
-								<input type="text" name="new_brand_name" id="new_brand_name"
-									placeholder="e.g. Razer, Anker, Dell, Apple..." class="new-brand-input-element">
+							<div class="field-input-wrap">
+								<select name="BrandID" id="brand-select" required onchange="fetchSuggestedModels(); updateLivePreview();">
+									<option value="">-- Select Brand --</option>
+									<?php foreach ($brands as $brand): ?>
+										<option value="<?= esc_attr($brand->BrandID) ?>" <?= selected($editing->BrandID ?? '', $brand->BrandID, false) ?>>
+											<?= esc_html($brand->BrandName) ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
 							</div>
 						</div>
 
@@ -260,6 +243,7 @@ function device_form($editing = null)
 								<input type="text" name="SerialNumber" id="serial_number_input"
 									value="<?= esc_attr($editing->SerialNumber ?? '') ?>" placeholder="e.g. C02G4589MD6R"
 									autocomplete="off" required>
+								<div id="serial_duplicate_warning"></div>
 							</div>
 						</div>
 
@@ -320,7 +304,7 @@ function device_form($editing = null)
 
 					<!-- Form Actions (Cancel & Submit) -->
 					<div class="form-actions modern-form-actions">
-						<button type="button" onclick="history.back()"
+						<button type="button" onclick="handleCancelAddDevice()"
 							class="btn btn-danger btn-cancel-action border rounded-pill">
 							<i class="fa-solid fa-arrow-left me-1"></i> Cancel
 						</button>
@@ -405,52 +389,14 @@ function device_form($editing = null)
 
 	<!-- Interactive Logic & Live Sync JavaScript -->
 	<script>
-		function checkBrandSelection(selectElem) {
-			var addBtn = document.getElementById('btn-add-new-brand');
-			if (addBtn) {
-				addBtn.style.display = (selectElem.value !== '') ? 'none' : 'block';
+		window.handleCancelAddDevice = function() {
+			const ref = document.referrer;
+			if (ref && ref.includes(window.location.host) && !ref.includes('add=') && !ref.includes('edit=') && !ref.includes('receive=')) {
+				window.location.href = ref;
+			} else {
+				window.location.href = '<?= esc_url(home_url('/home/')) ?>';
 			}
-			updateLivePreview();
-		}
-
-		function toggleNewBrandMode() {
-			var selectWrapper = document.getElementById('brand-select-wrapper');
-			var newWrapper = document.getElementById('new_brand_wrapper');
-			var input = document.getElementById('new_brand_name');
-			var select = document.getElementById('brand-select');
-			var linkBtn = document.getElementById('btn-add-new-brand-link');
-
-			if (!selectWrapper || !newWrapper || !input || !select) return;
-
-			selectWrapper.style.display = 'none';
-			newWrapper.style.display = 'block';
-			if (linkBtn) linkBtn.style.display = 'none';
-
-			select.required = false;
-			input.required = true;
-			input.focus();
-			select.value = '';
-			updateLivePreview();
-		}
-
-		function cancelNewBrandMode() {
-			var selectWrapper = document.getElementById('brand-select-wrapper');
-			var newWrapper = document.getElementById('new_brand_wrapper');
-			var input = document.getElementById('new_brand_name');
-			var select = document.getElementById('brand-select');
-			var linkBtn = document.getElementById('btn-add-new-brand-link');
-
-			if (!selectWrapper || !newWrapper || !input || !select) return;
-
-			selectWrapper.style.display = 'block';
-			newWrapper.style.display = 'none';
-			if (linkBtn) linkBtn.style.display = 'inline-flex';
-
-			select.required = true;
-			input.required = false;
-			input.value = '';
-			updateLivePreview();
-		}
+		};
 
 		document.addEventListener('DOMContentLoaded', function () {
 			const categorySelect = document.getElementById('category_select');
@@ -459,7 +405,6 @@ function device_form($editing = null)
 			const serialInput = document.getElementById('serial_number_input');
 			const keywordSelect = document.getElementById('keyword_select');
 			const dateInput = document.getElementById('add_device_date_input');
-			const newBrandInput = document.getElementById('new_brand_name');
 			const deviceIdInput = document.getElementById('device_id_input');
 			const modelList = document.getElementById('suggested_models');
 
@@ -504,14 +449,15 @@ function device_form($editing = null)
 				const idDisplay = document.getElementById('preview-id-text');
 				if (idDisplay) idDisplay.textContent = devId;
 
-				let brandName = '';
-				if (newBrandInput && newBrandInput.value.trim()) {
-					brandName = newBrandInput.value.trim();
-				} else if (brandSelect && brandSelect.selectedIndex > 0) {
-					brandName = brandSelect.options[brandSelect.selectedIndex].text.trim();
-				}
 				const brandDisplay = document.getElementById('preview-brand-text');
-				if (brandDisplay) brandDisplay.textContent = brandName || 'Manufacturer Brand';
+				if (brandDisplay) {
+					if (brandSelect && brandSelect.selectedIndex >= 0) {
+						const opt = brandSelect.options[brandSelect.selectedIndex];
+						brandDisplay.textContent = (opt && brandSelect.value) ? opt.text : 'Manufacturer Brand';
+					} else {
+						brandDisplay.textContent = 'Manufacturer Brand';
+					}
+				}
 
 				const modelVal = modelInput && modelInput.value.trim() ? modelInput.value.trim() : 'Device Model Name';
 				const modelDisplay = document.getElementById('preview-model-text');
@@ -532,12 +478,12 @@ function device_form($editing = null)
 				if (dateDisplay) dateDisplay.textContent = dateVal;
 			};
 
-			function fetchSuggestedModels() {
+			window.fetchSuggestedModels = function () {
 				const catId = categorySelect ? categorySelect.value : '';
 				const brandId = brandSelect ? brandSelect.value : '';
 
 				if (modelList) modelList.innerHTML = '';
-				if (!catId || !brandId || brandId === 'add_new') return;
+				if (!catId || !brandId || !Number.isInteger(Number(brandId))) return;
 
 				const formData = new FormData();
 				formData.append('action', 'get_suggested_models');
@@ -559,7 +505,7 @@ function device_form($editing = null)
 						}
 					})
 					.catch(err => console.error('Error fetching models:', err));
-			}
+			};
 
 			if (categorySelect) {
 				categorySelect.addEventListener('change', () => {
@@ -577,7 +523,6 @@ function device_form($editing = null)
 			if (serialInput) serialInput.addEventListener('input', updateLivePreview);
 			if (keywordSelect) keywordSelect.addEventListener('change', updateLivePreview);
 			if (dateInput) dateInput.addEventListener('change', updateLivePreview);
-			if (newBrandInput) newBrandInput.addEventListener('input', updateLivePreview);
 			if (deviceIdInput) deviceIdInput.addEventListener('input', updateLivePreview);
 
 			// 3D Card Hover Tilt
@@ -615,9 +560,22 @@ function device_form($editing = null)
 
 	<!-- Responsive Stylesheet (Expanded Single-Screen Desktop + Classic Clean Mobile) -->
 	<style>
+		/* Default / Mobile-First: Hide Desktop Exclusive Elements */
+		.desktop-only-element,
+		.preview-panel-column,
+		.add-device-desktop-header,
+		.bg-glow-orb {
+			display: none !important;
+		}
+
+		.mobile-only-header,
+		.mobile-only-element {
+			display: block !important;
+		}
+
 		/* =============================================================
-						   DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
-						   ============================================================= */
+							   DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
+							   ============================================================= */
 		@media (min-width: 769px) {
 
 			.mobile-only-header,
@@ -626,6 +584,14 @@ function device_form($editing = null)
 			}
 
 			.desktop-only-element {
+				display: flex !important;
+			}
+
+			.preview-panel-column {
+				display: flex !important;
+			}
+
+			.add-device-desktop-header {
 				display: flex !important;
 			}
 
@@ -703,7 +669,13 @@ function device_form($editing = null)
 				flex-shrink: 0;
 			}
 
-
+			.desktop-header-title {
+				margin: 0 !important;
+				font-size: 1.25rem !important;
+				font-weight: 700 !important;
+				color: #0f172a !important;
+				line-height: 1.3 !important;
+			}
 
 			.desktop-header-subtitle {
 				margin: 3px 0 0 0;
@@ -737,7 +709,7 @@ function device_form($editing = null)
 			/* Desktop Layout Grid (2 Columns: Form + Preview) */
 			.add-device-layout-grid {
 				display: grid;
-				grid-template-columns: 1.4fr 0.9fr;
+				grid-template-columns: 1fr 340px;
 				gap: 1.5rem;
 				position: relative;
 				z-index: 1;
@@ -754,10 +726,10 @@ function device_form($editing = null)
 
 			.form-fields-wrapper {
 				background: #ffffff;
-				border: 1.5px solid #e2e8f0;
-				border-radius: 24px;
+				border: 1px solid #e2e8f0;
+				border-radius: 18px;
 				padding: 1.5rem 1.75rem;
-				box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.05);
+				box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
 				display: flex;
 				flex-direction: column;
 				justify-content: space-between;
@@ -923,82 +895,6 @@ function device_form($editing = null)
 
 			.btn-new-brand-text:hover i {
 				transform: rotate(90deg) !important;
-			}
-
-			.btn-new-brand-text:active {
-				transform: translateY(0) !important;
-				box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
-			}
-
-			.new-brand-wrapper-box {
-				background: #f8fafc !important;
-				border: 1.5px solid #c7d2fe !important;
-				border-radius: 12px !important;
-				padding: 8px 12px !important;
-				margin-top: 6px !important;
-				box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08) !important;
-				animation: slideDownFade 0.2s ease-out forwards;
-			}
-
-			.new-brand-top-bar {
-				display: flex !important;
-				align-items: center !important;
-				justify-content: space-between !important;
-				margin-bottom: 6px !important;
-				width: 100% !important;
-			}
-
-			.new-brand-title {
-				font-size: 0.8rem !important;
-				font-weight: 700 !important;
-				color: #4338ca !important;
-				white-space: nowrap !important;
-				display: inline-flex !important;
-				align-items: center !important;
-			}
-
-			.btn-cancel-brand {
-				all: unset !important;
-				display: inline-flex !important;
-				align-items: center !important;
-				gap: 4px !important;
-				background: #fee2e2 !important;
-				color: #dc2626 !important;
-				border: 1px solid #fca5a5 !important;
-				border-radius: 6px !important;
-				padding: 3px 10px !important;
-				font-size: 0.75rem !important;
-				font-weight: 700 !important;
-				line-height: 1.2 !important;
-				cursor: pointer !important;
-				transition: all 0.15s ease !important;
-				box-sizing: border-box !important;
-			}
-
-			.btn-cancel-brand:hover {
-				background: #fecaca !important;
-				color: #b91c1c !important;
-			}
-
-			.new-brand-input-element {
-				width: 100% !important;
-				height: 40px !important;
-				padding: 0 12px !important;
-				font-size: 0.88rem !important;
-				font-weight: 500 !important;
-				color: #0f172a !important;
-				background-color: #ffffff !important;
-				border: 1.5px solid #cbd5e1 !important;
-				border-radius: 8px !important;
-				transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-				box-sizing: border-box !important;
-			}
-
-			.new-brand-input-element:focus {
-				background-color: #ffffff !important;
-				border-color: #6366f1 !important;
-				outline: none !important;
-				box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
 			}
 
 			/* Desktop Actions */
@@ -1241,10 +1137,13 @@ function device_form($editing = null)
 		}
 
 		/* =============================================================
-						   MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
-						   ============================================================= */
+							   MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
+							   ============================================================= */
 		@media (max-width: 768px) {
-			.desktop-only-element {
+			.desktop-only-element,
+			.preview-panel-column,
+			.add-device-desktop-header,
+			.bg-glow-orb {
 				display: none !important;
 			}
 

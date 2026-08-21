@@ -89,7 +89,6 @@ function form_add_owner($editing = null)
                     <i class="fa-solid fa-user-plus"></i>
                 </div>
                 <div>
-                    <h1 class="emp-header-title">Add New Employee</h1>
                     <p class="emp-header-subtitle">Create profile, assign department and set initial account status</p>
                 </div>
             </div>
@@ -123,21 +122,19 @@ function form_add_owner($editing = null)
                                 Nickname <span class="emp-req">*</span>
                             </label>
                             <input type="text" name="Nickname" id="emp_nickname"
-                                value="<?= esc_attr($editing->Nickname ?? '') ?>" placeholder="e.g. Yoru" required
+                                value="<?= esc_attr($editing->Nickname ?? '') ?>" placeholder="e.g. Employee" required
                                 autocomplete="off">
                         </div>
 
                         <div class="emp-field-group">
                             <label for="emp_status">
                                 <i class="fa-solid fa-circle-check emp-field-icon desktop-only-el"></i>
-                                Status
+                                Status <i class="fa-solid fa-lock ms-1" style="font-size: 0.72rem; color: #94a3b8;"
+                                    title="Status is locked to Active for new employees"></i>
                             </label>
-                            <select name="StatusID" id="emp_status" required>
-                                <?php foreach ($status_emp as $status): ?>
-                                    <option value="<?= $status->StatusID ?>" <?= selected($editing->StatusID ?? $active_status_id, $status->StatusID, false) ?>>
-                                        <?= esc_html($status->Status_name) ?>
-                                    </option>
-                                <?php endforeach; ?>
+                            <input type="hidden" name="StatusID" value="<?= esc_attr($active_status_id) ?>">
+                            <select id="emp_status" class="emp-locked-select" disabled>
+                                <option value="<?= esc_attr($active_status_id) ?>" selected>Active</option>
                             </select>
                         </div>
 
@@ -148,7 +145,8 @@ function form_add_owner($editing = null)
                                 First Name
                             </label>
                             <input type="text" name="FirstName" id="emp_firstname"
-                                value="<?= esc_attr($editing->FirstName ?? '') ?>" placeholder="First name" autocomplete="off">
+                                value="<?= esc_attr($editing->FirstName ?? '') ?>" placeholder="First name"
+                                autocomplete="off">
                         </div>
 
                         <div class="emp-field-group">
@@ -157,7 +155,8 @@ function form_add_owner($editing = null)
                                 Last Name
                             </label>
                             <input type="text" name="LastName" id="emp_lastname"
-                                value="<?= esc_attr($editing->LastName ?? '') ?>" placeholder="Last name" autocomplete="off">
+                                value="<?= esc_attr($editing->LastName ?? '') ?>" placeholder="Last name"
+                                autocomplete="off">
                         </div>
 
                         <!-- Row 3: Email Address (Full Width Span 2) -->
@@ -234,7 +233,7 @@ function form_add_owner($editing = null)
                                 <i class="fa-solid fa-user"></i>
                             </div>
                             <div class="emp-id-pill" id="preview-emp-nickname">
-                                <?= esc_html($editing->Nickname ?: 'Yoru') ?>
+                                <?= esc_html(($editing->Nickname ?? '') ?: 'Employee') ?>
                             </div>
                         </div>
 
@@ -244,7 +243,7 @@ function form_add_owner($editing = null)
                                 <?= esc_html(trim(($editing->FirstName ?? '') . ' ' . ($editing->LastName ?? '')) ?: 'Staff Member') ?>
                             </div>
                             <div class="emp-preview-email" id="preview-emp-email">
-                                <?= esc_html($editing->Email ?: 'name@company.com') ?>
+                                <?= esc_html(($editing->Email ?? '') ?: 'name@company.com') ?>
                             </div>
 
                             <div class="emp-meta-grid">
@@ -481,6 +480,17 @@ function form_add_owner($editing = null)
                 background-size: 14px 14px !important;
                 padding-right: 32px !important;
                 cursor: pointer;
+            }
+
+            #add-employee-wrapper .emp-field-group select.emp-locked-select {
+                background-color: #f1f5f9 !important;
+                background-image: none !important;
+                color: #059669 !important;
+                font-weight: 600 !important;
+                border-color: #cbd5e1 !important;
+                cursor: not-allowed !important;
+                opacity: 1 !important;
+                -webkit-text-fill-color: #059669 !important;
             }
 
             #add-employee-wrapper .emp-field-group input:hover,
@@ -824,7 +834,7 @@ function form_add_owner($editing = null)
 
             function syncEmployeePreview() {
                 if (pNickname && nicknameInput) {
-                    pNickname.textContent = nicknameInput.value.trim() || 'Yoru';
+                    pNickname.textContent = nicknameInput.value.trim() || 'Employee';
                 }
                 if (pFullname) {
                     const fn = (firstnameInput ? firstnameInput.value.trim() : '');

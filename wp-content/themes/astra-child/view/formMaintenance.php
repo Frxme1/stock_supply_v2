@@ -199,9 +199,7 @@ function form_maintenance($editing = null)
     if (!empty($details_val) && !in_array($details_val, $known_options)) {
         if (strpos($details_val, 'Others - ') === 0) {
             $other_text = substr($details_val, strlen('Others - '));
-        } elseif (strpos($details_val, 'อื่นๆ / Others - ') === 0) {
-            $other_text = substr($details_val, strlen('อื่นๆ / Others - '));
-        } elseif ($details_val !== 'Others' && $details_val !== 'อื่นๆ / Others') {
+        } elseif ($details_val !== 'Others') {
             $other_text = $details_val;
         }
     }
@@ -341,8 +339,50 @@ function form_maintenance($editing = null)
                                 <i class="fa-solid fa-comment-dots maint-field-icon desktop-only-el"></i>
                                 Additional Notes / Custom Reason
                             </label>
+
+                            <!-- Quick Clickable Symptom Chips (FontAwesome Icons) -->
+                            <div class="maint-quick-chips-bar">
+                                <span class="maint-chips-label">
+                                    <i class="fa-solid fa-bolt text-warning me-1"></i> Quick Symptom Selection (1-Click):
+                                </span>
+                                <div class="maint-chips-grid" id="maint_symptom_chips">
+                                    <button type="button" class="maint-chip-btn" data-symptom="Cracked / Defective Screen" data-main-reason="Screen Issue">
+                                        <i class="fa-solid fa-desktop text-danger"></i>
+                                        <span>Cracked / Defective Screen</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="Battery Degraded / Swollen" data-main-reason="Battery Issue">
+                                        <i class="fa-solid fa-battery-quarter text-warning"></i>
+                                        <span>Battery Degraded / Swollen</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="No Power / Auto Shutdown" data-main-reason="Power Issue">
+                                        <i class="fa-solid fa-power-off text-danger"></i>
+                                        <span>No Power / Auto Shutdown</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="Keyboard / Touchpad Failure" data-main-reason="Keyboard / Mouse Issue">
+                                        <i class="fa-solid fa-keyboard text-primary"></i>
+                                        <span>Keyboard / Touchpad Failure</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="OS Reinstall / Software Glitch" data-main-reason="Software Issue">
+                                        <i class="fa-solid fa-arrows-rotate text-info"></i>
+                                        <span>OS Reinstall / Software Glitch</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="Faulty Charger / Damaged Port" data-main-reason="Power Issue">
+                                        <i class="fa-solid fa-plug text-warning"></i>
+                                        <span>Faulty Charger / Damaged Port</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="Upgrade RAM / Storage SSD" data-main-reason="Hardware Upgrade">
+                                        <i class="fa-solid fa-microchip text-success"></i>
+                                        <span>Upgrade RAM / SSD</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="Overheating / Loud Fan Noise" data-main-reason="Other Issue">
+                                        <i class="fa-solid fa-fan text-secondary"></i>
+                                        <span>Overheating / Loud Fan</span>
+                                    </button>
+                                </div>
+                            </div>
+
                             <input type="text" name="OtherDetails" id="OtherDetails"
-                                placeholder="Specify additional diagnostic notes or custom reason..."
+                                placeholder="Specify additional diagnostic notes or click quick symptom tags above..."
                                 value="<?= esc_attr($other_text) ?>" autocomplete="off">
                         </div>
 
@@ -1134,6 +1174,73 @@ function form_maintenance($editing = null)
             }
         }
 
+        /* Quick Clickable Symptom Chips */
+        .maint-quick-chips-bar {
+            margin-bottom: 12px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 12px 14px;
+            transition: all 0.2s ease;
+        }
+
+        .maint-chips-label {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 9px;
+            letter-spacing: -0.01em;
+        }
+
+        .maint-chips-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .maint-chip-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 9999px;
+            padding: 6px 13px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            user-select: none;
+            line-height: 1.3;
+        }
+
+        .maint-chip-btn:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #0f172a;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px -2px rgba(15, 23, 42, 0.12);
+        }
+
+        .maint-chip-btn:active {
+            transform: translateY(0);
+        }
+
+        .maint-chip-btn.is-selected {
+            background: #eff6ff;
+            border-color: #2563eb;
+            color: #1d4ed8;
+            box-shadow: 0 0 0 1.5px #2563eb, 0 3px 8px -1px rgba(37, 99, 235, 0.2);
+        }
+
+        .maint-chip-btn.is-selected i {
+            transform: scale(1.15);
+        }
+
         /* Animations */
         @keyframes maintSlideDown {
             from { opacity: 0; transform: translateY(-12px); }
@@ -1163,6 +1270,7 @@ function form_maintenance($editing = null)
             const reasonSelect = document.getElementById('maint_reason_select');
             const otherInput = document.getElementById('OtherDetails');
             const photoInput = document.getElementById('maint_photo');
+            const chipButtons = document.querySelectorAll('.maint-chip-btn');
 
             const pDate = document.getElementById('preview-maint-date');
             const pReason = document.getElementById('preview-maint-reason');
@@ -1186,7 +1294,68 @@ function form_maintenance($editing = null)
                         pReason.textContent = 'Select or enter reason';
                     }
                 }
+                syncChipsActiveState();
             }
+
+            function syncChipsActiveState() {
+                const currentVal = otherInput ? otherInput.value : '';
+                chipButtons.forEach(btn => {
+                    const symptom = btn.getAttribute('data-symptom');
+                    if (symptom && currentVal.includes(symptom)) {
+                        btn.classList.add('is-selected');
+                    } else {
+                        btn.classList.remove('is-selected');
+                    }
+                });
+            }
+
+            // Bind Quick Clickable Symptom Chips
+            chipButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (!otherInput) return;
+
+                    const symptom = this.getAttribute('data-symptom');
+                    const mainReason = this.getAttribute('data-main-reason');
+                    let currentVal = otherInput.value.trim();
+
+                    if (this.classList.contains('is-selected')) {
+                        // Deselect: remove this symptom
+                        let parts = currentVal.split(',').map(s => s.trim()).filter(Boolean);
+                        parts = parts.filter(p => p !== symptom);
+                        otherInput.value = parts.join(', ');
+                        this.classList.remove('is-selected');
+                    } else {
+                        // Select: append or set symptom
+                        if (!currentVal) {
+                            otherInput.value = symptom;
+                        } else {
+                            let parts = currentVal.split(',').map(s => s.trim()).filter(Boolean);
+                            if (!parts.includes(symptom)) {
+                                parts.push(symptom);
+                            }
+                            otherInput.value = parts.join(', ');
+                        }
+                        this.classList.add('is-selected');
+
+                        // Auto-select corresponding category in Reason dropdown if available
+                        if (reasonSelect && mainReason) {
+                            for (let i = 0; i < reasonSelect.options.length; i++) {
+                                if (reasonSelect.options[i].value === mainReason) {
+                                    reasonSelect.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (typeof window.flashAutoFillGlow === 'function') {
+                            window.flashAutoFillGlow(otherInput);
+                        }
+                    }
+
+                    syncMaintenancePreview();
+                });
+            });
 
             if (reasonSelect) {
                 reasonSelect.addEventListener('change', function () {

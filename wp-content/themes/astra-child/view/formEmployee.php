@@ -722,6 +722,9 @@ function form_owner()
                 title: 'Loading employee details...',
                 text: 'Checking assigned equipment for ' + nickname,
                 allowOutsideClick: false,
+                showConfirmButton: false,
+                showCancelButton: false,
+                showDenyButton: false,
                 didOpen: () => Swal.showLoading()
             });
 
@@ -739,7 +742,10 @@ function form_owner()
                             icon: 'error',
                             title: 'Error',
                             text: result.data ? result.data.message : 'Could not fetch employee details.',
-                            confirmButtonColor: '#4f46e5'
+                            showConfirmButton: true,
+                            showCancelButton: false,
+                            showDenyButton: false,
+                            confirmButtonColor: '#2563eb'
                         });
                         return;
                     }
@@ -782,10 +788,12 @@ function form_owner()
                             title: '⚠️ Confirm Resignation?',
                             html: noDeviceModalHtml,
                             width: 580,
+                            showConfirmButton: true,
                             showCancelButton: true,
+                            showDenyButton: false,
                             confirmButtonText: '<i class="fa-solid fa-user-minus me-1"></i> Confirm Resign',
                             cancelButtonText: 'Cancel',
-                            confirmButtonColor: '#d97706',
+                            confirmButtonColor: '#2563eb',
                             cancelButtonColor: '#64748b',
                             customClass: {
                                 popup: 'offboard-swal-popup',
@@ -798,6 +806,9 @@ function form_owner()
                             Swal.fire({
                                 title: 'Processing resignation...',
                                 allowOutsideClick: false,
+                                showConfirmButton: false,
+                                showCancelButton: false,
+                                showDenyButton: false,
                                 didOpen: () => Swal.showLoading()
                             });
 
@@ -813,19 +824,20 @@ function form_owner()
                                     if (offResult.success) {
                                         Swal.fire({
                                             icon: 'success',
-                                            title: 'Resignation Recorded',
-                                            html: '<p>' + offResult.data.message + '</p>',
+                                            title: 'Status Updated',
+                                            text: `${displayName} has been marked as Resigned.`,
                                             showConfirmButton: false,
-                                            timer: 1800
-                                        }).then(() => {
-                                            window.location.reload();
-                                        });
+                                            timer: 1500
+                                        }).then(() => location.reload());
                                     } else {
                                         Swal.fire({
                                             icon: 'error',
-                                            title: 'Resign Failed',
-                                            text: offResult.data ? offResult.data.message : 'An error occurred.',
-                                            confirmButtonColor: '#4f46e5'
+                                            title: 'Error',
+                                            text: offResult.data ? offResult.data.message : 'Could not resign employee.',
+                                            showConfirmButton: true,
+                                            showCancelButton: false,
+                                            showDenyButton: false,
+                                            confirmButtonColor: '#2563eb'
                                         });
                                     }
                                 })
@@ -833,8 +845,11 @@ function form_owner()
                                     Swal.fire({
                                         icon: 'error',
                                         title: 'Network Error',
-                                        text: 'Could not connect to the server.',
-                                        confirmButtonColor: '#4f46e5'
+                                        text: 'Could not connect to server.',
+                                        showConfirmButton: true,
+                                        showCancelButton: false,
+                                        showDenyButton: false,
+                                        confirmButtonColor: '#2563eb'
                                     });
                                 });
                         });
@@ -843,10 +858,10 @@ function form_owner()
 
                     // Case B: 1+ devices assigned — Build full device table HTML
                     let tableRows = '';
-                    devices.forEach((d, i) => {
+                    devices.forEach((d, idx) => {
                         tableRows += `
                         <tr class="offboard-row">
-                            <td class="offboard-td-num">${i + 1}</td>
+                            <td class="offboard-td-num">${idx + 1}</td>
                             <td class="offboard-td-id">#${d.DeviceID}</td>
                             <td class="offboard-td-model"><strong>${d.Model || '-'}</strong></td>
                             <td class="offboard-td-cat">
@@ -901,11 +916,13 @@ function form_owner()
                     Swal.fire({
                         title: '⚠️ Confirm Resignation & Offboard Devices',
                         html: modalHtml,
-                        width: 740,
+                        width: 780,
+                        showConfirmButton: true,
                         showCancelButton: true,
+                        showDenyButton: false,
                         confirmButtonText: '<i class="fa-solid fa-rotate-left me-1"></i> Confirm Resign & Return Devices',
                         cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#dc2626',
+                        confirmButtonColor: '#2563eb',
                         cancelButtonColor: '#64748b',
                         customClass: {
                             popup: 'offboard-swal-popup',
@@ -920,6 +937,9 @@ function form_owner()
                             title: 'Processing Offboard...',
                             text: 'Returning ' + count + ' device(s) to stock and marking as Resigned',
                             allowOutsideClick: false,
+                            showConfirmButton: false,
+                            showCancelButton: false,
+                            showDenyButton: false,
                             didOpen: () => Swal.showLoading()
                         });
 

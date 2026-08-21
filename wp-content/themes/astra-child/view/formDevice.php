@@ -404,7 +404,8 @@ function device_crud()
                                                         href="<?= home_url('/history/?device_search=') ?><?= esc_attr($row->DeviceID) ?>"><i
                                                             class="fa-solid fa-clock-rotate-left"></i> History</a>
                                                     <?php if ($status == 'Available'): ?>
-                                                        <a href="?receive=<?= esc_attr($row->DeviceID) ?>"><i
+                                                        <a href="#"
+                                                            onclick="confirmReceive({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? '') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>' }); return false;"><i
                                                                 class="fa-solid fa-box"></i>
                                                             Receive</a>
                                                         <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
@@ -417,8 +418,18 @@ function device_crud()
                                                             onclick="quickSwapDevice('<?= esc_js($row->DeviceID) ?>'); return false;"
                                                             class="text-warning"><i class="fa-solid fa-arrows-rotate"></i> Quick
                                                             Swap</a>
-                                                        <a
-                                                            href="?return=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
+                                                        <a href="#"
+                                                            data-device="<?= esc_attr(wp_json_encode([
+                                                                'id'           => $row->DeviceID,
+                                                                'brand'        => $row->Brand ?? '',
+                                                                'model'        => $row->Model ?? '',
+                                                                'category'     => $row->Category ?? '',
+                                                                'serialNumber' => $row->SerialNumber ?? '',
+                                                                'owner'        => $row->Owner ?? '',
+                                                                'department'   => $row->Department ?? '',
+                                                                'nonce'        => $dev_action_nonce
+                                                            ])) ?>"
+                                                            onclick="handleReturnDeviceClick(this); return false;"><i
                                                                 class="fa-solid fa-rotate-left"></i>
                                                             Return</a>
                                                         <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
@@ -427,9 +438,9 @@ function device_crud()
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                     <?php elseif ($status == 'Maintenance'): ?>
-                                                        <a
-                                                            href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
-                                                                class="fa-solid fa-circle text-success"></i> Available</a>
+                                                        <a href="#"
+                                                            onclick="confirmReturnFromMaintenance({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? '') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>', owner: '<?= esc_js($row->Owner ?? '') ?>', department: '<?= esc_js($row->Department ?? '') ?>', details: '<?= esc_js($row->Details ?? '') ?>', repairDate: '<?= esc_js($row->RepairDate ?? '') ?>' }, '<?= $dev_action_nonce ?>'); return false;"><i
+                                                                class="fa-solid fa-circle-check text-success"></i> Done & Return</a>
                                                         <a href="#"
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>

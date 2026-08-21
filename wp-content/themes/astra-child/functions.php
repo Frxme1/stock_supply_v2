@@ -632,10 +632,10 @@ function load_sweetalert_delete_details_script()
 {
     // check enqueue SweetAlert2
     if (!wp_script_is('sweetalert2', 'enqueued')) {
-        wp_enqueue_script('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array(), null, true);
+        wp_enqueue_script('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array(), null, false);
     }
-    wp_enqueue_script('sweetalert_delete_details', get_stylesheet_directory_uri() . '/js/sweetalert_delete_details.js', array('sweetalert2'), null, true);
-    wp_enqueue_script('sweetalert_retire', get_stylesheet_directory_uri() . '/js/sweetalert_retire.js', array('sweetalert2'), '1.1', true);
+    wp_enqueue_script('sweetalert_delete_details', get_stylesheet_directory_uri() . '/js/sweetalert_delete_details.js', array('sweetalert2'), filemtime(get_stylesheet_directory() . '/js/sweetalert_delete_details.js'), false);
+    wp_enqueue_script('sweetalert_retire', get_stylesheet_directory_uri() . '/js/sweetalert_retire.js', array('sweetalert2'), filemtime(get_stylesheet_directory() . '/js/sweetalert_retire.js'), false);
 }
 add_action('wp_enqueue_scripts', 'load_sweetalert_delete_details_script');
 

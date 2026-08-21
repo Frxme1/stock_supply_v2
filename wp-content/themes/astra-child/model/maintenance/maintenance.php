@@ -22,7 +22,7 @@ function device_crud_maintenance()
     // Search filter
     $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
     $filter_category = isset($_GET['filter_category']) ? trim($_GET['filter_category']) : '';
-    
+
     $where_clauses = ["s.StatusName = 'Maintenance'"];
 
     if (!empty($search)) {
@@ -85,8 +85,8 @@ function device_crud_maintenance()
     if (!function_exists('stock_supply_format_maint_date')) {
         function stock_supply_format_maint_date($repair_date, $created_at = null)
         {
-            $date_str = (!empty($repair_date) && $repair_date !== '0000-00-00') 
-                ? $repair_date 
+            $date_str = (!empty($repair_date) && $repair_date !== '0000-00-00')
+                ? $repair_date
                 : ((!empty($created_at) && $created_at !== '0000-00-00 00:00:00') ? $created_at : null);
 
             if (!empty($date_str)) {
@@ -130,7 +130,9 @@ function device_crud_maintenance()
                 </div>
 
                 <div class="col-12 col-sm-6 col-md-auto" style="width: 180px;">
-                    <select name="filter_category" id="filter_category" class="form-select form-select-sm filter-select-custom staggered-dropdown" style="border-radius: 10px; height: 38px;">
+                    <select name="filter_category" id="filter_category"
+                        class="form-select form-select-sm filter-select-custom staggered-dropdown"
+                        style="border-radius: 10px; height: 38px;">
                         <option value="">All Categories</option>
                         <?php foreach ($all_categories as $cat): ?>
                             <option value="<?= esc_attr($cat) ?>" <?= $filter_category == $cat ? 'selected' : '' ?>>
@@ -196,7 +198,7 @@ function device_crud_maintenance()
                             <div class="mobile-maint-header">
                                 <div class="mobile-maint-title-area">
                                     <div class="mobile-maint-title">
-                                        <?= esc_html($item->Brand) ?> <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
+                                        <?= esc_html($item->Brand) ?>             <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
                                     </div>
                                     <div class="mobile-maint-meta">
                                         <span class="maint-category-pill"><?= esc_html($item->Category) ?></span>
@@ -211,25 +213,33 @@ function device_crud_maintenance()
                             <!-- Body: Owner, Device ID, Sent Date & Issue -->
                             <div class="mobile-maint-body">
                                 <div class="maint-info-row">
-                                    <span class="maint-info-label"><i class="fa-solid fa-user" style="color: #6366f1;"></i> Owner</span>
-                                    <span class="maint-info-value"><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></span>
+                                    <span class="maint-info-label"><i class="fa-solid fa-user" style="color: #6366f1;"></i>
+                                        Owner</span>
+                                    <span
+                                        class="maint-info-value"><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></span>
                                 </div>
                                 <div class="maint-info-row">
-                                    <span class="maint-info-label"><i class="fa-solid fa-barcode" style="color: #64748b;"></i> Device ID</span>
-                                    <span class="maint-info-value"><code class="maint-dev-id"><?= esc_html($item->DeviceID) ?></code></span>
+                                    <span class="maint-info-label"><i class="fa-solid fa-barcode" style="color: #64748b;"></i>
+                                        Device ID</span>
+                                    <span class="maint-info-value"><code
+                                            class="maint-dev-id"><?= esc_html($item->DeviceID) ?></code></span>
                                 </div>
                                 <div class="maint-info-row">
-                                    <span class="maint-info-label"><i class="fa-regular fa-clock" style="color: #d97706;"></i> Sent to Repair</span>
-                                    <span class="maint-info-value" style="color: #d97706;"><?= esc_html(stock_supply_format_maint_date($item->RepairDate, $item->CreatedAt ?? null)) ?></span>
+                                    <span class="maint-info-label"><i class="fa-regular fa-clock" style="color: #d97706;"></i> Sent
+                                        to Repair</span>
+                                    <span class="maint-info-value"
+                                        style="color: #d97706;"><?= esc_html(stock_supply_format_maint_date($item->RepairDate, $item->CreatedAt ?? null)) ?></span>
                                 </div>
 
                                 <!-- Photo Preview if available -->
                                 <?php if (!empty($item->Photo)): ?>
                                     <div class="maint-info-row" style="align-items: flex-start; margin-top: 8px;">
-                                        <span class="maint-info-label"><i class="fa-solid fa-image" style="color: #10b981;"></i> Photo</span>
+                                        <span class="maint-info-label"><i class="fa-solid fa-image" style="color: #10b981;"></i>
+                                            Photo</span>
                                         <span class="maint-info-value">
                                             <a href="<?= esc_url($item->Photo) ?>" target="_blank">
-                                                <img src="<?= esc_url($item->Photo) ?>" style="width: 70px; height: 50px; object-fit: cover; border-radius: 8px; border: 1.5px solid #e2e8f0;">
+                                                <img src="<?= esc_url($item->Photo) ?>"
+                                                    style="width: 70px; height: 50px; object-fit: cover; border-radius: 8px; border: 1.5px solid #e2e8f0;">
                                             </a>
                                         </span>
                                     </div>
@@ -251,10 +261,21 @@ function device_crud_maintenance()
                                 <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="maint-btn maint-btn-secondary">
                                     <i class="fa-solid fa-magnifying-glass me-1"></i> Details
                                 </a>
-                                <a href="?return_to_owner=<?= esc_attr($item->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"
-                                    class="maint-btn maint-btn-primary">
-                                    <i class="fa-solid fa-circle-check me-1"></i> Return / Repair Done
-                                </a>
+                                <button type="button" data-device="<?= esc_attr(wp_json_encode([
+                                    'id' => $item->DeviceID,
+                                    'brand' => $item->Brand ?? '',
+                                    'model' => $item->Model ?? '',
+                                    'category' => $item->Category ?? '',
+                                    'serialNumber' => $item->SerialNumber ?? '',
+                                    'owner' => $item->Owner ?? '',
+                                    'department' => $item->Department ?? '',
+                                    'details' => $item->Details ?? '',
+                                    'repairDate' => $item->RepairDate ?? '',
+                                    'nonce' => $dev_action_nonce
+                                ])) ?>" onclick="handleReturnMaintenanceClick(this)"
+                                    class="maint-btn maint-btn-primary" style="border: none; cursor: pointer;">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Done & Return
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -309,7 +330,7 @@ function device_crud_maintenance()
                                 <!-- Device Title (Brand + Model) -->
                                 <h4
                                     style="font-weight: 800; color: #0f172a; margin-bottom: 4px; font-size: 1.15rem; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                    <?= esc_html($item->Brand) ?>     <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
+                                    <?= esc_html($item->Brand) ?>             <?= esc_html(!empty($item->Model) ? $item->Model : '') ?>
                                 </h4>
 
                                 <!-- Serial Number -->
@@ -341,8 +362,10 @@ function device_crud_maintenance()
                                 <!-- Photo Preview if available -->
                                 <?php if (!empty($item->Photo)): ?>
                                     <div style="margin-bottom: 12px;">
-                                        <a href="<?= esc_url($item->Photo) ?>" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #0284c7; text-decoration: none; font-weight: 600;">
-                                            <img src="<?= esc_url($item->Photo) ?>" style="width: 50px; height: 38px; object-fit: cover; border-radius: 6px; border: 1.5px solid #e2e8f0;">
+                                        <a href="<?= esc_url($item->Photo) ?>" target="_blank"
+                                            style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #0284c7; text-decoration: none; font-weight: 600;">
+                                            <img src="<?= esc_url($item->Photo) ?>"
+                                                style="width: 50px; height: 38px; object-fit: cover; border-radius: 6px; border: 1.5px solid #e2e8f0;">
                                             <span><i class="fa-solid fa-camera"></i> View Condition Photo</span>
                                         </a>
                                     </div>
@@ -359,16 +382,28 @@ function device_crud_maintenance()
                                 </div>
 
                                 <!-- Action Buttons (Fixed / Pinned to bottom of card) -->
-                                <div class="d-flex gap-2 justify-content-end pt-3 mt-auto" style="border-top: 1px dashed #e2e8f0; width: 100%;">
+                                <div class="d-flex gap-2 justify-content-end pt-3 mt-auto"
+                                    style="border-top: 1px dashed #e2e8f0; width: 100%;">
                                     <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="btn btn-sm btn-outline-secondary"
                                         style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
                                         <i class="fa-solid fa-magnifying-glass"></i> Details
                                     </a>
-                                    <a href="?return_to_owner=<?= esc_attr($item->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"
+                                    <button type="button" data-device="<?= esc_attr(wp_json_encode([
+                                        'id' => $item->DeviceID,
+                                        'brand' => $item->Brand ?? '',
+                                        'model' => $item->Model ?? '',
+                                        'category' => $item->Category ?? '',
+                                        'serialNumber' => $item->SerialNumber ?? '',
+                                        'owner' => $item->Owner ?? '',
+                                        'department' => $item->Department ?? '',
+                                        'details' => $item->Details ?? '',
+                                        'repairDate' => $item->RepairDate ?? '',
+                                        'nonce' => $dev_action_nonce
+                                    ])) ?>" onclick="handleReturnMaintenanceClick(this)"
                                         class="btn btn-sm btn-success"
-                                        style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: #16a34a; border-color: #16a34a;">
-                                        <i class="fa-solid fa-circle-check"></i> Return to User / Repair Completed
-                                    </a>
+                                        style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px; background: #16a34a; border-color: #16a34a; color: #ffffff; cursor: pointer;">
+                                        <i class="fa-solid fa-circle-check"></i> Done & Return
+                                    </button>
                                 </div>
 
                             </div>
@@ -392,6 +427,31 @@ function device_crud_maintenance()
 
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function handleReturnMaintenanceClick(btn) {
+            if (!btn) return;
+            try {
+                const raw = btn.getAttribute('data-device');
+                const data = JSON.parse(raw);
+                if (typeof confirmReturnFromMaintenance === 'function') {
+                    confirmReturnFromMaintenance(data, data.nonce || '');
+                } else {
+                    console.error('confirmReturnFromMaintenance not ready');
+                    if (confirm('Confirm return device ' + (data.id || '') + ' from maintenance?')) {
+                        const targetAction = data.owner && data.owner !== '-' ? 'return_to_owner' : 'available';
+                        const url = new URL(window.location.href);
+                        url.searchParams.set(targetAction, data.id);
+                        if (data.nonce) url.searchParams.set('_wpnonce', data.nonce);
+                        window.location.href = url.toString();
+                    }
+                }
+            } catch (err) {
+                console.error('Error parsing device data:', err);
+            }
+        }
+    </script>
 
     <?php
     return ob_get_clean();

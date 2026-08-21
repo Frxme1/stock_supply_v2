@@ -94,14 +94,14 @@ function receive_device($device = null)
             }
 
             $update_data = [
-                'OwnerID'      => $owner_id,
+                'OwnerID' => $owner_id,
                 'DepartmentID' => $department_id,
-                'PositionID'   => $position_id,
-                'ReceiveDate'  => $receive_date,
-                'StatusID'     => $in_use_status_id,
-                'ReturnDate'   => null,
-                'RepairDate'   => null,
-                'UpdatedAt'    => current_time('mysql'),
+                'PositionID' => $position_id,
+                'ReceiveDate' => $receive_date,
+                'StatusID' => $in_use_status_id,
+                'ReturnDate' => null,
+                'RepairDate' => null,
+                'UpdatedAt' => current_time('mysql'),
             ];
 
             $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
@@ -116,13 +116,13 @@ function receive_device($device = null)
 
                 $current_user = wp_get_current_user();
                 $wpdb->insert($table_history, [
-                    'DeviceID'    => $device_id,
-                    'Action'      => 'Assign Device',
-                    'Date'        => current_time('mysql'),
+                    'DeviceID' => $device_id,
+                    'Action' => 'Assign Device',
+                    'Date' => current_time('mysql'),
                     'Description' => $desc,
-                    'user_email'  => $current_user->user_email ?? '',
-                    'CategoryID'  => $dev_info->CategoryID ?? null,
-                    'Owner'       => $owner_nickname ?: '-'
+                    'user_email' => $current_user->user_email ?? '',
+                    'CategoryID' => $dev_info->CategoryID ?? null,
+                    'Owner' => $owner_nickname ?: '-'
                 ]);
 
                 $redirect_url = home_url('/home/?view=' . urlencode($device_id));
@@ -191,7 +191,15 @@ function receive_device($device = null)
         }
     }
     $after_borrow_count = max(0, $available_count - 1);
+
+    $cat_slug = !empty($category_name_info) ? sanitize_title($category_name_info) : 'home';
+    if (!in_array($cat_slug, ['laptop', 'monitor', 'accessories'])) {
+        $cat_slug = 'home';
+    }
+    $fallback_cancel_url = home_url('/' . $cat_slug . '/');
     ?>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Main Assign Device Container -->
     <div class="add-device-responsive-container">
@@ -218,7 +226,8 @@ function receive_device($device = null)
             </div>
         </div>
 
-        <form method="POST" action="" enctype="multipart/form-data" id="receive-device-form" class="edit-data-form add-device-main-form">
+        <form method="POST" action="" enctype="multipart/form-data" id="receive-device-form"
+            class="edit-data-form add-device-main-form">
             <?php wp_nonce_field('receive_device_nonce', '_rcv_nonce'); ?>
             <input type="hidden" name="update_device" value="1">
             <?php if (!empty($device_data->DeviceID)): ?>
@@ -245,7 +254,8 @@ function receive_device($device = null)
                                 </label>
                             </div>
                             <div class="field-input-wrap">
-                                <input type="text" value="<?= esc_attr($device_data->DeviceID ?? '') ?>" readonly class="input-locked">
+                                <input type="text" value="<?= esc_attr($device_data->DeviceID ?? '') ?>" readonly
+                                    class="input-locked">
                             </div>
                         </div>
 
@@ -262,9 +272,9 @@ function receive_device($device = null)
                                     <i class="fa-solid fa-magnifying-glass"
                                         style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none;"></i>
                                     <input type="text" id="owner_search_input" placeholder="Search employee nickname..."
-                                        autocomplete="off"
-                                        style="padding-left: 36px; padding-right: 32px;"
-                                        onfocus="this.select(); openOwnerSearchPopup()" oninput="onOwnerInputChanged(this.value)">
+                                        autocomplete="off" style="padding-left: 36px; padding-right: 32px;"
+                                        onfocus="this.select(); openOwnerSearchPopup()"
+                                        oninput="onOwnerInputChanged(this.value)">
                                     <i class="fa-solid fa-chevron-down"
                                         style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
                                 </div>
@@ -326,7 +336,8 @@ function receive_device($device = null)
                                 </label>
                             </div>
                             <div class="field-input-wrap">
-                                <input type="date" name="ReceiveDate" id="ReceiveDate" value="<?= esc_attr($date_value) ?>" min="<?= date('Y-m-d') ?>" required>
+                                <input type="date" name="ReceiveDate" id="ReceiveDate" value="<?= esc_attr($date_value) ?>"
+                                    min="<?= date('Y-m-d') ?>" required>
                             </div>
                         </div>
 
@@ -343,7 +354,8 @@ function receive_device($device = null)
                                     onchange="if(this.files && this.files[0]){ const r=new FileReader(); r.onload=e=>{ document.getElementById('rcv_photo_img').src=e.target.result; document.getElementById('rcv_photo_wrap').style.display='block'; }; r.readAsDataURL(this.files[0]); }"
                                     style="padding: 8px 12px;">
                                 <div id="rcv_photo_wrap" style="display:none; margin-top:8px;">
-                                    <img id="rcv_photo_img" src="" style="max-height:120px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                                    <img id="rcv_photo_img" src=""
+                                        style="max-height:120px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                                 </div>
                             </div>
                         </div>
@@ -352,11 +364,12 @@ function receive_device($device = null)
 
                     <!-- Form Actions (Cancel & Assign) -->
                     <div class="form-actions modern-form-actions">
-                        <button type="button" onclick="history.back()"
+                        <button type="button" onclick="handleCancelReceive()"
                             class="btn btn-danger btn-cancel-action border rounded-pill">
                             <i class="fa-solid fa-arrow-left me-1"></i> Cancel
                         </button>
-                        <button type="submit" name="update_device" class="btn btn-success btn-submit-action border rounded-pill">
+                        <button type="submit" name="update_device" id="btn-confirm-assignment"
+                            class="btn btn-success btn-submit-action border rounded-pill">
                             <span class="btn-shine-effect desktop-only-element"></span>
                             <i class="fa-solid fa-check me-1"></i>
                             <span>Confirm Assignment</span>
@@ -382,7 +395,8 @@ function receive_device($device = null)
                         <div class="preview-visual-box">
                             <div class="preview-icon-halo"></div>
                             <div class="preview-icon-main">
-                                <i class="fa-solid <?= ($category_name_info === 'Monitor') ? 'fa-desktop' : (($category_name_info === 'Accessories') ? 'fa-plug' : 'fa-laptop') ?>"></i>
+                                <i
+                                    class="fa-solid <?= ($category_name_info === 'Monitor') ? 'fa-desktop' : (($category_name_info === 'Accessories') ? 'fa-plug' : 'fa-laptop') ?>"></i>
                             </div>
                             <div class="preview-id-pill">
                                 <?= esc_html($device_data->DeviceID ?? 'DEV000') ?>
@@ -392,7 +406,8 @@ function receive_device($device = null)
                         <!-- Stock Projection Box -->
                         <div class="preview-specs-box">
                             <div class="preview-device-name">
-                                <?= esc_html($brand_name_info ?: 'Unspecified Brand') ?> <?= esc_html($device_model_name ? '- ' . $device_model_name : '') ?>
+                                <?= esc_html($brand_name_info ?: 'Unspecified Brand') ?>
+                                <?= esc_html($device_model_name ? '- ' . $device_model_name : '') ?>
                             </div>
                             <div class="preview-brand-tag">
                                 Category: <?= esc_html($category_name_info ?: 'Hardware') ?>
@@ -400,12 +415,17 @@ function receive_device($device = null)
 
                             <div class="preview-meta-grid">
                                 <div class="preview-meta-item">
-                                    <span class="meta-label"><i class="fa-solid fa-boxes-stacked me-1"></i> Available Now</span>
-                                    <span class="meta-value font-mono" style="color: #34d399; font-size: 1.05rem;"><?= $available_count ?> Units</span>
+                                    <span class="meta-label"><i class="fa-solid fa-boxes-stacked me-1"></i> Available
+                                        Now</span>
+                                    <span class="meta-value font-mono"
+                                        style="color: #34d399; font-size: 1.05rem;"><?= $available_count ?> Units</span>
                                 </div>
                                 <div class="preview-meta-item">
-                                    <span class="meta-label"><i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Remaining After</span>
-                                    <span class="meta-value font-mono" style="color: <?= ($after_borrow_count < 3) ? '#f87171' : '#60a5fa' ?>; font-size: 1.05rem;"><?= $after_borrow_count ?> Units</span>
+                                    <span class="meta-label"><i class="fa-solid fa-arrow-right-from-bracket me-1"></i>
+                                        Remaining After</span>
+                                    <span class="meta-value font-mono"
+                                        style="color: <?= ($after_borrow_count < 3) ? '#f87171' : '#60a5fa' ?>; font-size: 1.05rem;"><?= $after_borrow_count ?>
+                                        Units</span>
                                 </div>
                             </div>
                         </div>
@@ -424,6 +444,7 @@ function receive_device($device = null)
         }
 
         @media (min-width: 769px) {
+
             .mobile-only-header,
             .mobile-only-element {
                 display: none !important;
@@ -675,7 +696,7 @@ function receive_device($device = null)
                 font-weight: 600 !important;
                 background-color: #ffffff !important;
                 border: 1.5px solid #e2e8f0 !important;
-                color: #64748b !important;
+                color: #ffffffff !important;
                 transition: all 0.2s ease !important;
             }
 
@@ -975,36 +996,74 @@ function receive_device($device = null)
 
         /* Shared Animations */
         @keyframes slideDownFade {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes cardFadeIn {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes iconFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
         }
 
         @keyframes dotPulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
         }
 
         @keyframes shineSweep {
-            0% { left: -60%; }
-            20%, 100% { left: 140%; }
+            0% {
+                left: -60%;
+            }
+
+            20%,
+            100% {
+                left: 140%;
+            }
         }
     </style>
 
     <script>
         const ownerDataList = [
             <?php foreach ($owners_data as $o): ?>
-                {
+                        {
                     id: <?= intval($o->OwnerID) ?>,
                     name: <?= json_encode(trim($o->Nickname)) ?>,
                     deptId: <?= json_encode(!empty($o->DepartmentID) ? strval($o->DepartmentID) : '') ?>,
@@ -1057,104 +1116,191 @@ function receive_device($device = null)
                             </div>
                         </div>
                     `;
-                });
-                popup.innerHTML = html;
-            }
-            popup.style.display = 'block';
+            });
+            popup.innerHTML = html;
         }
+        popup.style.display = 'block';
+    }
 
-        function selectOwnerItem(id, displayName) {
-            const input = document.getElementById('owner_search_input');
-            const hiddenInput = document.getElementById('OwnerID');
-            const popup = document.getElementById('owner_search_popup');
+    function selectOwnerItem(id, displayName) {
+        const input = document.getElementById('owner_search_input');
+        const hiddenInput = document.getElementById('OwnerID');
+        const popup = document.getElementById('owner_search_popup');
 
-            if (input) input.value = displayName;
-            if (hiddenInput) {
-                hiddenInput.value = id;
-                handleOwnerChange();
-            }
-            if (popup) popup.style.display = 'none';
+        if (input) input.value = displayName;
+        if (hiddenInput) {
+            hiddenInput.value = id;
+            handleOwnerChange();
         }
+        if (popup) popup.style.display = 'none';
+    }
 
-        function handleOwnerChange() {
-            const ownerId = document.getElementById('OwnerID').value;
-            const deptSelect = document.getElementById('DepartmentID');
-            const posSelect = document.getElementById('PositionID');
+    function handleOwnerChange() {
+        const ownerId = document.getElementById('OwnerID').value;
+        const deptSelect = document.getElementById('DepartmentID');
+        const posSelect = document.getElementById('PositionID');
 
-            const found = ownerDataList.find(o => String(o.id) === String(ownerId));
-            if (found) {
-                if (deptSelect) {
-                    deptSelect.value = (found.deptId !== null && found.deptId !== undefined && found.deptId !== '') ? String(found.deptId) : '';
+        const found = ownerDataList.find(o => String(o.id) === String(ownerId));
+        if (found) {
+            if (deptSelect) {
+                deptSelect.value = (found.deptId !== null && found.deptId !== undefined && found.deptId !== '') ? String(found.deptId) : '';
+                if (typeof window.flashAutoFillGlow === 'function') {
+                    window.flashAutoFillGlow(deptSelect);
                 }
-                if (posSelect) {
-                    posSelect.value = (found.posId !== null && found.posId !== undefined && found.posId !== '') ? String(found.posId) : '';
-                }
-            } else {
-                if (deptSelect) deptSelect.value = '';
-                if (posSelect) posSelect.value = '';
             }
+            if (posSelect) {
+                posSelect.value = (found.posId !== null && found.posId !== undefined && found.posId !== '') ? String(found.posId) : '';
+                if (typeof window.flashAutoFillGlow === 'function') {
+                    window.flashAutoFillGlow(posSelect);
+                }
+            }
+        } else {
+            if (deptSelect) deptSelect.value = '';
+            if (posSelect) posSelect.value = '';
         }
+    }
 
-        document.addEventListener('click', function (e) {
-            const wrap = document.getElementById('website_owner_search_wrap');
-            const popup = document.getElementById('owner_search_popup');
-            if (wrap && popup && !wrap.contains(e.target)) {
-                popup.style.display = 'none';
+    document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('website_owner_search_wrap');
+        const popup = document.getElementById('owner_search_popup');
+        if (wrap && popup && !wrap.contains(e.target)) {
+            popup.style.display = 'none';
+        }
+    });
+
+    // Stock Data Constants for Warning
+    const afterBorrowCount = <?= intval($after_borrow_count) ?>;
+    const availableCount = <?= intval($available_count) ?>;
+    const currentModelName = <?= json_encode(trim(($brand_name_info ? $brand_name_info . ' ' : '') . ($device_model_name ?: 'Device'))) ?>;
+    const currentDeviceId = <?= json_encode($device_data->DeviceID ?? '') ?>;
+
+    // Smart Cancel Navigation (Reliable even after Page Refresh)
+    window.handleCancelReceive = function() {
+        const ref = document.referrer;
+        if (ref && ref.includes(window.location.host) && !ref.includes('receive=') && !ref.includes('edit=') && !ref.includes('add=')) {
+            window.location.href = ref;
+        } else {
+            window.location.href = '<?= esc_url($fallback_cancel_url) ?>';
+        }
+    };
+
+    // Form submit validation & Low Stock Alert
+    function initReceiveDeviceValidation() {
+        const rcvForm = document.getElementById('receive-device-form');
+        if (!rcvForm || rcvForm.dataset.validationAttached === 'true') return;
+        rcvForm.dataset.validationAttached = 'true';
+
+        rcvForm.addEventListener('submit', function (e) {
+            if (rcvForm.dataset.confirmedLowStock === 'true') {
+                return true;
+            }
+
+            const ownerInput = document.getElementById('OwnerID');
+            const hiddenDev = document.getElementById('hidden_device_id');
+            const selectDev = document.getElementById('select_device_id');
+            const deviceVal = hiddenDev ? hiddenDev.value.trim() : (selectDev ? selectDev.value.trim() : '');
+            const ownerVal = ownerInput ? ownerInput.value.trim() : '';
+
+            if (!deviceVal) {
+                e.preventDefault();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Device Required',
+                        text: 'Please choose an available device to assign.',
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    alert('Please choose an available device to assign.');
+                }
+                return false;
+            }
+
+            if (!ownerVal) {
+                e.preventDefault();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Assignee Required',
+                        text: 'Please search and select an employee from the list.',
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    alert('Please search and select an employee.');
+                }
+                const searchInput = document.getElementById('owner_search_input');
+                if (searchInput) {
+                    searchInput.focus();
+                    openOwnerSearchPopup();
+                }
+                return false;
+            }
+
+            // Low Stock Alert (Triggers when remaining available stock <= 3)
+            if (afterBorrowCount <= 3) {
+                e.preventDefault();
+
+                const ownerSearchInput = document.getElementById('owner_search_input');
+                const ownerDisplayName = ownerSearchInput ? ownerSearchInput.value.trim() : 'the employee';
+
+                let stockBadge = '';
+                if (afterBorrowCount === 0) {
+                    stockBadge = `<span style="color: #ef4444; font-weight: 800; background: #fee2e2; padding: 4px 12px; border-radius: 8px; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-triangle-exclamation"></i> 0 Units Left (Out of Stock!)</span>`;
+                } else {
+                    stockBadge = `<span style="color: #d97706; font-weight: 800; background: #fef3c7; padding: 4px 12px; border-radius: 8px; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-boxes-stacked"></i> Only ${afterBorrowCount} Unit${afterBorrowCount > 1 ? 's' : ''} Remaining</span>`;
+                }
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '⚠️ Low Stock Warning',
+                        html: `
+                        <div style="text-align: left; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 14px 18px; margin: 12px 0 16px 0;">
+                            <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; margin-bottom: 6px;">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Stock Threshold Alert
+                            </div>
+                            <div style="color: #78350f; font-size: 0.88rem; line-height: 1.5;">
+                                Assigning <strong>${currentModelName}</strong> (<code>${currentDeviceId}</code>) will reduce remaining available inventory to:
+                                <div style="margin-top: 8px; font-size: 0.92rem;">${stockBadge}</div>
+                            </div>
+                        </div>
+                        <p style="margin: 0; color: #475569; font-size: 0.92rem; text-align: left;">
+                            Do you want to proceed with assigning this hardware asset to <strong style="color: #0f172a;">${ownerDisplayName}</strong>?
+                        </p>`,
+                        showConfirmButton: true,
+                        showCancelButton: true,
+                        showDenyButton: false,
+                        confirmButtonText: '<i class="fa-solid fa-check me-1"></i> Confirm & Assign',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#2563eb',
+                        cancelButtonColor: '#64748b',
+                        reverseButtons: true
+                    }).then((res) => {
+                        if (res.isConfirmed) {
+                            rcvForm.dataset.confirmedLowStock = 'true';
+                            rcvForm.submit();
+                        }
+                    });
+                } else {
+                    if (confirm(`Low Stock Alert: Remaining units will be ${afterBorrowCount}. Confirm assignment?`)) {
+                        rcvForm.dataset.confirmedLowStock = 'true';
+                        rcvForm.submit();
+                    }
+                }
+                return false;
             }
         });
+    }
 
-        // Form submit validation
-        document.addEventListener('DOMContentLoaded', function () {
-            const rcvForm = document.getElementById('receive-device-form');
-            if (rcvForm) {
-                rcvForm.addEventListener('submit', function (e) {
-                    const ownerInput = document.getElementById('OwnerID');
-                    const hiddenDev = document.getElementById('hidden_device_id');
-                    const selectDev = document.getElementById('select_device_id');
-                    const deviceVal = hiddenDev ? hiddenDev.value.trim() : (selectDev ? selectDev.value.trim() : '');
-                    const ownerVal = ownerInput ? ownerInput.value.trim() : '';
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initReceiveDeviceValidation);
+    } else {
+        initReceiveDeviceValidation();
+    }
+</script>
 
-                    if (!deviceVal) {
-                        e.preventDefault();
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Device Required',
-                                text: 'Please choose an available device to assign.',
-                                confirmButtonColor: '#0f172a'
-                            });
-                        } else {
-                            alert('Please choose an available device to assign.');
-                        }
-                        return false;
-                    }
-
-                    if (!ownerVal) {
-                        e.preventDefault();
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Assignee Required',
-                                text: 'Please search and select an employee from the list.',
-                                confirmButtonColor: '#0f172a'
-                            });
-                        } else {
-                            alert('Please search and select an employee.');
-                        }
-                        const searchInput = document.getElementById('owner_search_input');
-                        if (searchInput) {
-                            searchInput.focus();
-                            openOwnerSearchPopup();
-                        }
-                        return false;
-                    }
-                });
-            }
-        });
-    </script>
-
-    <?php
-    return ob_get_clean();
+<?php
+        return ob_get_clean();
 }
 
 add_shortcode('receive_device', 'receive_device');

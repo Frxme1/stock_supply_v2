@@ -403,8 +403,8 @@ function isResetButton(element) {
     }
 
     // 2. Check text content (removing special chars and spaces)
-    var rawText = (btn.textContent || '').replace(/[^a-zA-Z0-9\u0E00-\u0E7F]/g, '').toLowerCase();
-    if (rawText === 'reset' || rawText === 'รีเซ็ต' || rawText.includes('reset') || rawText.includes('รีเซ็ต')) {
+    var rawText = (btn.textContent || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    if (rawText === 'reset' || rawText.includes('reset')) {
         return true;
     }
 

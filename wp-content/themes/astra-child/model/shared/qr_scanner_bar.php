@@ -147,6 +147,7 @@ if ($category_filter) {
             justify-content: center;
             padding: 14px 20px;
             font-size: 1rem;
+            margin-bottom: 20px;
         }
 
         .dash-qr-hint {
@@ -589,7 +590,7 @@ if ($category_filter) {
             const qrBar = document.querySelector('.dash-qr-bar');
             const detailsOnly = qrBar ? (qrBar.getAttribute('data-details-only') === 'true') : false;
             window.__lastScannedOwners = dev.all_owners || [];
-            
+
             const statusMap = {
                 'In Use': { icon: 'fa-circle-xmark', color: '#dc2626', bg: '#fee2e2', label: 'In Use' },
                 'Available': { icon: 'fa-circle-check', color: '#16a34a', bg: '#dcfce7', label: 'Available' },
@@ -840,7 +841,7 @@ if ($category_filter) {
         };
 
         if (!window.stock_supply_get_dept_abbr) {
-            window.stock_supply_get_dept_abbr = function(dept) {
+            window.stock_supply_get_dept_abbr = function (dept) {
                 if (!dept || dept === '-') return '';
                 const map = {
                     'IT': 'IT',

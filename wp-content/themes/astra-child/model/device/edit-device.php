@@ -32,20 +32,25 @@ function edit_device_form($editing = null)
         $Model = sanitize_text_field($_POST['Model']);
         $SerialNumber = sanitize_text_field($_POST['SerialNumber']);
 
-        $raw_brand_id = $_POST['BrandID'] ?? '';
+        $raw_brand_id = trim($_POST['BrandID'] ?? '');
+        $brand_name_in = trim($_POST['BrandName'] ?? '');
         $new_brand_name = trim($_POST['new_brand_name'] ?? '');
 
-        if (!empty($new_brand_name)) {
-            $existing_brand_id = $wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $new_brand_name));
+        $brand_string = !empty($new_brand_name) ? $new_brand_name : (!empty($brand_name_in) ? $brand_name_in : $raw_brand_id);
+
+        if (is_numeric($brand_string) && intval($brand_string) > 0) {
+            $BrandID = intval($brand_string);
+        } elseif (!empty($brand_string)) {
+            $existing_brand_id = $wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $brand_string));
             if ($existing_brand_id) {
                 $BrandID = intval($existing_brand_id);
             } else {
-                $inserted = $wpdb->insert('Brands', ['BrandName' => ucfirst($new_brand_name)]);
+                $inserted = $wpdb->insert('Brands', ['BrandName' => ucfirst($brand_string)]);
                 if (!$inserted) {
                     $next_brand_id = intval($wpdb->get_var("SELECT MAX(BrandID) FROM Brands")) + 1;
-                    $wpdb->query($wpdb->prepare("INSERT INTO Brands (BrandID, BrandName) VALUES (%d, %s)", $next_brand_id, ucfirst($new_brand_name)));
+                    $wpdb->query($wpdb->prepare("INSERT INTO Brands (BrandID, BrandName) VALUES (%d, %s)", $next_brand_id, ucfirst($brand_string)));
                 }
-                $BrandID = intval($wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $new_brand_name)));
+                $BrandID = intval($wpdb->get_var($wpdb->prepare("SELECT BrandID FROM Brands WHERE LOWER(BrandName) = LOWER(%s)", $brand_string)));
             }
         } else {
             $BrandID = intval($raw_brand_id);
@@ -219,6 +224,16 @@ function edit_device_form($editing = null)
         'retired' => ['color' => '#94a3b8', 'bg' => 'rgba(148, 163, 184, 0.15)', 'border' => 'rgba(148, 163, 184, 0.35)', 'dot' => '#94a3b8'],
     ];
     $init_conf = $status_color_map[$initial_status_raw] ?? ['color' => '#818cf8', 'bg' => 'rgba(129, 140, 248, 0.15)', 'border' => 'rgba(129, 140, 248, 0.35)', 'dot' => '#818cf8'];
+
+    $current_brand_name = '';
+    if (!empty($editing->BrandID)) {
+        foreach ($brands as $b) {
+            if ($b->BrandID == $editing->BrandID) {
+                $current_brand_name = $b->BrandName;
+                break;
+            }
+        }
+    }
     ?>
 
     <!-- Main Edit Device Container -->
@@ -271,7 +286,8 @@ function edit_device_form($editing = null)
                                 </label>
                             </div>
                             <div class="field-input-wrap">
-                                <input type="text" value="<?= esc_attr($currentCategoryName) ?>" readonly class="input-locked">
+                                <input type="text" value="<?= esc_attr($currentCategoryName) ?>" readonly
+                                    class="input-locked">
                             </div>
                         </div>
 
@@ -284,55 +300,28 @@ function edit_device_form($editing = null)
                                 </label>
                             </div>
                             <div class="field-input-wrap">
-                                <input type="text" value="<?= esc_attr($editing->DeviceID ?? '') ?>" readonly class="input-locked">
+                                <input type="text" value="<?= esc_attr($editing->DeviceID ?? '') ?>" readonly
+                                    class="input-locked">
                             </div>
                         </div>
 
-                        <!-- Brand Select + Add Brand Inline -->
+                        <!-- Brand Select (Standard Dropdown) -->
                         <div class="form-group modern-group">
-                            <div class="field-header d-flex justify-content-between align-items-center">
-                                <label for="edit-brand-select" class="mb-0">
+                            <div class="field-header">
+                                <label for="edit-brand-select">
                                     <i class="fa-solid fa-building field-icon-desktop desktop-only-element"></i>
                                     Brand <span class="required-star">*</span>
                                 </label>
-                                <button type="button" id="btn-add-new-brand-link"
-                                    class="btn-new-brand-text desktop-only-element" onclick="toggleEditNewBrandMode()">
-                                    <i class="fa-solid fa-plus-circle"></i> New Brand
-                                </button>
                             </div>
-
-                            <div id="edit-brand-select-wrapper">
-                                <div class="field-input-wrap">
-                                    <select name="BrandID" id="edit-brand-select" required
-                                        onchange="checkEditBrandSelection(this)">
-                                        <option value="">-- Select Brand --</option>
-                                        <?php foreach ($brands as $b): ?>
-                                            <option value="<?= esc_attr($b->BrandID) ?>" <?= selected($editing->BrandID ?? '', $b->BrandID, false) ?>>
-                                                <?= esc_html($b->BrandName) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <button type="button" id="btn-edit-add-new-brand" class="btn w-100 mt-2 mobile-only-element"
-                                    style="border: 1.5px dashed #cbd5e1; color: #475569; font-weight: 600; border-radius: 8px; padding: 10px; background: #ffffff; transition: all 0.2s; <?= (!empty($editing->BrandID)) ? 'display: none;' : '' ?>"
-                                    onclick="toggleEditNewBrandMode()">
-                                    <i class="fa-solid fa-plus me-1"></i> Add New Brand
-                                </button>
-                            </div>
-
-                            <!-- New Brand Input Wrapper (Animated Slide-in) -->
-                            <div id="edit_new_brand_wrapper" class="new-brand-wrapper-box" style="display: none;">
-                                <div class="new-brand-top-bar">
-                                    <span class="new-brand-title">
-                                        <i class="fa-solid fa-sparkles text-primary me-1"></i> Create New Brand
-                                    </span>
-                                    <button type="button" class="btn-cancel-brand" onclick="cancelEditNewBrandMode()"
-                                        title="Cancel">
-                                        <i class="fa-solid fa-xmark"></i> Cancel
-                                    </button>
-                                </div>
-                                <input type="text" name="new_brand_name" id="edit_new_brand_name"
-                                    placeholder="e.g. Razer, Anker, Dell, Apple..." class="new-brand-input-element">
+                            <div class="field-input-wrap">
+                                <select name="BrandID" id="edit-brand-select" required onchange="updateLivePreview()">
+                                    <option value="">-- Select Brand --</option>
+                                    <?php foreach ($brands as $b): ?>
+                                        <option value="<?= esc_attr($b->BrandID) ?>" <?= selected($editing->BrandID ?? '', $b->BrandID, false) ?>>
+                                            <?= esc_html($b->BrandName) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
 
@@ -361,6 +350,7 @@ function edit_device_form($editing = null)
                             <div class="field-input-wrap">
                                 <input type="text" name="SerialNumber" id="serial_number_input"
                                     value="<?= esc_attr($editing->SerialNumber ?? '') ?>">
+                                <div id="edit_serial_duplicate_warning"></div>
                             </div>
                         </div>
 
@@ -396,7 +386,8 @@ function edit_device_form($editing = null)
                                 </label>
                             </div>
                             <div class="field-input-wrap">
-                                <input type="text" value="<?= esc_attr($current_keyword_name) ?>" readonly class="input-locked">
+                                <input type="text" value="<?= esc_attr($current_keyword_name) ?>" readonly
+                                    class="input-locked">
                                 <input type="hidden" name="KeywordID" id="KeywordID"
                                     value="<?= esc_attr($editing->KeywordID ?? 0) ?>">
                             </div>
@@ -476,7 +467,7 @@ function edit_device_form($editing = null)
 
                     <!-- Form Actions (Cancel & Update) -->
                     <div class="form-actions modern-form-actions">
-                        <button type="button" onclick="history.back()"
+                        <button type="button" onclick="handleCancelEditDevice()"
                             class="btn btn-danger btn-cancel-action border rounded-pill">
                             <i class="fa-solid fa-arrow-left me-1"></i> Cancel
                         </button>
@@ -563,9 +554,82 @@ function edit_device_form($editing = null)
             padding-right: 36px !important;
         }
 
+        .brand-search-box-wrap {
+            position: relative;
+            width: 100%;
+        }
+
+        .brand-search-box-wrap .position-relative {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .brand-search-icon {
+            position: absolute;
+            left: 12px;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .brand-search-filter-input {
+            width: 100% !important;
+            height: 38px !important;
+            padding-left: 32px !important;
+            padding-right: 30px !important;
+            font-size: 0.84rem !important;
+            font-weight: 500 !important;
+            background-color: #f1f5f9 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            color: #0f172a !important;
+            transition: all 0.15s ease !important;
+            box-sizing: border-box !important;
+        }
+
+        .brand-search-filter-input:focus {
+            background-color: #ffffff !important;
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+            outline: none !important;
+        }
+
+        .brand-search-clear-btn {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 0.78rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-search-clear-btn:hover {
+            color: #475569;
+        }
+
+        /* Default / Mobile-First: Hide Desktop Exclusive Elements */
+        .desktop-only-element,
+        .preview-panel-column,
+        .add-device-desktop-header,
+        .bg-glow-orb {
+            display: none !important;
+        }
+
+        .mobile-only-header,
+        .mobile-only-element {
+            display: block !important;
+        }
+
         /* =============================================================
-                   DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
-                   ============================================================= */
+                       DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
+                       ============================================================= */
         @media (min-width: 769px) {
 
             .mobile-only-header,
@@ -574,6 +638,14 @@ function edit_device_form($editing = null)
             }
 
             .desktop-only-element {
+                display: flex !important;
+            }
+
+            .preview-panel-column {
+                display: flex !important;
+            }
+
+            .add-device-desktop-header {
                 display: flex !important;
             }
 
@@ -843,79 +915,6 @@ function edit_device_form($editing = null)
             .btn-new-brand-text:active {
                 transform: translateY(0) !important;
                 box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
-            }
-
-            .new-brand-wrapper-box {
-                background: #f8fafc !important;
-                border: 1.5px solid #c7d2fe !important;
-                border-radius: 12px !important;
-                padding: 8px 12px !important;
-                margin-top: 6px !important;
-                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08) !important;
-                animation: slideDownFade 0.2s ease-out forwards;
-            }
-
-            .new-brand-top-bar {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                margin-bottom: 6px !important;
-                width: 100% !important;
-            }
-
-            .new-brand-title {
-                font-size: 0.8rem !important;
-                font-weight: 700 !important;
-                color: #4338ca !important;
-                white-space: nowrap !important;
-                display: inline-flex !important;
-                align-items: center !important;
-            }
-
-            .btn-cancel-brand {
-                all: unset !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                gap: 4px !important;
-                background: #fee2e2 !important;
-                color: #dc2626 !important;
-                border: 1px solid #fca5a5 !important;
-                border-radius: 6px !important;
-                padding: 3px 10px !important;
-                font-size: 0.75rem !important;
-                font-weight: 700 !important;
-                line-height: 1.2 !important;
-                cursor: pointer !important;
-                transition: all 0.15s ease !important;
-                box-sizing: border-box !important;
-            }
-
-            .btn-cancel-brand:hover {
-                background: #fecaca !important;
-                color: #b91c1c !important;
-            }
-
-            .new-brand-input-element {
-                width: 100% !important;
-                height: 40px !important;
-                padding: 0 12px !important;
-                font-size: 0.88rem !important;
-                font-weight: 500 !important;
-                color: #0f172a !important;
-                background-color: #ffffff !important;
-                border: 1.5px solid #cbd5e1 !important;
-                border-radius: 8px !important;
-                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-                box-sizing: border-box !important;
-            }
-
-            .new-brand-input-element:focus {
-                background-color: #ffffff !important;
-                border-color: #6366f1 !important;
-                outline: none !important;
-                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
-            }
-
             /* Desktop Actions */
             .modern-form-actions {
                 display: flex !important;
@@ -1136,10 +1135,13 @@ function edit_device_form($editing = null)
         }
 
         /* =============================================================
-                   MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
-                   ============================================================= */
+                       MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
+                       ============================================================= */
         @media (max-width: 768px) {
-            .desktop-only-element {
+            .desktop-only-element,
+            .preview-panel-column,
+            .add-device-desktop-header,
+            .bg-glow-orb {
                 display: none !important;
             }
 
@@ -1310,7 +1312,7 @@ function edit_device_form($editing = null)
         const editOwnerDataList = [
             { id: '', name: '-- No Owner --', deptName: '' },
             <?php foreach ($owners as $o): ?>
-                                {
+                                        {
                     id: <?= intval($o->OwnerID) ?>,
                     name: <?= json_encode(trim($o->Nickname)) ?>,
                     deptName: <?= json_encode($o->DepartmentName ?? '') ?>
@@ -1417,57 +1419,9 @@ function edit_device_form($editing = null)
             }
         });
 
-        function checkEditBrandSelection(selectElem) {
-            var addBtn = document.getElementById('btn-edit-add-new-brand');
-            if (addBtn) {
-                if (selectElem.value !== '') {
-                    addBtn.style.display = 'none';
-                } else {
-                    addBtn.style.display = 'block';
-                }
-            }
-            updateLivePreview();
-        }
-
-        function toggleEditNewBrandMode() {
-            var selectWrapper = document.getElementById('edit-brand-select-wrapper');
-            var newWrapper = document.getElementById('edit_new_brand_wrapper');
-            var input = document.getElementById('edit_new_brand_name');
-            var select = document.getElementById('edit-brand-select');
-
-            if (!selectWrapper || !newWrapper || !input || !select) return;
-
-            selectWrapper.style.display = 'none';
-            newWrapper.style.display = 'block';
-
-            select.required = false;
-            input.required = true;
-            input.focus();
-            select.value = '';
-            updateLivePreview();
-        }
-
-        function cancelEditNewBrandMode() {
-            var selectWrapper = document.getElementById('edit-brand-select-wrapper');
-            var newWrapper = document.getElementById('edit_new_brand_wrapper');
-            var input = document.getElementById('edit_new_brand_name');
-            var select = document.getElementById('edit-brand-select');
-
-            if (!selectWrapper || !newWrapper || !input || !select) return;
-
-            selectWrapper.style.display = 'block';
-            newWrapper.style.display = 'none';
-
-            select.required = true;
-            input.required = false;
-            input.value = '';
-            updateLivePreview();
-        }
-
         function updateLivePreview() {
             const modelInput = document.getElementById('model_input');
             const brandSelect = document.getElementById('edit-brand-select');
-            const newBrandInput = document.getElementById('edit_new_brand_name');
             const serialInput = document.getElementById('serial_number_input');
             const statusSelect = document.getElementById('StatusID');
             const ownerInput = document.getElementById('edit_owner_search_input');
@@ -1485,10 +1439,11 @@ function edit_device_form($editing = null)
                 pModel.textContent = modelInput.value.trim() || 'Hardware Asset';
             }
             if (pBrand) {
-                if (newBrandInput && newBrandInput.value.trim()) {
-                    pBrand.textContent = newBrandInput.value.trim();
-                } else if (brandSelect && brandSelect.selectedIndex > 0) {
-                    pBrand.textContent = brandSelect.options[brandSelect.selectedIndex].text;
+                if (brandSelect && brandSelect.selectedIndex >= 0) {
+                    const opt = brandSelect.options[brandSelect.selectedIndex];
+                    pBrand.textContent = (opt && brandSelect.value) ? opt.text : 'Manufacturer Brand';
+                } else {
+                    pBrand.textContent = 'Manufacturer Brand';
                 }
             }
             if (pSerial && serialInput) {
@@ -1591,13 +1546,93 @@ function edit_device_form($editing = null)
 
             const modelInput = document.getElementById('model_input');
             const serialInput = document.getElementById('serial_number_input');
-            const brandSelect = document.getElementById('edit-brand-select');
+            const brandInput = document.getElementById('edit_brand_input');
             const newBrandInput = document.getElementById('edit_new_brand_name');
+
+            if (brandInput) {
+                brandInput.addEventListener('focus', function () {
+                    filterEditBrandItems(this.value);
+                    openEditBrandDropdown();
+                });
+                brandInput.addEventListener('input', syncEditBrandSelection);
+                brandInput.addEventListener('change', syncEditBrandSelection);
+            }
 
             if (modelInput) modelInput.addEventListener('input', updateLivePreview);
             if (serialInput) serialInput.addEventListener('input', updateLivePreview);
-            if (brandSelect) brandSelect.addEventListener('change', updateLivePreview);
             if (newBrandInput) newBrandInput.addEventListener('input', updateLivePreview);
+
+            // Form Submit Validation for Brand
+            const editForm = document.getElementById('edit-device-form');
+            if (editForm) {
+                editForm.addEventListener('submit', function (e) {
+                    const newBrandWrap = document.getElementById('edit_new_brand_wrapper');
+                    const isNewMode = (newBrandWrap && newBrandWrap.style.display !== 'none');
+
+                    if (isNewMode) {
+                        const newName = newBrandInput ? newBrandInput.value.trim() : '';
+                        if (!newName) {
+                            e.preventDefault();
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '⚠️ Brand Name Required',
+                                text: 'Please enter a name for the new brand.',
+                                confirmButtonColor: '#2563eb'
+                            });
+                            return false;
+                        }
+                    } else {
+                        const typed = brandInput ? brandInput.value.trim() : '';
+                        if (!typed) {
+                            e.preventDefault();
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '⚠️ Brand Required',
+                                text: 'Please choose or enter a brand name.',
+                                confirmButtonColor: '#2563eb'
+                            });
+                            return false;
+                        }
+
+                        // Check if brand exists in system
+                        let found = isEditBrandInList(typed);
+
+                        if (!found) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: '❌ Brand Not Found',
+                                html: `Brand "<strong>${typed}</strong>" is not found in the inventory.<br><br>Please select an existing brand from the list or click <strong>+ Add as New Brand</strong> to create it.`,
+                                showCancelButton: true,
+                                confirmButtonText: '<i class="fa-solid fa-plus-circle me-1"></i> Add as New Brand',
+                                cancelButtonText: 'Select Existing Brand',
+                                confirmButtonColor: '#2563eb',
+                                cancelButtonColor: '#64748b'
+                            }).then((res) => {
+                                if (res.isConfirmed) {
+                                    toggleEditNewBrandMode(typed);
+                                } else {
+                                    openEditBrandDropdown();
+                                    if (brandInput) brandInput.focus();
+                                }
+                            });
+                            return false;
+                        }
+                    }
+                });
+            }
+
+            // Smart Cancel Navigation (Reliable even after Page Refresh)
+            window.handleCancelEditDevice = function() {
+                const ref = document.referrer;
+                if (ref && ref.includes(window.location.host) && !ref.includes('edit=') && !ref.includes('receive=') && !ref.includes('add=')) {
+                    window.location.href = ref;
+                } else {
+                    window.location.href = '<?= esc_url(home_url('/home/')) ?>';
+                }
+            };
 
             // Initial preview sync
             updateLivePreview();

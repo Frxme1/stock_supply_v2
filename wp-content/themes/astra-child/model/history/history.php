@@ -65,7 +65,7 @@ function form_history()
             SELECT Nickname, FirstName, LastName, DepartmentID, PositionID 
             FROM Owners 
             GROUP BY Nickname, FirstName, LastName, DepartmentID, PositionID
-        ) AS o ON (H.Owner = o.Nickname OR CONCAT(o.FirstName, ' ', o.LastName) = H.Owner)
+        ) AS o ON (H.Owner = o.Nickname OR CONCAT(o.FirstName, ' ', o.LastName) = H.Owner OR H.Owner = o.FirstName OR H.Owner LIKE CONCAT(o.Nickname, ' (%%'))
         LEFT JOIN Departments AS dep ON o.DepartmentID = dep.DepartmentID
         LEFT JOIN Positions AS pos ON o.PositionID = pos.PositionID
         LEFT JOIN (
@@ -421,6 +421,10 @@ function form_history()
                                                 <div class="dtl-detail-row">
                                                     <span class="dtl-detail-label">Owner</span>
                                                     <span class="dtl-detail-value"><?= esc_html($row->Owner ?: '-') ?></span>
+                                                </div>
+                                                <div class="dtl-detail-row">
+                                                    <span class="dtl-detail-label">Department</span>
+                                                    <span class="dtl-detail-value"><?= esc_html($row->Dept ?: ($row->UserDept ?: '-')) ?></span>
                                                 </div>
                                                 <?php if (!empty($row->Photo)): ?>
                                                     <div class="dtl-detail-row align-items-center">
