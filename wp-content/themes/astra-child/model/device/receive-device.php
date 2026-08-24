@@ -349,13 +349,17 @@ function receive_device($device = null)
                                     Equipment Condition Photo (Camera / Upload)
                                 </label>
                             </div>
-                            <div class="field-input-wrap">
-                                <input type="file" name="photo" accept="image/*" capture="environment"
-                                    onchange="if(this.files && this.files[0]){ const r=new FileReader(); r.onload=e=>{ document.getElementById('rcv_photo_img').src=e.target.result; document.getElementById('rcv_photo_wrap').style.display='block'; }; r.readAsDataURL(this.files[0]); }"
+                            <div class="field-input-wrap rcv-photo-upload-wrap">
+                                <input type="file" name="photo" id="rcv_photo" accept="image/*" capture="environment"
                                     style="padding: 8px 12px;">
-                                <div id="rcv_photo_wrap" style="display:none; margin-top:8px;">
-                                    <img id="rcv_photo_img" src=""
-                                        style="max-height:120px; border-radius:8px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                                <div id="rcv_photo_wrap" class="rcv-photo-preview-box" style="display:none; margin-top:8px;">
+                                    <div class="rcv-photo-preview-inner" style="position: relative; display: inline-block;">
+                                        <img id="rcv_photo_img" src="" alt="Condition Photo Preview" onclick="openRcvPhotoModal(this.src)" title="Click to enlarge image">
+                                        <span class="rcv-photo-preview-badge">Attached</span>
+                                        <button type="button" class="rcv-photo-clear-btn" onclick="clearRcvPhoto()" title="Clear photo">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -434,6 +438,16 @@ function receive_device($device = null)
 
             </div>
         </form>
+
+        <!-- Custom Image Lightbox Modal -->
+        <div id="rcv_image_lightbox" class="rcv-image-lightbox" style="display:none;" onclick="closeRcvLightbox(event)">
+            <div class="rcv-lightbox-dialog" onclick="event.stopPropagation()">
+                <button type="button" class="rcv-lightbox-close-btn" onclick="closeRcvLightbox(event)" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <img id="rcv_lightbox_img" src="" alt="Full Condition Photo">
+            </div>
+        </div>
     </div>
 
     <!-- Responsive Stylesheet (Expanded Single-Screen Desktop + Classic Clean Mobile) -->
@@ -441,6 +455,183 @@ function receive_device($device = null)
         #owner_search_input {
             padding-left: 42px !important;
             padding-right: 36px !important;
+        }
+
+        /* --- SHARED PHOTO UPLOAD & PREVIEW STYLES --- */
+        .rcv-photo-upload-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .rcv-photo-preview-box {
+            position: relative;
+            display: inline-block;
+            margin-top: 8px;
+            width: fit-content;
+        }
+
+        .rcv-photo-preview-inner {
+            position: relative;
+            display: inline-block;
+            border-radius: 12px;
+        }
+
+        .rcv-photo-preview-box img {
+            width: 140px !important;
+            height: 95px !important;
+            object-fit: cover !important;
+            border-radius: 12px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            display: block !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+            cursor: zoom-in !important;
+            transition: transform 0.2s ease !important;
+        }
+
+        .rcv-photo-preview-box img:hover {
+            transform: scale(1.03);
+        }
+
+        .rcv-photo-preview-badge {
+            position: absolute !important;
+            bottom: 6px !important;
+            left: 6px !important;
+            background: rgba(16, 185, 129, 0.95) !important;
+            color: #ffffff !important;
+            font-size: 0.68rem !important;
+            font-weight: 700 !important;
+            padding: 2px 8px !important;
+            border-radius: 6px !important;
+            backdrop-filter: blur(4px) !important;
+            pointer-events: none !important;
+            z-index: 5 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+            letter-spacing: 0.02em !important;
+        }
+
+        .rcv-photo-clear-btn {
+            position: absolute !important;
+            top: -8px !important;
+            right: -8px !important;
+            width: 26px !important;
+            height: 26px !important;
+            min-width: 26px !important;
+            max-width: 26px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border: 2px solid #ffffff !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.78rem !important;
+            line-height: 1 !important;
+            cursor: pointer !important;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45) !important;
+            transition: all 0.2s ease !important;
+            z-index: 20 !important;
+        }
+
+        .rcv-photo-clear-btn:hover {
+            background: #dc2626 !important;
+            transform: scale(1.15) !important;
+        }
+
+        .rcv-photo-clear-btn i {
+            font-size: 0.75rem !important;
+            color: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+        }
+
+        /* Custom Fullscreen Image Lightbox */
+        .rcv-image-lightbox {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.88) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            display: none;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 999999 !important;
+            padding: 1.25rem !important;
+            box-sizing: border-box !important;
+        }
+
+        .rcv-image-lightbox.is-open {
+            display: flex !important;
+            animation: rcvLightFadeIn 0.2s ease-out;
+        }
+
+        .rcv-lightbox-dialog {
+            position: relative !important;
+            max-width: 92vw !important;
+            max-height: 90vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            animation: rcvLightZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .rcv-lightbox-dialog img {
+            max-width: 92vw !important;
+            max-height: 85vh !important;
+            width: auto !important;
+            height: auto !important;
+            object-fit: contain !important;
+            border-radius: 16px !important;
+            box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+            display: block !important;
+        }
+
+        .rcv-lightbox-close-btn {
+            position: absolute !important;
+            top: -14px !important;
+            right: -14px !important;
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 38px !important;
+            max-width: 38px !important;
+            border-radius: 50% !important;
+            background: #0f172a !important;
+            color: #ffffff !important;
+            border: 2px solid rgba(255, 255, 255, 0.9) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.1rem !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+            transition: all 0.2s ease !important;
+            z-index: 1000 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .rcv-lightbox-close-btn:hover {
+            background: #ef4444 !important;
+            transform: scale(1.1) !important;
+        }
+
+        @keyframes rcvLightFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes rcvLightZoomIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         @media (min-width: 769px) {
@@ -452,6 +643,11 @@ function receive_device($device = null)
 
             .desktop-only-element {
                 display: flex !important;
+            }
+
+            .field-input-wrap.desktop-only-element {
+                display: block !important;
+                width: 100% !important;
             }
 
             .add-device-responsive-container {
@@ -1063,7 +1259,7 @@ function receive_device($device = null)
     <script>
         const ownerDataList = [
             <?php foreach ($owners_data as $o): ?>
-                        {
+                                {
                     id: <?= intval($o->OwnerID) ?>,
                     name: <?= json_encode(trim($o->Nickname)) ?>,
                     deptId: <?= json_encode(!empty($o->DepartmentID) ? strval($o->DepartmentID) : '') ?>,
@@ -1175,7 +1371,7 @@ function receive_device($device = null)
     const currentDeviceId = <?= json_encode($device_data->DeviceID ?? '') ?>;
 
     // Smart Cancel Navigation (Reliable even after Page Refresh)
-    window.handleCancelReceive = function() {
+    window.handleCancelReceive = function () {
         const ref = document.referrer;
         if (ref && ref.includes(window.location.host) && !ref.includes('receive=') && !ref.includes('edit=') && !ref.includes('add=')) {
             window.location.href = ref;
@@ -1255,18 +1451,18 @@ function receive_device($device = null)
                         icon: 'warning',
                         title: '⚠️ Low Stock Warning',
                         html: `
-                        <div style="text-align: left; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 14px 18px; margin: 12px 0 16px 0;">
-                            <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; margin-bottom: 6px;">
-                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Stock Threshold Alert
+                            <div style="text-align: left; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 14px 18px; margin: 12px 0 16px 0;">
+                                <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; margin-bottom: 6px;">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Stock Threshold Alert
+                                </div>
+                                <div style="color: #78350f; font-size: 0.88rem; line-height: 1.5;">
+                                    Assigning <strong>${currentModelName}</strong> (<code>${currentDeviceId}</code>) will reduce remaining available inventory to:
+                                    <div style="margin-top: 8px; font-size: 0.92rem;">${stockBadge}</div>
+                                </div>
                             </div>
-                            <div style="color: #78350f; font-size: 0.88rem; line-height: 1.5;">
-                                Assigning <strong>${currentModelName}</strong> (<code>${currentDeviceId}</code>) will reduce remaining available inventory to:
-                                <div style="margin-top: 8px; font-size: 0.92rem;">${stockBadge}</div>
-                            </div>
-                        </div>
-                        <p style="margin: 0; color: #475569; font-size: 0.92rem; text-align: left;">
-                            Do you want to proceed with assigning this hardware asset to <strong style="color: #0f172a;">${ownerDisplayName}</strong>?
-                        </p>`,
+                            <p style="margin: 0; color: #475569; font-size: 0.92rem; text-align: left;">
+                                Do you want to proceed with assigning this hardware asset to <strong style="color: #0f172a;">${ownerDisplayName}</strong>?
+                            </p>`,
                         showConfirmButton: true,
                         showCancelButton: true,
                         showDenyButton: false,
@@ -1292,10 +1488,79 @@ function receive_device($device = null)
         });
     }
 
+    window.clearRcvPhoto = function () {
+        const photoInput = document.getElementById('rcv_photo');
+        if (photoInput) {
+            photoInput.value = '';
+        }
+        const prevWrap = document.getElementById('rcv_photo_wrap');
+        const prevImg = document.getElementById('rcv_photo_img');
+        if (prevImg) {
+            prevImg.src = '';
+        }
+        if (prevWrap) {
+            prevWrap.style.display = 'none';
+        }
+    };
+
+    window.openRcvPhotoModal = function (src) {
+        if (!src) return;
+        const box = document.getElementById('rcv_image_lightbox');
+        const img = document.getElementById('rcv_lightbox_img');
+        if (box && img) {
+            img.src = src;
+            box.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    window.closeRcvLightbox = function (e) {
+        if (e) e.stopPropagation();
+        const box = document.getElementById('rcv_image_lightbox');
+        if (box) {
+            box.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+    };
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            window.closeRcvLightbox();
+        }
+    });
+
+    function initReceiveDevicePhoto() {
+        const rcvPhotoInput = document.getElementById('rcv_photo');
+        if (rcvPhotoInput) {
+            rcvPhotoInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const prevWrap = document.getElementById('rcv_photo_wrap');
+                        const prevImg = document.getElementById('rcv_photo_img');
+                        if (prevImg) {
+                            prevImg.src = e.target.result;
+                        }
+                        if (prevWrap) {
+                            prevWrap.style.display = 'inline-block';
+                        }
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    window.clearRcvPhoto();
+                }
+            });
+        }
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initReceiveDeviceValidation);
+        document.addEventListener('DOMContentLoaded', function () {
+            initReceiveDeviceValidation();
+            initReceiveDevicePhoto();
+        });
     } else {
         initReceiveDeviceValidation();
+        initReceiveDevicePhoto();
     }
 </script>
 

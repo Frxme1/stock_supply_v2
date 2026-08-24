@@ -84,13 +84,13 @@ function form_maintenance($editing = null)
         $inserted = $wpdb->insert(
             $table_maintenance,
             [
-                'DeviceID'   => $DeviceID,
+                'DeviceID' => $DeviceID,
                 'RepairDate' => $RepairDate,
-                'Details'    => $Details,
+                'Details' => $Details,
                 'user_email' => $user_email,
-                'Photo'      => $photo_url,
-                'CreatedAt'  => current_time('mysql'),
-                'UpdatedAt'  => current_time('mysql'),
+                'Photo' => $photo_url,
+                'CreatedAt' => current_time('mysql'),
+                'UpdatedAt' => current_time('mysql'),
             ],
             ['%s', '%s', '%s', '%s', '%s', '%s', '%s']
         );
@@ -111,7 +111,7 @@ function form_maintenance($editing = null)
         $updated = $wpdb->update(
             $table_device,
             [
-                'StatusID'   => $status_id,
+                'StatusID' => $status_id,
                 'RepairDate' => $RepairDate
             ],
             ['DeviceID' => $DeviceID],
@@ -138,14 +138,14 @@ function form_maintenance($editing = null)
 
         // Insert history
         $wpdb->insert('History_new', [
-            'DeviceID'    => $DeviceID,
-            'Action'      => 'Maintenance',
-            'Date'        => current_time('mysql'),
+            'DeviceID' => $DeviceID,
+            'Action' => 'Maintenance',
+            'Date' => current_time('mysql'),
             'Description' => "Device ID {$DeviceID} set to Maintenance. Reason: {$Details}",
-            'user_email'  => $user_email,
-            'CategoryID'  => $device_info->CategoryID ?? null,
-            'Owner'       => $owner_nickname,
-            'Photo'       => $photo_url
+            'user_email' => $user_email,
+            'CategoryID' => $device_info->CategoryID ?? null,
+            'Owner' => $owner_nickname,
+            'Photo' => $photo_url
         ]);
 
         // Send email notification
@@ -183,7 +183,7 @@ function form_maintenance($editing = null)
     }
 
     $maint_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'") ?: 3);
-    $is_in_maintenance = ($editing && isset($editing->StatusID) && (int)$editing->StatusID === $maint_status_id);
+    $is_in_maintenance = ($editing && isset($editing->StatusID) && (int) $editing->StatusID === $maint_status_id);
     $dateValue = ($is_in_maintenance && !empty($editing->RepairDate)) ? date('Y-m-d', strtotime($editing->RepairDate)) : current_time('Y-m-d');
     $details_val = $is_in_maintenance ? ($editing->Details ?? '') : '';
     $other_text = '';
@@ -242,10 +242,11 @@ function form_maintenance($editing = null)
             <div class="maint-layout-grid">
                 <!-- Left Column: Form Fields -->
                 <div class="maint-form-card">
-                    
+
                     <!-- Section 1: Device Information -->
                     <div class="maint-section-divider">
-                        <span class="maint-section-title"><i class="fa-solid fa-circle-info me-1"></i> Device Information</span>
+                        <span class="maint-section-title"><i class="fa-solid fa-circle-info me-1"></i> Device
+                            Information</span>
                     </div>
 
                     <div class="maint-fields-grid">
@@ -265,8 +266,8 @@ function form_maintenance($editing = null)
                                 <i class="fa-solid fa-building maint-field-icon desktop-only-el"></i>
                                 Brand
                             </label>
-                            <input type="text" id="maint_brand"
-                                value="<?= esc_attr($editing->BrandName ?? '—') ?>" readonly disabled class="input-readonly">
+                            <input type="text" id="maint_brand" value="<?= esc_attr($editing->BrandName ?? '—') ?>" readonly
+                                disabled class="input-readonly">
                         </div>
 
                         <!-- Category -->
@@ -275,8 +276,8 @@ function form_maintenance($editing = null)
                                 <i class="fa-solid fa-shapes maint-field-icon desktop-only-el"></i>
                                 Category
                             </label>
-                            <input type="text" id="maint_category"
-                                value="<?= esc_attr($editing->CategoryName ?? '—') ?>" readonly disabled class="input-readonly">
+                            <input type="text" id="maint_category" value="<?= esc_attr($editing->CategoryName ?? '—') ?>"
+                                readonly disabled class="input-readonly">
                         </div>
 
                         <!-- Model -->
@@ -285,8 +286,8 @@ function form_maintenance($editing = null)
                                 <i class="fa-solid fa-laptop maint-field-icon desktop-only-el"></i>
                                 Model
                             </label>
-                            <input type="text" id="maint_model"
-                                value="<?= esc_attr($editing->Model ?? '—') ?>" readonly disabled class="input-readonly">
+                            <input type="text" id="maint_model" value="<?= esc_attr($editing->Model ?? '—') ?>" readonly
+                                disabled class="input-readonly">
                         </div>
 
                         <!-- Serial Number (Full Width Span 2) -->
@@ -295,14 +296,15 @@ function form_maintenance($editing = null)
                                 <i class="fa-solid fa-barcode maint-field-icon desktop-only-el"></i>
                                 Serial Number
                             </label>
-                            <input type="text" id="maint_sn"
-                                value="<?= esc_attr($editing->SerialNumber ?? '—') ?>" readonly disabled class="input-readonly">
+                            <input type="text" id="maint_sn" value="<?= esc_attr($editing->SerialNumber ?? '—') ?>" readonly
+                                disabled class="input-readonly">
                         </div>
                     </div>
 
                     <!-- Section 2: Maintenance Details -->
                     <div class="maint-section-divider mt-4">
-                        <span class="maint-section-title"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Maintenance Details</span>
+                        <span class="maint-section-title"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Maintenance
+                            Details</span>
                     </div>
 
                     <div class="maint-fields-grid">
@@ -312,7 +314,8 @@ function form_maintenance($editing = null)
                                 <i class="fa-solid fa-calendar-day maint-field-icon desktop-only-el"></i>
                                 Repair Date <span class="maint-req">*</span>
                             </label>
-                            <input type="date" name="RepairDate" id="maint_date" value="<?= esc_attr($dateValue) ?>" required>
+                            <input type="date" name="RepairDate" id="maint_date" value="<?= esc_attr($dateValue) ?>"
+                                required>
                         </div>
 
                         <!-- Maintenance Reason Select -->
@@ -326,7 +329,8 @@ function form_maintenance($editing = null)
                                 <option value="Screen Issue" <?= (strpos($details_val, 'Screen Issue') !== false) ? 'selected' : '' ?>>Screen Issue</option>
                                 <option value="Battery Issue" <?= (strpos($details_val, 'Battery Issue') !== false) ? 'selected' : '' ?>>Battery Issue</option>
                                 <option value="Power Issue" <?= (strpos($details_val, 'Power Issue') !== false) ? 'selected' : '' ?>>Power Issue</option>
-                                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Keyboard') !== false || strpos($details_val, 'Mouse') !== false) ? 'selected' : '' ?>>Keyboard / Mouse Issue</option>
+                                <option value="Keyboard / Mouse Issue" <?= (strpos($details_val, 'Keyboard') !== false || strpos($details_val, 'Mouse') !== false) ? 'selected' : '' ?>>Keyboard / Mouse Issue
+                                </option>
                                 <option value="Hardware Upgrade" <?= (strpos($details_val, 'Hardware Upgrade') !== false) ? 'selected' : '' ?>>Hardware Upgrade</option>
                                 <option value="Software Issue" <?= (strpos($details_val, 'Software Issue') !== false) ? 'selected' : '' ?>>Software Issue</option>
                                 <option value="Other Issue" <?= ($other_text || strpos($details_val, 'Other') !== false) ? 'selected' : '' ?>>Other Issue (Custom)</option>
@@ -343,38 +347,46 @@ function form_maintenance($editing = null)
                             <!-- Quick Clickable Symptom Chips (FontAwesome Icons) -->
                             <div class="maint-quick-chips-bar">
                                 <span class="maint-chips-label">
-                                    <i class="fa-solid fa-bolt text-warning me-1"></i> Quick Symptom Selection (1-Click):
+                                    <i class="fa-solid fa-bolt text-warning me-1"></i> Quick Symptom Selection:
                                 </span>
                                 <div class="maint-chips-grid" id="maint_symptom_chips">
-                                    <button type="button" class="maint-chip-btn" data-symptom="Cracked / Defective Screen" data-main-reason="Screen Issue">
+                                    <button type="button" class="maint-chip-btn" data-symptom="Cracked / Defective Screen"
+                                        data-main-reason="Screen Issue">
                                         <i class="fa-solid fa-desktop text-danger"></i>
                                         <span>Cracked / Defective Screen</span>
                                     </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="Battery Degraded / Swollen" data-main-reason="Battery Issue">
+                                    <button type="button" class="maint-chip-btn" data-symptom="Battery Degraded / Swollen"
+                                        data-main-reason="Battery Issue">
                                         <i class="fa-solid fa-battery-quarter text-warning"></i>
                                         <span>Battery Degraded / Swollen</span>
                                     </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="No Power / Auto Shutdown" data-main-reason="Power Issue">
+                                    <button type="button" class="maint-chip-btn" data-symptom="No Power / Auto Shutdown"
+                                        data-main-reason="Power Issue">
                                         <i class="fa-solid fa-power-off text-danger"></i>
                                         <span>No Power / Auto Shutdown</span>
                                     </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="Keyboard / Touchpad Failure" data-main-reason="Keyboard / Mouse Issue">
+                                    <button type="button" class="maint-chip-btn" data-symptom="Keyboard / Touchpad Failure"
+                                        data-main-reason="Keyboard / Mouse Issue">
                                         <i class="fa-solid fa-keyboard text-primary"></i>
                                         <span>Keyboard / Touchpad Failure</span>
                                     </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="OS Reinstall / Software Glitch" data-main-reason="Software Issue">
+                                    <button type="button" class="maint-chip-btn"
+                                        data-symptom="OS Reinstall / Software Glitch" data-main-reason="Software Issue">
                                         <i class="fa-solid fa-arrows-rotate text-info"></i>
                                         <span>OS Reinstall / Software Glitch</span>
                                     </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="Faulty Charger / Damaged Port" data-main-reason="Power Issue">
+                                    <button type="button" class="maint-chip-btn"
+                                        data-symptom="Faulty Charger / Damaged Port" data-main-reason="Power Issue">
                                         <i class="fa-solid fa-plug text-warning"></i>
                                         <span>Faulty Charger / Damaged Port</span>
                                     </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="Upgrade RAM / Storage SSD" data-main-reason="Hardware Upgrade">
+                                    <button type="button" class="maint-chip-btn" data-symptom="Upgrade RAM / Storage SSD"
+                                        data-main-reason="Hardware Upgrade">
                                         <i class="fa-solid fa-microchip text-success"></i>
                                         <span>Upgrade RAM / SSD</span>
                                     </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="Overheating / Loud Fan Noise" data-main-reason="Other Issue">
+                                    <button type="button" class="maint-chip-btn" data-symptom="Overheating / Loud Fan Noise"
+                                        data-main-reason="Other Issue">
                                         <i class="fa-solid fa-fan text-secondary"></i>
                                         <span>Overheating / Loud Fan</span>
                                     </button>
@@ -395,8 +407,16 @@ function form_maintenance($editing = null)
                             <div class="maint-photo-upload-wrap">
                                 <input type="file" name="photo" id="maint_photo" accept="image/*" capture="environment">
                                 <div id="maint_photo_preview_box" class="maint-photo-preview-box" style="display:none;">
-                                    <img id="maint_photo_img" src="" alt="Condition Photo Preview">
-                                    <span class="maint-photo-preview-badge">Attached</span>
+                                    <div class="maint-photo-preview-inner"
+                                        style="position: relative; display: inline-block;">
+                                        <img id="maint_photo_img" src="" alt="Condition Photo Preview" onclick="openPhotoModal(this.src)" title="Click to enlarge image" style="cursor: zoom-in;">
+                                        <span class="maint-photo-preview-badge">Attached</span>
+                                        <button type="button" class="maint-photo-clear-btn" onclick="clearMaintPhoto()"
+                                            title="Clear photo">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -435,7 +455,8 @@ function form_maintenance($editing = null)
                             <div class="maint-avatar-circle" id="preview-maint-icon">
                                 <i class="fa-solid fa-screwdriver-wrench"></i>
                             </div>
-                            <img id="preview-maint-uploaded-img" src="" style="display:none; width: 80px; height: 80px; border-radius: 16px; object-fit: cover; border: 2px solid rgba(245, 158, 11, 0.6); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); z-index: 1; margin-bottom: 0.5rem;">
+                            <img id="preview-maint-uploaded-img" src="" onclick="openPhotoModal(this.src)" title="Click to enlarge image"
+                                style="display:none; width: 80px; height: 80px; border-radius: 16px; object-fit: cover; border: 2px solid rgba(245, 158, 11, 0.6); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); z-index: 1; margin-bottom: 0.5rem; cursor: zoom-in;">
                             <div class="maint-id-pill" id="preview-maint-device-id">
                                 <?= esc_html($editing->DeviceID ?? 'DEV-XXXX') ?>
                             </div>
@@ -452,20 +473,25 @@ function form_maintenance($editing = null)
 
                             <div class="maint-meta-grid">
                                 <div class="maint-meta-item">
-                                    <span class="maint-meta-label"><i class="fa-solid fa-calendar-day me-1"></i> SERVICE DATE</span>
+                                    <span class="maint-meta-label"><i class="fa-solid fa-calendar-day me-1"></i> SERVICE
+                                        DATE</span>
                                     <span class="maint-meta-val" id="preview-maint-date">
                                         <?= esc_html($dateValue ?: date('Y-m-d')) ?>
                                     </span>
                                 </div>
                                 <div class="maint-meta-item">
-                                    <span class="maint-meta-label"><i class="fa-solid fa-barcode me-1"></i> SERIAL NO.</span>
+                                    <span class="maint-meta-label"><i class="fa-solid fa-barcode me-1"></i> SERIAL
+                                        NO.</span>
                                     <span class="maint-meta-val" id="preview-maint-sn">
                                         <?= esc_html($editing->SerialNumber ?: '—') ?>
                                     </span>
                                 </div>
-                                <div class="maint-meta-item maint-span-2" style="border-top: 1px dashed rgba(255, 255, 255, 0.1); padding-top: 6px; margin-top: 4px;">
-                                    <span class="maint-meta-label"><i class="fa-solid fa-triangle-exclamation me-1"></i> ISSUE / REASON</span>
-                                    <span class="maint-meta-val" id="preview-maint-reason" style="color: #fbbf24; font-weight: 700;">
+                                <div class="maint-meta-item maint-span-2"
+                                    style="border-top: 1px dashed rgba(255, 255, 255, 0.1); padding-top: 6px; margin-top: 4px;">
+                                    <span class="maint-meta-label"><i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                        ISSUE / REASON</span>
+                                    <span class="maint-meta-val" id="preview-maint-reason"
+                                        style="color: #fbbf24; font-weight: 700;">
                                         <?= esc_html($details_val ?: 'Select or enter reason') ?>
                                     </span>
                                 </div>
@@ -476,6 +502,16 @@ function form_maintenance($editing = null)
 
             </div>
         </form>
+
+        <!-- Custom Image Lightbox Modal -->
+        <div id="maint_image_lightbox" class="maint-image-lightbox" style="display:none;" onclick="closeMaintLightbox(event)">
+            <div class="maint-lightbox-dialog" onclick="event.stopPropagation()">
+                <button type="button" class="maint-lightbox-close-btn" onclick="closeMaintLightbox(event)" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <img id="maint_lightbox_img" src="" alt="Full Condition Photo">
+            </div>
+        </div>
     </div>
 
     <!-- Scoped Modern Stylesheet -->
@@ -506,6 +542,196 @@ function form_maintenance($editing = null)
             padding: 0.5rem 1rem 2rem 1rem;
             font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             box-sizing: border-box;
+        }
+
+        /* --- SHARED PHOTO UPLOAD & PREVIEW STYLES (Both Desktop & Mobile) --- */
+        #maintenance-form-wrapper .maint-photo-upload-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        #maintenance-form-wrapper .maint-photo-preview-box {
+            position: relative;
+            display: inline-block;
+            margin-top: 8px;
+            width: fit-content;
+        }
+
+        #maintenance-form-wrapper .maint-photo-preview-inner {
+            position: relative;
+            display: inline-block;
+            border-radius: 12px;
+        }
+
+        #maintenance-form-wrapper .maint-photo-preview-box img {
+            width: 140px !important;
+            height: 95px !important;
+            object-fit: cover !important;
+            border-radius: 12px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            display: block !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+            cursor: zoom-in !important;
+            transition: transform 0.2s ease !important;
+        }
+
+        #maintenance-form-wrapper .maint-photo-preview-box img:hover {
+            transform: scale(1.03);
+        }
+
+        #maintenance-form-wrapper .maint-photo-preview-badge {
+            position: absolute !important;
+            bottom: 6px !important;
+            left: 6px !important;
+            background: rgba(16, 185, 129, 0.95) !important;
+            color: #ffffff !important;
+            font-size: 0.68rem !important;
+            font-weight: 700 !important;
+            padding: 2px 8px !important;
+            border-radius: 6px !important;
+            backdrop-filter: blur(4px) !important;
+            pointer-events: none !important;
+            z-index: 5 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+            letter-spacing: 0.02em !important;
+        }
+
+        #maintenance-form-wrapper .maint-photo-clear-btn {
+            position: absolute !important;
+            top: -8px !important;
+            right: -8px !important;
+            width: 26px !important;
+            height: 26px !important;
+            min-width: 26px !important;
+            max-width: 26px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border: 2px solid #ffffff !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.78rem !important;
+            line-height: 1 !important;
+            cursor: pointer !important;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45) !important;
+            transition: all 0.2s ease !important;
+            z-index: 20 !important;
+        }
+
+        #maintenance-form-wrapper .maint-photo-clear-btn:hover {
+            background: #dc2626 !important;
+            transform: scale(1.15) !important;
+        }
+
+        #maintenance-form-wrapper .maint-photo-clear-btn i {
+            font-size: 0.75rem !important;
+            color: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+        }
+
+        /* Photo Zoom Hover & Lightbox Styles */
+        #maintenance-form-wrapper #preview-maint-uploaded-img,
+        #maintenance-form-wrapper #maint_photo_img {
+            cursor: zoom-in !important;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
+        }
+
+        #maintenance-form-wrapper #preview-maint-uploaded-img:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 28px rgba(245, 158, 11, 0.75) !important;
+            border-color: #f59e0b !important;
+        }
+
+        /* Custom Fullscreen Image Lightbox */
+        .maint-image-lightbox {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.88) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            display: none;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 999999 !important;
+            padding: 1.25rem !important;
+            box-sizing: border-box !important;
+        }
+
+        .maint-image-lightbox.is-open {
+            display: flex !important;
+            animation: maintLightFadeIn 0.2s ease-out;
+        }
+
+        .maint-lightbox-dialog {
+            position: relative !important;
+            max-width: 92vw !important;
+            max-height: 90vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            animation: maintLightZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .maint-lightbox-dialog img {
+            max-width: 92vw !important;
+            max-height: 85vh !important;
+            width: auto !important;
+            height: auto !important;
+            object-fit: contain !important;
+            border-radius: 16px !important;
+            box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+            display: block !important;
+        }
+
+        .maint-lightbox-close-btn {
+            position: absolute !important;
+            top: -14px !important;
+            right: -14px !important;
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 38px !important;
+            max-width: 38px !important;
+            border-radius: 50% !important;
+            background: #0f172a !important;
+            color: #ffffff !important;
+            border: 2px solid rgba(255, 255, 255, 0.9) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.1rem !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+            transition: all 0.2s ease !important;
+            z-index: 1000 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .maint-lightbox-close-btn:hover {
+            background: #ef4444 !important;
+            transform: scale(1.1) !important;
+        }
+
+        @keyframes maintLightFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes maintLightZoomIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         /* --- DESKTOP STYLES (Screen > 768px) --- */
@@ -622,7 +848,7 @@ function form_maintenance($editing = null)
                 gap: 1.75rem;
                 position: relative;
                 z-index: 1;
-                align-items: stretch;
+                align-items: start;
             }
 
             #maintenance-form-wrapper .maint-form-card {
@@ -746,47 +972,6 @@ function form_maintenance($editing = null)
                 box-shadow: 0 0 0 3.5px rgba(234, 88, 12, 0.16) !important;
             }
 
-            #maintenance-form-wrapper .maint-photo-upload-wrap {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            #maintenance-form-wrapper .maint-photo-upload-wrap input[type="file"] {
-                padding: 10px 14px !important;
-                height: auto !important;
-                border: 1.5px dashed #cbd5e1 !important;
-                background: #f8fafc !important;
-                border-radius: 12px !important;
-                cursor: pointer;
-            }
-
-            #maintenance-form-wrapper .maint-photo-preview-box {
-                position: relative;
-                display: inline-block;
-                max-width: 140px;
-            }
-
-            #maintenance-form-wrapper .maint-photo-preview-box img {
-                width: 100%;
-                height: 90px;
-                object-fit: cover;
-                border-radius: 10px;
-                border: 1.5px solid #e2e8f0;
-            }
-
-            #maintenance-form-wrapper .maint-photo-preview-badge {
-                position: absolute;
-                top: 4px;
-                right: 4px;
-                background: #10b981;
-                color: #ffffff;
-                font-size: 0.65rem;
-                font-weight: 700;
-                padding: 2px 6px;
-                border-radius: 4px;
-            }
-
             #maintenance-form-wrapper .maint-form-actions {
                 display: flex !important;
                 align-items: center !important;
@@ -849,16 +1034,17 @@ function form_maintenance($editing = null)
                 animation: maintShineSweep 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            /* Preview Badge Column */
+            /* Preview Badge Column (Sticky & Proportional Spacing) */
             #maintenance-form-wrapper .maint-preview-column {
                 display: flex !important;
                 flex-direction: column !important;
+                position: sticky !important;
+                top: 24px !important;
                 animation: maintCardFadeIn 0.5s ease-out forwards;
             }
 
             #maintenance-form-wrapper .maint-badge-card {
                 position: relative;
-                height: 100%;
                 background: linear-gradient(145deg, #0f172a 0%, #1c1917 100%);
                 border-radius: 20px;
                 padding: 1.5rem;
@@ -866,7 +1052,7 @@ function form_maintenance($editing = null)
                 box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.35);
                 display: flex;
                 flex-direction: column;
-                justify-content: space-between;
+                gap: 1.25rem;
                 overflow: hidden;
                 border: 1px solid rgba(255, 255, 255, 0.1);
             }
@@ -917,32 +1103,32 @@ function form_maintenance($editing = null)
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 1.25rem 0;
+                padding: 1rem 0 0.5rem 0;
                 z-index: 1;
             }
 
             #maintenance-form-wrapper .maint-avatar-halo {
                 position: absolute;
-                width: 110px;
-                height: 110px;
+                width: 130px;
+                height: 130px;
                 border-radius: 50%;
                 background: radial-gradient(circle, rgba(234, 88, 12, 0.4) 0%, transparent 70%);
-                filter: blur(14px);
+                filter: blur(16px);
                 z-index: 0;
             }
 
             #maintenance-form-wrapper .maint-avatar-circle {
-                width: 72px;
-                height: 72px;
+                width: 78px;
+                height: 78px;
                 border-radius: 50%;
                 background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
-                box-shadow: 0 0 30px rgba(234, 88, 12, 0.4);
+                box-shadow: 0 0 32px rgba(234, 88, 12, 0.45);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 color: #ffffff;
-                font-size: 2rem;
-                margin-bottom: 0.5rem;
+                font-size: 2.1rem;
+                margin-bottom: 0.6rem;
                 z-index: 1;
             }
 
@@ -1243,24 +1429,55 @@ function form_maintenance($editing = null)
 
         /* Animations */
         @keyframes maintSlideDown {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes maintCardFadeIn {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes maintDotPulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            }
+
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
         }
 
         @keyframes maintShineSweep {
-            0% { left: -60%; }
-            20%, 100% { left: 140%; }
+            0% {
+                left: -60%;
+            }
+
+            20%,
+            100% {
+                left: 140%;
+            }
         }
     </style>
 
@@ -1376,6 +1593,51 @@ function form_maintenance($editing = null)
             if (otherInput) otherInput.addEventListener('input', syncMaintenancePreview);
             if (dateInput) dateInput.addEventListener('change', syncMaintenancePreview);
 
+            window.openPhotoModal = function (src) {
+                if (!src) return;
+                const box = document.getElementById('maint_image_lightbox');
+                const img = document.getElementById('maint_lightbox_img');
+                if (box && img) {
+                    img.src = src;
+                    box.classList.add('is-open');
+                    document.body.style.overflow = 'hidden';
+                }
+            };
+
+            window.closeMaintLightbox = function (e) {
+                if (e) e.stopPropagation();
+                const box = document.getElementById('maint_image_lightbox');
+                if (box) {
+                    box.classList.remove('is-open');
+                    document.body.style.overflow = '';
+                }
+            };
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    window.closeMaintLightbox();
+                }
+            });
+
+            window.clearMaintPhoto = function () {
+                if (photoInput) {
+                    photoInput.value = '';
+                }
+                const prevWrap = document.getElementById('maint_photo_preview_box');
+                const prevImg = document.getElementById('maint_photo_img');
+                if (prevImg) {
+                    prevImg.src = '';
+                }
+                if (prevWrap) {
+                    prevWrap.style.display = 'none';
+                }
+                if (pPhotoImg && pIcon) {
+                    pPhotoImg.src = '';
+                    pPhotoImg.style.display = 'none';
+                    pIcon.style.display = 'flex';
+                }
+            };
+
             if (photoInput) {
                 photoInput.addEventListener('change', function () {
                     if (this.files && this.files[0]) {
@@ -1394,6 +1656,8 @@ function form_maintenance($editing = null)
                             }
                         };
                         reader.readAsDataURL(this.files[0]);
+                    } else {
+                        window.clearMaintPhoto();
                     }
                 });
             }
