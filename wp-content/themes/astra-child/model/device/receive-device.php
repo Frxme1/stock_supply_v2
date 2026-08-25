@@ -216,13 +216,13 @@ function receive_device($device = null)
                 <div>
                     <br>
                     <p class="desktop-header-subtitle">
-                        Assign hardware asset to employee & record allocation history
+                        Assign device to an employee and update records
                     </p>
                 </div>
             </div>
             <div class="desktop-header-badge">
                 <span class="pulse-dot-green"></span>
-                <span>Hardware Asset Check-Out</span>
+                <span>Assign Device</span>
             </div>
         </div>
 
@@ -346,17 +346,20 @@ function receive_device($device = null)
                             <div class="field-header">
                                 <label>
                                     <i class="fa-solid fa-camera field-icon-desktop desktop-only-element"></i>
-                                    Equipment Condition Photo (Camera / Upload)
+                                    Device Photo (Optional)
                                 </label>
                             </div>
                             <div class="field-input-wrap rcv-photo-upload-wrap">
                                 <input type="file" name="photo" id="rcv_photo" accept="image/*" capture="environment"
                                     style="padding: 8px 12px;">
-                                <div id="rcv_photo_wrap" class="rcv-photo-preview-box" style="display:none; margin-top:8px;">
+                                <div id="rcv_photo_wrap" class="rcv-photo-preview-box"
+                                    style="display:none; margin-top:8px;">
                                     <div class="rcv-photo-preview-inner" style="position: relative; display: inline-block;">
-                                        <img id="rcv_photo_img" src="" alt="Condition Photo Preview" onclick="openRcvPhotoModal(this.src)" title="Click to enlarge image">
+                                        <img id="rcv_photo_img" src="" alt="Condition Photo Preview"
+                                            onclick="openRcvPhotoModal(this.src)" title="Click to enlarge image">
                                         <span class="rcv-photo-preview-badge">Attached</span>
-                                        <button type="button" class="rcv-photo-clear-btn" onclick="clearRcvPhoto()" title="Clear photo">
+                                        <button type="button" class="rcv-photo-clear-btn" onclick="clearRcvPhoto()"
+                                            title="Clear photo">
                                             <i class="fa-solid fa-xmark"></i>
                                         </button>
                                     </div>
@@ -388,7 +391,7 @@ function receive_device($device = null)
 
                         <!-- Top Bar -->
                         <div class="preview-top-bar">
-                            <span class="preview-tag"><i class="fa-solid fa-laptop me-1"></i> Target Asset</span>
+                            <span class="preview-tag"><i class="fa-solid fa-laptop me-1"></i> Selected Device</span>
                             <span class="preview-status-badge">
                                 <span class="preview-status-dot"></span>
                                 <span>Ready to Assign</span>
@@ -507,7 +510,7 @@ function receive_device($device = null)
             backdrop-filter: blur(4px) !important;
             pointer-events: none !important;
             z-index: 5 !important;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
             letter-spacing: 0.02em !important;
         }
 
@@ -625,13 +628,25 @@ function receive_device($device = null)
         }
 
         @keyframes rcvLightFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         @keyframes rcvLightZoomIn {
-            from { opacity: 0; transform: scale(0.92); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         @media (min-width: 769px) {
@@ -770,11 +785,11 @@ function receive_device($device = null)
 
             .form-fields-wrapper {
                 background: #ffffff;
-                border: 1.5px solid #e2e8f0;
-                border-radius: 20px;
-                padding: 1.75rem;
-                box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
-                animation: cardFadeIn 0.4s ease-out forwards;
+                border: 1px solid #e2e8f0;
+                border-radius: 18px;
+                padding: 1.5rem 1.75rem;
+                box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
+                animation: cardFadeIn 0.45s ease-out forwards;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
@@ -782,42 +797,41 @@ function receive_device($device = null)
 
             .modern-grid {
                 display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: 1fr 1fr !important;
                 gap: 1rem 1.25rem !important;
             }
 
             .modern-group {
-                display: flex !important;
-                flex-direction: column !important;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
                 margin-bottom: 0 !important;
             }
 
-            .modern-group .field-header {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                margin-bottom: 5px !important;
-            }
-
-            .modern-group .field-header label {
+            .modern-group label {
                 font-size: 0.85rem !important;
                 font-weight: 700 !important;
-                color: #1e293b !important;
-                display: inline-flex !important;
+                color: #334155 !important;
+                display: flex !important;
                 align-items: center !important;
                 gap: 6px !important;
-                margin-bottom: 0 !important;
-                letter-spacing: -0.01em !important;
+                margin: 0 !important;
+                text-transform: none !important;
             }
 
             .field-icon-desktop {
-                color: #4f46e5;
-                font-size: 0.85rem;
+                color: #6366f1;
+                font-size: 0.9rem;
             }
 
             .required-star {
                 color: #ef4444;
-                font-weight: bold;
+                font-weight: 700;
+            }
+
+            .field-input-wrap {
+                position: relative;
+                width: 100%;
             }
 
             .field-input-wrap input,
@@ -828,32 +842,28 @@ function receive_device($device = null)
                 font-size: 0.92rem !important;
                 font-weight: 500 !important;
                 color: #0f172a !important;
-                background-color: #ffffff !important;
-                border: 1.5px solid #cbd5e1 !important;
-                border-radius: 10px !important;
+                background-color: #f8fafc !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 12px !important;
                 transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
                 box-sizing: border-box !important;
-                appearance: none;
             }
 
             .field-input-wrap select {
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
-                background-position: right 0.75rem center !important;
-                background-repeat: no-repeat !important;
-                background-size: 1.1em 1.1em !important;
-                padding-right: 2.2rem !important;
-                cursor: pointer;
+                padding-right: 36px !important;
+                cursor: pointer !important;
             }
 
-            .field-input-wrap input:hover:not([readonly]):not([disabled]),
-            .field-input-wrap select:hover:not([readonly]):not([disabled]) {
-                border-color: #94a3b8 !important;
-            }
-
-            .field-input-wrap input:focus:not([readonly]):not([disabled]),
-            .field-input-wrap select:focus:not([readonly]):not([disabled]) {
+            .field-input-wrap input:hover,
+            .field-input-wrap select:hover {
+                border-color: #cbd5e1 !important;
                 background-color: #ffffff !important;
-                border-color: #4f46e5 !important;
+            }
+
+            .field-input-wrap input:focus,
+            .field-input-wrap select:focus {
+                background-color: #ffffff !important;
+                border-color: #6366f1 !important;
                 outline: none !important;
                 box-shadow: 0 0 0 3.5px rgba(99, 102, 241, 0.16) !important;
             }
@@ -892,7 +902,8 @@ function receive_device($device = null)
                 font-weight: 600 !important;
                 background-color: #ffffff !important;
                 border: 1.5px solid #e2e8f0 !important;
-                color: #ffffffff !important;
+                border-radius: 10px !important;
+                color: #f1f5f9 !important;
                 transition: all 0.2s ease !important;
             }
 
@@ -908,17 +919,18 @@ function receive_device($device = null)
                 padding: 0.6rem 2.2rem !important;
                 font-size: 0.92rem !important;
                 font-weight: 700 !important;
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+                background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
                 border: none !important;
+                border-radius: 10px !important;
                 color: #ffffff !important;
-                box-shadow: 0 6px 20px -4px rgba(16, 185, 129, 0.4) !important;
+                box-shadow: 0 6px 20px -4px rgba(79, 70, 229, 0.4) !important;
                 transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
             }
 
             .btn-submit-action:hover {
                 transform: translateY(-2px) !important;
                 color: #ffffff !important;
-                box-shadow: 0 8px 25px -4px rgba(16, 185, 129, 0.5) !important;
+                box-shadow: 0 8px 25px -4px rgba(79, 70, 229, 0.5) !important;
             }
 
             .btn-shine-effect {
@@ -1259,7 +1271,7 @@ function receive_device($device = null)
     <script>
         const ownerDataList = [
             <?php foreach ($owners_data as $o): ?>
-                                {
+                                        {
                     id: <?= intval($o->OwnerID) ?>,
                     name: <?= json_encode(trim($o->Nickname)) ?>,
                     deptId: <?= json_encode(!empty($o->DepartmentID) ? strval($o->DepartmentID) : '') ?>,
@@ -1451,18 +1463,18 @@ function receive_device($device = null)
                         icon: 'warning',
                         title: '⚠️ Low Stock Warning',
                         html: `
-                            <div style="text-align: left; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 14px 18px; margin: 12px 0 16px 0;">
-                                <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; margin-bottom: 6px;">
-                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Stock Threshold Alert
+                                <div style="text-align: left; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 14px 18px; margin: 12px 0 16px 0;">
+                                    <div style="font-weight: 700; color: #92400e; font-size: 0.95rem; margin-bottom: 6px;">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Stock Threshold Alert
+                                    </div>
+                                    <div style="color: #78350f; font-size: 0.88rem; line-height: 1.5;">
+                                        Assigning <strong>${currentModelName}</strong> (<code>${currentDeviceId}</code>) will reduce remaining available inventory to:
+                                        <div style="margin-top: 8px; font-size: 0.92rem;">${stockBadge}</div>
+                                    </div>
                                 </div>
-                                <div style="color: #78350f; font-size: 0.88rem; line-height: 1.5;">
-                                    Assigning <strong>${currentModelName}</strong> (<code>${currentDeviceId}</code>) will reduce remaining available inventory to:
-                                    <div style="margin-top: 8px; font-size: 0.92rem;">${stockBadge}</div>
-                                </div>
-                            </div>
-                            <p style="margin: 0; color: #475569; font-size: 0.92rem; text-align: left;">
-                                Do you want to proceed with assigning this hardware asset to <strong style="color: #0f172a;">${ownerDisplayName}</strong>?
-                            </p>`,
+                                <p style="margin: 0; color: #475569; font-size: 0.92rem; text-align: left;">
+                                    Do you want to proceed with assigning this hardware asset to <strong style="color: #0f172a;">${ownerDisplayName}</strong>?
+                                </p>`,
                         showConfirmButton: true,
                         showCancelButton: true,
                         showDenyButton: false,

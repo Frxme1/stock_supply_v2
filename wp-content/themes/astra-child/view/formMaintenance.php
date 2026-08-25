@@ -153,7 +153,7 @@ function form_maintenance($editing = null)
             stock_supply_send_email('Maintenance', $DeviceID, $device_info->OwnerID, $Details);
         }
 
-        show_alert('success', 'Maintenance Device!', '', home_url('/maintenance/'));
+        show_alert('success', 'Sent to Repair', 'The device has been placed in maintenance.', home_url('/maintenance/'));
         return ob_get_clean();
     }
 
@@ -220,13 +220,13 @@ function form_maintenance($editing = null)
                 <div>
                     <br>
                     <p class="maint-header-subtitle">
-                        Record Equipment Service, Diagnostic Notes & Hardware Repair Log
+                        Send device for repair and record issue details
                     </p>
                 </div>
             </div>
             <div class="maint-header-badge">
                 <span class="maint-pulse-dot"></span>
-                <span>MAINTENANCE SERVICE</span>
+                <span>Send to Repair</span>
             </div>
         </div>
 
@@ -235,7 +235,7 @@ function form_maintenance($editing = null)
 
             <!-- Mobile Only Header -->
             <div class="maint-mobile-header mobile-only-el">
-                <h2>Form Maintenance</h2>
+                <h2>Send to Repair</h2>
             </div>
 
             <!-- Desktop & Mobile 2-Column Bento Layout Grid -->
@@ -394,7 +394,7 @@ function form_maintenance($editing = null)
                             </div>
 
                             <input type="text" name="OtherDetails" id="OtherDetails"
-                                placeholder="Specify additional diagnostic notes or click quick symptom tags above..."
+                                placeholder="Enter issue details or select from tags above..."
                                 value="<?= esc_attr($other_text) ?>" autocomplete="off">
                         </div>
 
@@ -1583,7 +1583,7 @@ function form_maintenance($editing = null)
                         } else if (this.value) {
                             otherInput.placeholder = 'Specify additional details regarding ' + this.value + ' (optional)...';
                         } else {
-                            otherInput.placeholder = 'Specify additional diagnostic notes or custom reason...';
+                            otherInput.placeholder = 'Enter issue details or select from tags above...';
                         }
                     }
                     syncMaintenancePreview();

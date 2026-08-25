@@ -23,7 +23,7 @@ function form_edit_owner($editing = null)
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Security Verification Failed',
+                        title: 'Session Expired',
                         text: 'Security token expired. Please refresh and try again.'
                     });
                 });
@@ -121,7 +121,7 @@ function form_edit_owner($editing = null)
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Update Employee Success',
+                        title: 'Employee Updated',
                         showConfirmButton: false,
                         timer: 1500
                     }).then(() => {
@@ -135,7 +135,7 @@ function form_edit_owner($editing = null)
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Update Failed',
+                        title: 'Failed to Update Employee',
                         text: 'Error: " . $db_err . "'
                     });
                 });
@@ -160,12 +160,12 @@ function form_edit_owner($editing = null)
                     <i class="fa-solid fa-user-pen"></i>
                 </div>
                 <div>
-                    <p class="emp-header-subtitle">Update staff profile information, role & department assignments</p>
+                    <p class="emp-header-subtitle">Update employee details, role, and department</p>
                 </div>
             </div>
             <div class="emp-header-badge">
                 <span class="emp-status-dot-static"></span>
-                <span>STAFF RECORD</span>
+                <span>Edit Employee</span>
             </div>
         </div>
 
@@ -379,11 +379,10 @@ function form_edit_owner($editing = null)
         #edit-employee-wrapper {
             position: relative;
             width: 100%;
-            max-width: 1100px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 1rem 1rem 2.5rem 1rem;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Thonburi", "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
+            padding: 0.5rem 1rem 2rem 1rem;
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             box-sizing: border-box;
             color: #0f172a;
         }
@@ -402,12 +401,14 @@ function form_edit_owner($editing = null)
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                background: #ffffff;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(226, 232, 240, 0.9);
+                border-radius: 18px;
                 padding: 1rem 1.5rem;
                 margin-bottom: 1.25rem;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+                box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
             }
 
             #edit-employee-wrapper .emp-header-left {
@@ -417,30 +418,30 @@ function form_edit_owner($editing = null)
             }
 
             #edit-employee-wrapper .emp-icon-badge {
-                width: 42px;
-                height: 42px;
-                border-radius: 10px;
-                background: #eff6ff;
-                border: 1px solid #dbeafe;
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: #2563eb;
-                font-size: 1.15rem;
+                color: #ffffff;
+                font-size: 1.3rem;
+                box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
                 flex-shrink: 0;
             }
 
             #edit-employee-wrapper .emp-header-title {
                 margin: 0;
-                font-size: 1.2rem;
+                font-size: 1.25rem;
                 font-weight: 700;
                 color: #0f172a;
                 line-height: 1.3;
             }
 
             #edit-employee-wrapper .emp-header-subtitle {
-                margin: 2px 0 0 0;
-                font-size: 0.82rem;
+                margin: 3px 0 0 0;
+                font-size: 0.85rem;
                 color: #64748b;
                 line-height: 1.4;
             }
@@ -448,23 +449,23 @@ function form_edit_owner($editing = null)
             #edit-employee-wrapper .emp-header-badge {
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
-                padding: 5px 12px;
-                background: #f8fafc;
-                color: #475569;
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                font-size: 0.75rem;
-                font-weight: 600;
+                gap: 7px;
+                padding: 5px 14px;
+                background: rgba(99, 102, 241, 0.08);
+                color: #4f46e5;
+                border-radius: 999px;
+                font-size: 0.78rem;
+                font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: 0.04em;
             }
 
             #edit-employee-wrapper .emp-status-dot-static {
-                width: 6px;
-                height: 6px;
+                width: 7px;
+                height: 7px;
                 border-radius: 50%;
-                background-color: #2563eb;
+                background-color: #10b981;
+                box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
             }
 
             #edit-employee-wrapper .emp-main-form {
@@ -478,30 +479,32 @@ function form_edit_owner($editing = null)
             #edit-employee-wrapper .emp-layout-grid {
                 display: grid;
                 grid-template-columns: 1.4fr 0.9fr;
-                gap: 1.25rem;
+                gap: 1.5rem;
                 align-items: stretch;
             }
 
             #edit-employee-wrapper .emp-form-card {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 12px;
+                border-radius: 18px;
                 padding: 1.5rem 1.75rem;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+                box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
+                animation: cardFadeIn 0.45s ease-out forwards;
             }
 
             #edit-employee-wrapper .emp-fields-grid {
                 display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: 1fr 1fr !important;
                 gap: 1rem 1.25rem !important;
             }
 
             #edit-employee-wrapper .emp-field-group {
                 display: flex !important;
                 flex-direction: column !important;
+                gap: 5px !important;
                 margin-bottom: 0 !important;
             }
 
@@ -510,126 +513,136 @@ function form_edit_owner($editing = null)
             }
 
             #edit-employee-wrapper .emp-field-group label {
-                font-size: 0.82rem !important;
-                font-weight: 600 !important;
+                font-size: 0.85rem !important;
+                font-weight: 700 !important;
                 color: #334155 !important;
-                display: inline-flex !important;
+                display: flex !important;
                 align-items: center !important;
                 gap: 6px !important;
-                margin-bottom: 5px !important;
+                margin: 0 !important;
+                text-transform: none !important;
             }
 
             #edit-employee-wrapper .emp-field-icon {
-                color: #64748b;
-                font-size: 0.8rem;
+                color: #6366f1;
+                font-size: 0.9rem;
             }
 
             #edit-employee-wrapper .emp-req {
-                color: #dc2626;
+                color: #ef4444;
+                font-weight: 700;
             }
 
             #edit-employee-wrapper .emp-field-group input,
             #edit-employee-wrapper .emp-field-group select {
                 width: 100% !important;
-                height: 42px !important;
+                height: 44px !important;
                 padding: 0 14px !important;
-                font-size: 0.9rem !important;
+                font-size: 0.92rem !important;
                 font-weight: 500 !important;
                 color: #0f172a !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                border-radius: 8px !important;
-                transition: border-color 0.12s ease, box-shadow 0.12s ease !important;
+                background-color: #f8fafc !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 12px !important;
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
                 box-sizing: border-box !important;
-                appearance: none;
             }
 
             #edit-employee-wrapper .emp-field-group select {
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E") !important;
-                background-position: right 12px center !important;
-                background-repeat: no-repeat !important;
-                background-size: 14px 14px !important;
-                padding-right: 32px !important;
-                cursor: pointer;
+                padding-right: 36px !important;
+                cursor: pointer !important;
+            }
+
+            #edit-employee-wrapper .emp-field-group select.emp-locked-select {
+                background-color: #f1f5f9 !important;
+                color: #059669 !important;
+                font-weight: 700 !important;
+                border: 1.5px solid #cbd5e1 !important;
+                cursor: not-allowed !important;
+                opacity: 1 !important;
+                -webkit-text-fill-color: #059669 !important;
             }
 
             #edit-employee-wrapper .emp-field-group input:hover,
             #edit-employee-wrapper .emp-field-group select:hover {
-                border-color: #94a3b8 !important;
+                border-color: #cbd5e1 !important;
+                background-color: #ffffff !important;
             }
 
             #edit-employee-wrapper .emp-field-group input:focus,
             #edit-employee-wrapper .emp-field-group select:focus {
                 background-color: #ffffff !important;
-                border-color: #2563eb !important;
+                border-color: #6366f1 !important;
                 outline: none !important;
-                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+                box-shadow: 0 0 0 3.5px rgba(99, 102, 241, 0.16) !important;
             }
 
             #edit-employee-wrapper .emp-form-actions {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: flex-end !important;
-                gap: 10px !important;
-                margin-top: 1.5rem !important;
-                padding-top: 1.25rem !important;
-                border-top: 1px solid #f1f5f9 !important;
+                gap: 1rem !important;
+                margin-top: 1.25rem !important;
+                padding-top: 1rem !important;
+                border-top: 1.5px dashed #f1f5f9 !important;
             }
 
             #edit-employee-wrapper .emp-btn-cancel {
-                padding: 0.55rem 1.25rem !important;
-                font-size: 0.875rem !important;
+                padding: 0.6rem 1.75rem !important;
+                font-size: 0.92rem !important;
                 font-weight: 600 !important;
-                background: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                color: #475569 !important;
-                border-radius: 8px !important;
-                transition: all 0.12s ease !important;
+                background-color: #ffffff !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 10px !important;
+                color: #64748b !important;
+                transition: all 0.2s ease !important;
                 cursor: pointer !important;
             }
 
             #edit-employee-wrapper .emp-btn-cancel:hover {
-                background: #f8fafc !important;
+                background-color: #f1f5f9 !important;
                 color: #0f172a !important;
-                border-color: #94a3b8 !important;
+                border-color: #cbd5e1 !important;
             }
 
             #edit-employee-wrapper .emp-btn-submit {
-                padding: 0.55rem 1.4rem !important;
-                font-size: 0.875rem !important;
-                font-weight: 600 !important;
-                background: #2563eb !important;
-                border: 1px solid #1d4ed8 !important;
+                padding: 0.6rem 2.2rem !important;
+                font-size: 0.92rem !important;
+                font-weight: 700 !important;
+                background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+                border: none !important;
+                border-radius: 10px !important;
                 color: #ffffff !important;
-                border-radius: 8px !important;
-                box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
-                transition: all 0.12s ease !important;
+                box-shadow: 0 6px 20px -4px rgba(79, 70, 229, 0.4) !important;
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
                 cursor: pointer !important;
             }
 
             #edit-employee-wrapper .emp-btn-submit:hover {
-                background: #1d4ed8 !important;
+                transform: translateY(-2px) !important;
                 color: #ffffff !important;
-                box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3) !important;
+                box-shadow: 0 8px 25px -4px rgba(79, 70, 229, 0.5) !important;
             }
 
             /* Preview Badge Column */
             #edit-employee-wrapper .emp-preview-column {
                 display: flex !important;
                 flex-direction: column !important;
+                animation: cardFadeIn 0.5s ease-out forwards;
             }
 
             #edit-employee-wrapper .emp-badge-card {
                 height: 100%;
-                background: #f8fafc;
-                border-radius: 12px;
-                padding: 1.25rem;
+                background: linear-gradient(165deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.98) 100%);
+                border-radius: 20px;
+                padding: 1.5rem;
                 color: #0f172a;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-                border: 1px solid #e2e8f0;
+                border: 1.5px solid #e2e8f0;
                 box-sizing: border-box;
+                box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.05);
             }
 
             #edit-employee-wrapper .emp-badge-top {
@@ -639,15 +652,15 @@ function form_edit_owner($editing = null)
             }
 
             #edit-employee-wrapper .emp-badge-tag {
-                font-size: 0.72rem;
+                font-size: 0.75rem;
                 font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: 0.04em;
-                color: #475569;
-                background: #ffffff;
-                padding: 3px 8px;
-                border-radius: 4px;
-                border: 1px solid #e2e8f0;
+                color: #4338ca;
+                background: #eef2ff;
+                padding: 4px 10px;
+                border-radius: 999px;
+                border: 1px solid #c7d2fe;
             }
 
             #edit-employee-wrapper .emp-badge-status {
@@ -656,7 +669,7 @@ function form_edit_owner($editing = null)
                 gap: 5px;
                 font-size: 0.72rem;
                 font-weight: 600;
-                padding: 3px 10px;
+                padding: 4px 10px;
                 border-radius: 999px;
                 color: #059669;
                 background: #ecfdf5;
@@ -668,6 +681,7 @@ function form_edit_owner($editing = null)
                 height: 6px;
                 border-radius: 50%;
                 background: #10b981;
+                box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
             }
 
             #edit-employee-wrapper .emp-avatar-box {
@@ -675,55 +689,54 @@ function form_edit_owner($editing = null)
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 1rem 0;
+                padding: 1.25rem 0;
             }
 
             #edit-employee-wrapper .emp-avatar-circle {
-                width: 64px;
-                height: 64px;
+                width: 68px;
+                height: 68px;
                 border-radius: 50%;
-                background: #eff6ff;
-                border: 2px solid #bfdbfe;
+                background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: #2563eb;
-                font-size: 1.6rem;
-                margin-bottom: 0.5rem;
+                color: #ffffff;
+                font-size: 1.8rem;
+                margin-bottom: 0.75rem;
+                box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.35);
             }
 
             #edit-employee-wrapper .emp-id-pill {
-                font-size: 1rem;
+                font-size: 1.05rem;
                 font-weight: 700;
                 color: #0f172a;
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                padding: 3px 14px;
-                border-radius: 6px;
+                padding: 4px 16px;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
             }
 
             #edit-employee-wrapper .emp-details-box {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 0.85rem 1rem;
+                border-radius: 12px;
+                padding: 1rem 1.15rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
             }
 
             #edit-employee-wrapper .emp-preview-name {
-                font-size: 1rem;
+                font-size: 1.05rem;
                 font-weight: 700;
                 color: #0f172a;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                line-height: 1.3;
             }
 
             #edit-employee-wrapper .emp-preview-email {
-                font-size: 0.8rem;
+                font-size: 0.82rem;
                 color: #64748b;
-                font-weight: 500;
-                margin-bottom: 0.6rem;
-                word-break: break-all;
+                margin-bottom: 0.75rem;
+                line-height: 1.3;
             }
 
             #edit-employee-wrapper .emp-meta-grid {
@@ -744,12 +757,12 @@ function form_edit_owner($editing = null)
                 color: #64748b;
                 text-transform: uppercase;
                 letter-spacing: 0.04em;
-                margin-bottom: 1px;
-                font-weight: 600;
+                margin-bottom: 2px;
+                font-weight: 700;
             }
 
             #edit-employee-wrapper .emp-meta-val {
-                font-size: 0.82rem;
+                font-size: 0.84rem;
                 font-weight: 600;
                 color: #0f172a;
                 white-space: nowrap;
@@ -761,7 +774,7 @@ function form_edit_owner($editing = null)
         /* --- MOBILE STYLES (Screen <= 768px) --- */
         @media (max-width: 768px) {
             #edit-employee-wrapper {
-                padding: 0.5rem 0.5rem 2rem 0.5rem !important;
+                padding: 0 !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
             }
@@ -775,14 +788,16 @@ function form_edit_owner($editing = null)
             }
 
             #edit-employee-wrapper .emp-mobile-header {
-                margin-bottom: 1rem !important;
-                text-align: left !important;
+                display: block;
+                text-align: center;
+                margin-bottom: 15px;
             }
 
             #edit-employee-wrapper .emp-mobile-header h2 {
                 font-size: 1.35rem !important;
-                font-weight: 700 !important;
+                font-weight: 800 !important;
                 color: #0f172a !important;
+                letter-spacing: -0.02em !important;
                 margin: 0 !important;
             }
 
@@ -792,78 +807,88 @@ function form_edit_owner($editing = null)
             }
 
             #edit-employee-wrapper .emp-form-card {
-                background: #ffffff !important;
-                border: 1px solid #e2e8f0 !important;
-                border-radius: 12px !important;
-                padding: 1.25rem 1rem !important;
-                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
             }
 
             #edit-employee-wrapper .emp-fields-grid {
                 display: flex !important;
                 flex-direction: column !important;
-                gap: 12px !important;
+                gap: 14px !important;
                 width: 100% !important;
             }
 
             #edit-employee-wrapper .emp-field-group {
-                display: flex !important;
-                flex-direction: column !important;
+                background: #ffffff !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 20px !important;
+                padding: 16px 18px !important;
+                box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
                 margin-bottom: 0 !important;
             }
 
             #edit-employee-wrapper .emp-field-group label {
-                font-size: 0.8rem !important;
-                font-weight: 600 !important;
-                color: #334155 !important;
-                margin-bottom: 4px !important;
+                font-size: 0.78rem !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.06em !important;
+                color: #475569 !important;
+                margin-bottom: 8px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
             }
 
             #edit-employee-wrapper .emp-field-group input,
             #edit-employee-wrapper .emp-field-group select {
                 width: 100% !important;
                 box-sizing: border-box !important;
-                height: 44px !important;
-                border-radius: 8px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                padding: 0 12px !important;
-                font-size: 0.9rem !important;
-                font-weight: 500 !important;
+                height: 48px !important;
+                border-radius: 14px !important;
+                background-color: #f8fafc !important;
+                border: 1.5px solid #cbd5e1 !important;
+                padding: 0 16px !important;
+                font-size: 16px !important;
+                font-weight: 600 !important;
                 color: #0f172a !important;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
             }
 
             #edit-employee-wrapper .emp-form-actions {
                 display: flex !important;
                 flex-direction: row !important;
-                gap: 8px !important;
-                margin-top: 16px !important;
-                padding-top: 14px !important;
-                border-top: 1px solid #f1f5f9 !important;
+                gap: 12px !important;
+                margin-top: 24px !important;
+                padding-top: 18px !important;
+                border-top: 1.5px dashed #e2e8f0 !important;
+                width: 100% !important;
             }
 
             #edit-employee-wrapper .emp-btn-cancel,
             #edit-employee-wrapper .emp-btn-submit {
-                flex: 1 1 0 !important;
-                height: 44px !important;
-                font-size: 0.9rem !important;
-                font-weight: 600 !important;
-                border-radius: 8px !important;
-                display: inline-flex !important;
+                flex: 1 !important;
+                height: 52px !important;
+                border-radius: 9999px !important;
+                font-size: 1rem !important;
+                font-weight: 700 !important;
+                display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
             }
 
             #edit-employee-wrapper .emp-btn-cancel {
                 background: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                color: #475569 !important;
+                border: 1.5px solid #e2e8f0 !important;
+                color: #64748b !important;
             }
 
             #edit-employee-wrapper .emp-btn-submit {
-                background: #2563eb !important;
-                border: 1px solid #1d4ed8 !important;
+                background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+                border: none !important;
                 color: #ffffff !important;
+                box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
             }
         }
     </style>

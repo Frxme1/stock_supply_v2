@@ -130,7 +130,7 @@ function confirmReceive(idOrData, model = '', brand = '', category = '', serial 
         </div>
 
         <p style="margin: 0; color: #64748b; font-size: 0.92rem; line-height: 1.5; text-align: center;">
-            Do you want to proceed to the assignment page to check out this hardware asset to an employee?
+            Do you want to assign this device to an employee?
         </p>
     </div>`;
 
@@ -262,7 +262,7 @@ function confirmReturnFromMaintenance(idOrData, nonce = '') {
         </div>
 
         <p style="margin: 0; color: #475569; font-size: 0.92rem; line-height: 1.5; text-align: center;">
-            ${ownerName ? `Do you want to return this repaired device to <strong>${ownerName}</strong> or return to available inventory?` : `Do you want to return this repaired device to available inventory stock?`}
+            ${ownerName ? `Do you want to return this repaired device to <strong>${ownerName}</strong> or return to available stock?` : `Do you want to return this repaired device to available stock?`}
         </p>
     </div>`;
 
@@ -404,7 +404,7 @@ function confirmReturnDevice(idOrData, nonce = '') {
         </div>
 
         <p style="margin: 0; color: #475569; font-size: 0.92rem; line-height: 1.5; text-align: center;">
-            Are you sure you want to return this device from <strong>${ownerDisplay}</strong> back to available inventory stock?
+            Return this device from <strong>${ownerDisplay}</strong> back to available stock?
         </p>
     </div>`;
 

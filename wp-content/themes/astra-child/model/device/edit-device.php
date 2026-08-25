@@ -251,13 +251,13 @@ function edit_device_form($editing = null)
                 <div>
                     <br>
                     <p class="desktop-header-subtitle">
-                        Update hardware parameters, ownership assignment, and asset status
+                        Update device details, assignment, and status
                     </p>
                 </div>
             </div>
             <div class="desktop-header-badge">
                 <span class="pulse-dot-green"></span>
-                <span>Asset Specification Update</span>
+                <span>Edit Device</span>
             </div>
         </div>
 
@@ -305,15 +305,20 @@ function edit_device_form($editing = null)
                             </div>
                         </div>
 
-                        <!-- Brand Select (Standard Dropdown) -->
-                        <div class="form-group modern-group">
-                            <div class="field-header">
+                        <!-- Brand Select with Add New Brand Toggle -->
+                        <div class="form-group modern-group" id="brand-form-group">
+                            <div class="field-header"
+                                style="display: flex; justify-content: space-between; align-items: center;">
                                 <label for="edit-brand-select">
                                     <i class="fa-solid fa-building field-icon-desktop desktop-only-element"></i>
                                     Brand <span class="required-star">*</span>
                                 </label>
+                                <button type="button" id="btn-toggle-new-brand" class="btn-toggle-brand-pill"
+                                    onclick="toggleEditNewBrandMode()">
+                                    <i class="fa-solid fa-plus"></i> Add New Brand
+                                </button>
                             </div>
-                            <div class="field-input-wrap">
+                            <div class="field-input-wrap" id="brand-select-wrap">
                                 <select name="BrandID" id="edit-brand-select" required onchange="updateLivePreview()">
                                     <option value="">-- Select Brand --</option>
                                     <?php foreach ($brands as $b): ?>
@@ -322,6 +327,16 @@ function edit_device_form($editing = null)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                            </div>
+                            <div class="field-input-wrap" id="brand-new-input-wrap" style="display: none;">
+                                <div style="display: flex; gap: 8px; width: 100%;">
+                                    <input type="text" name="new_brand_name" id="new_brand_name"
+                                        placeholder="Type new brand name (e.g. Razer, Anker)..." style="flex: 1;">
+                                    <button type="button" class="btn-cancel-brand" onclick="cancelEditNewBrandMode()"
+                                        title="Cancel">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -402,7 +417,8 @@ function edit_device_form($editing = null)
                                 </label>
                             </div>
                             <!-- Desktop Custom Searchable Dropdown (Desktop Only) -->
-                            <div class="field-input-wrap desktop-only-element" id="website_edit_owner_search_wrap" style="position: relative;">
+                            <div class="field-input-wrap desktop-only-element" id="website_edit_owner_search_wrap"
+                                style="position: relative;">
                                 <div style="position: relative; width: 100%;">
                                     <i class="fa-solid fa-magnifying-glass"
                                         style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none; z-index: 2;"></i>
@@ -500,7 +516,7 @@ function edit_device_form($editing = null)
 
                         <!-- Card Top Bar -->
                         <div class="preview-top-bar">
-                            <span class="preview-tag"><i class="fa-solid fa-cube me-1"></i> Asset Summary</span>
+                            <span class="preview-tag"><i class="fa-solid fa-cube me-1"></i> Device Details</span>
                             <span class="preview-status-badge" id="preview-status-pill"
                                 style="color: <?= $init_conf['color'] ?>; background: <?= $init_conf['bg'] ?>; border: 1px solid <?= $init_conf['border'] ?>;">
                                 <span class="preview-status-dot" id="preview-status-dot"
@@ -524,7 +540,7 @@ function edit_device_form($editing = null)
                         <!-- Card Metadata Details -->
                         <div class="preview-specs-box">
                             <div class="preview-device-name" id="preview-model-text">
-                                <?= esc_html($editing->Model ?: 'Hardware Asset') ?>
+                                <?= esc_html($editing->Model ?: 'Device Model') ?>
                             </div>
                             <div class="preview-brand-tag" id="preview-brand-text">
                                 <?php
@@ -642,8 +658,8 @@ function edit_device_form($editing = null)
         }
 
         /* =============================================================
-                           DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
-                           ============================================================= */
+                               DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
+                               ============================================================= */
         @media (min-width: 769px) {
 
             .mobile-only-header,
@@ -788,54 +804,53 @@ function edit_device_form($editing = null)
 
             .form-fields-wrapper {
                 background: #ffffff;
-                border: 1.5px solid #e2e8f0;
-                border-radius: 20px;
-                padding: 1.75rem;
-                box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
-                animation: cardFadeIn 0.4s ease-out forwards;
+                border: 1px solid #e2e8f0;
+                border-radius: 18px;
+                padding: 1.5rem 1.75rem;
+                box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
+                animation: cardFadeIn 0.45s ease-out forwards;
             }
 
             .modern-grid {
                 display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: 1fr 1fr !important;
                 gap: 1rem 1.25rem !important;
             }
 
             .modern-group {
-                display: flex !important;
-                flex-direction: column !important;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
                 margin-bottom: 0 !important;
             }
 
-            .modern-group .field-header {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                margin-bottom: 5px !important;
-            }
-
-            .modern-group .field-header label {
+            .modern-group label {
                 font-size: 0.85rem !important;
                 font-weight: 700 !important;
-                color: #1e293b !important;
-                display: inline-flex !important;
+                color: #334155 !important;
+                display: flex !important;
                 align-items: center !important;
                 gap: 6px !important;
-                margin-bottom: 0 !important;
-                letter-spacing: -0.01em !important;
+                margin: 0 !important;
+                text-transform: none !important;
             }
 
             .field-icon-desktop {
-                color: #4f46e5;
-                font-size: 0.85rem;
+                color: #6366f1;
+                font-size: 0.9rem;
             }
 
             .required-star {
                 color: #ef4444;
-                font-weight: bold;
+                font-weight: 700;
+            }
+
+            .field-input-wrap {
+                position: relative;
+                width: 100%;
             }
 
             .field-input-wrap input,
@@ -846,32 +861,28 @@ function edit_device_form($editing = null)
                 font-size: 0.92rem !important;
                 font-weight: 500 !important;
                 color: #0f172a !important;
-                background-color: #ffffff !important;
-                border: 1.5px solid #cbd5e1 !important;
-                border-radius: 10px !important;
+                background-color: #f8fafc !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 12px !important;
                 transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
                 box-sizing: border-box !important;
-                appearance: none;
             }
 
             .field-input-wrap select {
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
-                background-position: right 0.75rem center !important;
-                background-repeat: no-repeat !important;
-                background-size: 1.1em 1.1em !important;
-                padding-right: 2.2rem !important;
-                cursor: pointer;
+                padding-right: 36px !important;
+                cursor: pointer !important;
             }
 
-            .field-input-wrap input:hover:not([readonly]):not([disabled]),
-            .field-input-wrap select:hover:not([readonly]):not([disabled]) {
-                border-color: #94a3b8 !important;
-            }
-
-            .field-input-wrap input:focus:not([readonly]):not([disabled]),
-            .field-input-wrap select:focus:not([readonly]):not([disabled]) {
+            .field-input-wrap input:hover,
+            .field-input-wrap select:hover {
+                border-color: #cbd5e1 !important;
                 background-color: #ffffff !important;
-                border-color: #4f46e5 !important;
+            }
+
+            .field-input-wrap input:focus,
+            .field-input-wrap select:focus {
+                background-color: #ffffff !important;
+                border-color: #6366f1 !important;
                 outline: none !important;
                 box-shadow: 0 0 0 3.5px rgba(99, 102, 241, 0.16) !important;
             }
@@ -894,447 +905,494 @@ function edit_device_form($editing = null)
                 padding-right: 38px !important;
             }
 
-            .btn-new-brand-text {
-                background: #eff6ff !important;
-                border: 1px solid #bfdbfe !important;
-                color: #2563eb !important;
+            .btn-toggle-brand-pill,
+            .btn-new-brand-text,
+            .btn-link-brand,
+            #btn-toggle-new-brand {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 5px !important;
+                height: 26px !important;
+                min-height: 26px !important;
+                max-height: 26px !important;
+                padding: 0 10px !important;
+                background: #eef2ff !important;
+                border: 1px solid #c7d2fe !important;
+                border-radius: 9999px !important;
+                color: #4338ca !important;
                 font-size: 0.72rem !important;
                 font-weight: 700 !important;
-                padding: 3px 10px !important;
-                border-radius: 9999px !important;
+                line-height: 1 !important;
+                letter-spacing: 0.02em !important;
+                white-space: nowrap !important;
                 cursor: pointer !important;
                 user-select: none !important;
                 outline: none !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                gap: 5px !important;
+                box-shadow: 0 1px 2px rgba(99, 102, 241, 0.08) !important;
                 text-decoration: none !important;
-                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-                box-shadow: 0 1px 2px rgba(37, 99, 235, 0.06) !important;
+                transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                margin: 0 !important;
+                vertical-align: middle !important;
             }
 
-            .btn-new-brand-text i {
-                font-size: 0.75rem !important;
-                transition: transform 0.25s ease !important;
+            .btn-toggle-brand-pill i,
+            .btn-new-brand-text i,
+            .btn-link-brand i,
+            #btn-toggle-new-brand i {
+                font-size: 0.68rem !important;
+                color: #4f46e5 !important;
+                transition: transform 0.2s ease !important;
             }
 
-            .btn-new-brand-text:hover {
-                background: #2563eb !important;
-                border-color: #2563eb !important;
+            .btn-toggle-brand-pill:hover,
+            .btn-new-brand-text:hover,
+            .btn-link-brand:hover,
+            #btn-toggle-new-brand:hover {
+                background: #4338ca !important;
+                border-color: #4338ca !important;
                 color: #ffffff !important;
                 transform: translateY(-1px) !important;
-                box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25) !important;
+                box-shadow: 0 4px 10px rgba(67, 56, 202, 0.25) !important;
                 text-decoration: none !important;
             }
 
-            .btn-new-brand-text:hover i {
+            .btn-toggle-brand-pill:hover i,
+            .btn-new-brand-text:hover i,
+            .btn-link-brand:hover i,
+            #btn-toggle-new-brand:hover i {
+                color: #ffffff !important;
                 transform: rotate(90deg) !important;
             }
 
-            .btn-new-brand-text:active {
+            .btn-toggle-brand-pill:active,
+            .btn-new-brand-text:active,
+            .btn-link-brand:active,
+            #btn-toggle-new-brand:active {
                 transform: translateY(0) !important;
-                box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+                box-shadow: 0 1px 2px rgba(67, 56, 202, 0.15) !important;
             }
 
             /* Desktop Actions */
             .modern-form-actions {
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: flex-end !important;
-                    gap: 1rem !important;
-                    margin-top: 1.25rem !important;
-                    padding-top: 1rem !important;
-                    border-top: 1.5px dashed #f1f5f9 !important;
-                }
-
-                .btn-cancel-action {
-                    padding: 0.6rem 1.75rem !important;
-                    font-size: 0.92rem !important;
-                    font-weight: 600 !important;
-                    background-color: #ffffff !important;
-                    border: 1.5px solid #e2e8f0 !important;
-                    color: #ffffff !important;
-                    transition: all 0.2s ease !important;
-                }
-
-                .btn-cancel-action:hover {
-                    background-color: #f1f5f9 !important;
-                    color: #0f172a !important;
-                    border-color: #cbd5e1 !important;
-                }
-
-                .btn-submit-action {
-                    position: relative;
-                    overflow: hidden;
-                    padding: 0.6rem 2.2rem !important;
-                    font-size: 0.92rem !important;
-                    font-weight: 700 !important;
-                    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
-                    border: none !important;
-                    color: #ffffff !important;
-                    box-shadow: 0 6px 20px -4px rgba(79, 70, 229, 0.4) !important;
-                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-                }
-
-                .btn-submit-action:hover {
-                    transform: translateY(-2px) !important;
-                    color: #0f172a !important;
-                    box-shadow: 0 8px 25px -4px rgba(79, 70, 229, 0.5) !important;
-                }
-
-                .btn-shine-effect {
-                    position: absolute;
-                    top: -50%;
-                    left: -60%;
-                    width: 40%;
-                    height: 200%;
-                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-                    transform: rotate(25deg);
-                    animation: shineSweep 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
-                }
-
-                /* Preview Column (Right Side) */
-                .preview-panel-column {
-                    display: flex !important;
-                    flex-direction: column !important;
-                    animation: cardFadeIn 0.5s ease-out forwards;
-                }
-
-                .live-preview-card {
-                    position: relative;
-                    height: 100%;
-                    background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
-                    border-radius: 20px;
-                    padding: 1.5rem;
-                    color: #ffffff;
-                    box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.35);
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
-                    overflow: hidden;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                }
-
-                .preview-top-bar {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    z-index: 1;
-                }
-
-                .preview-tag {
-                    font-size: 0.72rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.08em;
-                    color: #a5b4fc;
-                    background: rgba(165, 180, 252, 0.12);
-                    padding: 4px 10px;
-                    border-radius: 6px;
-                    border: 1px solid rgba(165, 180, 252, 0.2);
-                }
-
-                .preview-status-badge {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    font-size: 0.75rem;
-                    font-weight: 700;
-                    color: #10b981;
-                    background: rgba(16, 185, 129, 0.15);
-                    border: 1px solid rgba(16, 185, 129, 0.3);
-                    padding: 4px 12px;
-                    border-radius: 999px;
-                    transition: all 0.3s ease;
-                }
-
-                .preview-status-dot {
-                    width: 6px;
-                    height: 6px;
-                    background: #10b981;
-                    border-radius: 50%;
-                    box-shadow: 0 0 8px #10b981;
-                    transition: all 0.3s ease;
-                }
-
-                .preview-visual-box {
-                    position: relative;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 1.25rem 0;
-                    z-index: 1;
-                }
-
-                .preview-icon-halo {
-                    position: absolute;
-                    width: 110px;
-                    height: 110px;
-                    border-radius: 50%;
-                    background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
-                    filter: blur(14px);
-                    z-index: 0;
-                }
-
-                .preview-icon-main {
-                    font-size: 3.5rem;
-                    color: #ffffff;
-                    text-shadow: 0 4px 20px rgba(99, 102, 241, 0.6);
-                    animation: iconFloat 3.5s ease-in-out infinite;
-                    z-index: 1;
-                    margin-bottom: 0.75rem;
-                }
-
-                .preview-id-pill {
-                    font-size: 1.1rem;
-                    font-weight: 800;
-                    letter-spacing: 0.05em;
-                    color: #e0e7ff;
-                    background: rgba(255, 255, 255, 0.08);
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    padding: 4px 16px;
-                    border-radius: 12px;
-                    backdrop-filter: blur(8px);
-                    z-index: 1;
-                    font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
-                }
-
-                .preview-specs-box {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 14px;
-                    padding: 1rem;
-                    backdrop-filter: blur(12px);
-                    z-index: 1;
-                }
-
-                .preview-device-name {
-                    font-size: 1.15rem;
-                    font-weight: 800;
-                    color: #ffffff;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                .preview-brand-tag {
-                    font-size: 0.8rem;
-                    color: #818cf8;
-                    font-weight: 600;
-                    margin-bottom: 0.75rem;
-                }
-
-                .preview-meta-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 8px;
-                    border-top: 1px solid rgba(255, 255, 255, 0.08);
-                    padding-top: 8px;
-                }
-
-                .preview-meta-item {
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .preview-meta-item .meta-label {
-                    font-size: 0.68rem;
-                    color: #94a3b8;
-                    text-transform: uppercase;
-                    letter-spacing: 0.04em;
-                }
-
-                .preview-meta-item .meta-value {
-                    font-size: 0.82rem;
-                    font-weight: 600;
-                    color: #f1f5f9;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-end !important;
+                gap: 1rem !important;
+                margin-top: 1.25rem !important;
+                padding-top: 1rem !important;
+                border-top: 1.5px dashed #f1f5f9 !important;
             }
 
-            /* =============================================================
-                           MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
-                           ============================================================= */
-            @media (max-width: 768px) {
-
-                .desktop-only-element,
-                .preview-panel-column,
-                .add-device-desktop-header,
-                .bg-glow-orb {
-                    display: none !important;
-                }
-
-                .mobile-only-header {
-                    display: block !important;
-                    margin-bottom: 1rem !important;
-                    text-align: center !important;
-                }
-
-                .mobile-only-header h2 {
-                    font-size: 1.5rem !important;
-                    font-weight: 800 !important;
-                    color: #0f172a !important;
-                    margin: 0 !important;
-                }
-
-                .add-device-responsive-container {
-                    padding: 0 4px 2rem 4px !important;
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    box-sizing: border-box !important;
-                }
-
-                .add-device-layout-grid {
-                    display: block !important;
-                    width: 100% !important;
-                }
-
-                .form-fields-wrapper {
-                    background: transparent !important;
-                    border: none !important;
-                    padding: 0 !important;
-                    box-shadow: none !important;
-                }
-
-                .form-grid {
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 14px !important;
-                    width: 100% !important;
-                }
-
-                .form-group {
-                    background: #ffffff !important;
-                    border: 1.5px solid #e2e8f0 !important;
-                    border-radius: 20px !important;
-                    padding: 16px 18px !important;
-                    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
-                    margin-bottom: 0 !important;
-                }
-
-                .form-group label {
-                    font-size: 0.78rem !important;
-                    font-weight: 700 !important;
-                    text-transform: uppercase !important;
-                    letter-spacing: 0.06em !important;
-                    color: #475569 !important;
-                    margin-bottom: 8px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    gap: 6px !important;
-                }
-
-                .form-group input,
-                .form-group select {
-                    width: 100% !important;
-                    box-sizing: border-box !important;
-                    height: 48px !important;
-                    border-radius: 14px !important;
-                    background-color: #f8fafc !important;
-                    border: 1.5px solid #cbd5e1 !important;
-                    padding: 0 16px !important;
-                    font-size: 16px !important;
-                    font-weight: 600 !important;
-                    color: #0f172a !important;
-                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-                }
-
-                .form-actions {
-                    display: flex !important;
-                    flex-direction: row !important;
-                    gap: 12px !important;
-                    margin-top: 24px !important;
-                    padding-top: 18px !important;
-                    border-top: 1px solid #f1f5f9 !important;
-                }
-
-                .form-actions .btn {
-                    flex: 1 1 0 !important;
-                    width: 100% !important;
-                    height: 50px !important;
-                    font-size: 16px !important;
-                    font-weight: 700 !important;
-                    border-radius: 9999px !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                }
+            .btn-cancel-brand {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 44px !important;
+                height: 44px !important;
+                border-radius: 12px !important;
+                border: 1.5px solid #e2e8f0 !important;
+                background-color: #f8fafc !important;
+                color: #64748b !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+                flex-shrink: 0 !important;
             }
 
-            /* Shared Animations */
-            @keyframes slideDownFade {
-                from {
-                    opacity: 0;
-                    transform: translateY(-12px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            .btn-cancel-brand:hover {
+                background-color: #fee2e2 !important;
+                color: #dc2626 !important;
+                border-color: #fca5a5 !important;
             }
 
-            @keyframes cardFadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(12px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            .btn-cancel-action {
+                padding: 0.6rem 1.75rem !important;
+                font-size: 0.92rem !important;
+                font-weight: 600 !important;
+                background-color: #ffffff !important;
+                border: 1.5px solid #e2e8f0 !important;
+                color: #f1f5f9 !important;
+                transition: all 0.2s ease !important;
             }
 
-            @keyframes iconFloat {
-
-                0%,
-                100% {
-                    transform: translateY(0);
-                }
-
-                50% {
-                    transform: translateY(-4px);
-                }
+            .btn-cancel-action:hover {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+                border-color: #cbd5e1 !important;
             }
 
-            @keyframes dotPulse {
-                0% {
-                    transform: scale(0.95);
-                    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-                }
-
-                70% {
-                    transform: scale(1.05);
-                    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
-                }
-
-                100% {
-                    transform: scale(0.95);
-                    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-                }
+            .btn-submit-action {
+                position: relative;
+                overflow: hidden;
+                padding: 0.6rem 2.2rem !important;
+                font-size: 0.92rem !important;
+                font-weight: 700 !important;
+                background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+                border: none !important;
+                color: #ffffff !important;
+                box-shadow: 0 6px 20px -4px rgba(79, 70, 229, 0.4) !important;
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
             }
 
-            @keyframes shineSweep {
-                0% {
-                    left: -60%;
-                }
-
-                20%,
-                100% {
-                    left: 140%;
-                }
+            .btn-submit-action:hover {
+                transform: translateY(-2px) !important;
+                color: #0f172a !important;
+                box-shadow: 0 8px 25px -4px rgba(79, 70, 229, 0.5) !important;
             }
+
+            .btn-shine-effect {
+                position: absolute;
+                top: -50%;
+                left: -60%;
+                width: 40%;
+                height: 200%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+                transform: rotate(25deg);
+                animation: shineSweep 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* Preview Column (Right Side) */
+            .preview-panel-column {
+                display: flex !important;
+                flex-direction: column !important;
+                animation: cardFadeIn 0.5s ease-out forwards;
+            }
+
+            .live-preview-card {
+                position: relative;
+                height: 100%;
+                background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+                border-radius: 20px;
+                padding: 1.5rem;
+                color: #ffffff;
+                box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.35);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .preview-top-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                z-index: 1;
+            }
+
+            .preview-tag {
+                font-size: 0.72rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: #a5b4fc;
+                background: rgba(165, 180, 252, 0.12);
+                padding: 4px 10px;
+                border-radius: 6px;
+                border: 1px solid rgba(165, 180, 252, 0.2);
+            }
+
+            .preview-status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: #10b981;
+                background: rgba(16, 185, 129, 0.15);
+                border: 1px solid rgba(16, 185, 129, 0.3);
+                padding: 4px 12px;
+                border-radius: 999px;
+                transition: all 0.3s ease;
+            }
+
+            .preview-status-dot {
+                width: 6px;
+                height: 6px;
+                background: #10b981;
+                border-radius: 50%;
+                box-shadow: 0 0 8px #10b981;
+                transition: all 0.3s ease;
+            }
+
+            .preview-visual-box {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 1.25rem 0;
+                z-index: 1;
+            }
+
+            .preview-icon-halo {
+                position: absolute;
+                width: 110px;
+                height: 110px;
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+                filter: blur(14px);
+                z-index: 0;
+            }
+
+            .preview-icon-main {
+                font-size: 3.5rem;
+                color: #ffffff;
+                text-shadow: 0 4px 20px rgba(99, 102, 241, 0.6);
+                animation: iconFloat 3.5s ease-in-out infinite;
+                z-index: 1;
+                margin-bottom: 0.75rem;
+            }
+
+            .preview-id-pill {
+                font-size: 1.1rem;
+                font-weight: 800;
+                letter-spacing: 0.05em;
+                color: #e0e7ff;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                padding: 4px 16px;
+                border-radius: 12px;
+                backdrop-filter: blur(8px);
+                z-index: 1;
+                font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+            }
+
+            .preview-specs-box {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 14px;
+                padding: 1rem;
+                backdrop-filter: blur(12px);
+                z-index: 1;
+            }
+
+            .preview-device-name {
+                font-size: 1.15rem;
+                font-weight: 800;
+                color: #ffffff;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .preview-brand-tag {
+                font-size: 0.8rem;
+                color: #818cf8;
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+            }
+
+            .preview-meta-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                padding-top: 8px;
+            }
+
+            .preview-meta-item {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .preview-meta-item .meta-label {
+                font-size: 0.68rem;
+                color: #94a3b8;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            .preview-meta-item .meta-value {
+                font-size: 0.82rem;
+                font-weight: 600;
+                color: #f1f5f9;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        /* =============================================================
+                               MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
+                               ============================================================= */
+        @media (max-width: 768px) {
+
+            .desktop-only-element,
+            .preview-panel-column,
+            .add-device-desktop-header,
+            .bg-glow-orb {
+                display: none !important;
+            }
+
+            .mobile-only-header {
+                display: block !important;
+                margin-bottom: 1rem !important;
+                text-align: center !important;
+            }
+
+            .mobile-only-header h2 {
+                font-size: 1.5rem !important;
+                font-weight: 800 !important;
+                color: #0f172a !important;
+                margin: 0 !important;
+            }
+
+            .add-device-responsive-container {
+                padding: 0 4px 2rem 4px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .add-device-layout-grid {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .form-fields-wrapper {
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+
+            .form-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 14px !important;
+                width: 100% !important;
+            }
+
+            .form-group {
+                background: #ffffff !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 20px !important;
+                padding: 16px 18px !important;
+                box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+                margin-bottom: 0 !important;
+            }
+
+            .form-group label {
+                font-size: 0.78rem !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.06em !important;
+                color: #475569 !important;
+                margin-bottom: 8px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+            }
+
+            .form-group input,
+            .form-group select {
+                width: 100% !important;
+                box-sizing: border-box !important;
+                height: 48px !important;
+                border-radius: 14px !important;
+                background-color: #f8fafc !important;
+                border: 1.5px solid #cbd5e1 !important;
+                padding: 0 16px !important;
+                font-size: 16px !important;
+                font-weight: 600 !important;
+                color: #0f172a !important;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+            }
+
+            .form-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 12px !important;
+                margin-top: 24px !important;
+                padding-top: 18px !important;
+                border-top: 1px solid #f1f5f9 !important;
+            }
+
+            .form-actions .btn {
+                flex: 1 1 0 !important;
+                width: 100% !important;
+                height: 50px !important;
+                font-size: 16px !important;
+                font-weight: 700 !important;
+                border-radius: 9999px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+        }
+
+        /* Shared Animations */
+        @keyframes slideDownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes iconFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        @keyframes dotPulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        @keyframes shineSweep {
+            0% {
+                left: -60%;
+            }
+
+            20%,
+            100% {
+                left: 140%;
+            }
+        }
     </style>
 
     <script>
         const editOwnerDataList = [
             { id: '', name: '-- No Owner --', deptName: '' },
             <?php foreach ($owners as $o): ?>
-                                                {
+                                                        {
                     id: <?= intval($o->OwnerID) ?>,
                     name: <?= json_encode(trim($o->Nickname)) ?>,
                     deptName: <?= json_encode($o->DepartmentName ?? '') ?>
@@ -1444,6 +1502,7 @@ function edit_device_form($editing = null)
         function updateLivePreview() {
             const modelInput = document.getElementById('model_input');
             const brandSelect = document.getElementById('edit-brand-select');
+            const newBrandInput = document.getElementById('new_brand_name');
             const serialInput = document.getElementById('serial_number_input');
             const statusSelect = document.getElementById('StatusID');
             const ownerInput = document.getElementById('edit_owner_search_input');
@@ -1461,7 +1520,9 @@ function edit_device_form($editing = null)
                 pModel.textContent = modelInput.value.trim() || 'Hardware Asset';
             }
             if (pBrand) {
-                if (brandSelect && brandSelect.selectedIndex >= 0) {
+                if (newBrandInput && newBrandInput.value.trim()) {
+                    pBrand.textContent = newBrandInput.value.trim();
+                } else if (brandSelect && brandSelect.selectedIndex >= 0) {
                     const opt = brandSelect.options[brandSelect.selectedIndex];
                     pBrand.textContent = (opt && brandSelect.value) ? opt.text : 'Manufacturer Brand';
                 } else {
@@ -1497,6 +1558,44 @@ function edit_device_form($editing = null)
                 }
             }
         }
+
+        window.toggleEditNewBrandMode = function (prefillName = '') {
+            const selectWrap = document.getElementById('brand-select-wrap');
+            const inputWrap = document.getElementById('brand-new-input-wrap');
+            const select = document.getElementById('edit-brand-select');
+            const input = document.getElementById('new_brand_name');
+            const toggleBtn = document.getElementById('btn-toggle-new-brand');
+
+            if (selectWrap && inputWrap && select && input) {
+                selectWrap.style.display = 'none';
+                inputWrap.style.display = 'block';
+                select.required = false;
+                select.value = '';
+                input.required = true;
+                if (prefillName) input.value = prefillName;
+                input.focus();
+                if (toggleBtn) toggleBtn.style.display = 'none';
+                updateLivePreview();
+            }
+        };
+
+        window.cancelEditNewBrandMode = function () {
+            const selectWrap = document.getElementById('brand-select-wrap');
+            const inputWrap = document.getElementById('brand-new-input-wrap');
+            const select = document.getElementById('edit-brand-select');
+            const input = document.getElementById('new_brand_name');
+            const toggleBtn = document.getElementById('btn-toggle-new-brand');
+
+            if (selectWrap && inputWrap && select && input) {
+                selectWrap.style.display = 'block';
+                inputWrap.style.display = 'none';
+                select.required = true;
+                input.required = false;
+                input.value = '';
+                if (toggleBtn) toggleBtn.style.display = 'inline-flex';
+                updateLivePreview();
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', function () {
             const statusSelect = document.getElementById('StatusID');
@@ -1568,28 +1667,24 @@ function edit_device_form($editing = null)
 
             const modelInput = document.getElementById('model_input');
             const serialInput = document.getElementById('serial_number_input');
-            const brandInput = document.getElementById('edit_brand_input');
-            const newBrandInput = document.getElementById('edit_new_brand_name');
+            const brandSelect = document.getElementById('edit-brand-select');
+            const newBrandInput = document.getElementById('new_brand_name');
 
-            if (brandInput) {
-                brandInput.addEventListener('focus', function () {
-                    filterEditBrandItems(this.value);
-                    openEditBrandDropdown();
-                });
-                brandInput.addEventListener('input', syncEditBrandSelection);
-                brandInput.addEventListener('change', syncEditBrandSelection);
+            if (brandSelect) {
+                brandSelect.addEventListener('change', updateLivePreview);
             }
-
+            if (newBrandInput) {
+                newBrandInput.addEventListener('input', updateLivePreview);
+            }
             if (modelInput) modelInput.addEventListener('input', updateLivePreview);
             if (serialInput) serialInput.addEventListener('input', updateLivePreview);
-            if (newBrandInput) newBrandInput.addEventListener('input', updateLivePreview);
 
-            // Form Submit Validation for Brand
+            // Form Submit Validation
             const editForm = document.getElementById('edit-device-form');
             if (editForm) {
                 editForm.addEventListener('submit', function (e) {
-                    const newBrandWrap = document.getElementById('edit_new_brand_wrapper');
-                    const isNewMode = (newBrandWrap && newBrandWrap.style.display !== 'none');
+                    const inputWrap = document.getElementById('brand-new-input-wrap');
+                    const isNewMode = (inputWrap && inputWrap.style.display !== 'none');
 
                     if (isNewMode) {
                         const newName = newBrandInput ? newBrandInput.value.trim() : '';
@@ -1600,45 +1695,6 @@ function edit_device_form($editing = null)
                                 title: '⚠️ Brand Name Required',
                                 text: 'Please enter a name for the new brand.',
                                 confirmButtonColor: '#2563eb'
-                            });
-                            return false;
-                        }
-                    } else {
-                        const typed = brandInput ? brandInput.value.trim() : '';
-                        if (!typed) {
-                            e.preventDefault();
-                            Swal.fire({
-                                icon: 'warning',
-                                title: '⚠️ Brand Required',
-                                text: 'Please choose or enter a brand name.',
-                                confirmButtonColor: '#2563eb'
-                            });
-                            return false;
-                        }
-
-                        // Check if brand exists in system
-                        let found = isEditBrandInList(typed);
-
-                        if (!found) {
-                            e.preventDefault();
-                            e.stopPropagation();
-
-                            Swal.fire({
-                                icon: 'error',
-                                title: '❌ Brand Not Found',
-                                html: `Brand "<strong>${typed}</strong>" is not found in the inventory.<br><br>Please select an existing brand from the list or click <strong>+ Add as New Brand</strong> to create it.`,
-                                showCancelButton: true,
-                                confirmButtonText: '<i class="fa-solid fa-plus-circle me-1"></i> Add as New Brand',
-                                cancelButtonText: 'Select Existing Brand',
-                                confirmButtonColor: '#2563eb',
-                                cancelButtonColor: '#64748b'
-                            }).then((res) => {
-                                if (res.isConfirmed) {
-                                    toggleEditNewBrandMode(typed);
-                                } else {
-                                    openEditBrandDropdown();
-                                    if (brandInput) brandInput.focus();
-                                }
                             });
                             return false;
                         }

@@ -135,13 +135,13 @@ function device_form($editing = null)
 				<div>
 					<br>
 					<p class="desktop-header-subtitle">
-						<?= $editing ? 'Update hardware parameters and asset records' : 'Register and categorize hardware equipment to central inventory' ?>
+						<?= $editing ? 'Update device details and specifications' : 'Add a new device to inventory' ?>
 					</p>
 				</div>
 			</div>
 			<div class="desktop-header-badge">
 				<span class="pulse-dot-green"></span>
-				<span><?= $editing ? 'Asset Update' : 'Hardware Asset Registry' ?></span>
+				<span><?= $editing ? 'Edit Device' : 'New Device' ?></span>
 			</div>
 		</div>
 
@@ -194,16 +194,22 @@ function device_form($editing = null)
 							</div>
 						</div>
 
-						<!-- Brand Select (Standard Dropdown) -->
-						<div class="form-group modern-group">
-							<div class="field-header">
+						<!-- Brand Select with Add New Brand Toggle -->
+						<div class="form-group modern-group" id="brand-form-group">
+							<div class="field-header"
+								style="display: flex; justify-content: space-between; align-items: center;">
 								<label for="brand-select">
 									<i class="fa-solid fa-building field-icon-desktop desktop-only-element"></i>
 									Brand <span class="required-star">*</span>
 								</label>
+								<button type="button" id="btn-toggle-new-brand" class="btn-toggle-brand-pill"
+									onclick="toggleNewBrandMode()">
+									<i class="fa-solid fa-plus"></i> Add New Brand
+								</button>
 							</div>
-							<div class="field-input-wrap">
-								<select name="BrandID" id="brand-select" required onchange="fetchSuggestedModels(); updateLivePreview();">
+							<div class="field-input-wrap" id="brand-select-wrap">
+								<select name="BrandID" id="brand-select" required
+									onchange="fetchSuggestedModels(); updateLivePreview();">
 									<option value="">-- Select Brand --</option>
 									<?php foreach ($brands as $brand): ?>
 										<option value="<?= esc_attr($brand->BrandID) ?>" <?= selected($editing->BrandID ?? '', $brand->BrandID, false) ?>>
@@ -211,6 +217,16 @@ function device_form($editing = null)
 										</option>
 									<?php endforeach; ?>
 								</select>
+							</div>
+							<div class="field-input-wrap" id="brand-new-input-wrap" style="display: none;">
+								<div style="display: flex; gap: 8px; width: 100%;">
+									<input type="text" name="new_brand_name" id="new_brand_name"
+										placeholder="Type new brand name (e.g. Razer, Anker)..." style="flex: 1;">
+									<button type="button" class="btn-cancel-brand" onclick="cancelNewBrandMode()"
+										title="Cancel">
+										<i class="fa-solid fa-xmark"></i>
+									</button>
+								</div>
 							</div>
 						</div>
 
@@ -350,14 +366,14 @@ function device_form($editing = null)
 								<?= esc_html(!empty($editing->Model) ? $editing->Model : 'Device Model Name') ?>
 							</div>
 							<div class="preview-brand-text" id="preview-brand-text">
-								Manufacturer Brand
+								Select Brand
 							</div>
 
 							<div class="preview-meta-grid">
 								<div class="preview-meta-row">
 									<span class="meta-label">Serial Number</span>
 									<span class="meta-val font-monospace" id="preview-sn-text">
-										<?= esc_html(!empty($editing->SerialNumber) ? $editing->SerialNumber : 'NO SERIAL YET') ?>
+										<?= esc_html(!empty($editing->SerialNumber) ? $editing->SerialNumber : '—') ?>
 									</span>
 								</div>
 								<div class="preview-meta-row">
@@ -377,7 +393,7 @@ function device_form($editing = null)
 						<div class="preview-card-footer">
 							<div class="d-flex align-items-center gap-1">
 								<span class="radar-dot"></span>
-								<span>Real-time Dynamic Preview</span>
+								<span>Live Preview</span>
 							</div>
 							<span class="text-muted"><i class="fa-solid fa-shield-halved"></i> Active</span>
 						</div>
@@ -389,7 +405,7 @@ function device_form($editing = null)
 
 	<!-- Interactive Logic & Live Sync JavaScript -->
 	<script>
-		window.handleCancelAddDevice = function() {
+		window.handleCancelAddDevice = function () {
 			const ref = document.referrer;
 			if (ref && ref.includes(window.location.host) && !ref.includes('add=') && !ref.includes('edit=') && !ref.includes('receive=')) {
 				window.location.href = ref;
@@ -451,7 +467,10 @@ function device_form($editing = null)
 
 				const brandDisplay = document.getElementById('preview-brand-text');
 				if (brandDisplay) {
-					if (brandSelect && brandSelect.selectedIndex >= 0) {
+					const newBrandInput = document.getElementById('new_brand_name');
+					if (newBrandInput && newBrandInput.value.trim()) {
+						brandDisplay.textContent = newBrandInput.value.trim();
+					} else if (brandSelect && brandSelect.selectedIndex >= 0) {
 						const opt = brandSelect.options[brandSelect.selectedIndex];
 						brandDisplay.textContent = (opt && brandSelect.value) ? opt.text : 'Manufacturer Brand';
 					} else {
@@ -476,6 +495,43 @@ function device_form($editing = null)
 				const dateVal = dateInput && dateInput.value ? dateInput.value : '<?= esc_js($dateValue) ?>';
 				const dateDisplay = document.getElementById('preview-date-text');
 				if (dateDisplay) dateDisplay.textContent = dateVal;
+			};
+
+			window.toggleNewBrandMode = function () {
+				const selectWrap = document.getElementById('brand-select-wrap');
+				const inputWrap = document.getElementById('brand-new-input-wrap');
+				const select = document.getElementById('brand-select');
+				const input = document.getElementById('new_brand_name');
+				const toggleBtn = document.getElementById('btn-toggle-new-brand');
+
+				if (selectWrap && inputWrap && select && input) {
+					selectWrap.style.display = 'none';
+					inputWrap.style.display = 'block';
+					select.required = false;
+					select.value = '';
+					input.required = true;
+					input.focus();
+					if (toggleBtn) toggleBtn.style.display = 'none';
+					updateLivePreview();
+				}
+			};
+
+			window.cancelNewBrandMode = function () {
+				const selectWrap = document.getElementById('brand-select-wrap');
+				const inputWrap = document.getElementById('brand-new-input-wrap');
+				const select = document.getElementById('brand-select');
+				const input = document.getElementById('new_brand_name');
+				const toggleBtn = document.getElementById('btn-toggle-new-brand');
+
+				if (selectWrap && inputWrap && select && input) {
+					selectWrap.style.display = 'block';
+					inputWrap.style.display = 'none';
+					select.required = true;
+					input.required = false;
+					input.value = '';
+					if (toggleBtn) toggleBtn.style.display = 'inline-flex';
+					updateLivePreview();
+				}
 			};
 
 			window.fetchSuggestedModels = function () {
@@ -519,6 +575,8 @@ function device_form($editing = null)
 					updateLivePreview();
 				});
 			}
+			const newBrandInputEl = document.getElementById('new_brand_name');
+			if (newBrandInputEl) newBrandInputEl.addEventListener('input', updateLivePreview);
 			if (modelInput) modelInput.addEventListener('input', updateLivePreview);
 			if (serialInput) serialInput.addEventListener('input', updateLivePreview);
 			if (keywordSelect) keywordSelect.addEventListener('change', updateLivePreview);
@@ -574,8 +632,8 @@ function device_form($editing = null)
 		}
 
 		/* =============================================================
-							   DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
-							   ============================================================= */
+									   DESKTOP STYLES (Screen > 768px): Spacious Single-Screen Bento
+									   ============================================================= */
 		@media (min-width: 769px) {
 
 			.mobile-only-header,
@@ -860,41 +918,93 @@ function device_form($editing = null)
 				animation: dotPulse 2s infinite;
 			}
 
-			.btn-new-brand-text {
-				background: #eff6ff !important;
-				border: 1px solid #bfdbfe !important;
-				color: #2563eb !important;
+			.btn-toggle-brand-pill,
+			.btn-new-brand-text,
+			.btn-link-brand,
+			#btn-toggle-new-brand {
+				display: inline-flex !important;
+				align-items: center !important;
+				justify-content: center !important;
+				gap: 5px !important;
+				height: 26px !important;
+				min-height: 26px !important;
+				max-height: 26px !important;
+				padding: 0 10px !important;
+				background: #eef2ff !important;
+				border: 1px solid #c7d2fe !important;
+				border-radius: 9999px !important;
+				color: #4338ca !important;
 				font-size: 0.72rem !important;
 				font-weight: 700 !important;
-				padding: 3px 10px !important;
-				border-radius: 9999px !important;
+				line-height: 1 !important;
+				letter-spacing: 0.02em !important;
+				white-space: nowrap !important;
 				cursor: pointer !important;
 				user-select: none !important;
 				outline: none !important;
-				display: inline-flex !important;
-				align-items: center !important;
-				gap: 5px !important;
+				box-shadow: 0 1px 2px rgba(99, 102, 241, 0.08) !important;
 				text-decoration: none !important;
-				transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-				box-shadow: 0 1px 2px rgba(37, 99, 235, 0.06) !important;
+				transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+				margin: 0 !important;
+				vertical-align: middle !important;
 			}
 
-			.btn-new-brand-text i {
-				font-size: 0.75rem !important;
-				transition: transform 0.25s ease !important;
+			.btn-toggle-brand-pill i,
+			.btn-new-brand-text i,
+			.btn-link-brand i,
+			#btn-toggle-new-brand i {
+				font-size: 0.68rem !important;
+				color: #4f46e5 !important;
+				transition: transform 0.2s ease !important;
 			}
 
-			.btn-new-brand-text:hover {
-				background: #2563eb !important;
-				border-color: #2563eb !important;
+			.btn-toggle-brand-pill:hover,
+			.btn-new-brand-text:hover,
+			.btn-link-brand:hover,
+			#btn-toggle-new-brand:hover {
+				background: #4338ca !important;
+				border-color: #4338ca !important;
 				color: #ffffff !important;
 				transform: translateY(-1px) !important;
-				box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25) !important;
+				box-shadow: 0 4px 10px rgba(67, 56, 202, 0.25) !important;
 				text-decoration: none !important;
 			}
 
-			.btn-new-brand-text:hover i {
+			.btn-toggle-brand-pill:hover i,
+			.btn-new-brand-text:hover i,
+			.btn-link-brand:hover i,
+			#btn-toggle-new-brand:hover i {
+				color: #ffffff !important;
 				transform: rotate(90deg) !important;
+			}
+
+			.btn-toggle-brand-pill:active,
+			.btn-new-brand-text:active,
+			.btn-link-brand:active,
+			#btn-toggle-new-brand:active {
+				transform: translateY(0) !important;
+				box-shadow: 0 1px 2px rgba(67, 56, 202, 0.15) !important;
+			}
+
+			.btn-cancel-brand {
+				display: inline-flex !important;
+				align-items: center !important;
+				justify-content: center !important;
+				width: 44px !important;
+				height: 44px !important;
+				border-radius: 12px !important;
+				border: 1.5px solid #e2e8f0 !important;
+				background-color: #f8fafc !important;
+				color: #64748b !important;
+				cursor: pointer !important;
+				transition: all 0.2s ease !important;
+				flex-shrink: 0 !important;
+			}
+
+			.btn-cancel-brand:hover {
+				background-color: #fee2e2 !important;
+				color: #dc2626 !important;
+				border-color: #fca5a5 !important;
 			}
 
 			/* Desktop Actions */
@@ -914,7 +1024,7 @@ function device_form($editing = null)
 				font-weight: 600 !important;
 				background-color: #ffffff !important;
 				border: 1.5px solid #e2e8f0 !important;
-				color: #ffffff !important;
+				color: #f1f5f9 !important;
 				transition: all 0.2s ease !important;
 			}
 
@@ -1137,9 +1247,10 @@ function device_form($editing = null)
 		}
 
 		/* =============================================================
-							   MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
-							   ============================================================= */
+									   MOBILE STYLES (Screen <= 768px): Reverted to Classic Mobile Look
+									   ============================================================= */
 		@media (max-width: 768px) {
+
 			.desktop-only-element,
 			.preview-panel-column,
 			.add-device-desktop-header,

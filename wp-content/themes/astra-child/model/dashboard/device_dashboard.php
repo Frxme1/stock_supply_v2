@@ -365,7 +365,10 @@ function device_dashboard()
                                 $bar_color = $sm_status_colors[$status];
                                 ?>
                                 <div class="stock-bar-row">
-                                    <span class="stock-bar-label"><?= esc_html($status) ?></span>
+                                    <div class="stock-bar-label-wrap">
+                                        <span class="stock-bar-dot" style="background: <?= $bar_color ?>;"></span>
+                                        <span class="stock-bar-label"><?= esc_html($status) ?></span>
+                                    </div>
                                     <div class="stock-bar-track">
                                         <div class="stock-bar-fill" id="stock-bar-<?= $cat_slug ?>-<?= $status_slug ?>"
                                             style="width: 0%; background: <?= $bar_color ?>;"></div>
@@ -441,9 +444,9 @@ function device_dashboard()
 
     <style>
         /* ============================================================
-                       device_dashboard — page-specific styles only
-                       Shared card/grid/animation styles → dashboard_cards.css
-                       ============================================================ */
+                           device_dashboard — page-specific styles only
+                           Shared card/grid/animation styles → dashboard_cards.css
+                           ============================================================ */
 
         /* ---- New Devices Notification Card ---- */
         .new-devices-alert-header {

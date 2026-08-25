@@ -213,6 +213,9 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px currentColor;
     animation: pulseDot 2.8s ease-in-out infinite;
 }
 
@@ -237,22 +240,26 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    margin-top: 0.75rem;
 }
 
 .next-progress-bar {
     flex: 1;
-    height: 6px;
-    background: var(--dc-progress-bg);
+    height: 8px;
+    background: #e2e8f0;
     border-radius: 9999px;
     overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .next-progress-fill {
     height: 100%;
     border-radius: 9999px;
-    transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
 .next-progress-fill::after {
@@ -262,7 +269,7 @@
     left: -60%;
     width: 40%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.5);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
     transform: skewX(-20deg);
     animation: shimmerBar 2.8s ease-in-out infinite;
     animation-delay: 1.6s;
@@ -285,11 +292,16 @@
 }
 
 .next-progress-text {
-    font-size: 0.8rem;
-    color: var(--dc-text-muted);
-    font-weight: 600;
-    min-width: 36px;
-    text-align: right;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 2px 7px;
+    min-width: 40px;
+    text-align: center;
+    font-family: ui-monospace, SFMono-Regular, monospace;
     font-feature-settings: "tnum";
 }
 

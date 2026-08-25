@@ -48,54 +48,72 @@ function printDeviceLabels(devices) {
                 body { background-color: white; padding: 0; }
             }
             .label-card {
-                width: 250px;
-                height: 100px;
+                width: 140px;
+                min-height: 145px;
                 background: white;
-                border: 1px dashed #aaa;
+                border: 1px dashed #cbd5e1;
                 border-radius: 8px;
-                padding: 10px 14px;
+                padding: 10px 8px 8px 8px;
                 box-sizing: border-box;
                 display: flex;
-                flex-direction: row;
+                flex-direction: column;
                 align-items: center;
+                justify-content: center;
+                text-align: center;
                 page-break-inside: avoid;
             }
             @media print {
                 .label-card { border: 1px solid transparent; }
             }
             .qr-col {
-                width: 80px;
+                width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                margin-bottom: 6px;
             }
             .qr-code {
-                width: 75px;
-                height: 75px;
+                width: 80px;
+                height: 80px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .qr-code img,
+            .qr-code canvas {
+                display: block;
+                margin: 0 auto;
             }
             .info-col {
-                flex: 1;
-                padding-left: 12px;
+                width: 100%;
+                padding: 0;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                align-items: flex-start;
+                align-items: center;
+                text-align: center;
                 overflow: hidden;
             }
             .info-col h3 {
-                margin: 0 0 6px 0;
-                font-size: 17px;
-                font-weight: 700;
+                margin: 0 0 2px 0;
+                font-size: 15px;
+                font-weight: 800;
                 color: #0f172a;
                 white-space: nowrap;
+                letter-spacing: 0.02em;
+                line-height: 1.2;
             }
             .info-col p {
                 margin: 0;
-                font-size: 13px;
+                font-size: 11px;
                 font-weight: 600;
                 color: #475569;
                 white-space: nowrap;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                line-height: 1.2;
             }
             .print-btn-container {
                 width: 100%;
@@ -147,8 +165,8 @@ function printDeviceLabels(devices) {
                     const qrUrl = baseUrl + "?view=" + encodeURIComponent(dev.id);
                     new QRCode(document.getElementById('qr-' + index), {
                         text: qrUrl,
-                        width: 75,
-                        height: 75,
+                        width: 80,
+                        height: 80,
                         colorDark : "#000000",
                         colorLight : "#ffffff",
                         correctLevel : QRCode.CorrectLevel.L

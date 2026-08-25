@@ -658,7 +658,7 @@ if ($category_filter) {
                 htmlContent += `
                 <!-- Quick Actions Title -->
                 <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
-                    <i class="fa-solid fa-bolt" style="color:#6366f1;"></i> Quick Actions (Instant Status Change)
+                    <i class="fa-solid fa-bolt" style="color:#6366f1;"></i> Quick Actions
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             `;
@@ -697,13 +697,13 @@ if ($category_filter) {
                 htmlContent += `
                 </div>
                 <div style="margin-top:10px;">
-                    <a href="${viewDetailUrl}" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#0f172a; width:100%; height:42px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.85rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Details & History</a>
+                    <a href="${viewDetailUrl}" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#0f172a; width:100%; height:42px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.85rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Details</a>
                 </div>
             `;
             } else {
                 htmlContent += `
                 <div style="margin-top:12px;">
-                    <a href="${viewDetailUrl}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; height:44px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.88rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Full Details & History</a>
+                    <a href="${viewDetailUrl}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; height:44px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.88rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Details</a>
                 </div>
             `;
             }
@@ -743,7 +743,7 @@ if ($category_filter) {
                     <p style="margin-bottom:14px; color:#64748b;">Device <strong>${deviceId}</strong> - You may attach an optional condition photo:</p>
                     
                     <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:6px; color:#334155;">
-                        <i class="fa-solid fa-camera" style="color:#6366f1; margin-right:4px;"></i> Equipment Condition Photo (Camera / Upload)
+                        <i class="fa-solid fa-camera" style="color:#6366f1; margin-right:4px;"></i> Device Photo (Optional)
                     </label>
                     <input type="file" id="swal_qr_action_photo" accept="image/*" capture="environment" onchange="window.__qrPreviewImage(this)" style="width:100%; box-sizing:border-box; padding:8px; border:1px dashed #cbd5e1; border-radius:10px; font-size:0.85rem; background:#ffffff;">
                     <div id="swal_qr_img_preview_wrap" style="display:none; margin-top:10px; text-align:center;">
@@ -889,7 +889,7 @@ if ($category_filter) {
                     </select>
 
                     <label style="font-weight:600; font-size:0.85rem; display:block; margin-bottom:6px; color:#334155;">
-                        <i class="fa-solid fa-camera" style="color:#6366f1; margin-right:4px;"></i> Equipment Condition Photo (Camera / Upload)
+                        <i class="fa-solid fa-camera" style="color:#6366f1; margin-right:4px;"></i> Device Photo (Optional)
                     </label>
                     <input type="file" id="swal_qr_assign_photo" accept="image/*" capture="environment" onchange="window.__qrPreviewAssignImage(this)" style="width:100%; box-sizing:border-box; padding:8px; border:1px dashed #cbd5e1; border-radius:10px; font-size:0.85rem; background:#ffffff;">
                     <div id="swal_qr_assign_preview_wrap" style="display:none; margin-top:10px; text-align:center;">
@@ -898,7 +898,7 @@ if ($category_filter) {
                 </div>
             `,
                 showConfirmButton: true,
-                confirmButtonText: '<i class="fa-solid fa-check"></i> Confirm Check-out',
+                confirmButtonText: '<i class="fa-solid fa-check"></i> Confirm Assignment',
                 confirmButtonColor: '#6366f1',
                 showDenyButton: true,
                 denyButtonText: '<i class="fa-solid fa-arrow-left"></i> Back',

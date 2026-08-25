@@ -265,28 +265,37 @@ function employee_dashboard()
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            margin-top: 0.75rem;
         }
 
         .next-progress-bar {
             flex: 1;
-            height: 6px;
-            background: #f3f4f6;
+            height: 8px;
+            background: #e2e8f0;
             border-radius: 9999px;
             overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
         }
 
         .next-progress-fill {
             height: 100%;
             border-radius: 9999px;
             transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
         }
 
         .next-progress-text {
-            font-size: 0.825rem;
-            color: #6b7280;
-            font-weight: 500;
-            min-width: 32px;
-            text-align: right;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #334155;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 2px 7px;
+            min-width: 40px;
+            text-align: center;
+            font-family: ui-monospace, SFMono-Regular, monospace;
         }
 
         /* Animations */

@@ -456,9 +456,9 @@ function form_history()
                 if (!imgUrl) return;
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:8px;"></i> Equipment Condition Photo',
+                        title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:8px;"></i> Device Photo',
                         imageUrl: imgUrl,
-                        imageAlt: 'Equipment Condition Photo',
+                        imageAlt: 'Device Photo',
                         showCloseButton: false,
                         confirmButtonColor: '#6366f1',
                         confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
@@ -472,7 +472,7 @@ function form_history()
                         overlay.innerHTML = `
                             <div class="photo-lightbox-card">
                                 <button class="photo-lightbox-close" title="Close">&times;</button>
-                                <img id="photo_lightbox_img" class="photo-lightbox-img" src="" alt="Equipment Condition Photo">
+                                <img id="photo_lightbox_img" class="photo-lightbox-img" src="" alt="Device Photo">
                             </div>
                         `;
                         const closeBtn = overlay.querySelector('.photo-lightbox-close');

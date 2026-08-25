@@ -927,7 +927,7 @@ function device_view_details($device_id = null)
                     <div class="vd-maint-title-group">
                         <span class="vd-maint-badge">
                             <span class="vd-maint-pulse-dot"></span>
-                            <i class="fa-solid fa-screwdriver-wrench"></i> Active Maintenance Case
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Under Maintenance
                         </span>
                         <?php if (!empty($days_in_repair_text)): ?>
                             <span class="vd-maint-duration-pill">
@@ -949,10 +949,10 @@ function device_view_details($device_id = null)
                     <div class="vd-maint-issue-card">
                         <div>
                             <div class="vd-maint-label">
-                                <i class="fa-solid fa-triangle-exclamation"></i> Reported Issue / Diagnostic Reason
+                                <i class="fa-solid fa-triangle-exclamation"></i> Reported Issue
                             </div>
                             <div class="vd-maint-issue-content">
-                                <?= esc_html($active_maintenance->Details ?: 'No specific diagnostic reason provided.') ?>
+                                <?= esc_html($active_maintenance->Details ?: 'No issue details provided.') ?>
                             </div>
                         </div>
                     </div>
@@ -1087,7 +1087,7 @@ function device_view_details($device_id = null)
             <!-- Current Owner -->
             <div class="vd-info-card vd-card-span-2">
                 <div class="vd-info-label">
-                    <i class="fa-solid fa-user text-indigo-500"></i> Current Assigned Owner
+                    <i class="fa-solid fa-user text-indigo-500"></i> Current Owner
                 </div>
                 <div class="vd-info-value">
                     <?= esc_html(formatName(stock_supply_format_owner_with_dept($device->OwnerNickname ?: $device->OwnerFullname, $device->DepartmentName))) ?>
@@ -1102,7 +1102,7 @@ function device_view_details($device_id = null)
             <div class="vd-history-header">
                 <div class="d-flex align-items-center gap-3 flex-wrap">
                     <h3 class="vd-history-title">
-                        <i class="fa-solid fa-clock-rotate-left text-primary"></i> Equipment History Log
+                        <i class="fa-solid fa-clock-rotate-left text-primary"></i> Device History
                     </h3>
                     <?php if ($maint_count > 0): ?>
                         <span class="vd-maint-count-badge">
@@ -1312,9 +1312,9 @@ function device_view_details($device_id = null)
         if (!imgUrl) return;
         if (typeof Swal !== 'undefined') {
             Swal.fire({
-                title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:8px;"></i> Equipment Condition Photo',
+                title: '<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:8px;"></i> Device Photo',
                 imageUrl: imgUrl,
-                imageAlt: 'Equipment Condition Photo',
+                imageAlt: 'Device Photo',
                 showCloseButton: false,
                 confirmButtonColor: '#6366f1',
                 confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
@@ -1328,7 +1328,7 @@ function device_view_details($device_id = null)
                 overlay.innerHTML = `
                     <div class="photo-lightbox-card">
                         <button class="photo-lightbox-close" title="Close">&times;</button>
-                        <img id="photo_lightbox_img" class="photo-lightbox-img" src="" alt="Equipment Condition Photo">
+                        <img id="photo_lightbox_img" class="photo-lightbox-img" src="" alt="Device Photo">
                     </div>
                 `;
                 const closeBtn = overlay.querySelector('.photo-lightbox-close');
