@@ -26,7 +26,7 @@ function device_view_details($device_id = null)
 
     if (isset($_GET['delete'])) {
         if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'delete_history_nonce')) {
-            return '<p>Security check failed.</p>';
+            return ob_get_clean() . '<p style="color:red;">Security check failed.</p>';
         }
         $history_id = sanitize_text_field($_GET['delete']);
         $wpdb->delete($table_history, ['HistoryID' => $history_id], ['%s']);
@@ -34,15 +34,27 @@ function device_view_details($device_id = null)
 
     $device_id = $device_id ?: ($_GET['view'] ?? '');
     if (empty($device_id)) {
-        return '<p>No Device ID provided.</p>';
+        return ob_get_clean() . '<p>No Device ID provided.</p>';
     }
 
-    // Query Device details with Category, Brand, Status, Keyword, Owner, and Department
+    // Query Device details with Category, Brand, Status, Keyword, Owner, and Department (with smart owner fallback for repair/maintenance cases)
     $device = $wpdb->get_row($wpdb->prepare("
         SELECT d.*, b.BrandName, c.CategoryName, s.StatusName, kw.KeywordName,
-               o.Nickname AS OwnerNickname,
-               TRIM(CONCAT(COALESCE(o.FirstName, ''), ' ', COALESCE(o.LastName, ''))) AS OwnerFullname,
-               dept.DepartmentName
+               COALESCE(
+                   o.Nickname,
+                   (SELECT o2.Nickname FROM Repair_Requests rr2 LEFT JOIN Owners o2 ON rr2.OwnerID = o2.OwnerID WHERE rr2.DeviceID = d.DeviceID ORDER BY rr2.RequestID DESC LIMIT 1),
+                   (SELECT h.Owner FROM History_new h WHERE h.DeviceID = d.DeviceID AND h.Owner IS NOT NULL AND h.Owner != '-' AND h.Owner != '' ORDER BY h.Date DESC, h.HistoryID DESC LIMIT 1)
+               ) AS OwnerNickname,
+               COALESCE(
+                   TRIM(CONCAT(COALESCE(o.FirstName, ''), ' ', COALESCE(o.LastName, ''))),
+                   (SELECT TRIM(CONCAT(COALESCE(o3.FirstName, ''), ' ', COALESCE(o3.LastName, ''))) FROM Repair_Requests rr3 LEFT JOIN Owners o3 ON rr3.OwnerID = o3.OwnerID WHERE rr3.DeviceID = d.DeviceID ORDER BY rr3.RequestID DESC LIMIT 1),
+                   (SELECT TRIM(CONCAT(COALESCE(o4.FirstName, ''), ' ', COALESCE(o4.LastName, ''))) FROM History_new h2 LEFT JOIN Owners o4 ON (h2.Owner = o4.Nickname OR h2.Owner = CONCAT(o4.FirstName, ' ', o4.LastName)) WHERE h2.DeviceID = d.DeviceID AND h2.Owner IS NOT NULL AND h2.Owner != '-' AND h2.Owner != '' ORDER BY h2.Date DESC, h2.HistoryID DESC LIMIT 1)
+               ) AS OwnerFullname,
+               COALESCE(
+                   dept.DepartmentName,
+                   (SELECT d2.DepartmentName FROM Repair_Requests rr4 LEFT JOIN Owners o5 ON rr4.OwnerID = o5.OwnerID LEFT JOIN Departments d2 ON o5.DepartmentID = d2.DepartmentID WHERE rr4.DeviceID = d.DeviceID ORDER BY rr4.RequestID DESC LIMIT 1),
+                   (SELECT d3.DepartmentName FROM History_new h3 LEFT JOIN Owners o6 ON (h3.Owner = o6.Nickname OR h3.Owner = CONCAT(o6.FirstName, ' ', o6.LastName)) LEFT JOIN Departments d3 ON o6.DepartmentID = d3.DepartmentID WHERE h3.DeviceID = d.DeviceID AND h3.Owner IS NOT NULL AND h3.Owner != '-' AND h3.Owner != '' ORDER BY h3.Date DESC, h3.HistoryID DESC LIMIT 1)
+               ) AS DepartmentName
         FROM {$table_device} d
         LEFT JOIN {$table_brand} b ON d.BrandID = b.BrandID
         LEFT JOIN {$table_cat} c ON d.CategoryID = c.CategoryID
@@ -54,7 +66,7 @@ function device_view_details($device_id = null)
     ", $device_id));
 
     if (!$device) {
-        return '<p>Device not found.</p>';
+        return ob_get_clean() . '<p>Device not found.</p>';
     }
 
     // Query Active / Latest Maintenance Record
@@ -516,6 +528,13 @@ function device_view_details($device_id = null)
             border: 1px solid #e2e8f0;
         }
         .vd-status-Retired .vd-status-dot { background: #94a3b8; }
+
+        .vd-status-Lost {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .vd-status-Lost .vd-status-dot { background: #ef4444; }
 
         /* Copy Button inside info card */
         .vd-copy-btn {
@@ -1027,6 +1046,8 @@ function device_view_details($device_id = null)
                         $statusClass = 'vd-status-InUse';
                     elseif (strcasecmp($statusName, 'Maintenance') === 0)
                         $statusClass = 'vd-status-Maintenance';
+                    elseif (strcasecmp($statusName, 'Lost') === 0)
+                        $statusClass = 'vd-status-Lost';
                     ?>
                     <div class="vd-status-badge <?= $statusClass ?>">
                         <div class="vd-status-dot"></div>

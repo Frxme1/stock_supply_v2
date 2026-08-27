@@ -1,5 +1,11 @@
 <!-- Mobile Device List -->
 <div class="mobile-only-container" style="margin-top: 16px;">
+    <!-- Mobile Filter Button -->
+    <button type="button" class="mobile-filter-btn" onclick="openBottomSheet()">
+        <span><i class="fa-solid fa-filter"></i> Filters & Search</span>
+        <i class="fa-solid fa-chevron-right text-muted"></i>
+    </button>
+
     <?php foreach ($rows as $row): ?>
         <div class="mobile-device-card">
             <div class="mobile-device-header">

@@ -44,13 +44,24 @@ function device_crud_maintenance()
 
     $where_sql = "WHERE " . implode(" AND ", $where_clauses);
 
-    // Fetch all active maintenance devices matching query (Clean Deduplicated Query)
+    // Fetch all active maintenance devices matching query (Clean Deduplicated Query with Smart Owner Fallback)
     $all_active_maintenance = $wpdb->get_results("
         SELECT d.DeviceID, c.CategoryName AS Category, b.BrandName AS Brand, d.Model, d.SerialNumber,
                COALESCE(m.RepairDate, d.RepairDate) AS RepairDate,
                m.MaintenanceID, m.CreatedAt, m.Details, m.Photo,
                s.StatusName AS Status,
-               o.Nickname AS Owner, dept.DepartmentName AS Department
+               COALESCE(
+                   o.Nickname,
+                   (SELECT o2.Nickname FROM Repair_Requests rr2 LEFT JOIN Owners o2 ON rr2.OwnerID = o2.OwnerID WHERE rr2.DeviceID = d.DeviceID ORDER BY rr2.RequestID DESC LIMIT 1),
+                   (SELECT h.Owner FROM History_new h WHERE h.DeviceID = d.DeviceID AND h.Owner IS NOT NULL AND h.Owner != '-' AND h.Owner != '' ORDER BY h.Date DESC, h.HistoryID DESC LIMIT 1),
+                   '-'
+               ) AS Owner,
+               COALESCE(
+                   dept.DepartmentName,
+                   (SELECT d2.DepartmentName FROM Repair_Requests rr3 LEFT JOIN Owners o3 ON rr3.OwnerID = o3.OwnerID LEFT JOIN Departments d2 ON o3.DepartmentID = d2.DepartmentID WHERE rr3.DeviceID = d.DeviceID ORDER BY rr3.RequestID DESC LIMIT 1),
+                   (SELECT d3.DepartmentName FROM History_new h2 LEFT JOIN Owners o4 ON (h2.Owner = o4.Nickname OR h2.Owner = CONCAT(o4.FirstName, ' ', o4.LastName)) LEFT JOIN Departments d3 ON o4.DepartmentID = d3.DepartmentID WHERE h2.DeviceID = d.DeviceID AND h2.Owner IS NOT NULL AND h2.Owner != '-' AND h2.Owner != '' ORDER BY h2.Date DESC, h2.HistoryID DESC LIMIT 1),
+                   '-'
+               ) AS Department
         FROM Devices d
         INNER JOIN Statuses s ON d.StatusID = s.StatusID
         LEFT JOIN (

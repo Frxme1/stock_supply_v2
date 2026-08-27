@@ -321,17 +321,18 @@ function openBottomSheet() {
         }
         backdrop.classList.add('open');
     }
-    var filterForm = document.getElementById('advanced-filter-form');
+    var filterForm = document.getElementById('advanced-filter-form') || document.querySelector('.ajax-filter-form') || document.querySelector('form[method="GET"]');
     var mobileContainer = document.getElementById('mobile-filter-container');
     if (filterForm && mobileContainer && filterForm.parentElement !== mobileContainer) {
         mobileContainer.appendChild(filterForm);
-        filterForm.style.display = 'block';
+    }
+    if (filterForm) {
+        filterForm.style.setProperty('display', 'block', 'important');
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Crucial Fix: Move mobileBottomSheet and backdrop directly under <body> 
-    // to prevent HTML nested <form> bug which makes all inputs/buttons unclickable!
+    // Move mobileBottomSheet and backdrop directly under <body> to prevent form nesting issues
     var sheet = document.getElementById('mobileBottomSheet');
     var backdrop = document.getElementById('bottomSheetBackdrop');
     if (sheet && sheet.parentElement !== document.body) {
@@ -342,11 +343,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (window.innerWidth <= 768) {
-        var filterForm = document.getElementById('advanced-filter-form');
+        var filterForm = document.getElementById('advanced-filter-form') || document.querySelector('.ajax-filter-form');
         var mobileContainer = document.getElementById('mobile-filter-container');
-        if (filterForm && mobileContainer) {
+        if (filterForm && mobileContainer && filterForm.parentElement !== mobileContainer) {
             mobileContainer.appendChild(filterForm);
-            filterForm.style.display = 'block'; // Make filter visible inside bottom sheet
+            filterForm.style.setProperty('display', 'block', 'important');
         }
     }
 });

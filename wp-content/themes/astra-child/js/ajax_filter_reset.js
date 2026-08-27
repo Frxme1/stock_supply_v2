@@ -511,11 +511,23 @@ async function loadAjaxContent(targetUrl, formToClear = null) {
                 currentDesktop.innerHTML = newDesktop.innerHTML;
             }
 
-            // 1.5 Replace Mobile Cards Content (.mobile-only-container)
-            const newMobile = doc.querySelector('.mobile-only-container');
-            const currentMobile = document.querySelector('.mobile-only-container');
-            if (newMobile && currentMobile) {
-                currentMobile.innerHTML = newMobile.innerHTML;
+            // 1.5 Replace All Mobile Cards Content (.mobile-only-container)
+            const newMobiles = doc.querySelectorAll('.mobile-only-container');
+            const currentMobiles = document.querySelectorAll('.mobile-only-container');
+            if (newMobiles.length > 0 && currentMobiles.length > 0) {
+                currentMobiles.forEach((cur, idx) => {
+                    if (newMobiles[idx]) {
+                        cur.innerHTML = newMobiles[idx].innerHTML;
+                    }
+                });
+            } else if (newMobiles.length > 0 && currentMobiles.length === 0) {
+                const targetArea = document.querySelector('#content.site-content') || document.querySelector('.entry-content') || document.querySelector('#content') || document.body;
+                if (targetArea) {
+                    newMobiles.forEach(nm => {
+                        const clone = nm.cloneNode(true);
+                        targetArea.appendChild(clone);
+                    });
+                }
             }
 
             // 1.6 Replace other specialized panels (Maintenance, History, etc.)

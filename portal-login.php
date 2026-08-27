@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($owner) {
+        session_regenerate_id(true);
         $_SESSION['portal_owner_id'] = $owner->OwnerID;
         $_SESSION['portal_owner_name'] = !empty($owner->FirstName) ? $owner->FirstName . ' ' . $owner->LastName : $owner->Nickname;
         $_SESSION['portal_owner_email'] = $owner->Email ?? '';

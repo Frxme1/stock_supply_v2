@@ -277,13 +277,9 @@ function device_crud()
                             <div class="quick-action-title">History</div>
                         </a>
                     </div>
-
-                    <!-- Mobile Filter Button -->
-                    <button type="button" class="mobile-filter-btn" onclick="openBottomSheet()">
-                        <span><i class="fa-solid fa-filter"></i> Filters & Search</span>
-                        <i class="fa-solid fa-chevron-right text-muted"></i>
-                    </button>
                 </div>
+
+                <?php include(get_stylesheet_directory() . '/model/shared/mobile_device_list.php'); ?>
 
                 <div id="device_table" class="table-wrapper">
                     <table class="table-custom" style="width: 100%;">
@@ -409,10 +405,12 @@ function device_crud()
                                                                 class="fa-solid fa-box"></i>
                                                             Receive</a>
                                                         <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
-                                                                class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
-                                                        <a href="#"
+                                                                class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>                                                        <a href="#"
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                                        <a href="#"
+                                                            onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                                class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
                                                     <?php elseif ($status == 'In Use'): ?>
                                                         <a href="#"
                                                             onclick="quickSwapDevice('<?= esc_js($row->DeviceID) ?>'); return false;"
@@ -431,12 +429,15 @@ function device_crud()
                                                             ])) ?>"
                                                             onclick="handleReturnDeviceClick(this); return false;"><i
                                                                 class="fa-solid fa-rotate-left"></i>
-                                                            Return</a>
+                                                             Return</a>
                                                         <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                                 class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
                                                         <a href="#"
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                                        <a href="#"
+                                                            onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                                class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
                                                     <?php elseif ($status == 'Maintenance'): ?>
                                                         <a href="#"
                                                             onclick="confirmReturnFromMaintenance({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? '') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>', owner: '<?= esc_js($row->Owner ?? '') ?>', department: '<?= esc_js($row->Department ?? '') ?>', details: '<?= esc_js($row->Details ?? '') ?>', repairDate: '<?= esc_js($row->RepairDate ?? '') ?>' }, '<?= $dev_action_nonce ?>'); return false;"><i
@@ -444,7 +445,10 @@ function device_crud()
                                                         <a href="#"
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                                    <?php elseif ($status == 'Retired'): ?>
+                                                        <a href="#"
+                                                            onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                                class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
+                                                    <?php elseif ($status == 'Retired' || $status == 'Lost'): ?>
                                                         <a
                                                             href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                                 class="fa-solid fa-circle text-success"></i> Available</a>
@@ -507,80 +511,6 @@ function device_crud()
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                </div>
-
-                <!-- Mobile Device Cards -->
-                <div class="mobile-only-container" style="margin-top: 16px;">
-                    <?php foreach ($rows as $index => $row): ?>
-                        <?php
-                        $status = $row->Status;
-                        $statusClass = '';
-                        if (strcasecmp($status, 'Available') === 0)
-                            $statusClass = 'status-available';
-                        elseif (strcasecmp($status, 'In Use') === 0)
-                            $statusClass = 'status-inuse';
-                        elseif (strcasecmp($status, 'Maintenance') === 0)
-                            $statusClass = 'status-maintenance';
-                        elseif (strcasecmp($status, 'Retired') === 0)
-                            $statusClass = 'status-retired';
-                        ?>
-                        <div class="mobile-device-card">
-                            <div class="mobile-device-header">
-                                <div class="mobile-device-title-area">
-                                    <div class="mobile-device-title"><?= esc_html($row->Brand) ?>
-                                        <?= esc_html(!empty($row->Model) ? $row->Model : '') ?>
-                                    </div>
-                                    <div class="mobile-device-meta"><?= esc_html($row->Category) ?> | SN:
-                                        <?= esc_html(!empty($row->SerialNumber) ? $row->SerialNumber : '-') ?>
-                                    </div>
-                                </div>
-                                <div class="status-badge <?= $statusClass ?>">
-                                    <span class="status-dot"></span>
-                                    <?= esc_html($status) ?>
-                                </div>
-                            </div>
-                            <div class="mobile-device-body">
-                                <div class="mobile-device-owner">
-                                    <i class="fa-solid fa-user"></i>
-                                    <?php
-                                    $owner = trim($row->Owner ?? '');
-                                    $nickname = trim($row->Nickname ?? '');
-                                    if ($owner === '' && $nickname === '') {
-                                        echo '-';
-                                    } else {
-                                        if ($nickname !== '')
-                                            echo htmlspecialchars($nickname) . ' ';
-                                        if ($owner !== '') {
-                                            preg_match('/\((.*?)\)$/', $owner, $matches);
-                                            $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
-                                            $nameParts = explode(' ', $nameOnly);
-                                            if (count($nameParts) > 1) {
-                                                $lastInitial = strtoupper(mb_substr(end($nameParts), 0, 1)) . '.';
-                                                echo htmlspecialchars($lastInitial);
-                                            }
-                                        }
-                                        $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
-                                        if (!empty($deptAbbr)) {
-                                            echo ' <span class="text-muted small">' . htmlspecialchars($deptAbbr) . '</span>';
-                                        }
-                                    }
-                                    ?>
-                                </div>
-                                <div class="mobile-device-id"><strong><?= esc_html($row->DeviceID) ?></strong></div>
-                            </div>
-                            <div class="mobile-device-actions">
-                                <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                                    <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"
-                                        class="mobile-btn-action mobile-btn-secondary"><i class="fa-solid fa-gear"></i> Edit</a>
-                                <?php else: ?>
-                                    <a href="?edit=<?= esc_attr($row->DeviceID) ?>"
-                                        class="mobile-btn-action mobile-btn-secondary"><i class="fa-solid fa-gear"></i> Edit</a>
-                                <?php endif; ?>
-                                <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="mobile-btn-action mobile-btn-primary"><i
-                                        class="fa-solid fa-magnifying-glass"></i> View</a>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
                 </div>
             </form>
 
@@ -868,64 +798,6 @@ function device_crud()
             </div>
         </div>
 
-        <!-- Bottom Sheet for Filters -->
-        <div class="bottom-sheet-backdrop" id="bottomSheetBackdrop" onclick="closeBottomSheet()"></div>
-        <div class="bottom-sheet" id="mobileBottomSheet">
-            <div class="bottom-sheet-header">
-                <h3>Filters</h3>
-                <button class="bottom-sheet-close" onclick="closeBottomSheet()"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div id="mobile-filter-container"></div>
-        </div>
-        <script>
-            function closeBottomSheet() {
-                var sheet = document.getElementById('mobileBottomSheet');
-                var backdrop = document.getElementById('bottomSheetBackdrop');
-                if (sheet) sheet.classList.remove('open');
-                if (backdrop) backdrop.classList.remove('open');
-            }
-            function openBottomSheet() {
-                var sheet = document.getElementById('mobileBottomSheet');
-                var backdrop = document.getElementById('bottomSheetBackdrop');
-                if (sheet) {
-                    if (sheet.parentElement !== document.body) {
-                        document.body.appendChild(sheet);
-                    }
-                    sheet.classList.add('open');
-                }
-                if (backdrop) {
-                    if (backdrop.parentElement !== document.body) {
-                        document.body.appendChild(backdrop);
-                    }
-                    backdrop.classList.add('open');
-                }
-                var filterForm = document.getElementById('advanced-filter-form');
-                var mobileContainer = document.getElementById('mobile-filter-container');
-                if (filterForm && mobileContainer && filterForm.parentElement !== mobileContainer) {
-                    mobileContainer.appendChild(filterForm);
-                    filterForm.style.display = 'block';
-                }
-            }
-            document.addEventListener('DOMContentLoaded', function () {
-                var sheet = document.getElementById('mobileBottomSheet');
-                var backdrop = document.getElementById('bottomSheetBackdrop');
-                if (sheet && sheet.parentElement !== document.body) {
-                    document.body.appendChild(sheet);
-                }
-                if (backdrop && backdrop.parentElement !== document.body) {
-                    document.body.appendChild(backdrop);
-                }
-                if (window.innerWidth <= 768) {
-                    var filterForm = document.getElementById('advanced-filter-form');
-                    var mobileContainer = document.getElementById('mobile-filter-container');
-                    if (filterForm && mobileContainer && filterForm.parentElement !== mobileContainer) {
-                        mobileContainer.appendChild(filterForm);
-                        filterForm.style.display = 'block';
-                    }
-                }
-            });
-        </script>
-
         <!-- Bottom Sheet for Add Device (Mobile Only) -->
         <div class="bottom-sheet-backdrop" id="addDeviceBottomSheetBackdrop" onclick="closeAddDeviceBottomSheet()"></div>
         <div class="bottom-sheet" id="addDeviceBottomSheet" style="height: 90vh; overflow-y: auto; padding: 20px;">
@@ -958,7 +830,7 @@ function device_crud()
         <script src="<?= get_stylesheet_directory_uri() ?>/js/print_labels.js?v=<?= time() ?>"></script>
 
         <?php
-
+        include(get_stylesheet_directory() . '/model/shared/mobile_styles.php');
         return ob_get_clean();
 }
 

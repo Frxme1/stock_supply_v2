@@ -23,27 +23,72 @@ function form_history()
 
     $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
     $filter_category = isset($_GET['filter_category']) ? trim($_GET['filter_category']) : '';
+    $filter_action = isset($_GET['filter_action']) ? trim($_GET['filter_action']) : '';
+
     $params = [];
     $where_clauses = [];
 
+    // Base filters (search & category) for global action counts
+    $base_params = [];
+    $base_where_clauses = [];
+
     if (!empty($search)) {
         $like = '%' . $wpdb->esc_like($search) . '%';
-        $where_clauses[] = "(H.Description LIKE %s OR H.Action LIKE %s OR H.user_email LIKE %s OR H.Owner LIKE %s OR C.CategoryName LIKE %s)";
+        $search_clause = "(H.Description LIKE %s OR H.Action LIKE %s OR H.user_email LIKE %s OR H.Owner LIKE %s OR C.CategoryName LIKE %s)";
+        $where_clauses[] = $search_clause;
         $params = array_merge($params, array_fill(0, 5, $like));
+        $base_where_clauses[] = $search_clause;
+        $base_params = array_merge($base_params, array_fill(0, 5, $like));
     }
     if (!empty($filter_category)) {
         $where_clauses[] = "C.CategoryName = %s";
         $params[] = $filter_category;
+        $base_where_clauses[] = "C.CategoryName = %s";
+        $base_params[] = $filter_category;
     }
-    $search_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
+    if (!empty($filter_action) && strtolower($filter_action) !== 'all') {
+        $where_clauses[] = "TRIM(H.Action) = %s";
+        $params[] = $filter_action;
+    }
 
-    // COUNT total items
+    $search_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
+    $base_search_sql = !empty($base_where_clauses) ? 'WHERE ' . implode(' AND ', $base_where_clauses) : '';
+
+    // Total base count (for Total chip)
+    $total_base_items = $wpdb->get_var(
+        $wpdb->prepare("
+            SELECT COUNT(*) FROM $table_history AS H
+            LEFT JOIN $table_category AS C ON H.CategoryID = C.CategoryID
+            $base_search_sql
+        ", ...$base_params)
+    );
+
+    // Global action counts across all records matching base search/category
+    $action_counts_raw = $wpdb->get_results(
+        $wpdb->prepare("
+            SELECT TRIM(H.Action) as action_name, COUNT(*) as cnt 
+            FROM $table_history AS H
+            LEFT JOIN $table_category AS C ON H.CategoryID = C.CategoryID
+            $base_search_sql
+            GROUP BY TRIM(H.Action)
+            ORDER BY cnt DESC
+        ", ...$base_params)
+    );
+
+    $action_counts = [];
+    foreach ($action_counts_raw as $ac) {
+        if (!empty($ac->action_name)) {
+            $action_counts[$ac->action_name] = intval($ac->cnt);
+        }
+    }
+
+    // COUNT total items for current active filter (with action filter)
     $total_items = $wpdb->get_var(
         $wpdb->prepare("
-        SELECT COUNT(*) FROM $table_history AS H
-        LEFT JOIN $table_category AS C ON H.CategoryID = C.CategoryID
-        $search_sql
-    ", ...$params)
+            SELECT COUNT(*) FROM $table_history AS H
+            LEFT JOIN $table_category AS C ON H.CategoryID = C.CategoryID
+            $search_sql
+        ", ...$params)
     );
     $total_pages = ceil($total_items / $page);
 
@@ -82,8 +127,9 @@ function form_history()
     ", ...array_merge($params, [$page, $offset]))
     );
 
-    // Suggestion
+    // Suggestion and Options
     $all_categories = $wpdb->get_col("SELECT DISTINCT CategoryName FROM $table_category WHERE CategoryName != '' ORDER BY CategoryName");
+    $all_actions = $wpdb->get_col("SELECT DISTINCT TRIM(Action) FROM $table_history WHERE Action != '' ORDER BY Action");
     $suggestions = $wpdb->get_col("SELECT DISTINCT Action FROM $table_history LIMIT 50");
     ob_start();
 
@@ -267,7 +313,7 @@ function form_history()
         <form method="GET" action="" id="advanced-filter-form">
             <?php
             foreach ($_GET as $key => $value) {
-                if (!in_array($key, ['device_search', 'filter_category', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
+                if (!in_array($key, ['device_search', 'filter_category', 'filter_action', 'filter_status', 'filter_brand', 'filter_department', 'paged'])) {
                     if (is_array($value)) {
                         foreach ($value as $v) {
                             echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -303,10 +349,21 @@ function form_history()
                     </select>
                 </div>
 
+                <div class="col-12 col-sm-6 col-md-auto" style="width: 180px;">
+                    <select name="filter_action" id="filter_action" class="form-select form-select-sm filter-select-custom staggered-dropdown" style="height: 38px; border-radius: 10px;">
+                        <option value="">All Actions</option>
+                        <?php foreach ($all_actions as $act): ?>
+                            <option value="<?= esc_attr($act) ?>" <?= strtolower($filter_action) === strtolower($act) ? 'selected' : '' ?>>
+                                <?= esc_html($act) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <div class="col-12 col-sm-6 col-md-auto d-flex gap-2">
                     <button class="btn-filter-modern flex-grow-1" type="submit"><i class="fa-solid fa-filter"></i>
                         Filter</button>
-                    <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'paged']); ?>
+                    <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'filter_action', 'paged']); ?>
                     <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
             </div>
@@ -346,29 +403,27 @@ function form_history()
                 $key = $dt->format('F Y');
                 $grouped[$key][] = $row;
             }
-
-            // Count actions for stats
-            $action_counts = [];
-            foreach ($rows as $row) {
-                $a = trim($row->Action);
-                if (!isset($action_counts[$a]))
-                    $action_counts[$a] = 0;
-                $action_counts[$a]++;
-            }
             ?>
-            <div class="dtl-timeline-wrap active">
+            <div class="dtl-timeline-wrap active dtl-server-filtered">
                 <!-- Stats -->
                 <?php if (!empty($action_counts)): ?>
                     <div class="dtl-stats">
-                        <div class="dtl-stat-chip active" data-filter-action="all" role="button" tabindex="0">
+                        <?php 
+                        $is_total_active = empty($filter_action) || strtolower($filter_action) === 'all';
+                        $total_url = remove_query_arg('paged', add_query_arg(['filter_action' => null]));
+                        ?>
+                        <a href="<?= esc_url($total_url) ?>" class="dtl-stat-chip <?= $is_total_active ? 'active' : '' ?>" role="button">
                             <i class="fa-solid fa-list-check"></i> Total
-                            <span class="dtl-stat-count"><?= count($rows) ?></span>
-                        </div>
-                        <?php foreach ($action_counts as $act => $cnt): ?>
-                            <div class="dtl-stat-chip" data-filter-action="<?= esc_attr(strtolower(trim($act))) ?>" role="button" tabindex="0">
+                            <span class="dtl-stat-count"><?= number_format($total_base_items) ?></span>
+                        </a>
+                        <?php foreach ($action_counts as $act => $cnt): 
+                            $is_act_active = (strtolower($filter_action) === strtolower($act));
+                            $act_url = remove_query_arg('paged', add_query_arg(['filter_action' => $act]));
+                        ?>
+                            <a href="<?= esc_url($act_url) ?>" class="dtl-stat-chip <?= $is_act_active ? 'active' : '' ?>" role="button">
                                 <?= esc_html($act) ?>
-                                <span class="dtl-stat-count"><?= $cnt ?></span>
-                            </div>
+                                <span class="dtl-stat-count"><?= number_format($cnt) ?></span>
+                            </a>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>

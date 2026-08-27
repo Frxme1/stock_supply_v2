@@ -344,6 +344,9 @@ function device_crud_acc_sories()
                                                     <a href="#"
                                                         onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                                    <a href="#"
+                                                        onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                            class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
                                                 <?php elseif ($status == 'In Use'): ?>
                                                     <a href="#"
                                                         onclick="quickSwapDevice('<?= esc_js($row->DeviceID) ?>'); return false;"
@@ -368,6 +371,9 @@ function device_crud_acc_sories()
                                                     <a href="#"
                                                         onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>
+                                                    <a href="#"
+                                                        onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                            class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
                                                 <?php elseif ($status == 'Maintenance'): ?>
                                                     <a href="#"
                                                         onclick="confirmReturnFromMaintenance({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? 'Accessories') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>', owner: '<?= esc_js($row->Owner ?? '') ?>', department: '<?= esc_js($row->Department ?? '') ?>', details: '<?= esc_js($row->Details ?? '') ?>', repairDate: '<?= esc_js($row->RepairDate ?? '') ?>' }, '<?= $dev_action_nonce ?>'); return false;"><i
@@ -375,7 +381,10 @@ function device_crud_acc_sories()
                                                     <a href="#"
                                                         onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>
-                                                <?php elseif ($status == 'Retired'): ?>
+                                                    <a href="#"
+                                                        onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
+                                                            class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
+                                                <?php elseif ($status == 'Retired' || $status == 'Lost'): ?>
                                                     <a
                                                         href="?available=<?= esc_attr($row->DeviceID) ?>&_wpnonce=<?= $dev_action_nonce ?>"><i
                                                             class="fa-solid fa-circle text-success"></i> Available</a>

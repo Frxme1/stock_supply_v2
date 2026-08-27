@@ -125,7 +125,14 @@ function receive_device($device = null)
                     'Owner' => $owner_nickname ?: '-'
                 ]);
 
-                $redirect_url = home_url('/home/?view=' . urlencode($device_id));
+                $category_slug = '';
+                if ($dev_info && !empty($dev_info->CategoryID)) {
+                    $cat_name = $wpdb->get_var($wpdb->prepare("SELECT CategoryName FROM Categories WHERE CategoryID = %d", $dev_info->CategoryID));
+                    if ($cat_name) {
+                        $category_slug = sanitize_title($cat_name);
+                    }
+                }
+                $redirect_url = $category_slug ? home_url('/' . $category_slug . '/?view=' . urlencode($device_id)) : home_url('/home/?view=' . urlencode($device_id));
 
                 echo "<script>
                     document.addEventListener('DOMContentLoaded', function() {

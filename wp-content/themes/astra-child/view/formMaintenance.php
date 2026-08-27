@@ -5,6 +5,10 @@ if (!defined('ABSPATH')) {
 
 function form_maintenance($editing = null)
 {
+    if (!is_object($editing)) {
+        $editing = null;
+    }
+
     global $wpdb;
     $table_device = 'Devices';
     $table_maintenance = 'Maintenance';
@@ -32,7 +36,7 @@ function form_maintenance($editing = null)
     }
 
     // Handle form submit
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_device'])) {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['update_device'])) {
         if (!is_user_logged_in() || !isset($_POST['_maint_nonce']) || !wp_verify_nonce($_POST['_maint_nonce'], 'update_maintenance_nonce')) {
             show_alert('error', 'Unauthorized', 'Security check failed.');
             return ob_get_clean();
@@ -465,10 +469,10 @@ function form_maintenance($editing = null)
                         <!-- Details Specs Box -->
                         <div class="maint-details-box">
                             <div class="maint-preview-name" id="preview-maint-model">
-                                <?= esc_html($editing->Model ?: 'Hardware Equipment') ?>
+                                <?= esc_html(!empty($editing->Model) ? $editing->Model : 'Hardware Equipment') ?>
                             </div>
                             <div class="maint-preview-brand" id="preview-maint-brand">
-                                <?= esc_html(($editing->BrandName ?? '') . ' ' . ($editing->CategoryName ?? '')) ?: 'Device Details' ?>
+                                <?= esc_html(trim(($editing->BrandName ?? '') . ' ' . ($editing->CategoryName ?? '')) ?: 'Device Details') ?>
                             </div>
 
                             <div class="maint-meta-grid">
@@ -483,7 +487,7 @@ function form_maintenance($editing = null)
                                     <span class="maint-meta-label"><i class="fa-solid fa-barcode me-1"></i> SERIAL
                                         NO.</span>
                                     <span class="maint-meta-val" id="preview-maint-sn">
-                                        <?= esc_html($editing->SerialNumber ?: '—') ?>
+                                        <?= esc_html(!empty($editing->SerialNumber) ? $editing->SerialNumber : '—') ?>
                                     </span>
                                 </div>
                                 <div class="maint-meta-item maint-span-2"

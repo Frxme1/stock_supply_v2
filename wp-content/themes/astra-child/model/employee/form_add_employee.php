@@ -17,6 +17,19 @@ function form_add_owner($editing = null)
     echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['Nickname'])) {
+        if (!is_user_logged_in() || !isset($_POST['_add_emp_nonce']) || !wp_verify_nonce($_POST['_add_emp_nonce'], 'add_employee_nonce')) {
+            echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session Expired',
+                        text: 'Security token expired. Please refresh and try again.'
+                    });
+                });
+            </script>";
+            return ob_get_clean();
+        }
+
         $owner_id = isset($_POST['OwnerID']) ? intval($_POST['OwnerID']) : null;
         $nickname = sanitize_text_field($_POST['Nickname'] ?? '');
         $status_id = !empty($_POST['StatusID']) ? intval($_POST['StatusID']) : $active_status_id;

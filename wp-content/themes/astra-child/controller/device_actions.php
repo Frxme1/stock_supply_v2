@@ -725,6 +725,7 @@ function handle_device_actions()
                     'PositionID'   => null
                 ];
 
+                $wpdb->delete($table_maintenance, ['DeviceID' => $device_id], ['%s']);
                 $updated = $wpdb->update($table_devices, $update_data, ['DeviceID' => $device_id]);
 
                 if ($updated !== false) {

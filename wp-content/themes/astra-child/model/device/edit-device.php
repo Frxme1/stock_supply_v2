@@ -81,29 +81,56 @@ function edit_device_form($editing = null)
 
         // Security & Integrity check for Status
         $selected_status_name = strtolower($wpdb->get_var($wpdb->prepare("SELECT StatusName FROM Statuses WHERE StatusID = %d", $StatusID)) ?? '');
-        if ($selected_status_name === 'available' || $selected_status_name === 'retired') {
-            $OwnerID = null; // Auto-clear owner to prevent ghost assignment on Available/Retired
+        if ($selected_status_name === 'available' || $selected_status_name === 'retired' || $selected_status_name === 'lost') {
+            $OwnerID = null; // Auto-clear owner to prevent ghost assignment on Available/Retired/Lost
+        } elseif ($selected_status_name === 'in use' && empty($OwnerID)) {
+            echo "<script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Assignment',
+                    text: 'Please select an assigned employee when setting status to In Use.',
+                    showConfirmButton: true
+                });
+            </script>";
+            return ob_get_clean();
+        }
+
+        $DepartmentID = null;
+        $PositionID = null;
+        if (!empty($OwnerID)) {
+            $owner_row = $wpdb->get_row($wpdb->prepare("SELECT DepartmentID, PositionID FROM Owners WHERE OwnerID = %d", $OwnerID));
+            if ($owner_row) {
+                $DepartmentID = !empty($owner_row->DepartmentID) ? intval($owner_row->DepartmentID) : null;
+                $PositionID = !empty($owner_row->PositionID) ? intval($owner_row->PositionID) : null;
+            }
         }
 
         $data = [
-            'Model' => $Model,
-            'SerialNumber' => $SerialNumber,
-            'BrandID' => $BrandID,
-            'StatusID' => $StatusID,
-            'KeywordID' => $KeywordID,
-            'OwnerID' => $OwnerID,
+            'Model'         => $Model,
+            'SerialNumber'  => $SerialNumber,
+            'BrandID'       => $BrandID,
+            'StatusID'      => $StatusID,
+            'KeywordID'     => $KeywordID ?: null,
+            'OwnerID'       => $OwnerID ?: null,
+            'DepartmentID'  => $DepartmentID ?: null,
+            'PositionID'    => $PositionID ?: null,
             'AddDeviceDate' => $AddDeviceDate,
-            'UpdatedAt' => current_time('mysql'),
+            'UpdatedAt'     => current_time('mysql'),
         ];
 
-        $format = ['%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s'];
+        if ($OwnerID === null) {
+            $data['ReceiveDate'] = null;
+            $data['ReturnDate'] = null;
+            $data['RepairDate'] = null;
+            $data['ExpectedReturnDate'] = null;
+        }
+
         $where = ['DeviceID' => $DeviceID];
-        $where_format = ['%s'];
 
         // Get previous info for history
         $device_info = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_devices WHERE DeviceID = %s", $DeviceID));
 
-        $updated = $wpdb->update($table_devices, $data, $where, $format, $where_format);
+        $updated = $wpdb->update($table_devices, $data, $where);
 
         // Get category slug
         $category_slug = '';

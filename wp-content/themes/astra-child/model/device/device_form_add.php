@@ -147,6 +147,7 @@ function device_form($editing = null)
 
 		<!-- Main Form Component (Responsive) -->
 		<form method="POST" action="" id="add-device-form" class="edit-data-form add-device-main-form">
+			<?php wp_nonce_field('add_device_nonce', '_add_device_nonce'); ?>
 			<input type="hidden" name="DeviceID" value="<?= esc_attr($device_id) ?>">
 
 			<!-- Mobile Only Title (Classic look) -->

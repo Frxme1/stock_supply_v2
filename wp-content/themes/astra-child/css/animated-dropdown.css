@@ -142,10 +142,12 @@
     color: #2563eb;
 }
 
-/* Custom hide for original select */
-select.animated-hidden,
-.staggered-dropdown {
-    display: none !important;
+/* Custom hide for original select on desktop (when replaced by animated custom dropdown) */
+@media (min-width: 769px) {
+    select.animated-hidden,
+    .staggered-dropdown {
+        display: none !important;
+    }
 }
 
 .animated-dropdown-list::-webkit-scrollbar {
@@ -169,6 +171,8 @@ select.animated-hidden,
 
     select,
     .form-select,
+    .staggered-dropdown,
+    .filter-select-custom,
     .form-group select {
         display: block !important;
         visibility: visible !important;
@@ -177,13 +181,13 @@ select.animated-hidden,
         z-index: 50 !important;
         pointer-events: auto !important;
         width: 100% !important;
-        height: 44px !important;
-        min-height: 44px !important;
+        height: 48px !important;
+        min-height: 48px !important;
         background-color: #ffffff !important;
         border: 1.5px solid #cbd5e1 !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
         padding: 0 36px 0 14px !important;
-        font-size: 0.9rem !important;
+        font-size: 0.95rem !important;
         font-weight: 500 !important;
         color: #0f172a !important;
         appearance: none !important;

@@ -26,7 +26,7 @@ function confirmRetire(id, paramName = 'retired', nonce = '') {
 }
 window.confirmRetire = confirmRetire;
 
-function confirmLost(id, paramName = 'lost') {
+function confirmLost(id, paramName = 'lost', nonce = '') {
     Swal.fire({
         title: 'Report as Lost?',
         text: 'Do you want to mark this device as lost? Please provide a reason or details.',
@@ -45,6 +45,9 @@ function confirmLost(id, paramName = 'lost') {
             const url = new URL(window.location.href);
             url.searchParams.set(paramName, id);
             url.searchParams.set('reason', result.value);
+            if (nonce) {
+                url.searchParams.set('_wpnonce', nonce);
+            }
             window.location.href = url.toString();
         }
     });

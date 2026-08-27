@@ -122,6 +122,11 @@
         if (!statsContainers.length) return;
 
         statsContainers.forEach(function (statsWrap) {
+            // Skip client-side filtering if container uses server-side filtered links
+            if (statsWrap.closest('.dtl-server-filtered') || statsWrap.querySelector('a.dtl-stat-chip')) {
+                return;
+            }
+
             const timelineWrap = statsWrap.closest('.dtl-timeline-wrap') || statsWrap.parentElement;
             if (!timelineWrap) return;
 

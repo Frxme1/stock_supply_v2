@@ -18,7 +18,7 @@ function form_edit_owner($editing = null)
     echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['OwnerID'])) {
-        if (!isset($_POST['_edit_emp_nonce']) || !wp_verify_nonce($_POST['_edit_emp_nonce'], 'edit_employee_nonce')) {
+        if (!is_user_logged_in() || !isset($_POST['_edit_emp_nonce']) || !wp_verify_nonce($_POST['_edit_emp_nonce'], 'edit_employee_nonce')) {
             echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({

@@ -19,7 +19,7 @@ function form_owner()
     // ===== RESIGN (Soft Delete) =====
     if (isset($_GET['resign'])) {
         if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'resign_owner_nonce')) {
-            return;
+            return ob_get_clean() . '<p style="color:red;">Security check failed.</p>';
         }
         $owner_id = intval($_GET['resign']);
         $owner_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_owner_wn WHERE OwnerID = %d", $owner_id));
@@ -69,7 +69,7 @@ function form_owner()
     // ===== DELETE (Hard Delete) =====
     if (isset($_GET['delete'])) {
         if (!is_user_logged_in() || !isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'delete_owner_nonce')) {
-            return;
+            return ob_get_clean() . '<p style="color:red;">Security check failed.</p>';
         }
         $owner_id = intval($_GET['delete']);
         $owner_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_owner_wn WHERE OwnerID = %d", $owner_id));
@@ -114,16 +114,14 @@ function form_owner()
 
     // form add
     if (isset($_GET['add'])) {
-        echo form_add_owner();
-        return;
+        return ob_get_clean() . form_add_owner();
     }
 
     // form edit
     if (isset($_GET['edit'])) {
-        $edit_id = sanitize_text_field($_GET['edit']);
+        $edit_id = intval($_GET['edit']);
         $editing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_owner WHERE OwnerID = %d", $edit_id));
-        echo form_edit_owner($editing);
-        return;
+        return ob_get_clean() . form_edit_owner($editing);
     }
 
     echo employee_dashboard();

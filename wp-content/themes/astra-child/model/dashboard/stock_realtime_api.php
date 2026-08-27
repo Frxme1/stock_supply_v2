@@ -28,7 +28,7 @@ function stock_realtime_data_handler()
     }
 
     // Ensure all known statuses present
-    foreach (['Available', 'In Use', 'Maintenance', 'Retired'] as $s) {
+    foreach (['Available', 'In Use', 'Maintenance', 'Retired', 'Lost'] as $s) {
         if (!isset($by_status[$s])) {
             $by_status[$s] = 0;
         }
@@ -41,7 +41,7 @@ function stock_realtime_data_handler()
     );
     $by_category_status = [];
     $categories = ['Monitor', 'Laptop', 'Accessories'];
-    $statuses = ['Available', 'In Use', 'Maintenance', 'Retired'];
+    $statuses = ['Available', 'In Use', 'Maintenance', 'Retired', 'Lost'];
 
     // Initialize
     foreach ($categories as $cat) {

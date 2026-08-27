@@ -114,11 +114,6 @@ function add_pwa_service_worker()
     <?php
 }
 add_action('wp_footer', 'add_pwa_service_worker');
-if (has_post_thumbnail()) {
-    the_post_thumbnail('full'); // Or other sizes like 'medium', 'large'
-}
-
-
 
 // Helper to parse search query string (extract Device ID from URL if full URL is scanned/pasted)
 function stock_supply_parse_search_query($search)
@@ -955,6 +950,17 @@ function stock_supply_setup_db()
 
     // Clean up 'Other' category from Categories table
     $wpdb->query("DELETE FROM Categories WHERE LOWER(CategoryName) = 'other'");
+
+    // Ensure 'Lost' status exists in Statuses table
+    $lost_exists = $wpdb->get_var("SELECT COUNT(*) FROM Statuses WHERE LOWER(StatusName) = 'lost'");
+    if (!$lost_exists) {
+        $wpdb->insert('Statuses', [
+            'StatusName' => 'Lost',
+            'user_email' => 'admin',
+            'CreatedAt' => current_time('mysql'),
+            'UpdatedAt' => current_time('mysql'),
+        ]);
+    }
 }
 add_action('after_setup_theme', 'stock_supply_setup_db');
 
