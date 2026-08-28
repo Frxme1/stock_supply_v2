@@ -174,6 +174,32 @@ function confirmReceive(idOrData, model = '', brand = '', category = '', serial 
 }
 window.confirmReceive = confirmReceive;
 
+function getCleanOwnerName(data) {
+    if (!data) return '';
+    let name = data.nickname || data.owner || '';
+    if (typeof name !== 'string') return '';
+    name = name.trim();
+    if (name === '-' || name === 'null' || name === 'undefined') return '';
+    
+    // Strip trailing parentheses like " (Full-time)" or "(IT)"
+    let clean = name.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    if (clean && !clean.startsWith('(')) {
+        return clean;
+    }
+    // If stripped result is empty or started with '(', check data.nickname
+    if (data.nickname && typeof data.nickname === 'string') {
+        let nick = data.nickname.trim();
+        if (nick && nick !== '-' && !nick.startsWith('(')) {
+            return nick;
+        }
+    }
+    // If name didn't start with '(', return it
+    if (!name.startsWith('(')) {
+        return name;
+    }
+    return '';
+}
+
 function confirmReturnFromMaintenance(idOrData, nonce = '') {
     let data = {};
     if (typeof idOrData === 'object' && idOrData !== null) {
@@ -197,8 +223,8 @@ function confirmReturnFromMaintenance(idOrData, nonce = '') {
     const modelName = data.model || '';
     const categoryName = data.category || 'Hardware';
     const serialNumber = data.serialNumber || '-';
-    const ownerName = data.owner && data.owner !== '-' ? data.owner : '';
-    const deptName = data.department && data.department !== '-' ? data.department : '';
+    const ownerName = getCleanOwnerName(data);
+    const deptName = (data.department && data.department !== '-' && !data.department.startsWith('(')) ? data.department.trim() : '';
     const details = data.details || 'Maintenance completed';
     const actionNonce = nonce || data.nonce || '';
 
@@ -347,8 +373,8 @@ function confirmReturnDevice(idOrData, nonce = '') {
     const modelName = data.model || '';
     const categoryName = data.category || 'Hardware';
     const serialNumber = data.serialNumber || '-';
-    const ownerName = data.owner && data.owner !== '-' ? data.owner : '';
-    const deptName = data.department && data.department !== '-' ? data.department : '';
+    const ownerName = getCleanOwnerName(data);
+    const deptName = (data.department && data.department !== '-' && !data.department.startsWith('(')) ? data.department.trim() : '';
     const actionNonce = nonce || data.nonce || '';
 
     let catIcon = 'fa-laptop';
@@ -447,6 +473,29 @@ function confirmReturnDevice(idOrData, nonce = '') {
     }
 }
 window.confirmReturnDevice = confirmReturnDevice;
+
+function openPhotoModal(imgUrl, title = 'Condition Photo') {
+    if (!imgUrl) return;
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: `<i class="fa-solid fa-camera" style="color:#6366f1; margin-right:8px;"></i> ${title}`,
+            imageUrl: imgUrl,
+            imageAlt: title,
+            imageWidth: 'auto',
+            imageHeight: 'auto',
+            showCloseButton: true,
+            confirmButtonColor: '#6366f1',
+            confirmButtonText: '<i class="fa-solid fa-xmark"></i> Close',
+            customClass: {
+                popup: 'photo-lightbox-swal-popup',
+                image: 'photo-lightbox-swal-img'
+            }
+        });
+    } else {
+        window.open(imgUrl, '_blank');
+    }
+}
+window.openPhotoModal = openPhotoModal;
 
 function handleReturnDeviceClick(el) {
     if (!el) return;

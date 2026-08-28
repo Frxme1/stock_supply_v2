@@ -19,6 +19,7 @@ function device_dashboard_laptop()
         'In Use'      => ['color' => '#F05353', 'icon' => '<i class="fa-solid fa-ban"></i>'],
         'Maintenance' => ['color' => '#FDB840', 'icon' => '<i class="fa-solid fa-screwdriver-wrench"></i>'],
         'Retired'     => ['color' => '#919191', 'icon' => '<i class="fa-solid fa-trash-can"></i>'],
+        'Lost'        => ['color' => '#EF4444', 'icon' => '<i class="fa-solid fa-triangle-exclamation"></i>'],
     ];
 
     $status_urls = [
@@ -26,6 +27,7 @@ function device_dashboard_laptop()
         'In Use'      => home_url('/laptop/?filter_status=In+Use'),
         'Maintenance' => home_url('/maintenance/'),
         'Retired'     => home_url('/laptop/?filter_status=Retired'),
+        'Lost'        => home_url('/laptop/?filter_status=Lost'),
     ];
 
     // Map count per status
@@ -43,7 +45,7 @@ function device_dashboard_laptop()
         <div class="next-grid mt-4">
             <?php foreach ($status_config as $status => $config):
                 $count = $summary_map[$status] ?? 0;
-                $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
+                $percent = $total_laptop > 0 ? round(($count / $total_laptop) * 100, 0) : 0;
                 $target_url = $status_urls[$status] ?? home_url('/laptop/');
             ?>
                 <div class="next-card slide-up clickable-card" onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url($target_url) ?>');}else{window.location.href='<?= esc_url($target_url) ?>';}" style="cursor: pointer;" title="Filter by <?= esc_attr($status) ?>">

@@ -22,6 +22,7 @@ function device_crud_maintenance()
     // Search filter
     $search = isset($_GET['device_search']) ? stock_supply_parse_search_query($_GET['device_search']) : '';
     $filter_category = isset($_GET['filter_category']) ? trim($_GET['filter_category']) : '';
+    $filter_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
 
     $where_clauses = ["s.StatusName = 'Maintenance'"];
 
@@ -41,6 +42,9 @@ function device_crud_maintenance()
     if (!empty($filter_category)) {
         $where_clauses[] = $wpdb->prepare("c.CategoryName = %s", $filter_category);
     }
+    if (!empty($filter_brand)) {
+        $where_clauses[] = $wpdb->prepare("b.BrandName = %s", $filter_brand);
+    }
 
     $where_sql = "WHERE " . implode(" AND ", $where_clauses);
 
@@ -51,11 +55,14 @@ function device_crud_maintenance()
                m.MaintenanceID, m.CreatedAt, m.Details, m.Photo,
                s.StatusName AS Status,
                COALESCE(
-                   o.Nickname,
+                   NULLIF(o.Nickname, ''),
+                   NULLIF(TRIM(CONCAT(COALESCE(o.FirstName, ''), ' ', COALESCE(o.LastName, ''))), ''),
                    (SELECT o2.Nickname FROM Repair_Requests rr2 LEFT JOIN Owners o2 ON rr2.OwnerID = o2.OwnerID WHERE rr2.DeviceID = d.DeviceID ORDER BY rr2.RequestID DESC LIMIT 1),
+                   (SELECT TRIM(CONCAT(COALESCE(o2.FirstName, ''), ' ', COALESCE(o2.LastName, ''))) FROM Repair_Requests rr2 LEFT JOIN Owners o2 ON rr2.OwnerID = o2.OwnerID WHERE rr2.DeviceID = d.DeviceID ORDER BY rr2.RequestID DESC LIMIT 1),
                    (SELECT h.Owner FROM History_new h WHERE h.DeviceID = d.DeviceID AND h.Owner IS NOT NULL AND h.Owner != '-' AND h.Owner != '' ORDER BY h.Date DESC, h.HistoryID DESC LIMIT 1),
                    '-'
                ) AS Owner,
+               o.Nickname,
                COALESCE(
                    dept.DepartmentName,
                    (SELECT d2.DepartmentName FROM Repair_Requests rr3 LEFT JOIN Owners o3 ON rr3.OwnerID = o3.OwnerID LEFT JOIN Departments d2 ON o3.DepartmentID = d2.DepartmentID WHERE rr3.DeviceID = d.DeviceID ORDER BY rr3.RequestID DESC LIMIT 1),
@@ -82,6 +89,7 @@ function device_crud_maintenance()
     ");
 
     $all_categories = $wpdb->get_col("SELECT DISTINCT CategoryName FROM Categories WHERE CategoryName != '' ORDER BY CategoryName ASC");
+    $all_brands = $wpdb->get_col("SELECT DISTINCT BrandName FROM Brands WHERE BrandName != '' ORDER BY BrandName ASC");
     $suggestions = $wpdb->get_col("SELECT DISTINCT BrandName FROM Brands WHERE BrandName != '' ORDER BY BrandName ASC LIMIT 50");
 
     if (!function_exists('formatName')) {
@@ -115,7 +123,7 @@ function device_crud_maintenance()
         <form method="GET" action="" id="advanced-filter-form">
             <?php
             foreach ($_GET as $key => $value) {
-                if (!in_array($key, ['device_search', 'filter_category', 'filter_status', 'filter_brand', 'filter_department', 'paged', 'sort', 'order'])) {
+                if (!in_array($key, ['device_search', 'filter_category', 'filter_brand', 'filter_status', 'filter_department', 'paged', 'sort', 'order'])) {
                     if (is_array($value)) {
                         foreach ($value as $v) {
                             echo '<input type="hidden" name="' . esc_attr($key) . '[]" value="' . esc_attr($v) . '">';
@@ -126,8 +134,9 @@ function device_crud_maintenance()
                 }
             }
             ?>
-            <div class="row align-items-center g-2 mb-4">
-                <div class="col-12 col-sm-6 col-md-auto" style="width: 250px;">
+            <div class="row align-items-end g-2 mb-4">
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label class="form-label mb-1 text-muted" style="font-size: 0.85em;"><i class="fa-solid fa-magnifying-glass me-1"></i> Search Text</label>
                     <?php
                     $search_placeholder = 'Search Maintenance Device...';
                     $search_list = 'search_suggestions';
@@ -140,10 +149,10 @@ function device_crud_maintenance()
                     </datalist>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-auto" style="width: 180px;">
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label class="form-label mb-1 text-muted" style="font-size: 0.85em;"><i class="fa-solid fa-shapes me-1"></i> Category</label>
                     <select name="filter_category" id="filter_category"
-                        class="form-select form-select-sm filter-select-custom staggered-dropdown"
-                        style="border-radius: 10px; height: 38px;">
+                        class="form-select form-select-sm filter-select-custom staggered-dropdown">
                         <option value="">All Categories</option>
                         <?php foreach ($all_categories as $cat): ?>
                             <option value="<?= esc_attr($cat) ?>" <?= $filter_category == $cat ? 'selected' : '' ?>>
@@ -153,13 +162,25 @@ function device_crud_maintenance()
                     </select>
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-auto d-flex gap-2">
-                    <button class="btn btn-primary" type="submit"
-                        style="background: #1e40af; border-color: #1e40af; font-weight: 700; border-radius: 10px; padding: 8px 18px;"><i
-                            class="fa-solid fa-magnifying-glass me-1"></i> Filter</button>
-                    <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'paged', 'sort', 'order']); ?>
-                    <a href="<?= esc_url($reset_url) ?>" class="btn btn-outline-secondary btn-reset-modern"
-                        style="border-radius: 10px; font-weight: 600; padding: 8px 16px;">Reset</a>
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label class="form-label mb-1 text-muted" style="font-size: 0.85em;"><i class="fa-solid fa-building me-1"></i> Brand</label>
+                    <select name="filter_brand" id="filter_brand"
+                        class="form-select form-select-sm filter-select-custom staggered-dropdown">
+                        <option value="">All Brands</option>
+                        <?php foreach ($all_brands as $brand): ?>
+                            <option value="<?= esc_attr($brand) ?>" <?= $filter_brand == $brand ? 'selected' : '' ?>>
+                                <?= esc_html($brand) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-auto d-flex align-items-end gap-2">
+                    <button class="btn-filter-modern flex-grow-1" type="submit">
+                        <i class="fa-solid fa-filter me-1"></i> Filter
+                    </button>
+                    <?php $reset_url = remove_query_arg(['device_search', 'filter_category', 'filter_brand', 'paged', 'sort', 'order']); ?>
+                    <a href="<?= esc_url($reset_url) ?>" class="btn-reset-modern">Reset</a>
                 </div>
             </div>
         </form>
@@ -198,6 +219,46 @@ function device_crud_maintenance()
 
             <!-- Mobile Only View (3 Cards Initial + Load More +3 Cards) -->
             <div class="mobile-only-container">
+                <!-- Mobile Filter Trigger Button -->
+                <button type="button" class="mobile-filter-btn mb-3" onclick="openBottomSheet()">
+                    <span>
+                        <i class="fa-solid fa-filter"></i> Search & Filters
+                        <?php if (!empty($search) || !empty($filter_category) || !empty($filter_brand)): ?>
+                            <span class="badge bg-primary ms-1" style="font-size: 0.72rem; padding: 3px 8px; border-radius: 999px;">
+                                Active (<?= (!empty($search) ? 1 : 0) + (!empty($filter_category) ? 1 : 0) + (!empty($filter_brand) ? 1 : 0) ?>)
+                            </span>
+                        <?php endif; ?>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-muted"></i>
+                </button>
+
+                <!-- Active Filter Badges on Mobile -->
+                <?php if (!empty($search) || !empty($filter_category) || !empty($filter_brand)): ?>
+                    <div class="d-flex flex-wrap gap-2 mb-3" style="font-size: 0.82rem;">
+                        <?php if (!empty($search)): ?>
+                            <span class="badge d-inline-flex align-items-center gap-1 py-1 px-2" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:600; border-radius: 8px;">
+                                <i class="fa-solid fa-magnifying-glass"></i> "<?= esc_html($search) ?>"
+                                <a href="<?= esc_url(remove_query_arg('device_search')) ?>" style="color:#ef4444; margin-left:4px; text-decoration:none; font-weight:bold; font-size:1.1rem; line-height:1;">&times;</a>
+                            </span>
+                        <?php endif; ?>
+                        <?php if (!empty($filter_category)): ?>
+                            <span class="badge d-inline-flex align-items-center gap-1 py-1 px-2" style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-weight:600; border-radius: 8px;">
+                                <i class="fa-solid fa-shapes"></i> <?= esc_html($filter_category) ?>
+                                <a href="<?= esc_url(remove_query_arg('filter_category')) ?>" style="color:#ef4444; margin-left:4px; text-decoration:none; font-weight:bold; font-size:1.1rem; line-height:1;">&times;</a>
+                            </span>
+                        <?php endif; ?>
+                        <?php if (!empty($filter_brand)): ?>
+                            <span class="badge d-inline-flex align-items-center gap-1 py-1 px-2" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-weight:600; border-radius: 8px;">
+                                <i class="fa-solid fa-building"></i> <?= esc_html($filter_brand) ?>
+                                <a href="<?= esc_url(remove_query_arg('filter_brand')) ?>" style="color:#ef4444; margin-left:4px; text-decoration:none; font-weight:bold; font-size:1.1rem; line-height:1;">&times;</a>
+                            </span>
+                        <?php endif; ?>
+                        <a href="<?= esc_url($reset_url) ?>" class="badge d-inline-flex align-items-center gap-1 py-1 px-2" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:600; text-decoration:none; border-radius: 8px;">
+                            Clear all
+                        </a>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (!empty($all_active_maintenance)): ?>
                     <?php
                     $dev_action_nonce = wp_create_nonce('device_action_nonce');
@@ -248,9 +309,13 @@ function device_crud_maintenance()
                                         <span class="maint-info-label"><i class="fa-solid fa-image" style="color: #10b981;"></i>
                                             Photo</span>
                                         <span class="maint-info-value">
-                                            <a href="<?= esc_url($item->Photo) ?>" target="_blank">
+                                            <a href="javascript:void(0);"
+                                                onclick="openPhotoModal('<?= esc_url($item->Photo) ?>', 'Photo - <?= esc_js($item->DeviceID) ?>'); return false;"
+                                                style="display: inline-block; cursor: pointer;">
                                                 <img src="<?= esc_url($item->Photo) ?>"
-                                                    style="width: 70px; height: 50px; object-fit: cover; border-radius: 8px; border: 1.5px solid #e2e8f0;">
+                                                    style="width: 70px; height: 50px; object-fit: cover; border-radius: 8px; border: 1.5px solid #e2e8f0; transition: transform 0.15s ease;"
+                                                    onmouseover="this.style.transform='scale(1.05)';"
+                                                    onmouseout="this.style.transform='scale(1)';" title="Click to view photo">
                                             </a>
                                         </span>
                                     </div>
@@ -278,7 +343,8 @@ function device_crud_maintenance()
                                     'model' => $item->Model ?? '',
                                     'category' => $item->Category ?? '',
                                     'serialNumber' => $item->SerialNumber ?? '',
-                                    'owner' => $item->Owner ?? '',
+                                    'owner' => !empty($item->Nickname) ? $item->Nickname : (!empty(trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner ?? ''))) ? trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner)) : ($item->Owner ?? '')),
+                                    'nickname' => $item->Nickname ?? '',
                                     'department' => $item->Department ?? '',
                                     'details' => $item->Details ?? '',
                                     'repairDate' => $item->RepairDate ?? '',
@@ -290,6 +356,19 @@ function device_crud_maintenance()
                             </div>
                         </div>
                     <?php endforeach; ?>
+                <?php else: ?>
+                    <!-- Mobile Empty State -->
+                    <div class="text-center py-4"
+                        style="background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 20px; padding: 32px 16px;">
+                        <div
+                            style="width: 56px; height: 56px; border-radius: 50%; background: #eff6ff; color: #1e40af; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <h5 style="font-weight: 800; color: #0f172a; margin-bottom: 4px;">No Devices Found</h5>
+                        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 0;">
+                            <?= (!empty($search) || !empty($filter_category) || !empty($filter_brand)) ? 'Try adjusting your search filters' : 'All devices are available or in use.' ?>
+                        </p>
+                    </div>
                 <?php endif; ?>
             </div>
 
@@ -373,11 +452,14 @@ function device_crud_maintenance()
                                 <!-- Photo Preview if available -->
                                 <?php if (!empty($item->Photo)): ?>
                                     <div style="margin-bottom: 12px;">
-                                        <a href="<?= esc_url($item->Photo) ?>" target="_blank"
-                                            style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #0284c7; text-decoration: none; font-weight: 600;">
+                                        <a href="javascript:void(0);"
+                                            onclick="openPhotoModal('<?= esc_url($item->Photo) ?>', 'Photo - <?= esc_js($item->DeviceID) ?>'); return false;"
+                                            style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #0284c7; text-decoration: none; font-weight: 600; cursor: pointer;">
                                             <img src="<?= esc_url($item->Photo) ?>"
-                                                style="width: 50px; height: 38px; object-fit: cover; border-radius: 6px; border: 1.5px solid #e2e8f0;">
-                                            <span><i class="fa-solid fa-camera"></i> View Condition Photo</span>
+                                                style="width: 50px; height: 38px; object-fit: cover; border-radius: 6px; border: 1.5px solid #e2e8f0; transition: transform 0.15s ease;"
+                                                onmouseover="this.style.transform='scale(1.08)';"
+                                                onmouseout="this.style.transform='scale(1)';" title="Click to view photo">
+                                            <span><i class="fa-solid fa-camera"></i> View</span>
                                         </a>
                                     </div>
                                 <?php endif; ?>
@@ -405,13 +487,13 @@ function device_crud_maintenance()
                                         'model' => $item->Model ?? '',
                                         'category' => $item->Category ?? '',
                                         'serialNumber' => $item->SerialNumber ?? '',
-                                        'owner' => $item->Owner ?? '',
+                                        'owner' => !empty($item->Nickname) ? $item->Nickname : (!empty(trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner ?? ''))) ? trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner)) : ($item->Owner ?? '')),
+                                        'nickname' => $item->Nickname ?? '',
                                         'department' => $item->Department ?? '',
                                         'details' => $item->Details ?? '',
                                         'repairDate' => $item->RepairDate ?? '',
                                         'nonce' => $dev_action_nonce
-                                    ])) ?>" onclick="handleReturnMaintenanceClick(this)"
-                                        class="btn btn-sm btn-success"
+                                    ])) ?>" onclick="handleReturnMaintenanceClick(this)" class="btn btn-sm btn-success"
                                         style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px; background: #16a34a; border-color: #16a34a; color: #ffffff; cursor: pointer;">
                                         <i class="fa-solid fa-circle-check"></i> Done & Return
                                     </button>
@@ -431,11 +513,25 @@ function device_crud_maintenance()
                         <h4 style="font-weight: 800; color: #0f172a; margin-bottom: 6px;">No Devices Currently in Maintenance
                         </h4>
                         <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 0;">
-                            All devices in the system are currently available or actively in use.</p>
+                            <?= (!empty($search) || !empty($filter_category) || !empty($filter_brand)) ? 'No maintenance devices match your search filters.' : 'All devices in the system are currently available or actively in use.' ?>
+                        </p>
                     </div>
                 <?php endif; ?>
             </div>
 
+        </div>
+
+        <!-- Bottom Sheet for Mobile Filters -->
+        <div class="bottom-sheet-backdrop" id="bottomSheetBackdrop" onclick="closeBottomSheet()"></div>
+        <div class="bottom-sheet" id="mobileBottomSheet">
+            <div class="bottom-sheet-header">
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">
+                    <i class="fa-solid fa-filter me-2 text-primary"></i> Maintenance Filters
+                </h3>
+                <button type="button" class="bottom-sheet-close" onclick="closeBottomSheet()"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <div id="mobile-filter-container"></div>
         </div>
     </div>
 
@@ -465,6 +561,7 @@ function device_crud_maintenance()
     </script>
 
     <?php
+    include(get_stylesheet_directory() . '/model/shared/mobile_styles.php');
     return ob_get_clean();
 }
 add_shortcode('device_crud_mainten', 'device_crud_maintenance');

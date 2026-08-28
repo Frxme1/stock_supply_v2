@@ -17,10 +17,11 @@ function device_dashboard()
 ");
 
     $status_config = [
-        'Available' => ['color' => '#6ABF57', 'bg' => 'rgba(106, 191, 87, 0.08)', 'icon' => '<i class="fa-solid fa-circle-check"></i>'],
-        'In Use' => ['color' => '#F05353', 'bg' => 'rgba(240, 83, 83, 0.08)', 'icon' => '<i class="fa-solid fa-ban"></i>'],
+        'Available'   => ['color' => '#6ABF57', 'bg' => 'rgba(106, 191, 87, 0.08)', 'icon' => '<i class="fa-solid fa-circle-check"></i>'],
+        'In Use'      => ['color' => '#F05353', 'bg' => 'rgba(240, 83, 83, 0.08)', 'icon' => '<i class="fa-solid fa-ban"></i>'],
         'Maintenance' => ['color' => '#FDB840', 'bg' => 'rgba(253, 184, 64, 0.08)', 'icon' => '<i class="fa-solid fa-screwdriver-wrench"></i>'],
-        'Retired' => ['color' => '#919191', 'bg' => 'rgba(145, 145, 145, 0.08)', 'icon' => '<i class="fa-solid fa-trash-can"></i>'],
+        'Retired'     => ['color' => '#919191', 'bg' => 'rgba(145, 145, 145, 0.08)', 'icon' => '<i class="fa-solid fa-trash-can"></i>'],
+        'Lost'        => ['color' => '#EF4444', 'bg' => 'rgba(239, 68, 68, 0.08)', 'icon' => '<i class="fa-solid fa-triangle-exclamation"></i>'],
     ];
 
     // Build summary map
@@ -61,10 +62,11 @@ function device_dashboard()
     ];
 
     $status_urls = [
-        'Available' => home_url('/home/?filter_status=Available'),
-        'In Use' => home_url('/home/?filter_status=In+Use'),
+        'Available'   => home_url('/home/?filter_status=Available'),
+        'In Use'      => home_url('/home/?filter_status=In+Use'),
         'Maintenance' => home_url('/maintenance/'),
-        'Retired' => home_url('/home/?filter_status=Retired'),
+        'Retired'     => home_url('/home/?filter_status=Retired'),
+        'Lost'        => home_url('/home/?filter_status=Lost'),
     ];
 
     // Mobile-first command deck: common field actions in one tap.
@@ -335,12 +337,13 @@ function device_dashboard()
                     'Laptop' => ['icon' => 'fa-laptop', 'color' => '#15A5DA'],
                     'Accessories' => ['icon' => 'fa-plug', 'color' => '#6ABF57'],
                 ];
-                $sm_statuses = ['Available', 'In Use', 'Maintenance', 'Retired'];
+                $sm_statuses = ['Available', 'In Use', 'Maintenance', 'Retired', 'Lost'];
                 $sm_status_colors = [
-                    'Available' => '#6ABF57',
-                    'In Use' => '#F05353',
+                    'Available'   => '#6ABF57',
+                    'In Use'      => '#F05353',
                     'Maintenance' => '#FDB840',
-                    'Retired' => '#919191',
+                    'Retired'     => '#919191',
+                    'Lost'        => '#EF4444',
                 ];
 
                 foreach ($sm_categories as $cat_name => $cat_cfg):

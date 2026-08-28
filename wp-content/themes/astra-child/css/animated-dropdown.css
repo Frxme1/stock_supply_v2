@@ -169,11 +169,11 @@
         display: none !important;
     }
 
-    select,
-    .form-select,
-    .staggered-dropdown,
-    .filter-select-custom,
-    .form-group select {
+    select:not(.swal2-select):not(.swal2-input):not([style*="display: none"]):not([style*="display:none"]),
+    .form-select:not(.swal2-select),
+    .staggered-dropdown:not(.swal2-select),
+    .filter-select-custom:not(.swal2-select),
+    .form-group select:not(.swal2-select) {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -198,5 +198,22 @@
         background-repeat: no-repeat !important;
         background-size: 14px 14px !important;
         box-sizing: border-box !important;
+    }
+
+    /* Never force SweetAlert unused inputs/selects to display */
+    .swal2-container select.swal2-select:not([style*="display: block"]):not([style*="display: flex"]):not(.swal2-select-show),
+    .swal2-container .swal2-select[style*="display: none"],
+    .swal2-container .swal2-input[style*="display: none"],
+    .swal2-container .swal2-textarea[style*="display: none"],
+    .swal2-container .swal2-file[style*="display: none"],
+    .swal2-container .swal2-checkbox[style*="display: none"],
+    .swal2-container .swal2-radio[style*="display: none"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
     }
 }

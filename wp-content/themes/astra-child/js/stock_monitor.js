@@ -17,7 +17,8 @@
         'Available':   '#6ABF57',
         'In Use':      '#F05353',
         'Maintenance': '#FDB840',
-        'Retired':     '#919191'
+        'Retired':     '#919191',
+        'Lost':        '#EF4444'
     };
 
     // Category config
@@ -128,14 +129,13 @@
 
         // Update category cards
         var categories = ['Monitor', 'Laptop', 'Accessories'];
-        var statuses = ['Available', 'In Use', 'Maintenance', 'Retired'];
+        var statuses = ['Available', 'In Use', 'Maintenance', 'Retired', 'Lost'];
 
         categories.forEach(function (cat) {
             var catData = data.by_category_status[cat];
             if (!catData) return;
 
-            var totalInCat = 0;
-            statuses.forEach(function (s) { totalInCat += (catData[s] || 0); });
+            var totalInCat = Object.values(catData).reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
 
             // Total number
             var totalEl = document.getElementById('stock-total-' + slugify(cat));

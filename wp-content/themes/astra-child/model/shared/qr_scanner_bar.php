@@ -868,8 +868,18 @@ if ($category_filter) {
             let ownerOptionsHtml = '<option value="">-- Select Employee / Borrower --</option>';
             owners.forEach(o => {
                 let nickname = (o.Nickname || '').trim();
-                let fullName = [o.FirstName, o.LastName].filter(Boolean).map(s => s.trim()).filter(Boolean).join(' ');
-                let namePart = nickname || fullName || `Owner #${o.OwnerID}`;
+                let firstName = (o.FirstName || '').trim();
+                let lastName = (o.LastName || '').trim();
+                let lastInitial = '';
+                if (lastName && lastName.toLowerCase() !== 'null') {
+                    lastInitial = lastName.charAt(0).toUpperCase() + '.';
+                } else if (firstName && firstName.toLowerCase() !== 'null') {
+                    let parts = firstName.split(/\s+/);
+                    if (parts.length > 1 && parts[parts.length - 1].toLowerCase() !== 'null') {
+                        lastInitial = parts[parts.length - 1].charAt(0).toUpperCase() + '.';
+                    }
+                }
+                let namePart = nickname ? (lastInitial ? `${nickname} ${lastInitial}` : nickname) : (firstName || `Owner #${o.OwnerID}`);
                 let dept = (o.DepartmentName || '').trim();
                 let deptAbbr = window.stock_supply_get_dept_abbr(dept);
 

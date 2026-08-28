@@ -2,6 +2,31 @@
 $sidebar_badges = function_exists('stock_supply_get_sidebar_badges') ? stock_supply_get_sidebar_badges() : ['requests' => 0, 'maintenance' => 0, 'total' => 0];
 $requests_count = $sidebar_badges['requests'];
 $maintenance_count = $sidebar_badges['maintenance'];
+
+$current_user = wp_get_current_user();
+$is_logged_in = is_user_logged_in();
+$user_display_name = $is_logged_in ? ($current_user->display_name ?: $current_user->user_login) : 'Guest';
+$user_email = $is_logged_in ? strtolower($current_user->user_email) : '';
+$user_initial = strtoupper(mb_substr($user_display_name, 0, 1));
+$user_role_label = 'Staff';
+$user_role_class = 'staff';
+
+if ($is_logged_in) {
+    $roles = (array) $current_user->roles;
+    if (in_array('administrator', $roles)) {
+        $user_role_label = 'Admin';
+        $user_role_class = 'admin';
+    } elseif (in_array('stock_staff', $roles)) {
+        $user_role_label = 'Stock Staff';
+        $user_role_class = 'stock-staff';
+    } elseif (in_array('editor', $roles)) {
+        $user_role_label = 'Editor';
+        $user_role_class = 'editor';
+    } else {
+        $user_role_label = 'Staff';
+        $user_role_class = 'staff';
+    }
+}
 ?>
 <!-- ============================================================
    Custom Sidebar - Animated Expand/Collapse
@@ -108,8 +133,27 @@ $maintenance_count = $sidebar_badges['maintenance'];
         </a>
     </nav>
 
-    <!-- Bottom section: User + Logout -->
+    <!-- Bottom section: User Profile + Logout -->
     <div class="sidebar-bottom">
+        <?php if ($is_logged_in): ?>
+            <div class="sidebar-user-widget">
+                <div class="sidebar-user-avatar-wrap">
+                    <div class="sidebar-user-avatar">
+                        <span><?php echo esc_html($user_initial); ?></span>
+                    </div>
+                    <span class="sidebar-user-online-dot" title="Online"></span>
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name-row">
+                        <span class="sidebar-user-name" title="<?php echo esc_attr($user_display_name); ?>"><?php echo esc_html($user_display_name); ?></span>
+                        <span class="sidebar-user-role-badge <?php echo esc_attr($user_role_class); ?>"><?php echo esc_html($user_role_label); ?></span>
+                    </div>
+                    <?php if (!empty($user_email)): ?>
+                        <span class="sidebar-user-email" title="<?php echo esc_attr($user_email); ?>"><?php echo esc_html($user_email); ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
         <a href="<?php echo esc_url(home_url('/logout/')); ?>" class="sidebar-link sidebar-logout">
             <span class="sidebar-link-icon">
                 <i class="fa-solid fa-right-from-bracket" style="font-size: 20px;"></i>
@@ -237,6 +281,25 @@ $maintenance_count = $sidebar_badges['maintenance'];
             class="mobile-link <?php echo (is_page('add-device')) ? 'active' : ''; ?>">
             <span><i class="fa-solid fa-plus" style="font-size: 20px;"></i> Add Device</span>
         </a>
+        <?php if ($is_logged_in): ?>
+            <div class="mobile-user-card">
+                <div class="mobile-user-avatar-wrap">
+                    <div class="mobile-user-avatar">
+                        <span><?php echo esc_html($user_initial); ?></span>
+                    </div>
+                    <span class="mobile-user-online-dot" title="Online"></span>
+                </div>
+                <div class="mobile-user-info">
+                    <div class="mobile-user-name-row">
+                        <span class="mobile-user-name"><?php echo esc_html($user_display_name); ?></span>
+                        <span class="sidebar-user-role-badge <?php echo esc_attr($user_role_class); ?>"><?php echo esc_html($user_role_label); ?></span>
+                    </div>
+                    <?php if (!empty($user_email)): ?>
+                        <span class="mobile-user-email"><?php echo esc_html($user_email); ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
         <a href="<?php echo esc_url(home_url('/logout/')); ?>" class="mobile-link mobile-logout">
             <span><i class="fa-solid fa-right-from-bracket" style="font-size: 20px;"></i> Logout</span>
         </a>
@@ -522,9 +585,134 @@ $maintenance_count = $sidebar_badges['maintenance'];
 
     /* Bottom section */
     .sidebar-bottom {
-        padding: 8px 8px 16px;
+        padding: 8px 8px 14px;
         border-top: 1px solid rgba(255, 255, 255, 0.06);
         flex-shrink: 0;
+    }
+
+    /* User Widget in Desktop Sidebar */
+    .sidebar-user-widget {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px;
+        border-radius: 12px;
+        margin-bottom: 6px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.25s ease;
+        box-sizing: border-box;
+    }
+
+    .custom-sidebar-nav:hover .sidebar-user-widget {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(99, 102, 241, 0.25);
+    }
+
+    .sidebar-user-avatar-wrap {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar-user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .sidebar-user-online-dot {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #10b981;
+        border: 2px solid #0f172a;
+        box-shadow: 0 0 6px #10b981;
+    }
+
+    .sidebar-user-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        opacity: 0;
+        transform: translateX(-6px);
+        transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .custom-sidebar-nav:hover .sidebar-user-info {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .sidebar-user-name-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .sidebar-user-name {
+        font-weight: 700;
+        font-size: 0.88rem;
+        color: #ffffff;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sidebar-user-role-badge {
+        font-size: 0.62rem;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+    }
+
+    .sidebar-user-role-badge.admin {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .sidebar-user-role-badge.stock-staff {
+        background: rgba(99, 102, 241, 0.2);
+        color: #c7d2fe;
+        border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+
+    .sidebar-user-role-badge.staff {
+        background: rgba(16, 185, 129, 0.2);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .sidebar-user-email {
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.45);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-top: 1px;
+        text-transform: lowercase !important;
     }
 
     .sidebar-logout {
@@ -534,6 +722,85 @@ $maintenance_count = $sidebar_badges['maintenance'];
     .sidebar-logout:hover {
         background-color: rgba(239, 68, 68, 0.12);
         color: #f87171;
+    }
+
+    /* Mobile User Card */
+    .mobile-user-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        margin: 12px 4px 6px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        box-sizing: border-box;
+    }
+
+    .mobile-user-avatar-wrap {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+    }
+
+    .mobile-user-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .mobile-user-online-dot {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        border: 2px solid #111827;
+        box-shadow: 0 0 6px #10b981;
+    }
+
+    .mobile-user-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .mobile-user-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .mobile-user-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #ffffff;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobile-user-email {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-transform: lowercase !important;
+        margin-top: 2px;
     }
 
 

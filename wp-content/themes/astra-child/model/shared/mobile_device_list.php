@@ -33,20 +33,11 @@
                     <?php
                     $owner = trim($row->Owner ?? '');
                     $nickname = trim($row->Nickname ?? '');
-                    if ($owner === '' && $nickname === '') {
+                    $formattedOwner = stock_supply_format_nickname_with_initial($nickname, '', '', $owner);
+                    if ($formattedOwner === '-' || empty($formattedOwner)) {
                         echo '-';
                     } else {
-                        if ($nickname !== '')
-                            echo htmlspecialchars($nickname) . ' ';
-                        if ($owner !== '') {
-                            preg_match('/\((.*?)\)$/', $owner, $matches);
-                            $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
-                            $nameParts = explode(' ', $nameOnly);
-                            if (count($nameParts) > 1) {
-                                $lastInitial = strtoupper(mb_substr(end($nameParts), 0, 1)) . '.';
-                                echo htmlspecialchars($lastInitial);
-                            }
-                        }
+                        echo htmlspecialchars($formattedOwner);
                         $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
                         if (!empty($deptAbbr)) {
                             echo ' <span class="text-muted small">' . htmlspecialchars($deptAbbr) . '</span>';

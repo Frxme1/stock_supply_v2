@@ -241,6 +241,10 @@
     word-break: break-word;
 }
 
+.dtl-user-email {
+    text-transform: lowercase !important;
+}
+
 .dtl-photo-thumb {
     width: 48px;
     height: 48px;

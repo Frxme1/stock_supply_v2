@@ -992,7 +992,10 @@ function device_view_details($device_id = null)
                                 <i class="fa-solid fa-user text-indigo-500"></i> Assigned Owner
                             </span>
                             <span class="vd-maint-meta-val">
-                                <?= esc_html(formatName(stock_supply_format_owner_with_dept($device->OwnerNickname ?: $device->OwnerFullname, $device->DepartmentName))) ?>
+                                <?php
+                                $ownerDisplay = stock_supply_format_nickname_with_initial($device->OwnerNickname, '', '', $device->OwnerFullname);
+                                echo esc_html(formatName(stock_supply_format_owner_with_dept($ownerDisplay, $device->DepartmentName)));
+                                ?>
                             </span>
                         </div>
 
@@ -1111,7 +1114,10 @@ function device_view_details($device_id = null)
                     <i class="fa-solid fa-user text-indigo-500"></i> Current Owner
                 </div>
                 <div class="vd-info-value">
-                    <?= esc_html(formatName(stock_supply_format_owner_with_dept($device->OwnerNickname ?: $device->OwnerFullname, $device->DepartmentName))) ?>
+                    <?php
+                    $ownerDisplay = stock_supply_format_nickname_with_initial($device->OwnerNickname, '', '', $device->OwnerFullname);
+                    echo esc_html(formatName(stock_supply_format_owner_with_dept($ownerDisplay, $device->DepartmentName)));
+                    ?>
                 </div>
             </div>
         </div>
@@ -1236,8 +1242,8 @@ function device_view_details($device_id = null)
                                                     </span>
                                                 </div>
                                                 <div class="dtl-detail-row">
-                                                    <span class="dtl-detail-label">User</span>
-                                                    <span class="dtl-detail-value"><?= esc_html($row->user_email ?: '-') ?></span>
+                                                    <span class="dtl-detail-label">User Action</span>
+                                                    <span class="dtl-detail-value dtl-user-email" style="text-transform: lowercase !important;"><?= esc_html(strtolower($row->user_email ?: '-')) ?></span>
                                                 </div>
                                                 <div class="dtl-detail-row">
                                                     <span class="dtl-detail-label">Owner</span>

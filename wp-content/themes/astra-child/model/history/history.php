@@ -470,12 +470,12 @@ function form_history()
                                                     </span>
                                                 </div>
                                                 <div class="dtl-detail-row">
-                                                    <span class="dtl-detail-label">User</span>
-                                                    <span class="dtl-detail-value"><?= esc_html($row->user_email ?: '-') ?></span>
+                                                    <span class="dtl-detail-label">User Action</span>
+                                                    <span class="dtl-detail-value dtl-user-email" style="text-transform: lowercase !important;"><?= esc_html(strtolower($row->user_email ?: '-')) ?></span>
                                                 </div>
                                                 <div class="dtl-detail-row">
                                                     <span class="dtl-detail-label">Owner</span>
-                                                    <span class="dtl-detail-value"><?= esc_html($row->Owner ?: '-') ?></span>
+                                                    <span class="dtl-detail-value"><?= esc_html(stock_supply_format_nickname_with_initial('', '', '', $row->Owner)) ?></span>
                                                 </div>
                                                 <div class="dtl-detail-row">
                                                     <span class="dtl-detail-label">Department</span>

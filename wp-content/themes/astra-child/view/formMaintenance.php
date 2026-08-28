@@ -236,10 +236,73 @@ function form_maintenance($editing = null)
 
         <form method="POST" action="" id="maintenance-device-form" class="maint-main-form" enctype="multipart/form-data">
             <?php wp_nonce_field('update_maintenance_nonce', '_maint_nonce'); ?>
+            <input type="hidden" name="DeviceID" value="<?= esc_attr($editing->DeviceID ?? '') ?>">
 
-            <!-- Mobile Only Header -->
-            <div class="maint-mobile-header mobile-only-el">
-                <h2>Send to Repair</h2>
+            <!-- Mobile Sleek Header Bar (Mobile Only) -->
+            <div class="maint-mobile-header-bar mobile-only-el">
+                <div class="maint-mobile-header-top">
+                    <div class="maint-icon-badge-mob">
+                        <i class="fa-solid fa-wrench"></i>
+                    </div>
+                    <div class="maint-mobile-title-wrap">
+                        <h2>Send to Repair</h2>
+                        <p class="maint-mobile-subtitle">Record device issue and service details</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Hero Device Ticket Card (All-in-One Device Specs + Real-time Sync) -->
+            <div class="maint-mobile-hero-card mobile-only-el">
+                <div class="maint-badge-glow"></div>
+                
+                <!-- Top Badges Row -->
+                <div class="maint-mob-hero-top">
+                    <div class="maint-mob-id-pill">
+                        <i class="fa-solid fa-fingerprint me-1"></i> <?= esc_html($editing->DeviceID ?? 'DEV-XXXX') ?>
+                    </div>
+                    <div class="maint-mob-status-pill">
+                        <span class="maint-pulse-dot"></span>
+                        <span>Maintenance</span>
+                    </div>
+                </div>
+
+                <!-- Center Device Info -->
+                <div class="maint-mob-hero-main">
+                    <div class="maint-mob-avatar-box">
+                        <div class="maint-mob-avatar-icon" id="preview-maint-icon-mob">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                        <img id="preview-maint-uploaded-img-mob" src="" onclick="openPhotoModal(this.src)"
+                            title="Click to enlarge image"
+                            style="display:none; width: 56px; height: 56px; border-radius: 14px; object-fit: cover; border: 2px solid #f59e0b; cursor: zoom-in;">
+                    </div>
+                    <div class="maint-mob-hero-text">
+                        <div class="maint-mob-hero-name"><?= esc_html(!empty($editing->Model) ? $editing->Model : 'Hardware Equipment') ?></div>
+                        <div class="maint-mob-hero-tags">
+                            <?php if (!empty($editing->BrandName)): ?>
+                                <span class="maint-tag-pill brand"><?= esc_html($editing->BrandName) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($editing->CategoryName)): ?>
+                                <span class="maint-tag-pill cat"><?= esc_html($editing->CategoryName) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($editing->SerialNumber) && $editing->SerialNumber !== '—'): ?>
+                                <span class="maint-tag-pill sn"><i class="fa-solid fa-barcode me-1"></i><?= esc_html($editing->SerialNumber) ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Dynamic Ticket Preview Bar -->
+                <div class="maint-mob-live-strip">
+                    <div class="maint-mob-strip-item">
+                        <span class="maint-mob-strip-label"><i class="fa-solid fa-calendar-day me-1"></i> SERVICE DATE</span>
+                        <span class="maint-mob-strip-val" id="preview-maint-date-mob"><?= esc_html($dateValue ?: date('Y-m-d')) ?></span>
+                    </div>
+                    <div class="maint-mob-strip-item strip-reason">
+                        <span class="maint-mob-strip-label"><i class="fa-solid fa-triangle-exclamation me-1"></i> ISSUE / REASON</span>
+                        <span class="maint-mob-strip-val text-amber" id="preview-maint-reason-mob"><?= esc_html($details_val ?: 'Select or enter reason') ?></span>
+                    </div>
+                </div>
             </div>
 
             <!-- Desktop & Mobile 2-Column Bento Layout Grid -->
@@ -247,27 +310,26 @@ function form_maintenance($editing = null)
                 <!-- Left Column: Form Fields -->
                 <div class="maint-form-card">
 
-                    <!-- Section 1: Device Information -->
-                    <div class="maint-section-divider">
-                        <span class="maint-section-title"><i class="fa-solid fa-circle-info me-1"></i> Device
-                            Information</span>
+                    <!-- Section 1: Device Information (Desktop Only) -->
+                    <div class="maint-section-divider desktop-only-el">
+                        <span class="maint-section-title"><i class="fa-solid fa-circle-info me-1"></i> Device Information</span>
                     </div>
 
-                    <div class="maint-fields-grid">
+                    <div class="maint-fields-grid desktop-only-el">
                         <!-- Device ID -->
                         <div class="maint-field-group">
                             <label for="maint_device_id">
-                                <i class="fa-solid fa-fingerprint maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-fingerprint maint-field-icon"></i>
                                 Device ID
                             </label>
-                            <input type="text" name="DeviceID" id="maint_device_id"
+                            <input type="text" id="maint_device_id"
                                 value="<?= esc_attr($editing->DeviceID ?? '') ?>" required readonly class="input-readonly">
                         </div>
 
                         <!-- Brand -->
                         <div class="maint-field-group">
                             <label for="maint_brand">
-                                <i class="fa-solid fa-building maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-building maint-field-icon"></i>
                                 Brand
                             </label>
                             <input type="text" id="maint_brand" value="<?= esc_attr($editing->BrandName ?? '—') ?>" readonly
@@ -277,7 +339,7 @@ function form_maintenance($editing = null)
                         <!-- Category -->
                         <div class="maint-field-group">
                             <label for="maint_category">
-                                <i class="fa-solid fa-shapes maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-shapes maint-field-icon"></i>
                                 Category
                             </label>
                             <input type="text" id="maint_category" value="<?= esc_attr($editing->CategoryName ?? '—') ?>"
@@ -287,7 +349,7 @@ function form_maintenance($editing = null)
                         <!-- Model -->
                         <div class="maint-field-group">
                             <label for="maint_model">
-                                <i class="fa-solid fa-laptop maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-laptop maint-field-icon"></i>
                                 Model
                             </label>
                             <input type="text" id="maint_model" value="<?= esc_attr($editing->Model ?? '—') ?>" readonly
@@ -297,7 +359,7 @@ function form_maintenance($editing = null)
                         <!-- Serial Number (Full Width Span 2) -->
                         <div class="maint-field-group maint-span-2">
                             <label for="maint_sn">
-                                <i class="fa-solid fa-barcode maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-barcode maint-field-icon"></i>
                                 Serial Number
                             </label>
                             <input type="text" id="maint_sn" value="<?= esc_attr($editing->SerialNumber ?? '—') ?>" readonly
@@ -307,15 +369,14 @@ function form_maintenance($editing = null)
 
                     <!-- Section 2: Maintenance Details -->
                     <div class="maint-section-divider mt-4">
-                        <span class="maint-section-title"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Maintenance
-                            Details</span>
+                        <span class="maint-section-title"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Repair Information</span>
                     </div>
 
                     <div class="maint-fields-grid">
                         <!-- Repair Date -->
                         <div class="maint-field-group">
                             <label for="maint_date">
-                                <i class="fa-solid fa-calendar-day maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-calendar-day maint-field-icon"></i>
                                 Repair Date <span class="maint-req">*</span>
                             </label>
                             <input type="date" name="RepairDate" id="maint_date" value="<?= esc_attr($dateValue) ?>"
@@ -325,7 +386,7 @@ function form_maintenance($editing = null)
                         <!-- Maintenance Reason Select -->
                         <div class="maint-field-group">
                             <label for="maint_reason_select">
-                                <i class="fa-solid fa-triangle-exclamation maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-triangle-exclamation maint-field-icon"></i>
                                 Reason / Issue <span class="maint-req">*</span>
                             </label>
                             <select name="Details" id="maint_reason_select" required>
@@ -344,55 +405,58 @@ function form_maintenance($editing = null)
                         <!-- Additional Details (Full Width Span 2) -->
                         <div class="maint-field-group maint-span-2" id="other-details-group">
                             <label for="OtherDetails">
-                                <i class="fa-solid fa-comment-dots maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-comment-dots maint-field-icon"></i>
                                 Additional Notes / Custom Reason
                             </label>
 
                             <!-- Quick Clickable Symptom Chips (FontAwesome Icons) -->
                             <div class="maint-quick-chips-bar">
-                                <span class="maint-chips-label">
-                                    <i class="fa-solid fa-bolt text-warning me-1"></i> Quick Symptom Selection:
-                                </span>
+                                <div class="maint-chips-header">
+                                    <span class="maint-chips-label">
+                                        <i class="fa-solid fa-bolt text-warning me-1"></i> Quick Symptom Selection:
+                                    </span>
+                                    <span class="maint-chips-hint">Tap to auto-fill</span>
+                                </div>
                                 <div class="maint-chips-grid" id="maint_symptom_chips">
                                     <button type="button" class="maint-chip-btn" data-symptom="Cracked / Defective Screen"
                                         data-main-reason="Screen Issue">
                                         <i class="fa-solid fa-desktop text-danger"></i>
-                                        <span>Cracked / Defective Screen</span>
+                                        <span>Cracked Screen</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="Battery Degraded / Swollen"
                                         data-main-reason="Battery Issue">
                                         <i class="fa-solid fa-battery-quarter text-warning"></i>
-                                        <span>Battery Degraded / Swollen</span>
+                                        <span>Battery Degraded</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="No Power / Auto Shutdown"
                                         data-main-reason="Power Issue">
                                         <i class="fa-solid fa-power-off text-danger"></i>
-                                        <span>No Power / Auto Shutdown</span>
+                                        <span>No Power</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="Keyboard / Touchpad Failure"
                                         data-main-reason="Keyboard / Mouse Issue">
                                         <i class="fa-solid fa-keyboard text-primary"></i>
-                                        <span>Keyboard / Touchpad Failure</span>
+                                        <span>Keyboard / Touchpad</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn"
                                         data-symptom="OS Reinstall / Software Glitch" data-main-reason="Software Issue">
                                         <i class="fa-solid fa-arrows-rotate text-info"></i>
-                                        <span>OS Reinstall / Software Glitch</span>
+                                        <span>OS / Software</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn"
                                         data-symptom="Faulty Charger / Damaged Port" data-main-reason="Power Issue">
                                         <i class="fa-solid fa-plug text-warning"></i>
-                                        <span>Faulty Charger / Damaged Port</span>
+                                        <span>Charger / Port</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="Upgrade RAM / Storage SSD"
                                         data-main-reason="Hardware Upgrade">
                                         <i class="fa-solid fa-microchip text-success"></i>
-                                        <span>Upgrade RAM / SSD</span>
+                                        <span>Upgrade RAM/SSD</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="Overheating / Loud Fan Noise"
                                         data-main-reason="Other Issue">
                                         <i class="fa-solid fa-fan text-secondary"></i>
-                                        <span>Overheating / Loud Fan</span>
+                                        <span>Overheating / Fan</span>
                                     </button>
                                 </div>
                             </div>
@@ -405,7 +469,7 @@ function form_maintenance($editing = null)
                         <!-- Condition Photo Upload (Full Width Span 2) -->
                         <div class="maint-field-group maint-span-2">
                             <label for="maint_photo">
-                                <i class="fa-solid fa-camera maint-field-icon desktop-only-el"></i>
+                                <i class="fa-solid fa-camera maint-field-icon"></i>
                                 Condition Photo (Camera / Upload)
                             </label>
                             <div class="maint-photo-upload-wrap">
@@ -413,8 +477,10 @@ function form_maintenance($editing = null)
                                 <div id="maint_photo_preview_box" class="maint-photo-preview-box" style="display:none;">
                                     <div class="maint-photo-preview-inner"
                                         style="position: relative; display: inline-block;">
-                                        <img id="maint_photo_img" src="" alt="Condition Photo Preview" onclick="openPhotoModal(this.src)" title="Click to enlarge image" style="cursor: zoom-in;">
-                                        <span class="maint-photo-preview-badge">Attached</span>
+                                        <img id="maint_photo_img" src="" alt="Condition Photo Preview"
+                                            onclick="openPhotoModal(this.src)" title="Click to enlarge image"
+                                            style="cursor: zoom-in;">
+                                        <span class="maint-photo-preview-badge"><i class="fa-solid fa-check me-1"></i>Attached</span>
                                         <button type="button" class="maint-photo-clear-btn" onclick="clearMaintPhoto()"
                                             title="Clear photo">
                                             <i class="fa-solid fa-xmark"></i>
@@ -459,7 +525,8 @@ function form_maintenance($editing = null)
                             <div class="maint-avatar-circle" id="preview-maint-icon">
                                 <i class="fa-solid fa-screwdriver-wrench"></i>
                             </div>
-                            <img id="preview-maint-uploaded-img" src="" onclick="openPhotoModal(this.src)" title="Click to enlarge image"
+                            <img id="preview-maint-uploaded-img" src="" onclick="openPhotoModal(this.src)"
+                                title="Click to enlarge image"
                                 style="display:none; width: 80px; height: 80px; border-radius: 16px; object-fit: cover; border: 2px solid rgba(245, 158, 11, 0.6); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); z-index: 1; margin-bottom: 0.5rem; cursor: zoom-in;">
                             <div class="maint-id-pill" id="preview-maint-device-id">
                                 <?= esc_html($editing->DeviceID ?? 'DEV-XXXX') ?>
@@ -508,7 +575,8 @@ function form_maintenance($editing = null)
         </form>
 
         <!-- Custom Image Lightbox Modal -->
-        <div id="maint_image_lightbox" class="maint-image-lightbox" style="display:none;" onclick="closeMaintLightbox(event)">
+        <div id="maint_image_lightbox" class="maint-image-lightbox" style="display:none;"
+            onclick="closeMaintLightbox(event)">
             <div class="maint-lightbox-dialog" onclick="event.stopPropagation()">
                 <button type="button" class="maint-lightbox-close-btn" onclick="closeMaintLightbox(event)" title="Close">
                     <i class="fa-solid fa-xmark"></i>
@@ -598,7 +666,7 @@ function form_maintenance($editing = null)
             backdrop-filter: blur(4px) !important;
             pointer-events: none !important;
             z-index: 5 !important;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
             letter-spacing: 0.02em !important;
         }
 
@@ -729,13 +797,25 @@ function form_maintenance($editing = null)
         }
 
         @keyframes maintLightFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         @keyframes maintLightZoomIn {
-            from { opacity: 0; transform: scale(0.92); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         /* --- DESKTOP STYLES (Screen > 768px) --- */
@@ -1222,16 +1302,209 @@ function form_maintenance($editing = null)
                 display: block !important;
             }
 
-            #maintenance-form-wrapper .maint-mobile-header {
-                margin-bottom: 1rem !important;
-                text-align: center !important;
+            /* Mobile Header Bar */
+            #maintenance-form-wrapper .maint-mobile-header-bar {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 1.5px solid #e2e8f0;
+                border-radius: 18px;
+                padding: 14px 16px;
+                margin-bottom: 12px;
+                box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
             }
 
-            #maintenance-form-wrapper .maint-mobile-header h2 {
-                font-size: 1.5rem !important;
+            #maintenance-form-wrapper .maint-mobile-header-top {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            #maintenance-form-wrapper .maint-icon-badge-mob {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffffff;
+                font-size: 1.25rem;
+                box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+                flex-shrink: 0;
+            }
+
+            #maintenance-form-wrapper .maint-mobile-title-wrap h2 {
+                font-size: 1.25rem !important;
                 font-weight: 800 !important;
                 color: #0f172a !important;
                 margin: 0 !important;
+                line-height: 1.2 !important;
+            }
+
+            #maintenance-form-wrapper .maint-mobile-subtitle {
+                font-size: 0.8rem !important;
+                color: #64748b !important;
+                margin: 2px 0 0 0 !important;
+            }
+
+            /* Mobile Hero Device Ticket Card */
+            #maintenance-form-wrapper .maint-mobile-hero-card {
+                position: relative;
+                background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+                border: 1.5px solid rgba(245, 158, 11, 0.35);
+                border-radius: 20px;
+                padding: 16px;
+                margin-bottom: 16px;
+                color: #ffffff;
+                box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 0 0 20px rgba(245, 158, 11, 0.12);
+                overflow: hidden;
+            }
+
+            #maintenance-form-wrapper .maint-mob-hero-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 12px;
+            }
+
+            #maintenance-form-wrapper .maint-mob-id-pill {
+                font-size: 0.85rem;
+                font-weight: 800;
+                color: #fed7aa;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.18);
+                padding: 3px 12px;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+            }
+
+            #maintenance-form-wrapper .maint-mob-status-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: #f59e0b;
+                background: rgba(245, 158, 11, 0.15);
+                border: 1px solid rgba(245, 158, 11, 0.3);
+                padding: 3px 10px;
+                border-radius: 999px;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            #maintenance-form-wrapper .maint-mob-hero-main {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            #maintenance-form-wrapper .maint-mob-avatar-box {
+                position: relative;
+                flex-shrink: 0;
+            }
+
+            #maintenance-form-wrapper .maint-mob-avatar-icon {
+                width: 56px;
+                height: 56px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffffff;
+                font-size: 1.4rem;
+                box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4);
+            }
+
+            #maintenance-form-wrapper .maint-mob-hero-text {
+                flex: 1;
+                min-width: 0;
+            }
+
+            #maintenance-form-wrapper .maint-mob-hero-name {
+                font-size: 1.05rem;
+                font-weight: 800;
+                color: #ffffff;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 4px;
+            }
+
+            #maintenance-form-wrapper .maint-mob-hero-tags {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            #maintenance-form-wrapper .maint-tag-pill {
+                font-size: 0.72rem;
+                padding: 2px 8px;
+                border-radius: 6px;
+                font-weight: 700;
+            }
+
+            #maintenance-form-wrapper .maint-tag-pill.brand {
+                background: rgba(251, 191, 36, 0.15);
+                color: #fbbf24;
+                border: 1px solid rgba(251, 191, 36, 0.3);
+            }
+
+            #maintenance-form-wrapper .maint-tag-pill.cat {
+                background: rgba(99, 102, 241, 0.15);
+                color: #a5b4fc;
+                border: 1px solid rgba(99, 102, 241, 0.3);
+            }
+
+            #maintenance-form-wrapper .maint-tag-pill.sn {
+                background: rgba(255, 255, 255, 0.08);
+                color: #cbd5e1;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                font-family: monospace;
+            }
+
+            #maintenance-form-wrapper .maint-mob-live-strip {
+                display: grid;
+                grid-template-columns: 1fr 1.35fr;
+                gap: 10px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
+                padding: 8px 12px;
+            }
+
+            #maintenance-form-wrapper .maint-mob-strip-item {
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+            }
+
+            #maintenance-form-wrapper .maint-mob-strip-label {
+                font-size: 0.65rem;
+                color: #94a3b8;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                margin-bottom: 2px;
+            }
+
+            #maintenance-form-wrapper .maint-mob-strip-val {
+                font-size: 0.82rem;
+                font-weight: 700;
+                color: #f1f5f9;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #maintenance-form-wrapper .maint-mob-strip-val.text-amber {
+                color: #fbbf24 !important;
             }
 
             #maintenance-form-wrapper .maint-layout-grid {
@@ -1272,18 +1545,18 @@ function form_maintenance($editing = null)
             #maintenance-form-wrapper .maint-field-group {
                 background: #ffffff !important;
                 border: 1.5px solid #e2e8f0 !important;
-                border-radius: 20px !important;
+                border-radius: 18px !important;
                 padding: 16px 18px !important;
                 box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
                 margin-bottom: 0 !important;
             }
 
             #maintenance-form-wrapper .maint-field-group label {
-                font-size: 0.78rem !important;
+                font-size: 0.8rem !important;
                 font-weight: 700 !important;
                 text-transform: uppercase !important;
-                letter-spacing: 0.06em !important;
-                color: #475569 !important;
+                letter-spacing: 0.04em !important;
+                color: #334155 !important;
                 margin-bottom: 8px !important;
                 display: flex !important;
                 align-items: center !important;
@@ -1305,29 +1578,18 @@ function form_maintenance($editing = null)
                 box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
             }
 
-            #maintenance-form-wrapper .input-readonly,
-            #maintenance-form-wrapper input[readonly],
-            #maintenance-form-wrapper input:disabled,
-            #maintenance-form-wrapper select:disabled {
-                background-color: #f1f5f9 !important;
-                color: #0f172a !important;
-                -webkit-text-fill-color: #0f172a !important;
-                font-weight: 700 !important;
-                border: 1.5px solid #cbd5e1 !important;
-                cursor: not-allowed !important;
-                opacity: 1 !important;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a3 3 0 0 0-3 3v2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3zm1 5V4a1 1 0 0 0-2 0v2h2z'/%3E%3C/svg%3E") !important;
-                background-repeat: no-repeat !important;
-                background-position: right 14px center !important;
-                background-size: 14px 14px !important;
-                padding-right: 38px !important;
+            #maintenance-form-wrapper .maint-field-group input:focus,
+            #maintenance-form-wrapper .maint-field-group select:focus {
+                border-color: #ea580c !important;
+                background-color: #ffffff !important;
+                box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15) !important;
             }
 
             #maintenance-form-wrapper .maint-photo-upload-wrap input[type="file"] {
                 padding: 10px !important;
                 height: auto !important;
                 border-radius: 12px !important;
-                background: #ffffff !important;
+                background: #f8fafc !important;
                 border: 1.5px dashed #cbd5e1 !important;
             }
 
@@ -1337,7 +1599,7 @@ function form_maintenance($editing = null)
                 gap: 12px !important;
                 margin-top: 24px !important;
                 padding-top: 18px !important;
-                border-top: 1px solid #f1f5f9 !important;
+                border-top: 1px solid #e2e8f0 !important;
             }
 
             #maintenance-form-wrapper .maint-btn-cancel,
@@ -1356,52 +1618,50 @@ function form_maintenance($editing = null)
             }
 
             #maintenance-form-wrapper .maint-btn-cancel {
-                background: #dc2626 !important;
+                background: #ef4444 !important;
             }
 
             #maintenance-form-wrapper .maint-btn-submit {
                 background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%) !important;
             }
-        }
 
-        /* Quick Clickable Symptom Chips */
-        .maint-quick-chips-bar {
-            margin-bottom: 12px;
-            background: #f8fafc;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 12px 14px;
-            transition: all 0.2s ease;
-        }
+            /* Quick Symptom Chips on Mobile */
+            #maintenance-form-wrapper .maint-quick-chips-bar {
+                padding: 12px 14px !important;
+                background: #f8fafc !important;
+                border-radius: 16px !important;
+                border: 1.5px solid #e2e8f0 !important;
+                margin-bottom: 12px !important;
+            }
 
-        .maint-chips-label {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 9px;
-            letter-spacing: -0.01em;
-        }
+            #maintenance-form-wrapper .maint-chips-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 9px;
+            }
 
-        .maint-chips-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
+            #maintenance-form-wrapper .maint-chips-hint {
+                font-size: 0.72rem;
+                color: #64748b;
+                font-weight: 600;
+            }
 
-        .maint-chip-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            background: #ffffff;
-            border: 1.5px solid #cbd5e1;
-            border-radius: 9999px;
-            padding: 6px 13px;
-            font-size: 12.5px;
-            font-weight: 600;
-            color: #334155;
-            cursor: pointer;
+            #maintenance-form-wrapper .maint-chips-grid {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+            }
+
+            #maintenance-form-wrapper .maint-chip-btn {
+                padding: 8px 12px !important;
+                font-size: 0.8rem !important;
+                border-radius: 10px !important;
+                min-height: 38px !important;
+                flex-grow: 1;
+                justify-content: center;
+            }
+        }
             transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
             user-select: none;
@@ -1493,28 +1753,41 @@ function form_maintenance($editing = null)
             const photoInput = document.getElementById('maint_photo');
             const chipButtons = document.querySelectorAll('.maint-chip-btn');
 
+            // Desktop preview elements
             const pDate = document.getElementById('preview-maint-date');
             const pReason = document.getElementById('preview-maint-reason');
             const pPhotoImg = document.getElementById('preview-maint-uploaded-img');
             const pIcon = document.getElementById('preview-maint-icon');
 
+            // Mobile preview elements
+            const pDateMob = document.getElementById('preview-maint-date-mob');
+            const pReasonMob = document.getElementById('preview-maint-reason-mob');
+            const pPhotoImgMob = document.getElementById('preview-maint-uploaded-img-mob');
+            const pIconMob = document.getElementById('preview-maint-icon-mob');
+
             function syncMaintenancePreview() {
-                if (pDate && dateInput) {
-                    pDate.textContent = dateInput.value || '<?= esc_js($dateValue) ?>';
+                const dateVal = (dateInput ? dateInput.value : '') || '<?= esc_js($dateValue) ?>';
+                let sel = (reasonSelect && reasonSelect.selectedIndex > 0) ? reasonSelect.options[reasonSelect.selectedIndex].text : '';
+                let oth = (otherInput ? otherInput.value.trim() : '');
+                let fullReason = '';
+                if (sel && oth) {
+                    fullReason = sel + ' - ' + oth;
+                } else if (oth) {
+                    fullReason = oth;
+                } else if (sel) {
+                    fullReason = sel;
+                } else {
+                    fullReason = 'Select or enter reason';
                 }
-                if (pReason) {
-                    let sel = (reasonSelect && reasonSelect.selectedIndex > 0) ? reasonSelect.options[reasonSelect.selectedIndex].text : '';
-                    let oth = (otherInput ? otherInput.value.trim() : '');
-                    if (sel && oth) {
-                        pReason.textContent = sel + ' - ' + oth;
-                    } else if (oth) {
-                        pReason.textContent = oth;
-                    } else if (sel) {
-                        pReason.textContent = sel;
-                    } else {
-                        pReason.textContent = 'Select or enter reason';
-                    }
-                }
+
+                // Desktop sync
+                if (pDate) pDate.textContent = dateVal;
+                if (pReason) pReason.textContent = fullReason;
+
+                // Mobile sync
+                if (pDateMob) pDateMob.textContent = dateVal;
+                if (pReasonMob) pReasonMob.textContent = fullReason;
+
                 syncChipsActiveState();
             }
 
@@ -1640,6 +1913,11 @@ function form_maintenance($editing = null)
                     pPhotoImg.style.display = 'none';
                     pIcon.style.display = 'flex';
                 }
+                if (pPhotoImgMob && pIconMob) {
+                    pPhotoImgMob.src = '';
+                    pPhotoImgMob.style.display = 'none';
+                    pIconMob.style.display = 'flex';
+                }
             };
 
             if (photoInput) {
@@ -1657,6 +1935,11 @@ function form_maintenance($editing = null)
                                 pPhotoImg.src = e.target.result;
                                 pPhotoImg.style.display = 'block';
                                 pIcon.style.display = 'none';
+                            }
+                            if (pPhotoImgMob && pIconMob) {
+                                pPhotoImgMob.src = e.target.result;
+                                pPhotoImgMob.style.display = 'block';
+                                pIconMob.style.display = 'none';
                             }
                         };
                         reader.readAsDataURL(this.files[0]);

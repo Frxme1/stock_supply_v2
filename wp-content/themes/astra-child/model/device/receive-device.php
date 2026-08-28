@@ -20,7 +20,7 @@ function receive_device($device = null)
         FROM $table_owners o
         LEFT JOIN Departments d ON o.DepartmentID = d.DepartmentID
         LEFT JOIN Positions p ON o.PositionID = p.PositionID
-        WHERE (o.StatusID = 1 OR o.StatusID IS NULL OR o.StatusID = (SELECT StatusID FROM Status_employee WHERE Status_name = 'Active' LIMIT 1))
+        WHERE (o.StatusID != 2 OR o.StatusID IS NULL)
         ORDER BY o.Nickname ASC
     ");
 
@@ -52,7 +52,7 @@ function receive_device($device = null)
         }
     }
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_device']) || isset($_POST['_rcv_nonce']))) {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && (isset($_POST['update_device']) || isset($_POST['_rcv_nonce']))) {
         if (!is_user_logged_in() || !isset($_POST['_rcv_nonce']) || !wp_verify_nonce($_POST['_rcv_nonce'], 'receive_device_nonce')) {
             echo '<p style="color:red;">Security check failed.</p>';
             return ob_get_clean();
@@ -274,22 +274,41 @@ function receive_device($device = null)
                                     Assignee (Employee) <span class="required-star">*</span>
                                 </label>
                             </div>
-                            <div class="field-input-wrap" id="website_owner_search_wrap" style="position: relative;">
-                                <div style="position: relative;">
+                            <!-- Desktop Custom Searchable Dropdown (Desktop Only) -->
+                            <div class="field-input-wrap desktop-only-element" id="website_owner_search_wrap" style="position: relative;">
+                                <div style="position: relative; width: 100%; cursor: pointer;" onclick="toggleOwnerSearchPopup(event)">
                                     <i class="fa-solid fa-magnifying-glass"
-                                        style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none;"></i>
+                                        style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; pointer-events: none; z-index: 2;"></i>
                                     <input type="text" id="owner_search_input" placeholder="Search employee nickname..."
-                                        autocomplete="off" style="padding-left: 36px; padding-right: 32px;"
-                                        onfocus="this.select(); openOwnerSearchPopup()"
+                                        autocomplete="off" style="padding-left: 36px; padding-right: 36px; cursor: text;"
+                                        onclick="openOwnerSearchPopup(event)"
+                                        onfocus="openOwnerSearchPopup(event)"
                                         oninput="onOwnerInputChanged(this.value)">
-                                    <i class="fa-solid fa-chevron-down"
-                                        style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
+                                    <i class="fa-solid fa-chevron-down" id="owner_search_chevron"
+                                        style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem; pointer-events: none; z-index: 2; transition: transform 0.2s ease;"></i>
                                 </div>
 
                                 <!-- Live Floating Results Popup -->
                                 <div id="owner_search_popup"
-                                    style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12); z-index: 99999; padding: 4px;">
+                                    style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: 240px; overflow-y: auto; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 99999; padding: 4px;">
                                 </div>
+                            </div>
+
+                            <!-- Mobile Native System Select (Mobile Only) -->
+                            <div class="field-input-wrap mobile-only-element">
+                                <select id="mobile_owner_select" onchange="syncMobileOwnerSelect(this.value)">
+                                    <option value="">-- Select Employee --</option>
+                                    <?php foreach ($owners_data as $o): ?>
+                                        <?php 
+                                        $nickFmt = stock_supply_format_nickname_with_initial($o->Nickname, $o->FirstName, $o->LastName);
+                                        $details = array_filter([$o->DepartmentName ?? '', $o->PositionName ?? '']);
+                                        $opt_label = $nickFmt . (!empty($details) ? ' (' . implode(' • ', $details) . ')' : '');
+                                        ?>
+                                        <option value="<?= esc_attr($o->OwnerID) ?>">
+                                            <?= esc_html($opt_label) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <input type="hidden" name="OwnerID" id="OwnerID" value="">
                         </div>
@@ -1112,6 +1131,15 @@ function receive_device($device = null)
                 display: none !important;
             }
 
+            .mobile-only-element {
+                display: block !important;
+            }
+
+            .field-input-wrap.mobile-only-element {
+                display: block !important;
+                width: 100% !important;
+            }
+
             .mobile-only-header {
                 display: block !important;
                 margin-bottom: 1rem !important;
@@ -1278,9 +1306,12 @@ function receive_device($device = null)
     <script>
         const ownerDataList = [
             <?php foreach ($owners_data as $o): ?>
-                                        {
+                {
                     id: <?= intval($o->OwnerID) ?>,
-                    name: <?= json_encode(trim($o->Nickname)) ?>,
+                    name: <?= json_encode(stock_supply_format_nickname_with_initial($o->Nickname, $o->FirstName, $o->LastName)) ?>,
+                    rawNick: <?= json_encode(trim($o->Nickname ?? '')) ?>,
+                    firstName: <?= json_encode(trim($o->FirstName ?? '')) ?>,
+                    lastName: <?= json_encode(trim($o->LastName ?? '')) ?>,
                     deptId: <?= json_encode(!empty($o->DepartmentID) ? strval($o->DepartmentID) : '') ?>,
                     posId: <?= json_encode(!empty($o->PositionID) ? strval($o->PositionID) : '') ?>,
                     deptName: <?= json_encode($o->DepartmentName ?? '') ?>,
@@ -1289,99 +1320,159 @@ function receive_device($device = null)
             <?php endforeach; ?>
         ];
 
-        function openOwnerSearchPopup() {
+        function toggleOwnerSearchPopup(e) {
+            if (e) e.stopPropagation();
+            const popup = document.getElementById('owner_search_popup');
+            if (!popup) return;
+            if (popup.style.display === 'block') {
+                closeOwnerSearchPopup();
+            } else {
+                openOwnerSearchPopup(e);
+            }
+        }
+
+        function openOwnerSearchPopup(e) {
+            if (e) e.stopPropagation();
             const input = document.getElementById('owner_search_input');
+            const popup = document.getElementById('owner_search_popup');
+            const chevron = document.getElementById('owner_search_chevron');
             if (input) filterOwnerSearchPopup(input.value);
+            if (popup) popup.style.display = 'block';
+            if (chevron) chevron.style.transform = 'translateY(-50%) rotate(180deg)';
+        }
+
+        function closeOwnerSearchPopup() {
+            const popup = document.getElementById('owner_search_popup');
+            const chevron = document.getElementById('owner_search_chevron');
+            if (popup) popup.style.display = 'none';
+            if (chevron) chevron.style.transform = 'translateY(-50%) rotate(0deg)';
         }
 
         function onOwnerInputChanged(val) {
             filterOwnerSearchPopup(val);
+            const popup = document.getElementById('owner_search_popup');
+            const chevron = document.getElementById('owner_search_chevron');
+            if (popup) popup.style.display = 'block';
+            if (chevron) chevron.style.transform = 'translateY(-50%) rotate(180deg)';
+
             if (!val.trim()) {
                 const hiddenInput = document.getElementById('OwnerID');
-                if (hiddenInput) {
-                    hiddenInput.value = '';
-                    handleOwnerChange();
-                }
+                const mobileSelect = document.getElementById('mobile_owner_select');
+                if (hiddenInput) hiddenInput.value = '';
+                if (mobileSelect) mobileSelect.value = '';
+                handleOwnerChange();
             }
         }
 
         function filterOwnerSearchPopup(query) {
             const popup = document.getElementById('owner_search_popup');
             if (!popup) return;
-            const term = query.toLowerCase().trim();
+            const term = (query || '').toLowerCase().trim();
 
             const filtered = ownerDataList.filter(o => {
-                return !term || o.name.toLowerCase().includes(term) || o.deptName.toLowerCase().includes(term) || o.posName.toLowerCase().includes(term);
+                if (!term) return true;
+                return (o.name && o.name.toLowerCase().includes(term)) ||
+                       (o.rawNick && o.rawNick.toLowerCase().includes(term)) ||
+                       (o.firstName && o.firstName.toLowerCase().includes(term)) ||
+                       (o.lastName && o.lastName.toLowerCase().includes(term)) ||
+                       (o.deptName && o.deptName.toLowerCase().includes(term)) ||
+                       (o.posName && o.posName.toLowerCase().includes(term));
             });
 
             if (filtered.length === 0) {
-                popup.innerHTML = `<div style="padding: 10px 14px; color: #94a3b8; font-size: 0.85rem; text-align: center;">❌ No matching employee found</div>`;
+                popup.innerHTML = `<div style="padding: 12px 14px; color: #94a3b8; font-size: 0.85rem; text-align: center;"><i class="fa-solid fa-user-slash me-1"></i> No matching employee found</div>`;
             } else {
                 let html = '';
                 filtered.forEach(o => {
                     const deptBadge = o.deptName ? `<span style="font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 600; margin-right: 4px;">${o.deptName}</span>` : '';
-                    const posBadge = o.posName ? `<span style="font-size: 0.75rem; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; font-weight: 600;">${o.posName}</span>` : '';
-                    const displayName = o.name + (o.deptName || o.posName ? ` (${[o.deptName, o.posName].filter(Boolean).join(' • ')})` : '');
+                    let posBadge = '';
+                    if (o.posName) {
+                        const isIntern = o.posName.toLowerCase().includes('intern');
+                        const bg = isIntern ? '#ecfdf5' : '#eff6ff';
+                        const fg = isIntern ? '#047857' : '#1d4ed8';
+                        const bd = isIntern ? '#a7f3d0' : '#bfdbfe';
+                        const icon = isIntern ? 'fa-user-graduate' : 'fa-briefcase';
+                        posBadge = `<span style="font-size: 0.75rem; background: ${bg}; color: ${fg}; border: 1px solid ${bd}; padding: 2px 8px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid ${icon}" style="font-size:0.7rem;"></i>${o.posName}</span>`;
+                    }
+                    const fullDetails = [o.deptName, o.posName].filter(Boolean).join(' • ');
+                    const displayName = o.name + (fullDetails ? ` (${fullDetails})` : '');
+                    
                     html += `
-                        <div class="owner-item-row" onclick="selectOwnerItem(${o.id}, '${displayName.replace(/'/g, "\\'")}')" style="padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='transparent';">
-                            <span style="font-weight: 600; color: #0f172a;"><i class="fa-solid fa-user me-2" style="color: #64748b; font-size: 0.8rem;"></i>${o.name}</span>
-                            <div>
+                        <div class="owner-item-row" onclick="selectOwnerItem(${o.id}, '${displayName.replace(/'/g, "\\'")}', event)" style="padding: 8px 12px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; transition: background 0.15s; margin-bottom: 2px;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='transparent';">
+                            <span style="font-weight: 600; color: #0f172a;"><i class="fa-solid fa-user me-2" style="color: #6366f1; font-size: 0.8rem;"></i>${o.name}</span>
+                            <div style="display:flex; align-items:center;">
                                 ${deptBadge}
                                 ${posBadge}
                             </div>
                         </div>
                     `;
-            });
-            popup.innerHTML = html;
+                });
+                popup.innerHTML = html;
+            }
         }
-        popup.style.display = 'block';
-    }
 
-    function selectOwnerItem(id, displayName) {
-        const input = document.getElementById('owner_search_input');
-        const hiddenInput = document.getElementById('OwnerID');
-        const popup = document.getElementById('owner_search_popup');
+        function selectOwnerItem(id, displayName, e) {
+            if (e) e.stopPropagation();
+            const input = document.getElementById('owner_search_input');
+            const hiddenInput = document.getElementById('OwnerID');
+            const mobileSelect = document.getElementById('mobile_owner_select');
 
-        if (input) input.value = displayName;
-        if (hiddenInput) {
-            hiddenInput.value = id;
+            if (input) input.value = displayName;
+            if (hiddenInput) {
+                hiddenInput.value = id;
+                if (mobileSelect) mobileSelect.value = id;
+                handleOwnerChange();
+            }
+            closeOwnerSearchPopup();
+        }
+
+        function syncMobileOwnerSelect(val) {
+            const hiddenInput = document.getElementById('OwnerID');
+            const input = document.getElementById('owner_search_input');
+            if (hiddenInput) hiddenInput.value = val;
+            if (input) {
+                const found = ownerDataList.find(o => String(o.id) === String(val));
+                if (found) {
+                    const fullDetails = [found.deptName, found.posName].filter(Boolean).join(' • ');
+                    input.value = found.name + (fullDetails ? ` (${fullDetails})` : '');
+                } else {
+                    input.value = '';
+                }
+            }
             handleOwnerChange();
         }
-        if (popup) popup.style.display = 'none';
-    }
 
-    function handleOwnerChange() {
-        const ownerId = document.getElementById('OwnerID').value;
-        const deptSelect = document.getElementById('DepartmentID');
-        const posSelect = document.getElementById('PositionID');
+        function handleOwnerChange() {
+            const ownerId = document.getElementById('OwnerID').value;
+            const deptSelect = document.getElementById('DepartmentID');
+            const posSelect = document.getElementById('PositionID');
 
-        const found = ownerDataList.find(o => String(o.id) === String(ownerId));
-        if (found) {
-            if (deptSelect) {
-                deptSelect.value = (found.deptId !== null && found.deptId !== undefined && found.deptId !== '') ? String(found.deptId) : '';
-                if (typeof window.flashAutoFillGlow === 'function') {
-                    window.flashAutoFillGlow(deptSelect);
+            const found = ownerDataList.find(o => String(o.id) === String(ownerId));
+            if (found) {
+                if (deptSelect) {
+                    deptSelect.value = (found.deptId !== null && found.deptId !== undefined && found.deptId !== '') ? String(found.deptId) : '';
+                    if (typeof window.flashAutoFillGlow === 'function') {
+                        window.flashAutoFillGlow(deptSelect);
+                    }
                 }
-            }
-            if (posSelect) {
-                posSelect.value = (found.posId !== null && found.posId !== undefined && found.posId !== '') ? String(found.posId) : '';
-                if (typeof window.flashAutoFillGlow === 'function') {
-                    window.flashAutoFillGlow(posSelect);
+                if (posSelect) {
+                    posSelect.value = (found.posId !== null && found.posId !== undefined && found.posId !== '') ? String(found.posId) : '';
+                    if (typeof window.flashAutoFillGlow === 'function') {
+                        window.flashAutoFillGlow(posSelect);
+                    }
                 }
+            } else {
+                if (deptSelect) deptSelect.value = '';
+                if (posSelect) posSelect.value = '';
             }
-        } else {
-            if (deptSelect) deptSelect.value = '';
-            if (posSelect) posSelect.value = '';
         }
-    }
 
-    document.addEventListener('click', function (e) {
-        const wrap = document.getElementById('website_owner_search_wrap');
-        const popup = document.getElementById('owner_search_popup');
-        if (wrap && popup && !wrap.contains(e.target)) {
-            popup.style.display = 'none';
-        }
-    });
+        document.addEventListener('click', function (e) {
+            const wrap = document.getElementById('website_owner_search_wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                closeOwnerSearchPopup();
+            }
+        });
 
     // Stock Data Constants for Warning
     const afterBorrowCount = <?= intval($after_borrow_count) ?>;

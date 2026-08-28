@@ -211,6 +211,7 @@ require_once get_stylesheet_directory() . '/view/formDevice.php';
 require_once get_stylesheet_directory() . '/view/formEmployee.php';
 require_once get_stylesheet_directory() . '/view/formMaintenance.php';
 require_once get_stylesheet_directory() . '/view/view_device_details.php';
+require_once get_stylesheet_directory() . '/view/view_employee_details.php';
 
 // Cleanup: Delete Quick Transfer page if it exists
 add_action('init', function () {
@@ -280,7 +281,7 @@ function login_redirect_all_roles($redirect_to, $request, $user)
 add_filter('login_redirect', 'login_redirect_all_roles', 10, 3);
 
 
-// show admin bar for admin 
+// show admin bar for admin only
 function show_admin_bar_for_admins_only()
 {
     if (!current_user_can('administrator')) {
@@ -288,6 +289,31 @@ function show_admin_bar_for_admins_only()
     }
 }
 add_action('after_setup_theme', 'show_admin_bar_for_admins_only');
+
+
+// Block non-administrators from accessing wp-admin dashboard (redirects to /home/)
+function stock_supply_block_wp_admin_for_non_admins()
+{
+    if (is_admin() && !wp_doing_ajax() && !current_user_can('administrator')) {
+        wp_redirect(home_url('/home/'));
+        exit;
+    }
+}
+add_action('admin_init', 'stock_supply_block_wp_admin_for_non_admins');
+
+
+// Register custom 'Stock Staff' role (read frontend only, no WordPress backend capability)
+function stock_supply_register_custom_roles()
+{
+    if (!get_role('stock_staff')) {
+        add_role('stock_staff', 'Stock Staff (ผู้ดูแลสต็อก)', [
+            'read' => true,
+            'edit_posts' => false,
+            'delete_posts' => false,
+        ]);
+    }
+}
+add_action('init', 'stock_supply_register_custom_roles');
 
 
 
@@ -2106,51 +2132,106 @@ add_action('wp_footer', function () {
                     });
 
                     const categoryName = oldDev.CategoryName || 'N/A';
+                    let catIcon = 'fa-laptop';
+                    const catLower = categoryName.toLowerCase();
+                    if (catLower.includes('monitor') || catLower.includes('screen') || catLower.includes('display')) {
+                        catIcon = 'fa-desktop';
+                    } else if (catLower.includes('access') || catLower.includes('mouse') || catLower.includes('keyboard') || catLower.includes('cable') || catLower.includes('plug')) {
+                        catIcon = 'fa-plug';
+                    }
+
+                    const holderName = oldDev.OwnerNickname || oldDev.OwnerFullName || '-';
+                    const deptStr = oldDev.DepartmentName ? `(${oldDev.DepartmentName})` : '';
 
                     const modalHtml = `
-                        <div style="text-align: left; font-size: 0.92rem; font-family: sans-serif;">
-                            <div style="background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;">
-                                <div style="font-weight: 700; color: #c2410c; margin-bottom: 4px; font-size: 0.95rem;">
-                                    <i class="fa-solid fa-laptop-medical"></i> Faulty Device (to Maintenance):
+                        <div style="text-align: left; font-size: 0.92rem; font-family: inherit;">
+                            <!-- Faulty Device Card -->
+                            <div class="quick-swap-card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="background: #eff6ff; color: #1d4ed8; font-weight: 800; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.95rem; padding: 3px 10px; border-radius: 8px; border: 1px solid #bfdbfe;">
+                                        #${oldDev.DeviceID}
+                                    </span>
+                                    <span style="background: #fef2f2; color: #b91c1c; font-size: 0.76rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 5px;">
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> To Maintenance
+                                    </span>
                                 </div>
-                                <div style="color: #431407;">
-                                    <strong>${oldDev.DeviceID}</strong> - ${oldDev.BrandName || ''} ${oldDev.Model || ''} (${categoryName})<br>
-                                    <small style="color: #7c2d12;">Held by: <strong>${oldDev.OwnerNickname || '-'}</strong> ${oldDev.OwnerFullName ? '(' + oldDev.OwnerFullName + ')' : ''} | Dept: ${oldDev.DepartmentName || '-'}</small>
+
+                                <div style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
+                                    ${oldDev.BrandName || ''} ${oldDev.Model || ''}
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                                    <div style="background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                                        <span style="color: #64748b; font-size: 0.72rem; font-weight: 700; display: block; text-transform: uppercase; margin-bottom: 2px;">
+                                            <i class="fa-solid ${catIcon} me-1" style="color: #6366f1;"></i> Category
+                                        </span>
+                                        <strong style="color: #1e293b; font-size: 0.86rem;">${categoryName}</strong>
+                                    </div>
+                                    <div style="background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                                        <span style="color: #64748b; font-size: 0.72rem; font-weight: 700; display: block; text-transform: uppercase; margin-bottom: 2px;">
+                                            <i class="fa-solid fa-user me-1" style="color: #0ea5e9;"></i> Currently Held By
+                                        </span>
+                                        <strong style="color: #1e293b; font-size: 0.86rem;">${holderName} ${deptStr}</strong>
+                                    </div>
+                                    <div style="background: #ffffff; padding: 8px 10px; border-radius: 8px; border: 1px solid #f1f5f9; grid-column: span 2;">
+                                        <span style="color: #64748b; font-size: 0.72rem; font-weight: 700; display: block; text-transform: uppercase; margin-bottom: 2px;">
+                                            <i class="fa-solid fa-barcode me-1" style="color: #f59e0b;"></i> Serial Number
+                                        </span>
+                                        <span style="font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                                            ${oldDev.SerialNumber || '-'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div style="margin-bottom: 14px;">
-                                <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 6px;">
+                            <!-- Step 1: Fault Reason -->
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #1e293b; font-size: 0.9rem; margin-bottom: 6px;" for="swap-repair-reason">
+                                    <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i>
                                     1. Fault / Maintenance Reason <span style="color: #ef4444;">*</span>
                                 </label>
-                                <textarea id="swap-repair-reason" class="swal2-textarea" placeholder="Describe the issue (e.g. Screen broken, Won't power on, Battery failure)" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 8px 12px; height: 75px;"></textarea>
+                                <textarea id="swap-repair-reason" class="quick-swap-textarea-custom" placeholder="Describe the issue (e.g. Screen broken, Won't power on, Battery swelling)"></textarea>
                             </div>
 
-                            <div style="margin-bottom: 8px;">
-                                <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 6px;">
+                            <!-- Step 2: Select Replacement -->
+                            <div>
+                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #1e293b; font-size: 0.9rem; margin-bottom: 6px;">
+                                    <i class="fa-solid fa-arrows-rotate" style="color: #3b82f6;"></i>
                                     2. Select Replacement Device <span style="color: #ef4444;">*</span>
                                 </label>
-                                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                                     <div style="flex: 1;">
-                                        <label style="display: block; font-size: 0.76rem; font-weight: 600; color: #64748b; margin-bottom: 3px;">
+                                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">
                                             <i class="fa-solid fa-lock"></i> Category (Locked)
                                         </label>
-                                        <select id="swap-filter-category" class="swal2-select" disabled style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.82rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 4px 8px; height: 38px; background-color: #f1f5f9; color: #334155; cursor: not-allowed;">
+                                        <select id="swap-filter-category" class="quick-swap-select-custom" disabled>
                                             <option value="${oldDev.CategoryID}">🔒 ${categoryName}</option>
                                         </select>
                                     </div>
                                     <div style="flex: 1;">
-                                        <label style="display: block; font-size: 0.76rem; font-weight: 600; color: #64748b; margin-bottom: 3px;">
+                                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">
                                             <i class="fa-solid fa-tags"></i> Filter Brand
                                         </label>
-                                        <select id="swap-filter-brand" class="swal2-select" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.82rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 4px 8px; height: 38px;">
+                                        <select id="swap-filter-brand" class="quick-swap-select-custom">
                                             <option value="">-- All Brands --</option>
                                             ${brandOptionsHtml}
                                         </select>
                                     </div>
                                 </div>
-                                <select id="swap-new-device-id" class="swal2-select" style="margin: 0; width: 100%; box-sizing: border-box; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; padding: 8px 12px; height: 42px;">
-                                </select>
+
+                                <div>
+                                    <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">
+                                        <i class="fa-solid fa-box-open"></i> Available Replacement Device
+                                    </label>
+                                    <select id="swap-new-device-id" class="quick-swap-select-custom">
+                                    </select>
+                                </div>
+
+                                <!-- Dynamic Live Selection Preview -->
+                                <div id="swap-selected-preview" style="display: none; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 0.84rem; color: #166534;">
+                                    <i class="fa-solid fa-circle-check me-1"></i>
+                                    <span id="swap-preview-text"></span>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -2158,15 +2239,33 @@ add_action('wp_footer', function () {
                     Swal.fire({
                         title: '⚡ Quick Swap Device',
                         html: modalHtml,
+                        width: 540,
                         showCancelButton: true,
-                        confirmButtonText: '<i class="fa-solid fa-arrows-rotate"></i> Confirm Quick Swap',
+                        confirmButtonText: '<i class="fa-solid fa-arrows-rotate me-1"></i> Confirm Quick Swap',
                         cancelButtonText: 'Cancel',
                         confirmButtonColor: '#f59e0b',
-                        cancelButtonColor: '#6b7280',
+                        cancelButtonColor: '#64748b',
                         customClass: { popup: 'quick-swap-popup' },
                         didOpen: () => {
                             const brandSelect = document.getElementById('swap-filter-brand');
                             const devSelect = document.getElementById('swap-new-device-id');
+                            const previewBox = document.getElementById('swap-selected-preview');
+                            const previewText = document.getElementById('swap-preview-text');
+
+                            const updatePreview = () => {
+                                const val = devSelect ? devSelect.value : '';
+                                if (!val) {
+                                    if (previewBox) previewBox.style.display = 'none';
+                                    return;
+                                }
+                                const selectedDev = availables.find(d => String(d.DeviceID) === String(val));
+                                if (selectedDev && previewBox && previewText) {
+                                    const bName = selectedDev.BrandName || '';
+                                    const mName = selectedDev.Model || '';
+                                    previewText.innerHTML = `Ready to assign <strong>[${selectedDev.DeviceID}] ${bName} ${mName}</strong> to <strong>${holderName}</strong>`;
+                                    previewBox.style.display = 'block';
+                                }
+                            };
 
                             const updateDevList = () => {
                                 const brandVal = brandSelect ? brandSelect.value : '';
@@ -2187,9 +2286,11 @@ add_action('wp_footer', function () {
                                     });
                                 }
                                 devSelect.innerHTML = opts;
+                                updatePreview();
                             };
 
                             if (brandSelect) brandSelect.addEventListener('change', updateDevList);
+                            if (devSelect) devSelect.addEventListener('change', updatePreview);
                             updateDevList();
                         },
                         preConfirm: () => {
@@ -2288,9 +2389,95 @@ function stock_supply_format_owner_with_dept($owner_name, $dept)
     if (empty($owner_name) || $owner_name === '-') {
         return '-';
     }
-    $owner_name = trim(preg_replace('/\s*\(.*?\)$/', '', $owner_name));
+    $formatted = stock_supply_format_nickname_with_initial('', '', '', $owner_name);
+    if ($formatted === '-' || empty($formatted)) {
+        $formatted = trim(preg_replace('/\s*\(.*?\)$/', '', $owner_name));
+    }
     $abbr = stock_supply_get_dept_abbr($dept);
-    return $abbr ? $owner_name . ' ' . $abbr : $owner_name;
+    return $abbr ? $formatted . ' ' . $abbr : $formatted;
+}
+
+/**
+ * Helper to format Employee Nickname with first letter of Last Name (e.g. "Frame S.")
+ */
+function stock_supply_format_nickname_with_initial($nickname, $firstName = '', $lastName = '', $ownerField = '')
+{
+    $nick = trim($nickname ?? '');
+    $first = trim($firstName ?? '');
+    $last = trim($lastName ?? '');
+    $owner = trim($ownerField ?? '');
+
+    // Filter out literal 'NULL' strings
+    if (strcasecmp($last, 'NULL') === 0) $last = '';
+    if (strcasecmp($first, 'NULL') === 0) $first = '';
+    if (strcasecmp($nick, 'NULL') === 0) $nick = '';
+
+    $lastInitial = '';
+
+    // 1. Direct LastName check (e.g. "Sritonchai" -> "S.")
+    if (!empty($last)) {
+        $lastInitial = strtoupper(mb_substr($last, 0, 1)) . '.';
+    } 
+    // 2. Check FirstName for multi-word full name (e.g. "Kasamapron Sritonchai" -> "S.")
+    elseif (!empty($first)) {
+        $parts = preg_split('/\s+/', $first);
+        if (count($parts) > 1) {
+            $lastPart = end($parts);
+            if (strcasecmp($lastPart, 'NULL') !== 0 && !empty($lastPart)) {
+                $lastInitial = strtoupper(mb_substr($lastPart, 0, 1)) . '.';
+            }
+        }
+    } 
+    // 3. Fallback: check owner string e.g. "Mummy Sritonchai (Full-time)" or "Frame S. (Full-time)"
+    elseif (!empty($owner)) {
+        $clean = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
+        $clean = trim(preg_replace('/\bNULL\b/i', '', $clean));
+        $parts = preg_split('/\s+/', $clean);
+        if (count($parts) > 1) {
+            $lastPart = end($parts);
+            if (preg_match('/^[A-Za-z]\.?$/', $lastPart)) {
+                $lastInitial = strtoupper(rtrim($lastPart, '.')) . '.';
+            } elseif (!empty($lastPart) && strcasecmp($lastPart, 'NULL') !== 0) {
+                $lastInitial = strtoupper(mb_substr($lastPart, 0, 1)) . '.';
+            }
+        }
+    }
+
+    if (!empty($nick)) {
+        return !empty($lastInitial) ? $nick . ' ' . $lastInitial : $nick;
+    } elseif (!empty($first)) {
+        $firstWord = preg_split('/\s+/', $first)[0] ?? $first;
+        return !empty($lastInitial) ? $firstWord . ' ' . $lastInitial : $firstWord;
+    } elseif (!empty($owner)) {
+        $clean = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
+        $clean = trim(preg_replace('/\bNULL\b/i', '', $clean));
+        $parts = preg_split('/\s+/', $clean);
+        if (!empty($parts[0])) {
+            $firstWord = $parts[0];
+            return !empty($lastInitial) ? $firstWord . ' ' . $lastInitial : $firstWord;
+        }
+    }
+
+    return '-';
+}
+
+/**
+ * Helper to render distinctive Position Badges (Full-time vs Intern)
+ */
+function stock_supply_get_position_badge_html($position_name)
+{
+    if (empty($position_name) || $position_name === '-' || strcasecmp($position_name, 'NULL') === 0) {
+        return '<span class="position-badge position-none">-</span>';
+    }
+
+    $pos_lower = strtolower(trim($position_name));
+    if (strpos($pos_lower, 'intern') !== false) {
+        return '<span class="position-badge position-intern"><i class="fa-solid fa-user-graduate"></i> ' . esc_html($position_name) . '</span>';
+    } elseif (strpos($pos_lower, 'full') !== false) {
+        return '<span class="position-badge position-fulltime"><i class="fa-solid fa-briefcase"></i> ' . esc_html($position_name) . '</span>';
+    } else {
+        return '<span class="position-badge position-default">' . esc_html($position_name) . '</span>';
+    }
 }
 
 

@@ -26,45 +26,79 @@ function printDeviceLabels(devices) {
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Print Labels</title>
+        <title></title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
-            @media print {
-                @page { margin: 10mm; }
-                body { -webkit-print-color-adjust: exact; }
-                .no-print { display: none !important; }
+            @page {
+                size: A4 portrait;
+                margin: 0;
             }
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                    background-color: white !important;
+                    padding: 12mm 12mm !important;
+                    margin: 0 auto !important;
+                }
+                .no-print {
+                    display: none !important;
+                }
+                .labels-container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 auto !important;
+                    padding: 0 !important;
+                }
+                .label-card {
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
             body {
                 font-family: Arial, sans-serif;
                 margin: 0;
-                padding: 15px;
+                padding: 24px;
+                background-color: #f1f5f9;
+                color: #0f172a;
                 display: flex;
-                flex-wrap: wrap;
-                gap: 15px;
-                justify-content: flex-start;
-                background-color: #f0f0f0;
+                flex-direction: column;
+                align-items: center;
             }
-            @media print {
-                body { background-color: white; padding: 0; }
+
+            .labels-container {
+                width: 100%;
+                max-width: 760px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px 12px;
+                justify-items: center;
+                align-items: start;
             }
+
             .label-card {
-                width: 140px;
-                min-height: 145px;
+                width: 100%;
+                max-width: 155px;
+                min-height: 140px;
                 background: white;
-                border: 1px dashed #cbd5e1;
-                border-radius: 8px;
-                padding: 10px 8px 8px 8px;
-                box-sizing: border-box;
+                border: none;
+                border-radius: 0;
+                padding: 8px 4px 6px 4px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 text-align: center;
                 page-break-inside: avoid;
+                break-inside: avoid;
             }
-            @media print {
-                .label-card { border: 1px solid transparent; }
-            }
+
             .qr-col {
                 width: 100%;
                 display: flex;
@@ -73,28 +107,33 @@ function printDeviceLabels(devices) {
                 justify-content: center;
                 margin-bottom: 6px;
             }
+
             .qr-code {
-                width: 80px;
-                height: 80px;
+                width: 85px;
+                height: 85px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
             }
+
             .qr-code img,
             .qr-code canvas {
                 display: block;
                 margin: 0 auto;
+                width: 85px !important;
+                height: 85px !important;
             }
+
             .info-col {
                 width: 100%;
-                padding: 0;
+                padding: 0 2px;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 text-align: center;
-                overflow: hidden;
             }
+
             .info-col h3 {
                 margin: 0 0 2px 0;
                 font-size: 15px;
@@ -104,33 +143,47 @@ function printDeviceLabels(devices) {
                 letter-spacing: 0.02em;
                 line-height: 1.2;
             }
+
             .info-col p {
                 margin: 0;
-                font-size: 11px;
+                font-size: 8px;
                 font-weight: 600;
-                color: #475569;
-                white-space: nowrap;
+                color: #334155;
+                line-height: 1.25;
+                word-break: break-word;
+                overflow-wrap: anywhere;
                 max-width: 100%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                line-height: 1.2;
+                text-align: center;
             }
+
             .print-btn-container {
                 width: 100%;
-                text-align: center;
-                margin-bottom: 20px;
+                max-width: 760px;
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 24px;
             }
+
             .print-btn-container button {
-                padding: 10px 20px;
-                font-size: 16px;
-                background-color: #0d6efd;
+                padding: 10px 24px;
+                font-size: 15px;
+                font-weight: 700;
+                background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
                 color: white;
                 border: none;
-                border-radius: 5px;
+                border-radius: 9999px;
                 cursor: pointer;
+                box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.2s ease;
             }
+
             .print-btn-container button:hover {
-                background-color: #0b5ed7;
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
             }
         </style>
     </head>
@@ -138,6 +191,7 @@ function printDeviceLabels(devices) {
         <div class="print-btn-container no-print">
             <button onclick="window.print()">🖨️ Print Now</button>
         </div>
+        <div class="labels-container">
     `;
 
     devices.forEach((dev, index) => {
@@ -155,6 +209,7 @@ function printDeviceLabels(devices) {
     });
 
     html += `
+        </div>
         <script>
             window.onload = function() {
                 const devices = ${JSON.stringify(devices)};
@@ -165,8 +220,8 @@ function printDeviceLabels(devices) {
                     const qrUrl = baseUrl + "?view=" + encodeURIComponent(dev.id);
                     new QRCode(document.getElementById('qr-' + index), {
                         text: qrUrl,
-                        width: 80,
-                        height: 80,
+                        width: 85,
+                        height: 85,
                         colorDark : "#000000",
                         colorLight : "#ffffff",
                         correctLevel : QRCode.CorrectLevel.L

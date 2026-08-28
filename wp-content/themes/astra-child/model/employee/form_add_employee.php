@@ -46,7 +46,7 @@ function form_add_owner($editing = null)
             'DepartmentID' => !empty($_POST['DepartmentID']) ? intval($_POST['DepartmentID']) : null,
             'PositionID' => !empty($_POST['PositionID']) ? intval($_POST['PositionID']) : null,
             'StatusID' => $status_id,
-            'Email' => !empty($_POST['Email']) ? sanitize_email($_POST['Email']) : null,
+            'Email' => !empty($_POST['Email']) ? strtolower(sanitize_email($_POST['Email'])) : null,
             'user_email' => $user_email,
         ];
 
@@ -178,8 +178,8 @@ function form_add_owner($editing = null)
                                 <i class="fa-solid fa-envelope emp-field-icon desktop-only-el"></i>
                                 Email Address
                             </label>
-                            <input type="email" name="Email" id="emp_email" value="<?= esc_attr($editing->Email ?? '') ?>"
-                                placeholder="name@company.com" autocomplete="off">
+                            <input type="email" name="Email" id="emp_email" value="<?= esc_attr(strtolower($editing->Email ?? '')) ?>"
+                                placeholder="name@company.com" autocomplete="off" style="text-transform: lowercase !important;">
                         </div>
 
                         <!-- Row 4: Department & Position -->
@@ -255,8 +255,8 @@ function form_add_owner($editing = null)
                             <div class="emp-preview-name" id="preview-emp-fullname">
                                 <?= esc_html(trim(($editing->FirstName ?? '') . ' ' . ($editing->LastName ?? '')) ?: 'Staff Member') ?>
                             </div>
-                            <div class="emp-preview-email" id="preview-emp-email">
-                                <?= esc_html(($editing->Email ?? '') ?: 'name@company.com') ?>
+                            <div class="emp-preview-email" id="preview-emp-email" style="text-transform: lowercase !important;">
+                                <?= esc_html(strtolower(($editing->Email ?? '') ?: 'name@company.com')) ?>
                             </div>
 
                             <div class="emp-meta-grid">
@@ -277,17 +277,20 @@ function form_add_owner($editing = null)
                                 </div>
                                 <div class="emp-meta-item">
                                     <span class="emp-meta-label"><i class="fa-solid fa-briefcase me-1"></i> POSITION</span>
-                                    <span class="emp-meta-val" id="preview-emp-pos">
-                                        <?php
-                                        $pName = '—';
-                                        foreach ($positions as $p) {
-                                            if ($p->PositionID == ($editing->PositionID ?? 0)) {
-                                                $pName = $p->PositionName;
-                                                break;
-                                            }
+                                    <?php
+                                    $pName = '—';
+                                    $isIntern = false;
+                                    foreach ($positions as $p) {
+                                        if ($p->PositionID == ($editing->PositionID ?? 0)) {
+                                            $pName = $p->PositionName;
+                                            $isIntern = stripos($pName, 'intern') !== false;
+                                            break;
                                         }
-                                        echo esc_html($pName);
-                                        ?>
+                                    }
+                                    $posClass = !empty($editing->PositionID) ? ($isIntern ? 'pos-badge-intern' : 'pos-badge-fulltime') : '';
+                                    ?>
+                                    <span class="emp-meta-val <?= $posClass ?>" id="preview-emp-pos">
+                                        <?= esc_html($pName) ?>
                                     </span>
                                 </div>
                             </div>
@@ -870,13 +873,21 @@ function form_add_owner($editing = null)
                     pFullname.textContent = full || 'Staff Member';
                 }
                 if (pEmail && emailInput) {
-                    pEmail.textContent = emailInput.value.trim() || 'name@company.com';
+                    pEmail.textContent = (emailInput.value.trim() || 'name@company.com').toLowerCase();
                 }
                 if (pDept && deptSelect) {
                     pDept.textContent = (deptSelect.selectedIndex > 0) ? deptSelect.options[deptSelect.selectedIndex].text : '—';
                 }
                 if (pPos && posSelect) {
-                    pPos.textContent = (posSelect.selectedIndex > 0) ? posSelect.options[posSelect.selectedIndex].text : '—';
+                    if (posSelect.selectedIndex > 0) {
+                        const pText = posSelect.options[posSelect.selectedIndex].text;
+                        pPos.textContent = pText;
+                        const isInt = pText.toLowerCase().includes('intern');
+                        pPos.className = 'emp-meta-val ' + (isInt ? 'pos-badge-intern' : 'pos-badge-fulltime');
+                    } else {
+                        pPos.textContent = '—';
+                        pPos.className = 'emp-meta-val';
+                    }
                 }
                 if (statusSelect && statusSelect.selectedIndex >= 0) {
                     const opt = statusSelect.options[statusSelect.selectedIndex];

@@ -124,6 +124,12 @@ function form_owner()
         return ob_get_clean() . form_edit_owner($editing);
     }
 
+    // form view details
+    if (isset($_GET['view'])) {
+        $view_id = intval($_GET['view']);
+        return ob_get_clean() . view_employee_details($view_id);
+    }
+
     echo employee_dashboard();
 
 
@@ -414,12 +420,9 @@ function form_owner()
                     <!-- Header: Nickname & Status -->
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                         <div>
+                            <?php $nickFormatted = stock_supply_format_nickname_with_initial($row->Nickname, $row->FirstName, $row->LastName); ?>
                             <h4 style="margin: 0; font-weight: 800; font-size: 1.15rem; color: #0f172a;">
-                                <?= esc_html($row->Nickname) ?>
-                                <?php if ($deptAbbr): ?>
-                                    <span class="badge bg-light text-dark border ms-1"
-                                        style="font-size: 0.75rem; font-weight: 600;"><?= esc_html($deptAbbr) ?></span>
-                                <?php endif; ?>
+                                <?= esc_html($nickFormatted) ?>
                             </h4>
                             <div style="font-size: 0.85rem; color: #64748b; font-weight: 500; margin-top: 2px;">
                                 <i class="fa-solid fa-id-card me-1" style="color: #6366f1;"></i> <?= $fullname ?: '-' ?>
@@ -435,8 +438,8 @@ function form_owner()
                     <div
                         style="padding-top: 10px; border-top: 1px dashed #e2e8f0; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 6px;">
                         <?php if (!empty($row->Email)): ?>
-                            <div><i class="fa-regular fa-envelope me-1" style="color: #94a3b8; width: 16px;"></i>
-                                <?= esc_html($row->Email) ?>
+                            <div style="text-transform: lowercase;"><i class="fa-regular fa-envelope me-1" style="color: #94a3b8; width: 16px;"></i>
+                                <?= esc_html(strtolower($row->Email)) ?>
                             </div>
                         <?php endif; ?>
                         <?php if (!empty($row->Department)): ?>
@@ -445,14 +448,18 @@ function form_owner()
                             </div>
                         <?php endif; ?>
                         <?php if (!empty($row->Position)): ?>
-                            <div><i class="fa-solid fa-briefcase me-1" style="color: #94a3b8; width: 16px;"></i>
-                                <?= esc_html($row->Position) ?>
+                            <div class="mt-1">
+                                <?= stock_supply_get_position_badge_html($row->Position) ?>
                             </div>
                         <?php endif; ?>
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="d-flex gap-2 justify-content-end mt-3 pt-2" style="border-top: 1px dashed #f1f5f9;">
+                        <a href="?view=<?= $row->OwnerID ?>" class="btn btn-sm btn-outline-primary"
+                            style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; text-decoration: none;">
+                            <i class="fa-solid fa-eye me-1"></i> View Details
+                        </a>
                         <a href="?edit=<?= $row->OwnerID ?>" class="btn btn-sm btn-outline-secondary"
                             style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; text-decoration: none;">
                             <i class="fa-solid fa-gear me-1"></i> Edit
@@ -490,24 +497,23 @@ function form_owner()
             <tbody>
                 <?php foreach ($rows as $index => $row): ?>
                     <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
-                        <td class="text-start align-middle" data-label="ID">
-                            <?php $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? ''); ?>
-                            <strong><?= esc_html($row->Nickname) ?></strong>
-                            <?= $deptAbbr ? '<span class="text-muted small fw-normal">' . esc_html($deptAbbr) . '</span>' : '' ?>
-                            <small class="text-muted d-block font-monospace">#<?= $row->OwnerID ?></small>
+                        <td class="text-start align-middle" data-label="Nickname">
+                            <?php 
+                            $nickFormatted = stock_supply_format_nickname_with_initial($row->Nickname, $row->FirstName, $row->LastName);
+                            ?>
+                            <strong><?= esc_html($nickFormatted) ?></strong>
                         </td>
                         <td class="text-start align-middle" data-label="Employee">
-                            <?= !empty(trim($row->FirstName . ' ' . $row->LastName)) ? esc_html(trim($row->FirstName . ' ' . $row->LastName)) . ($deptAbbr ? ' <span class="text-muted small">' . esc_html($deptAbbr) . '</span>' : '') : '-' ?>
+                            <?= !empty(trim($row->FirstName . ' ' . $row->LastName)) ? esc_html(trim($row->FirstName . ' ' . $row->LastName)) : '-' ?>
                         </td>
-                        <td class="text-start align-middle text-muted" data-label="Email">
-                            <?= !empty($row->Email) ? esc_html($row->Email) : '-' ?>
+                        <td class="text-start align-middle text-muted" data-label="Email" style="text-transform: lowercase !important;">
+                            <?= !empty($row->Email) ? esc_html(strtolower($row->Email)) : '-' ?>
                         </td>
                         <td class="text-start align-middle" data-label="Department">
                             <?= !empty($row->Department) ? esc_html($row->Department) : '-' ?>
                         </td>
                         <td class="text-start align-middle" data-label="Position">
-                            <span
-                                class="badge bg-light text-dark border"><?= !empty($row->Position) ? esc_html($row->Position) : '-' ?></span>
+                            <?= stock_supply_get_position_badge_html($row->Position) ?>
                         </td>
                         <td class="text-start align-middle" data-label="Status">
                             <?php
@@ -528,6 +534,7 @@ function form_owner()
                                 <div class="dropdown-menu action-dropdown text-start">
                                     <div class="action-dropdown-header">Actions</div>
                                     <div class="action-dropdown-separator"></div>
+                                    <a href="?view=<?= $row->OwnerID ?>"><i class="fa-solid fa-eye text-primary"></i> View Details</a>
                                     <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
                                     <a href="#"
                                         onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"><i

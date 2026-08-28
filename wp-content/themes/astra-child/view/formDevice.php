@@ -148,6 +148,7 @@ function device_crud()
                                 <option value="Maintenance" <?= $filter_status == 'Maintenance' ? 'selected' : '' ?>>
                                     Maintenance</option>
                                 <option value="Retired" <?= $filter_status == 'Retired' ? 'selected' : '' ?>>Retired</option>
+                                <option value="Lost" <?= $filter_status == 'Lost' ? 'selected' : '' ?>>Lost</option>
                             </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
@@ -322,30 +323,12 @@ function device_crud()
                                         <?php
                                         $owner = trim($row->Owner ?? '');
                                         $nickname = trim($row->Nickname ?? '');
+                                        $formattedOwner = stock_supply_format_nickname_with_initial($nickname, '', '', $owner);
 
-                                        if ($owner === '' && $nickname === '') {
+                                        if ($formattedOwner === '-' || empty($formattedOwner)) {
                                             echo '<span class="text-muted">-</span>';
                                         } else {
-                                            if ($nickname !== '') {
-                                                echo '<span class="owner-name">' . htmlspecialchars($nickname) . '</span> ';
-                                            }
-
-                                            if ($owner !== '') {
-                                                preg_match('/\((.*?)\)$/', $owner, $matches);
-                                                $position = $matches[1] ?? '';
-                                                $nameOnly = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));
-                                                $nameParts = explode(' ', $nameOnly);
-
-                                                if (count($nameParts) > 1) {
-                                                    $lastName = end($nameParts);
-                                                    $lastInitial = strtoupper(mb_substr($lastName, 0, 1)) . '.';
-                                                } else {
-                                                    $lastInitial = '';
-                                                }
-
-                                                echo '<span class="owner-name">' . htmlspecialchars($lastInitial) . '</span>';
-                                            }
-
+                                            echo '<span class="owner-name">' . htmlspecialchars($formattedOwner) . '</span>';
                                             $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
                                             if (!empty($deptAbbr)) {
                                                 echo ' <span class="owner-dept text-muted" style="font-size: 0.85em;">' . htmlspecialchars($deptAbbr) . '</span>';
@@ -439,9 +422,7 @@ function device_crud()
                                                             onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
                                                     <?php elseif ($status == 'Maintenance'): ?>
-                                                        <a href="#"
-                                                            onclick="confirmReturnFromMaintenance({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? '') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>', owner: '<?= esc_js($row->Owner ?? '') ?>', department: '<?= esc_js($row->Department ?? '') ?>', details: '<?= esc_js($row->Details ?? '') ?>', repairDate: '<?= esc_js($row->RepairDate ?? '') ?>' }, '<?= $dev_action_nonce ?>'); return false;"><i
-                                                                class="fa-solid fa-circle-check text-success"></i> Done & Return</a>
+                                                        <a href="#" onclick="confirmReturnFromMaintenance({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? '') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>', owner: '<?= esc_js(!empty($row->Nickname) ? $row->Nickname : (!empty(trim(preg_replace('/\s*\(.*?\)/', '', $row->Owner ?? ''))) ? trim(preg_replace('/\s*\(.*?\)/', '', $row->Owner)) : '')) ?>', nickname: '<?= esc_js($row->Nickname ?? '') ?>', department: '<?= esc_js($row->Department ?? '') ?>', details: '<?= esc_js($row->Details ?? '') ?>', repairDate: '<?= esc_js($row->RepairDate ?? '') ?>' }, '<?= $dev_action_nonce ?>'); return false;"><i class="fa-solid fa-circle-check text-success"></i> Done & Return</a>
                                                         <a href="#"
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>

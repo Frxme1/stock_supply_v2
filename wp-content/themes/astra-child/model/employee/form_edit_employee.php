@@ -14,10 +14,26 @@ function form_edit_owner($editing = null)
     $resigned_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Status_Employee WHERE LOWER(Status_name) = 'resigned'") ?: 2);
     $available_status_id = (int) ($wpdb->get_var("SELECT StatusID FROM Statuses WHERE LOWER(StatusName) = 'available'") ?: 1);
 
+    // Query active devices currently assigned to this employee
+    $owner_id = intval($editing->OwnerID ?? 0);
+    $assigned_devices = [];
+    if ($owner_id > 0) {
+        $assigned_devices = $wpdb->get_results($wpdb->prepare("
+            SELECT d.DeviceID, c.CategoryName, b.BrandName, d.Model, d.SerialNumber, s.StatusName, kw.KeywordName, d.ReceiveDate
+            FROM Devices d
+            LEFT JOIN Brands b ON d.BrandID = b.BrandID
+            LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+            LEFT JOIN Statuses s ON d.StatusID = s.StatusID
+            LEFT JOIN Keywords kw ON d.KeywordID = kw.KeywordID
+            WHERE d.OwnerID = %d
+            ORDER BY d.CategoryID ASC, d.DeviceID ASC
+        ", $owner_id));
+    }
+
     ob_start();
     echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['OwnerID'])) {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && !empty($_POST['OwnerID'])) {
         if (!is_user_logged_in() || !isset($_POST['_edit_emp_nonce']) || !wp_verify_nonce($_POST['_edit_emp_nonce'], 'edit_employee_nonce')) {
             echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -38,7 +54,7 @@ function form_edit_owner($editing = null)
         $departmentID = !empty($_POST['DepartmentID']) ? intval($_POST['DepartmentID']) : null;
         $positionID = !empty($_POST['PositionID']) ? intval($_POST['PositionID']) : null;
         $statusID = !empty($_POST['StatusID']) ? intval($_POST['StatusID']) : null;
-        $email = !empty($_POST['Email']) ? sanitize_email($_POST['Email']) : null;
+        $email = !empty($_POST['Email']) ? strtolower(sanitize_email($_POST['Email'])) : null;
 
         $updated = $wpdb->update(
             $table_owner,
@@ -237,8 +253,8 @@ function form_edit_owner($editing = null)
                                 Email Address
                             </label>
                             <input type="email" name="Email" id="emp_edit_email"
-                                value="<?= esc_attr($editing->Email ?? '') ?>" placeholder="name@company.com"
-                                autocomplete="off">
+                                value="<?= esc_attr(strtolower($editing->Email ?? '')) ?>" placeholder="name@company.com"
+                                autocomplete="off" style="text-transform: lowercase !important;">
                         </div>
 
                         <!-- Row 4: Department & Position -->
@@ -313,8 +329,8 @@ function form_edit_owner($editing = null)
                             <div class="emp-preview-name" id="preview-edit-fullname">
                                 <?= esc_html(trim(($editing->FirstName ?? '') . ' ' . ($editing->LastName ?? '')) ?: 'Staff Member') ?>
                             </div>
-                            <div class="emp-preview-email" id="preview-edit-email">
-                                <?= esc_html($editing->Email ?: 'name@company.com') ?>
+                            <div class="emp-preview-email" id="preview-edit-email" style="text-transform: lowercase !important;">
+                                <?= esc_html(strtolower($editing->Email ?: 'name@company.com')) ?>
                             </div>
 
                             <div class="emp-meta-grid">
@@ -335,17 +351,20 @@ function form_edit_owner($editing = null)
                                 </div>
                                 <div class="emp-meta-item">
                                     <span class="emp-meta-label"><i class="fa-solid fa-briefcase me-1"></i> POSITION</span>
-                                    <span class="emp-meta-val" id="preview-edit-pos">
-                                        <?php
-                                        $pName = '—';
-                                        foreach ($positions as $p) {
-                                            if ($p->PositionID == ($editing->PositionID ?? 0)) {
-                                                $pName = $p->PositionName;
-                                                break;
-                                            }
+                                    <?php
+                                    $pName = '—';
+                                    $isIntern = false;
+                                    foreach ($positions as $p) {
+                                        if ($p->PositionID == ($editing->PositionID ?? 0)) {
+                                            $pName = $p->PositionName;
+                                            $isIntern = stripos($pName, 'intern') !== false;
+                                            break;
                                         }
-                                        echo esc_html($pName);
-                                        ?>
+                                    }
+                                    $posClass = !empty($editing->PositionID) ? ($isIntern ? 'pos-badge-intern' : 'pos-badge-fulltime') : '';
+                                    ?>
+                                    <span class="emp-meta-val <?= $posClass ?>" id="preview-edit-pos">
+                                        <?= esc_html($pName) ?>
                                     </span>
                                 </div>
                             </div>
@@ -355,6 +374,91 @@ function form_edit_owner($editing = null)
 
             </div>
         </form>
+
+        <!-- Assigned Equipment Section -->
+        <div class="emp-assigned-section mt-4">
+            <div class="emp-assigned-header">
+                <div class="emp-assigned-title-wrap">
+                    <div class="emp-assigned-icon">
+                        <i class="fa-solid fa-laptop-code"></i>
+                    </div>
+                    <div>
+                        <h3 class="emp-assigned-title">Assigned Equipment</h3>
+                        <p class="emp-assigned-subtitle">Devices currently issued to this staff member</p>
+                    </div>
+                </div>
+                <div class="emp-assigned-badge">
+                    <i class="fa-solid fa-layer-group me-1"></i>
+                    <span><?= count($assigned_devices) ?> <?= count($assigned_devices) === 1 ? 'Device' : 'Devices' ?></span>
+                </div>
+            </div>
+
+            <?php if (!empty($assigned_devices)): ?>
+                <div class="emp-assigned-grid">
+                    <?php foreach ($assigned_devices as $dev): 
+                        $cat = $dev->CategoryName ?? 'Device';
+                        $cat_icon = 'fa-plug';
+                        $cat_color = '#6ABF57';
+                        if (strcasecmp($cat, 'Laptop') === 0) {
+                            $cat_icon = 'fa-laptop';
+                            $cat_color = '#15A5DA';
+                        } elseif (strcasecmp($cat, 'Monitor') === 0) {
+                            $cat_icon = 'fa-desktop';
+                            $cat_color = '#FDB840';
+                        }
+                    ?>
+                        <div class="emp-dev-card">
+                            <div class="emp-dev-card-header">
+                                <div class="emp-dev-cat-badge" style="background: <?= $cat_color ?>18; color: <?= $cat_color ?>;">
+                                    <i class="fa-solid <?= $cat_icon ?> me-1"></i> <?= esc_html($cat) ?>
+                                </div>
+                                <span class="emp-dev-id-badge"><?= esc_html($dev->DeviceID) ?></span>
+                            </div>
+                            <div class="emp-dev-card-body">
+                                <div class="emp-dev-title">
+                                    <?= esc_html($dev->BrandName) ?> <?= esc_html($dev->Model) ?>
+                                </div>
+                                <div class="emp-dev-meta">
+                                    <div class="emp-dev-meta-item">
+                                        <span class="emp-dev-meta-label">Serial Number:</span>
+                                        <span class="emp-dev-meta-val font-monospace"><?= esc_html($dev->SerialNumber ?: '-') ?></span>
+                                    </div>
+                                    <?php if (!empty($dev->KeywordName)): ?>
+                                        <div class="emp-dev-meta-item">
+                                            <span class="emp-dev-meta-label">Type/Profile:</span>
+                                            <span class="emp-dev-meta-val"><?= esc_html($dev->KeywordName) ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($dev->ReceiveDate) && $dev->ReceiveDate !== '0000-00-00'): ?>
+                                        <div class="emp-dev-meta-item">
+                                            <span class="emp-dev-meta-label">Issued Date:</span>
+                                            <span class="emp-dev-meta-val"><?= esc_html(date_i18n('d M Y', strtotime($dev->ReceiveDate))) ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="emp-dev-card-footer">
+                                <span class="status-badge status-inuse" style="font-size: 0.72rem; padding: 3px 10px;">
+                                    <span class="status-dot"></span> <?= esc_html($dev->StatusName ?: 'In Use') ?>
+                                </span>
+                                <a href="<?= esc_url(home_url('/home/?view=' . $dev->DeviceID)) ?>" class="emp-dev-link-btn" title="View device timeline">
+                                    <span>Details</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="emp-assigned-empty">
+                    <div class="emp-assigned-empty-icon">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <h4>No Equipment Assigned</h4>
+                    <p>This staff member currently has no active laptops, monitors, or accessories assigned.</p>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Scoped Style Block: Clean Enterprise Theme -->
@@ -891,6 +995,211 @@ function form_edit_owner($editing = null)
                 box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
             }
         }
+
+        /* --- Assigned Equipment Section Styles --- */
+        #edit-employee-wrapper .emp-assigned-section {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 1.75rem;
+            box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #edit-employee-wrapper .emp-assigned-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        #edit-employee-wrapper .emp-assigned-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #edit-employee-wrapper .emp-assigned-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        #edit-employee-wrapper .emp-assigned-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+
+        #edit-employee-wrapper .emp-assigned-subtitle {
+            margin: 2px 0 0 0;
+            font-size: 0.84rem;
+            color: #64748b;
+        }
+
+        #edit-employee-wrapper .emp-assigned-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+        }
+
+        #edit-employee-wrapper .emp-assigned-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 16px;
+        }
+
+        #edit-employee-wrapper .emp-dev-card {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.22s ease;
+        }
+
+        #edit-employee-wrapper .emp-dev-card:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
+        }
+
+        #edit-employee-wrapper .emp-dev-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        #edit-employee-wrapper .emp-dev-cat-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        #edit-employee-wrapper .emp-dev-id-badge {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #1e40af;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        #edit-employee-wrapper .emp-dev-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        #edit-employee-wrapper .emp-dev-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        #edit-employee-wrapper .emp-dev-meta-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        #edit-employee-wrapper .emp-dev-meta-label {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        #edit-employee-wrapper .emp-dev-meta-val {
+            color: #334155;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        #edit-employee-wrapper .emp-dev-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        #edit-employee-wrapper .emp-dev-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #4f46e5;
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            transition: all 0.15s ease;
+        }
+
+        #edit-employee-wrapper .emp-dev-link-btn:hover {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+
+        #edit-employee-wrapper .emp-assigned-empty {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #64748b;
+        }
+
+        #edit-employee-wrapper .emp-assigned-empty-icon {
+            font-size: 2.5rem;
+            color: #cbd5e1;
+            margin-bottom: 10px;
+        }
+
+        #edit-employee-wrapper .emp-assigned-empty h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #334155;
+            margin: 0 0 4px 0;
+        }
+
+        #edit-employee-wrapper .emp-assigned-empty p {
+            font-size: 0.85rem;
+            margin: 0;
+            color: #94a3b8;
+        }
     </style>
 
     <script>
@@ -928,13 +1237,21 @@ function form_edit_owner($editing = null)
                     pFullname.textContent = full || 'Staff Member';
                 }
                 if (pEmail && emailInput) {
-                    pEmail.textContent = emailInput.value.trim() || 'name@company.com';
+                    pEmail.textContent = (emailInput.value.trim() || 'name@company.com').toLowerCase();
                 }
                 if (pDept && deptSelect) {
                     pDept.textContent = (deptSelect.selectedIndex > 0) ? deptSelect.options[deptSelect.selectedIndex].text : '—';
                 }
                 if (pPos && posSelect) {
-                    pPos.textContent = (posSelect.selectedIndex > 0) ? posSelect.options[posSelect.selectedIndex].text : '—';
+                    if (posSelect.selectedIndex > 0) {
+                        const pText = posSelect.options[posSelect.selectedIndex].text;
+                        pPos.textContent = pText;
+                        const isInt = pText.toLowerCase().includes('intern');
+                        pPos.className = 'emp-meta-val ' + (isInt ? 'pos-badge-intern' : 'pos-badge-fulltime');
+                    } else {
+                        pPos.textContent = '—';
+                        pPos.className = 'emp-meta-val';
+                    }
                 }
                 if (statusSelect && statusSelect.selectedIndex >= 0) {
                     const opt = statusSelect.options[statusSelect.selectedIndex];
