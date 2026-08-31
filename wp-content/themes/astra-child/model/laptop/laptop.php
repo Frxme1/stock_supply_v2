@@ -347,22 +347,21 @@ function device_crud_laptop()
                                                         onclick="quickSwapDevice('<?= esc_js($row->DeviceID) ?>'); return false;"
                                                         class="text-warning"><i class="fa-solid fa-arrows-rotate"></i> Quick
                                                         Swap</a>
-                                                    <a href="#"
-                                                        data-device="<?= esc_attr(wp_json_encode([
-                                                            'id'           => $row->DeviceID,
-                                                            'brand'        => $row->Brand ?? '',
-                                                            'model'        => $row->Model ?? '',
-                                                            'category'     => $row->Category ?? 'Laptop',
-                                                            'serialNumber' => $row->SerialNumber ?? '',
-                                                            'owner'        => $row->Owner ?? '',
-                                                            'department'   => $row->Department ?? '',
-                                                            'nonce'        => $dev_action_nonce
-                                                        ])) ?>"
+                                                    <a href="#" data-device="<?= esc_attr(wp_json_encode([
+                                                        'id' => $row->DeviceID,
+                                                        'brand' => $row->Brand ?? '',
+                                                        'model' => $row->Model ?? '',
+                                                        'category' => $row->Category ?? 'Laptop',
+                                                        'serialNumber' => $row->SerialNumber ?? '',
+                                                        'owner' => $row->Owner ?? '',
+                                                        'department' => $row->Department ?? '',
+                                                        'nonce' => $dev_action_nonce
+                                                    ])) ?>"
                                                         onclick="handleReturnDeviceClick(this); return false;"><i
                                                             class="fa-solid fa-rotate-left"></i>
                                                         Return</a>
                                                     <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
-                                                        class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
+                                                            class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
                                                     <a href="#"
                                                         onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                             class="fa-solid fa-circle text-dark"></i> Retired</a>

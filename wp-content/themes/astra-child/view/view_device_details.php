@@ -83,7 +83,11 @@ function device_view_details($device_id = null)
         WHERE DeviceID = %s
     ", $device_id)));
 
-    $is_in_maintenance = (strcasecmp($device->StatusName ?? '', 'Maintenance') === 0);
+    $status_name_raw = $device->StatusName ?? '';
+    $status_name_lower = strtolower($status_name_raw);
+    $is_available = in_array($status_name_lower, ['available', 'in stock', 'ready']);
+    $is_in_use = in_array($status_name_lower, ['in use', 'borrowed', 'assigned']);
+    $is_in_maintenance = (strcasecmp($status_name_raw, 'Maintenance') === 0);
 
     // Calculate Days in Repair if in maintenance
     $days_in_repair_text = '';
@@ -242,6 +246,58 @@ function device_view_details($device_id = null)
             background: linear-gradient(135deg, #047857 0%, #059669 100%);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
             color: #ffffff !important;
+        }
+
+        .vd-btn-assign {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            font-weight: 700;
+        }
+
+        .vd-btn-assign:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+            color: #ffffff !important;
+        }
+
+        .vd-btn-return-stock {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+            font-weight: 700;
+        }
+
+        .vd-btn-return-stock:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45);
+            color: #ffffff !important;
+        }
+
+        .vd-btn-repair {
+            background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+            font-weight: 700;
+        }
+
+        .vd-btn-repair:hover {
+            background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+            box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
+            color: #ffffff !important;
+        }
+
+        .vd-btn-edit {
+            background: #ffffff;
+            color: #334155 !important;
+            border: 1.5px solid #cbd5e1 !important;
+            font-weight: 600;
+        }
+
+        .vd-btn-edit:hover {
+            background: #f8fafc;
+            color: #0f172a !important;
+            border-color: #94a3b8 !important;
         }
 
         /* ===================================================
@@ -906,7 +962,42 @@ function device_view_details($device_id = null)
                     <i class="fa-solid fa-arrow-left"></i> Back
                 </button>
 
-                <!-- Primary Action: Done & Return (Only when in Maintenance) -->
+                <!-- Context Actions: Available Device -->
+                <?php if ($is_available): ?>
+                    <a href="<?= esc_url(add_query_arg(['receive' => $device->DeviceID], $category_table_url)) ?>"
+                        class="vd-btn vd-btn-assign">
+                        <i class="fa-solid fa-user-plus"></i> Assign Device
+                    </a>
+                    <a href="<?= esc_url(add_query_arg(['maintenance' => $device->DeviceID], $category_table_url)) ?>"
+                        class="vd-btn vd-btn-repair">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Send to Repair
+                    </a>
+                <?php endif; ?>
+
+                <!-- Context Actions: In-Use Device -->
+                <?php if ($is_in_use): ?>
+                    <button type="button"
+                        class="vd-btn vd-btn-return-stock"
+                        data-device="<?= esc_attr(wp_json_encode([
+                            'id'           => $device->DeviceID,
+                            'brand'        => $device->BrandName ?? '',
+                            'model'        => $device->Model ?? '',
+                            'category'     => $device->CategoryName ?? '',
+                            'serialNumber' => $device->SerialNumber ?? '',
+                            'owner'        => $device->OwnerNickname ?: ($device->OwnerFullname ?? ''),
+                            'department'   => $device->DepartmentName ?? '',
+                            'nonce'        => $dev_action_nonce
+                        ])) ?>"
+                        onclick="handleReturnStockClick(this)">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Return to Stock
+                    </button>
+                    <a href="<?= esc_url(add_query_arg(['maintenance' => $device->DeviceID], $category_table_url)) ?>"
+                        class="vd-btn vd-btn-repair">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Send to Repair
+                    </a>
+                <?php endif; ?>
+
+                <!-- Context Actions: In-Maintenance Device -->
                 <?php if ($is_in_maintenance): ?>
                     <button type="button"
                         class="vd-btn vd-btn-done-return"
@@ -927,6 +1018,13 @@ function device_view_details($device_id = null)
                     </button>
                 <?php endif; ?>
 
+                <!-- Universal Edit Device Specs -->
+                <a href="<?= esc_url(add_query_arg(['edit' => $device->DeviceID], $category_table_url)) ?>"
+                    class="vd-btn vd-btn-edit">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                </a>
+
+                <!-- Universal Print Label -->
                 <button type="button" class="btn btn-dark vd-btn"
                     onclick="printDeviceLabels([{ id: '<?= esc_js($device->DeviceID) ?>', sn: '<?= esc_js($device->SerialNumber) ?>' }])">
                     <i class="fa-solid fa-print"></i> Print Label
@@ -1314,6 +1412,26 @@ function device_view_details($device_id = null)
 
     <!-- SweetAlert & Return Action Helper -->
     <script>
+    function handleReturnStockClick(btn) {
+        if (!btn) return;
+        try {
+            const raw = btn.getAttribute('data-device');
+            const data = JSON.parse(raw);
+            if (typeof confirmReturnDevice === 'function') {
+                confirmReturnDevice(data, data.nonce || '');
+            } else {
+                if (confirm('Confirm return device ' + (data.id || '') + ' to stock?')) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('return', data.id);
+                    if (data.nonce) url.searchParams.set('_wpnonce', data.nonce);
+                    window.location.href = url.toString();
+                }
+            }
+        } catch(err) {
+            console.error('Error parsing device data for return:', err);
+        }
+    }
+
     function handleReturnMaintenanceClick(btn) {
         if (!btn) return;
         try {

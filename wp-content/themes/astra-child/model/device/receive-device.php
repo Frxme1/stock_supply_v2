@@ -24,6 +24,27 @@ function receive_device($device = null)
         ORDER BY o.Nickname ASC
     ");
 
+    // Fetch all currently assigned devices grouped by OwnerID for instant peek
+    $all_assigned_devices = $wpdb->get_results("
+        SELECT d.DeviceID, d.OwnerID, c.CategoryName, b.BrandName, d.Model, d.SerialNumber
+        FROM $table_devices d
+        LEFT JOIN Brands b ON d.BrandID = b.BrandID
+        LEFT JOIN Categories c ON d.CategoryID = c.CategoryID
+        WHERE d.OwnerID IS NOT NULL AND d.OwnerID > 0 AND d.StatusID = (SELECT StatusID FROM Statuses WHERE StatusName = 'In Use' LIMIT 1)
+        ORDER BY d.CategoryID ASC, d.DeviceID ASC
+    ");
+
+    $owner_devices_map = [];
+    foreach ($all_assigned_devices as $dev) {
+        $owner_devices_map[$dev->OwnerID][] = [
+            'id' => $dev->DeviceID,
+            'category' => $dev->CategoryName ?: 'Equipment',
+            'brand' => $dev->BrandName ?: '',
+            'model' => $dev->Model ?: '',
+            'sn' => $dev->SerialNumber ?: ''
+        ];
+    }
+
     $device_data = null;
     $date_value = date('Y-m-d');
 
@@ -368,7 +389,7 @@ function receive_device($device = null)
                         </div>
 
                         <!-- Condition Photo Upload -->
-                        <div class="form-group modern-group" style="grid-column: span 2;">
+                        <div class="form-group modern-group">
                             <div class="field-header">
                                 <label>
                                     <i class="fa-solid fa-camera field-icon-desktop desktop-only-element"></i>
@@ -390,6 +411,20 @@ function receive_device($device = null)
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Employee Devices Peek Card (Instantly shows what the assignee holds spanning full width) -->
+                        <div class="form-group modern-group assignee-devices-section" id="assignee_devices_section" style="display: none;">
+                            <div class="field-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                <label style="color: #1e40af; font-weight: 700; font-size: 0.88rem; margin: 0; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-boxes-stacked text-primary"></i>
+                                    <span>Currently Assigned Equipment (<span id="assignee_devices_count">0</span>)</span>
+                                </label>
+                                <span class="badge" id="assignee_devices_badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.75rem; border-radius: 999px; font-weight: 700; padding: 4px 12px;">Active</span>
+                            </div>
+                            <div id="assignee_devices_list" class="assignee-devices-grid">
+                                <!-- Populated dynamically via JS -->
                             </div>
                         </div>
 
@@ -825,6 +860,126 @@ function receive_device($device = null)
                 display: grid !important;
                 grid-template-columns: 1fr 1fr !important;
                 gap: 1rem 1.25rem !important;
+            }
+
+            /* --- Assignee Held Devices Card & Grid --- */
+            .assignee-devices-section {
+                grid-column: 1 / -1 !important;
+                background: #f8fafc !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 16px !important;
+                padding: 14px 18px !important;
+                margin-top: 6px !important;
+                box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04) !important;
+                animation: cardFadeIn 0.3s ease-out !important;
+            }
+
+            .assignee-devices-grid {
+                display: grid !important;
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+                gap: 10px !important;
+                max-height: 220px !important;
+                overflow-y: auto !important;
+                padding: 4px 2px !important;
+            }
+
+            .assignee-devices-grid::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            .assignee-devices-grid::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 4px;
+            }
+
+            .assignee-device-pill {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                padding: 8px 12px !important;
+                background: #ffffff !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 12px !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+                transition: all 0.15s ease !important;
+            }
+
+            .assignee-device-pill:hover {
+                border-color: #93c5fd !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 4px 10px rgba(37, 99, 235, 0.08) !important;
+            }
+
+            .assignee-dev-icon-wrap {
+                width: 34px !important;
+                height: 34px !important;
+                border-radius: 10px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 0.95rem !important;
+                flex-shrink: 0 !important;
+            }
+
+            .assignee-dev-icon-wrap.cat-laptop {
+                background: #eff6ff !important;
+                color: #2563eb !important;
+                border: 1px solid #bfdbfe !important;
+            }
+
+            .assignee-dev-icon-wrap.cat-monitor {
+                background: #f5f3ff !important;
+                color: #7c3aed !important;
+                border: 1px solid #ddd6fe !important;
+            }
+
+            .assignee-dev-icon-wrap.cat-accessories {
+                background: #ecfdf5 !important;
+                color: #059669 !important;
+                border: 1px solid #a7f3d0 !important;
+            }
+
+            .assignee-dev-info {
+                min-width: 0 !important;
+                flex: 1 !important;
+            }
+
+            .assignee-dev-title {
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                min-width: 0 !important;
+            }
+
+            .assignee-dev-id {
+                font-family: ui-monospace, SFMono-Regular, monospace !important;
+                font-weight: 800 !important;
+                color: #1e40af !important;
+                font-size: 0.88rem !important;
+                flex-shrink: 0 !important;
+            }
+
+            .assignee-dev-name {
+                font-size: 0.84rem !important;
+                font-weight: 600 !important;
+                color: #1e293b !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
+            .assignee-dev-sub {
+                margin-top: 2px !important;
+            }
+
+            .assignee-dev-sn {
+                font-size: 0.72rem !important;
+                color: #64748b !important;
+                background: #f1f5f9 !important;
+                padding: 1px 6px !important;
+                border-radius: 4px !important;
+                font-family: ui-monospace, SFMono-Regular, monospace !important;
+                display: inline-block !important;
             }
 
             .modern-group {
@@ -1442,10 +1597,86 @@ function receive_device($device = null)
             handleOwnerChange();
         }
 
+        const ownerDevicesMap = <?= wp_json_encode($owner_devices_map) ?>;
+
+        function renderAssigneeCurrentDevices(ownerId) {
+            const section = document.getElementById('assignee_devices_section');
+            const list = document.getElementById('assignee_devices_list');
+            const countEl = document.getElementById('assignee_devices_count');
+            const badgeEl = document.getElementById('assignee_devices_badge');
+            if (!section || !list) return;
+
+            if (!ownerId) {
+                section.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+
+            const devices = ownerDevicesMap[ownerId] || [];
+            section.style.display = 'block';
+            if (countEl) countEl.textContent = devices.length;
+
+            if (devices.length === 0) {
+                if (badgeEl) {
+                    badgeEl.textContent = 'None Held';
+                    badgeEl.style.background = '#f1f5f9';
+                    badgeEl.style.color = '#64748b';
+                    badgeEl.style.borderColor = '#cbd5e1';
+                }
+                list.innerHTML = `
+                    <div style="padding: 12px 14px; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 12px; font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 8px; grid-column: 1 / -1;">
+                        <i class="fa-solid fa-circle-check text-success"></i> This employee does not currently hold any equipment.
+                    </div>
+                `;
+            } else {
+                if (badgeEl) {
+                    badgeEl.textContent = `${devices.length} Holding`;
+                    badgeEl.style.background = '#eff6ff';
+                    badgeEl.style.color = '#1d4ed8';
+                    badgeEl.style.borderColor = '#bfdbfe';
+                }
+                let html = '';
+                devices.forEach(d => {
+                    const cat = (d.category || '').toLowerCase();
+                    let catIcon = 'fa-laptop';
+                    let catClass = 'cat-laptop';
+                    if (cat.includes('monitor')) {
+                        catIcon = 'fa-desktop';
+                        catClass = 'cat-monitor';
+                    } else if (cat.includes('access')) {
+                        catIcon = 'fa-plug';
+                        catClass = 'cat-accessories';
+                    }
+
+                    const deviceModel = [d.brand, d.model].filter(Boolean).join(' ') || 'Equipment';
+
+                    html += `
+                        <div class="assignee-device-pill">
+                            <div class="assignee-dev-icon-wrap ${catClass}">
+                                <i class="fa-solid ${catIcon}"></i>
+                            </div>
+                            <div class="assignee-dev-info">
+                                <div class="assignee-dev-title">
+                                    <span class="assignee-dev-id">${d.id}</span>
+                                    <span class="assignee-dev-name" title="${deviceModel}">${deviceModel}</span>
+                                </div>
+                                <div class="assignee-dev-sub">
+                                    ${d.sn ? `<span class="assignee-dev-sn">SN: ${d.sn}</span>` : '<span class="assignee-dev-sn" style="color:#94a3b8;">No SN</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+        }
+
         function handleOwnerChange() {
             const ownerId = document.getElementById('OwnerID').value;
             const deptSelect = document.getElementById('DepartmentID');
             const posSelect = document.getElementById('PositionID');
+
+            renderAssigneeCurrentDevices(ownerId);
 
             const found = ownerDataList.find(o => String(o.id) === String(ownerId));
             if (found) {

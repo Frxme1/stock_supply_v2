@@ -585,6 +585,66 @@ if ($category_filter) {
                 });
         }
 
+        window.__qrSwitchScanTab = function (tabName) {
+            const tabInfo = document.getElementById('qr_tab_info');
+            const tabHist = document.getElementById('qr_tab_history');
+            const btnInfo = document.getElementById('qr_tab_btn_info');
+            const btnHist = document.getElementById('qr_tab_btn_history');
+
+            if (tabName === 'history') {
+                if (tabInfo) tabInfo.style.display = 'none';
+                if (tabHist) tabHist.style.display = 'block';
+                if (btnInfo) {
+                    btnInfo.style.background = 'transparent';
+                    btnInfo.style.color = '#64748b';
+                    btnInfo.style.boxShadow = 'none';
+                }
+                if (btnHist) {
+                    btnHist.style.background = '#ffffff';
+                    btnHist.style.color = '#4338ca';
+                    btnHist.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                }
+            } else {
+                if (tabInfo) tabInfo.style.display = 'block';
+                if (tabHist) tabHist.style.display = 'none';
+                if (btnHist) {
+                    btnHist.style.background = 'transparent';
+                    btnHist.style.color = '#64748b';
+                    btnHist.style.boxShadow = 'none';
+                }
+                if (btnInfo) {
+                    btnInfo.style.background = '#ffffff';
+                    btnInfo.style.color = '#0f172a';
+                    btnInfo.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                }
+            }
+        };
+
+        window.__qrFilterCurrentPage = function (code) {
+            if (!code) return;
+            if (typeof Swal !== 'undefined') Swal.close();
+
+            const searchInput = document.querySelector('input[name="device_search"]') ||
+                document.querySelector('input[type="search"]') ||
+                document.querySelector('#search-input') ||
+                document.querySelector('#animated-search-input');
+
+            if (searchInput) {
+                searchInput.value = code;
+                const form = searchInput.closest('form');
+                if (form) {
+                    form.submit();
+                    return;
+                }
+            }
+
+            // Fallback: reload URL with parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('device_search', code);
+            url.searchParams.delete('paged');
+            window.location.href = url.toString();
+        };
+
         function renderScannedDeviceModal(dev) {
             window.__lastScannedDevice = dev;
             const qrBar = document.querySelector('.dash-qr-bar');
@@ -607,11 +667,13 @@ if ($category_filter) {
             };
             const catSlug = categorySlugMap[dev.CategoryName] || (dev.CategoryName ? dev.CategoryName.toLowerCase() : 'laptop');
             const viewDetailUrl = `<?= home_url('/') ?>${catSlug}/?view=${encodeURIComponent(dev.DeviceID)}`;
+            const historyCount = (dev.history && dev.history.length) ? dev.history.length : 0;
+            const isMaintForm = window.location.href.includes('maintenance') || !!document.getElementById('maintenance-device-form');
 
             let htmlContent = `
         <div style="text-align:left; font-size:0.92rem; box-sizing:border-box;">
             <!-- Header -->
-            <div style="margin-bottom:16px; padding-bottom:14px; border-bottom:1.5px solid #f1f5f9; padding-right:36px;">
+            <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1.5px solid #f1f5f9; padding-right:32px;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
                     <span style="background:#eff6ff; color:#2563eb; padding:3px 10px; border-radius:8px; font-weight:700; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px; border:1px solid #dbeafe;">
                         ${dev.CategoryName || 'Device'}
@@ -629,93 +691,137 @@ if ($category_filter) {
                 </div>
             </div>
 
-            <!-- Device Info Grid (Bento Table) -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:18px; background:#f8fafc; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden;">
-                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
-                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-barcode" style="margin-right:4px;"></i>Serial Number</span>
-                    <strong style="color:#0f172a; font-size:0.88rem; word-break:break-all;">${dev.SerialNumber || '-'}</strong>
+            <!-- Segmented Control Tabs (Info & Actions vs Full History) -->
+            <div style="display:flex; background:#f1f5f9; border-radius:12px; padding:3px; margin-bottom:14px; border:1px solid #e2e8f0;">
+                <button type="button" id="qr_tab_btn_info" onclick="window.__qrSwitchScanTab('info')" style="flex:1; border:none; background:#ffffff; color:#0f172a; font-weight:700; font-size:0.82rem; padding:8px 10px; border-radius:10px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.15s ease;">
+                    <i class="fa-solid fa-bolt me-1 text-primary"></i> Device & Actions
+                </button>
+                <button type="button" id="qr_tab_btn_history" onclick="window.__qrSwitchScanTab('history')" style="flex:1; border:none; background:transparent; color:#64748b; font-weight:700; font-size:0.82rem; padding:8px 10px; border-radius:10px; cursor:pointer; transition:all 0.15s ease;">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> History (${historyCount})
+                </button>
+            </div>
+
+            <!-- TAB 1: Device Details & Quick Actions -->
+            <div id="qr_tab_info">
+                <!-- Device Info Grid (Bento Table) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-bottom:14px; background:#f8fafc; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden;">
+                    <div style="padding:8px 12px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+                        <span style="color:#94a3b8; font-size:0.72rem; font-weight:600; display:block; text-transform:uppercase;"><i class="fa-solid fa-barcode" style="margin-right:4px;"></i>Serial Number</span>
+                        <strong style="color:#0f172a; font-size:0.86rem; word-break:break-all;" class="font-mono">${dev.SerialNumber || '-'}</strong>
+                    </div>
+                    <div style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">
+                        <span style="color:#94a3b8; font-size:0.72rem; font-weight:600; display:block; text-transform:uppercase;"><i class="fa-solid fa-user" style="margin-right:4px;"></i>Assigned To</span>
+                        <strong style="color:#0f172a; font-size:0.86rem;">${dev.OwnerName || '-'}</strong>
+                    </div>
+                    <div style="padding:8px 12px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+                        <span style="color:#94a3b8; font-size:0.72rem; font-weight:600; display:block; text-transform:uppercase;"><i class="fa-solid fa-building" style="margin-right:4px;"></i>Department</span>
+                        <strong style="color:#0f172a; font-size:0.86rem;">${dev.DepartmentName || '-'}</strong>
+                    </div>
+                    <div style="padding:8px 12px; border-bottom:1px solid #e2e8f0;">
+                        <span style="color:#94a3b8; font-size:0.72rem; font-weight:600; display:block; text-transform:uppercase;"><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Received Date</span>
+                        <strong style="color:#0f172a; font-size:0.86rem;">${dev.ReceiveDate || '-'}</strong>
+                    </div>
+                    ${dev.maintenance ? `
+                        <div style="padding:8px 12px; grid-column:span 2; background:#fffbeb; border-top:1px solid #fef3c7;">
+                            <span style="color:#b45309; font-size:0.72rem; font-weight:700; display:block;"><i class="fa-solid fa-wrench" style="margin-right:4px;"></i>Active Maintenance Issue:</span>
+                            <span style="color:#92400e; font-size:0.82rem;">${dev.maintenance.details}</span>
+                        </div>
+                    ` : ''}
                 </div>
-                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0;">
-                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-user" style="margin-right:4px;"></i>Assigned To</span>
-                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.OwnerName || '-'}</strong>
-                </div>
-                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
-                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-building" style="margin-right:4px;"></i>Department</span>
-                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.DepartmentName || '-'}</strong>
-                </div>
-                <div style="padding:9px 12px; border-bottom:1px solid #e2e8f0;">
-                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Received Date</span>
-                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.ReceiveDate || '-'}</strong>
-                </div>
-                <div style="padding:9px 12px; grid-column:span 2; background:#f1f5f9;">
-                    <span style="color:#94a3b8; font-size:0.74rem; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.3px;"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:4px;"></i>Last Repair</span>
-                    <strong style="color:#0f172a; font-size:0.88rem;">${dev.RepairDate || '-'}</strong>
+
+                ${isMaintForm ? `
+                    <div style="margin-bottom:10px;">
+                        <a href="?maintenance=${encodeURIComponent(dev.DeviceID)}" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; height:44px; font-weight:800; border-radius:12px; font-size:0.88rem; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(245,158,11,0.3);"><i class="fa-solid fa-wrench"></i> Fill Maintenance Form for ${dev.DeviceID}</a>
+                    </div>
+                ` : ''}
+
+                ${!detailsOnly ? `
+                    <!-- Quick Actions Grid -->
+                    <div style="font-weight:700; color:#334155; margin-bottom:8px; font-size:0.8rem; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-bolt" style="color:#6366f1;"></i> Quick Actions
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        ${dev.StatusName === 'In Use' ? `
+                            <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return', '<i class=\\'fa-solid fa-right-to-bracket\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return Device', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:42px; font-weight:700; border-radius:12px; font-size:0.84rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.25);"><i class="fa-solid fa-right-to-bracket"></i> Return</button>
+                            <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; height:42px; font-weight:700; border-radius:12px; font-size:0.84rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(245,158,11,0.25);"><i class="fa-solid fa-wrench"></i> Repair</button>
+                        ` : ''}
+
+                        ${dev.StatusName === 'Available' ? `
+                            <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; height:42px; font-weight:700; border-radius:12px; font-size:0.84rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(99,102,241,0.25);"><i class="fa-solid fa-hand-holding-hand"></i> Assign</button>
+                            <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; height:42px; font-weight:700; border-radius:12px; font-size:0.84rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(245,158,11,0.25);"><i class="fa-solid fa-wrench"></i> Repair</button>
+                        ` : ''}
+
+                        ${dev.StatusName === 'Maintenance' ? `
+                            ${(dev.OwnerID && dev.OwnerName && dev.OwnerName !== '-') ? `
+                                <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return_to_owner', '<i class=\\'fa-solid fa-user-check\\' style=\\'color:#3b82f6; margin-right:6px;\\'></i> Return to Owner', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#3b82f6')" style="background:linear-gradient(135deg,#3b82f6,#2563eb); color:#ffffff; width:100%; height:42px; font-weight:700; border-radius:12px; font-size:0.82rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(59,130,246,0.25);"><i class="fa-solid fa-user-check"></i> Return to ${dev.OwnerName}</button>
+                            ` : ''}
+                            <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return to Stock', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:42px; font-weight:700; border-radius:12px; font-size:0.84rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.25);"><i class="fa-solid fa-circle-check"></i> Return to Stock</button>
+                        ` : ''}
+
+                        ${(dev.StatusName !== 'In Use' && dev.StatusName !== 'Available' && dev.StatusName !== 'Maintenance') ? `
+                            <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Mark Available', '<i class=\\'fa-solid fa-check\\'></i> Confirm', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:42px; font-weight:700; border-radius:12px; font-size:0.84rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.25);"><i class="fa-solid fa-circle-check"></i> Mark Available</button>
+                        ` : ''}
+                    </div>
+                ` : ''}
+
+                <!-- Search/Filter in Page & Full View Buttons -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+                    <button type="button" onclick="window.__qrFilterCurrentPage('${dev.DeviceID}')" style="background:#eef2ff; color:#4338ca; border:1.5px solid #c7d2fe; height:42px; font-weight:700; border-radius:12px; font-size:0.82rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all 0.15s ease;">
+                        <i class="fa-solid fa-magnifying-glass"></i> Filter in Page
+                    </button>
+                    <a href="${viewDetailUrl}" style="background:#0f172a; color:#ffffff; height:42px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.82rem; transition:all 0.15s ease;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Full View
+                    </a>
                 </div>
             </div>
-`;
 
-            if (!detailsOnly) {
-                htmlContent += `
-                <!-- Quick Actions Title -->
-                <div style="font-weight:700; color:#334155; margin-bottom:10px; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
-                    <i class="fa-solid fa-bolt" style="color:#6366f1;"></i> Quick Actions
+            <!-- TAB 2: Complete Chronological History Timeline -->
+            <div id="qr_tab_history" style="display:none; max-height:320px; overflow-y:auto; padding-right:2px;">
+                ${(dev.history && dev.history.length > 0) ? `
+                    <div style="display:flex; flex-direction:column; gap:10px; position:relative; padding-left:14px; margin-top:6px;">
+                        <div style="position:absolute; top:6px; bottom:6px; left:4px; width:2px; background:#e2e8f0;"></div>
+                        ${dev.history.map(h => `
+                            <div style="position:relative;">
+                                <div style="position:absolute; left:-14px; top:6px; width:10px; height:10px; border-radius:50%; background:#4f46e5; border:2px solid #ffffff; box-shadow:0 0 0 1px #cbd5e1;"></div>
+                                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:9px 12px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                        <span style="font-weight:800; font-size:0.8rem; color:#0f172a;">${h.action}</span>
+                                        <span style="font-size:0.7rem; color:#94a3b8;"><i class="fa-regular fa-clock me-1"></i>${h.date}</span>
+                                    </div>
+                                    <div style="font-size:0.78rem; color:#334155; line-height:1.35;">${h.desc}</div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:0.72rem; color:#64748b;">
+                                        ${h.owner && h.owner !== '-' ? `<span><i class="fa-solid fa-user me-1 text-muted"></i>${h.owner}</span>` : '<span></span>'}
+                                        ${h.user ? `<span style="text-transform:lowercase;"><i class="fa-solid fa-user-gear me-1 text-muted"></i>${h.user}</span>` : ''}
+                                    </div>
+                                    ${h.photo ? `
+                                        <div style="margin-top:6px;">
+                                            <img src="${h.photo}" style="max-height:60px; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;" onclick="if(window.openPhotoModal) window.openPhotoModal('${h.photo}')" title="Click to view full photo">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : `
+                    <div style="text-align:center; padding:36px 12px; color:#94a3b8;">
+                        <i class="fa-solid fa-clock-rotate-left" style="font-size:2rem; margin-bottom:8px; display:block; color:#cbd5e1;"></i>
+                        <p style="margin:0; font-size:0.88rem; font-weight:600;">No history logs recorded yet.</p>
+                    </div>
+                `}
+
+                <div style="margin-top:12px; padding-top:10px; border-top:1px solid #f1f5f9; text-align:center;">
+                    <a href="${viewDetailUrl}" style="color:#4f46e5; font-size:0.82rem; font-weight:700; text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Complete History on Details Page</a>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            `;
+            </div>
 
-                if (dev.StatusName === 'In Use') {
-                    htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return', '<i class=\\'fa-solid fa-right-to-bracket\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return Device', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.25);"><i class="fa-solid fa-right-to-bracket"></i> Return</button>
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(245,158,11,0.25);"><i class="fa-solid fa-wrench"></i> Repair</button>
-                `;
-                } else if (dev.StatusName === 'Available') {
-                    htmlContent += `
-                    <button type="button" onclick="window.__qrPromptAssign('${dev.DeviceID}')" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(99,102,241,0.25);"><i class="fa-solid fa-hand-holding-hand"></i> Assign</button>
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'maintenance', '<i class=\\'fa-solid fa-wrench\\' style=\\'color:#f59e0b; margin-right:6px;\\'></i> Send to Repair', '<i class=\\'fa-solid fa-wrench\\'></i> Confirm Repair', '#f59e0b')" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(245,158,11,0.25);"><i class="fa-solid fa-wrench"></i> Repair</button>
-                `;
-                } else if (dev.StatusName === 'Maintenance') {
-                    if (dev.OwnerID && dev.OwnerName && dev.OwnerName !== '-') {
-                        htmlContent += `
-                        <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'return_to_owner', '<i class=\\'fa-solid fa-user-check\\' style=\\'color:#3b82f6; margin-right:6px;\\'></i> Return to Owner', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#3b82f6')" style="background:linear-gradient(135deg,#3b82f6,#2563eb); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(59,130,246,0.25);"><i class="fa-solid fa-user-check"></i> Return to ${dev.OwnerName}</button>
-                    `;
-                    }
-                    htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Return to Stock', '<i class=\\'fa-solid fa-check\\'></i> Confirm Return', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.25);"><i class="fa-solid fa-circle-check"></i> Return to Stock</button>
-                `;
-                } else {
-                    htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'available', '<i class=\\'fa-solid fa-circle-check\\' style=\\'color:#10b981; margin-right:6px;\\'></i> Mark Available', '<i class=\\'fa-solid fa-check\\'></i> Confirm', '#10b981')" style="background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; width:100%; height:44px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.85rem; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.25);"><i class="fa-solid fa-circle-check"></i> Mark Available</button>
-                `;
-                }
-
-                if (dev.StatusName !== 'Retired') {
-                    htmlContent += `
-                    <button type="button" onclick="window.__qrPromptActionWithPhoto('${dev.DeviceID}', 'retired', '<i class=\\'fa-solid fa-box-archive\\' style=\\'color:#64748b; margin-right:6px;\\'></i> Retire Device', '<i class=\\'fa-solid fa-box-archive\\'></i> Confirm Retire', '#64748b')" style="grid-column:span 2; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; width:100%; height:40px; margin:0; padding:0 12px; font-weight:700; border-radius:12px; font-size:0.82rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;"><i class="fa-solid fa-box-archive"></i> Retire Device</button>
-                `;
-                }
-
-                htmlContent += `
-                </div>
-                <div style="margin-top:10px;">
-                    <a href="${viewDetailUrl}" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#0f172a; width:100%; height:42px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.85rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Details</a>
-                </div>
-            `;
-            } else {
-                htmlContent += `
-                <div style="margin-top:12px;">
-                    <a href="${viewDetailUrl}" style="background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:#ffffff; width:100%; height:44px; margin:0; padding:0 16px; font-weight:700; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:12px; font-size:0.88rem; transition:all 0.2s; box-sizing:border-box;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View Details</a>
-                </div>
-            `;
-            }
-
-            htmlContent += `</div>`;
+        </div>`;
 
             Swal.fire({
                 html: htmlContent,
                 showConfirmButton: false,
                 showCloseButton: true,
                 width: 'min(94vw, 480px)',
-                padding: '20px',
+                padding: '18px',
                 customClass: { popup: 'dash-scan-popup' }
             });
         }

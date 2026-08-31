@@ -261,22 +261,109 @@ function device_crud()
                     </button>
                 </div>
 
-                <div class="mobile-only-container">
-                    <!-- Mobile Header / Quick Actions -->
-                    <div class="quick-action-grid">
-                        <a href="javascript:void(0);" onclick="openAddDeviceBottomSheet()" class="quick-action-card receive"
-                            style="grid-column: span 2;">
-                            <div class="quick-action-icon"><i class="fa-solid fa-plus"></i></div>
-                            <div class="quick-action-title">Add Device</div>
-                        </a>
-                        <a href="<?= home_url('/maintenance/') ?>" class="quick-action-card swap">
-                            <div class="quick-action-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                            <div class="quick-action-title">Maintenance</div>
-                        </a>
-                        <a href="<?= home_url('/history/') ?>" class="quick-action-card return">
-                            <div class="quick-action-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                            <div class="quick-action-title">History</div>
-                        </a>
+                <!-- Mobile Only Inventory Dashboard Hub -->
+                <?php
+                // Fetch real-time status and category metrics for mobile dashboard
+                $mob_status_counts = $wpdb->get_results("SELECT Status, COUNT(*) as count FROM $table_device_wn GROUP BY Status");
+                $mob_status_map = [];
+                foreach ($mob_status_counts as $sc) {
+                    $mob_status_map[$sc->Status] = intval($sc->count);
+                }
+                $mob_total_count = array_sum($mob_status_map);
+                $mob_avail_count = $mob_status_map['Available'] ?? 0;
+                $mob_inuse_count = $mob_status_map['In Use'] ?? 0;
+                $mob_maint_count = $mob_status_map['Maintenance'] ?? 0;
+                $mob_retired_count = ($mob_status_map['Retired'] ?? 0) + ($mob_status_map['Lost'] ?? 0);
+
+                $mob_cat_counts = $wpdb->get_results("SELECT Category, COUNT(*) as count FROM $table_device_wn WHERE Category != '' GROUP BY Category");
+                $mob_cat_map = [];
+                foreach ($mob_cat_counts as $cc) {
+                    $mob_cat_map[$cc->Category] = intval($cc->count);
+                }
+                $mob_monitors_count = $mob_cat_map['Monitor'] ?? 0;
+                $mob_laptops_count = $mob_cat_map['Laptop'] ?? 0;
+                $mob_acc_count = $mob_cat_map['Accessories'] ?? 0;
+                ?>
+                <div class="mobile-only-container mobile-dashboard-hub">
+                    <!-- Hero Live Inventory Card -->
+                    <div class="mob-dash-hero-card">
+                        <div class="mob-dash-hero-top">
+                            <div class="mob-dash-hero-title-wrap">
+                                <span class="mob-dash-badge-pill"><span class="mob-dash-pulse-dot"></span> LIVE INVENTORY</span>
+                                <div class="mob-dash-hero-total">
+                                    <span class="mob-dash-total-num"><?= number_format($mob_total_count) ?></span>
+                                    <span class="mob-dash-total-label">Total Assets</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4-Stat Grid (Tap to Filter) -->
+                        <div class="mob-dash-stat-grid">
+                            <!-- Available -->
+                            <a href="<?= esc_url(home_url('/home/?filter_status=Available')) ?>" class="mob-stat-item is-available" title="View Available">
+                                <div class="mob-stat-icon-wrap"><i class="fa-solid fa-circle-check"></i></div>
+                                <div class="mob-stat-content">
+                                    <span class="mob-stat-val"><?= $mob_avail_count ?></span>
+                                    <span class="mob-stat-lbl">In Stock</span>
+                                </div>
+                                <span class="mob-stat-pct"><?= $mob_total_count > 0 ? round(($mob_avail_count / $mob_total_count) * 100) : 0 ?>%</span>
+                            </a>
+
+                            <!-- In Use -->
+                            <a href="<?= esc_url(home_url('/home/?filter_status=In+Use')) ?>" class="mob-stat-item is-inuse" title="View In Use">
+                                <div class="mob-stat-icon-wrap"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="mob-stat-content">
+                                    <span class="mob-stat-val"><?= $mob_inuse_count ?></span>
+                                    <span class="mob-stat-lbl">In Use</span>
+                                </div>
+                                <span class="mob-stat-pct"><?= $mob_total_count > 0 ? round(($mob_inuse_count / $mob_total_count) * 100) : 0 ?>%</span>
+                            </a>
+
+                            <!-- Maintenance -->
+                            <a href="<?= esc_url(home_url('/maintenance/')) ?>" class="mob-stat-item is-maint" title="Go to Maintenance">
+                                <div class="mob-stat-icon-wrap"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                                <div class="mob-stat-content">
+                                    <span class="mob-stat-val"><?= $mob_maint_count ?></span>
+                                    <span class="mob-stat-lbl">Repairing</span>
+                                </div>
+                                <span class="mob-stat-pct"><?= $mob_total_count > 0 ? round(($mob_maint_count / $mob_total_count) * 100) : 0 ?>%</span>
+                            </a>
+
+                            <!-- Retired / Lost -->
+                            <a href="<?= esc_url(home_url('/home/?filter_status=Retired')) ?>" class="mob-stat-item is-retired" title="View Retired">
+                                <div class="mob-stat-icon-wrap"><i class="fa-solid fa-box-archive"></i></div>
+                                <div class="mob-stat-content">
+                                    <span class="mob-stat-val"><?= $mob_retired_count ?></span>
+                                    <span class="mob-stat-lbl">Retired</span>
+                                </div>
+                                <span class="mob-stat-pct"><?= $mob_total_count > 0 ? round(($mob_retired_count / $mob_total_count) * 100) : 0 ?>%</span>
+                            </a>
+                        </div>
+
+                        <!-- Category Equal 3-Column Grid -->
+                        <div class="mob-dash-cats-grid">
+                            <a href="<?= esc_url(home_url('/monitor/')) ?>" class="mob-cat-card" title="View Monitors">
+                                <div class="mob-cat-card-header">
+                                    <i class="fa-solid fa-desktop text-warning"></i>
+                                    <span>Monitors</span>
+                                </div>
+                                <div class="mob-cat-card-num"><?= $mob_monitors_count ?></div>
+                            </a>
+                            <a href="<?= esc_url(home_url('/laptop/')) ?>" class="mob-cat-card" title="View Laptops">
+                                <div class="mob-cat-card-header">
+                                    <i class="fa-solid fa-laptop text-info"></i>
+                                    <span>Laptops</span>
+                                </div>
+                                <div class="mob-cat-card-num"><?= $mob_laptops_count ?></div>
+                            </a>
+                            <a href="<?= esc_url(home_url('/accessories/')) ?>" class="mob-cat-card" title="View Accessories">
+                                <div class="mob-cat-card-header">
+                                    <i class="fa-solid fa-plug text-success"></i>
+                                    <span>Accessories</span>
+                                </div>
+                                <div class="mob-cat-card-num"><?= $mob_acc_count ?></div>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -388,7 +475,8 @@ function device_crud()
                                                                 class="fa-solid fa-box"></i>
                                                             Receive</a>
                                                         <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
-                                                                class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>                                                        <a href="#"
+                                                                class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a> <a
+                                                            href="#"
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>
                                                         <a href="#"
@@ -399,20 +487,19 @@ function device_crud()
                                                             onclick="quickSwapDevice('<?= esc_js($row->DeviceID) ?>'); return false;"
                                                             class="text-warning"><i class="fa-solid fa-arrows-rotate"></i> Quick
                                                             Swap</a>
-                                                        <a href="#"
-                                                            data-device="<?= esc_attr(wp_json_encode([
-                                                                'id'           => $row->DeviceID,
-                                                                'brand'        => $row->Brand ?? '',
-                                                                'model'        => $row->Model ?? '',
-                                                                'category'     => $row->Category ?? '',
-                                                                'serialNumber' => $row->SerialNumber ?? '',
-                                                                'owner'        => $row->Owner ?? '',
-                                                                'department'   => $row->Department ?? '',
-                                                                'nonce'        => $dev_action_nonce
-                                                            ])) ?>"
+                                                        <a href="#" data-device="<?= esc_attr(wp_json_encode([
+                                                            'id' => $row->DeviceID,
+                                                            'brand' => $row->Brand ?? '',
+                                                            'model' => $row->Model ?? '',
+                                                            'category' => $row->Category ?? '',
+                                                            'serialNumber' => $row->SerialNumber ?? '',
+                                                            'owner' => $row->Owner ?? '',
+                                                            'department' => $row->Department ?? '',
+                                                            'nonce' => $dev_action_nonce
+                                                        ])) ?>"
                                                             onclick="handleReturnDeviceClick(this); return false;"><i
                                                                 class="fa-solid fa-rotate-left"></i>
-                                                             Return</a>
+                                                            Return</a>
                                                         <a href="?maintenance=<?= esc_attr($row->DeviceID) ?>"><i
                                                                 class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a>
                                                         <a href="#"
@@ -422,7 +509,9 @@ function device_crud()
                                                             onclick="confirmLost('<?= esc_js($row->DeviceID) ?>', 'lost', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-triangle-exclamation text-danger"></i> Lost</a>
                                                     <?php elseif ($status == 'Maintenance'): ?>
-                                                        <a href="#" onclick="confirmReturnFromMaintenance({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? '') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>', owner: '<?= esc_js(!empty($row->Nickname) ? $row->Nickname : (!empty(trim(preg_replace('/\s*\(.*?\)/', '', $row->Owner ?? ''))) ? trim(preg_replace('/\s*\(.*?\)/', '', $row->Owner)) : '')) ?>', nickname: '<?= esc_js($row->Nickname ?? '') ?>', department: '<?= esc_js($row->Department ?? '') ?>', details: '<?= esc_js($row->Details ?? '') ?>', repairDate: '<?= esc_js($row->RepairDate ?? '') ?>' }, '<?= $dev_action_nonce ?>'); return false;"><i class="fa-solid fa-circle-check text-success"></i> Done & Return</a>
+                                                        <a href="#"
+                                                            onclick="confirmReturnFromMaintenance({ id: '<?= esc_js($row->DeviceID) ?>', brand: '<?= esc_js($row->Brand ?? '') ?>', model: '<?= esc_js($row->Model ?? '') ?>', category: '<?= esc_js($row->Category ?? '') ?>', serialNumber: '<?= esc_js($row->SerialNumber ?? '') ?>', owner: '<?= esc_js(!empty($row->Nickname) ? $row->Nickname : (!empty(trim(preg_replace('/\s*\(.*?\)/', '', $row->Owner ?? ''))) ? trim(preg_replace('/\s*\(.*?\)/', '', $row->Owner)) : '')) ?>', nickname: '<?= esc_js($row->Nickname ?? '') ?>', department: '<?= esc_js($row->Department ?? '') ?>', details: '<?= esc_js($row->Details ?? '') ?>', repairDate: '<?= esc_js($row->RepairDate ?? '') ?>' }, '<?= $dev_action_nonce ?>'); return false;"><i
+                                                                class="fa-solid fa-circle-check text-success"></i> Done & Return</a>
                                                         <a href="#"
                                                             onclick="confirmRetire('<?= esc_js($row->DeviceID) ?>', 'retired', '<?= $dev_action_nonce ?>'); return false;"><i
                                                                 class="fa-solid fa-circle text-dark"></i> Retired</a>
@@ -496,6 +585,227 @@ function device_crud()
             </form>
 
             <style>
+                /* =========================================================
+                   MOBILE INVENTORY DASHBOARD HUB (MODERN BENTO METRICS)
+                   ========================================================= */
+                @media (max-width: 768px) {
+                    .mobile-dashboard-hub {
+                        margin-bottom: 16px !important;
+                    }
+
+                    .mob-dash-hero-card {
+                        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%) !important;
+                        border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+                        border-radius: 22px !important;
+                        padding: 16px !important;
+                        color: #ffffff !important;
+                        box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.35) !important;
+                        margin-bottom: 12px !important;
+                        position: relative !important;
+                        overflow: hidden !important;
+                    }
+
+                    .mob-dash-hero-card::before {
+                        content: '';
+                        position: absolute;
+                        top: -30px;
+                        right: -30px;
+                        width: 120px;
+                        height: 120px;
+                        background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+                        pointer-events: none;
+                    }
+
+                    .mob-dash-hero-top {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: space-between !important;
+                        margin-bottom: 12px !important;
+                    }
+
+                    .mob-dash-badge-pill {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        gap: 6px !important;
+                        background: rgba(255, 255, 255, 0.1) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+                        border-radius: 20px !important;
+                        padding: 3px 10px !important;
+                        font-size: 0.68rem !important;
+                        font-weight: 800 !important;
+                        color: #e0e7ff !important;
+                        letter-spacing: 0.05em !important;
+                    }
+
+                    .mob-dash-pulse-dot {
+                        width: 6px !important;
+                        height: 6px !important;
+                        background: #10b981 !important;
+                        border-radius: 50% !important;
+                        box-shadow: 0 0 8px #10b981 !important;
+                        animation: pulseLive 2s infinite !important;
+                    }
+
+                    .mob-dash-hero-total {
+                        display: flex !important;
+                        align-items: baseline !important;
+                        gap: 8px !important;
+                        margin-top: 4px !important;
+                    }
+
+                    .mob-dash-total-num {
+                        font-size: 1.85rem !important;
+                        font-weight: 900 !important;
+                        color: #ffffff !important;
+                        line-height: 1 !important;
+                        font-family: 'SFMono-Regular', Consolas, Menlo, monospace !important;
+                    }
+
+                    .mob-dash-total-label {
+                        font-size: 0.8rem !important;
+                        font-weight: 600 !important;
+                        color: #94a3b8 !important;
+                    }
+
+                    /* 4-Stat Grid */
+                    .mob-dash-stat-grid {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 8px !important;
+                        margin-bottom: 10px !important;
+                    }
+
+                    .mob-stat-item {
+                        background: rgba(255, 255, 255, 0.06) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        border-radius: 14px !important;
+                        padding: 10px 12px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        gap: 8px !important;
+                        text-decoration: none !important;
+                        color: #ffffff !important;
+                        transition: all 0.15s ease !important;
+                        position: relative !important;
+                    }
+
+                    .mob-stat-item:active {
+                        background: rgba(255, 255, 255, 0.14) !important;
+                        transform: scale(0.97) !important;
+                    }
+
+                    .mob-stat-icon-wrap {
+                        width: 32px !important;
+                        height: 32px !important;
+                        border-radius: 10px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        font-size: 0.95rem !important;
+                        flex-shrink: 0 !important;
+                    }
+
+                    .mob-stat-item.is-available .mob-stat-icon-wrap { background: rgba(16, 185, 129, 0.2) !important; color: #34d399 !important; }
+                    .mob-stat-item.is-inuse .mob-stat-icon-wrap { background: rgba(59, 130, 246, 0.2) !important; color: #60a5fa !important; }
+                    .mob-stat-item.is-maint .mob-stat-icon-wrap { background: rgba(245, 158, 11, 0.2) !important; color: #fbbf24 !important; }
+                    .mob-stat-item.is-retired .mob-stat-icon-wrap { background: rgba(148, 163, 184, 0.2) !important; color: #cbd5e1 !important; }
+
+                    .mob-stat-content {
+                        flex: 1 !important;
+                        min-width: 0 !important;
+                    }
+
+                    .mob-stat-val {
+                        display: block !important;
+                        font-size: 1.15rem !important;
+                        font-weight: 900 !important;
+                        line-height: 1.1 !important;
+                        color: #ffffff !important;
+                        font-family: 'SFMono-Regular', Consolas, Menlo, monospace !important;
+                    }
+
+                    .mob-stat-lbl {
+                        display: block !important;
+                        font-size: 0.68rem !important;
+                        font-weight: 600 !important;
+                        color: #94a3b8 !important;
+                        text-transform: uppercase !important;
+                        letter-spacing: 0.03em !important;
+                        margin-top: 1px !important;
+                    }
+
+                    .mob-stat-pct {
+                        font-size: 0.72rem !important;
+                        font-weight: 700 !important;
+                        color: rgba(255, 255, 255, 0.45) !important;
+                    }
+
+                    /* Category Equal 3-Column Grid */
+                    .mob-dash-cats-grid {
+                        display: grid !important;
+                        grid-template-columns: repeat(3, 1fr) !important;
+                        gap: 8px !important;
+                        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+                        padding-top: 10px !important;
+                        width: 100% !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    .mob-cat-card {
+                        background: rgba(255, 255, 255, 0.05) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        border-radius: 12px !important;
+                        padding: 8px 4px !important;
+                        text-decoration: none !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        text-align: center !important;
+                        gap: 2px !important;
+                        transition: all 0.15s ease !important;
+                        min-width: 0 !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    .mob-cat-card:active {
+                        background: rgba(255, 255, 255, 0.14) !important;
+                        transform: scale(0.96) !important;
+                    }
+
+                    .mob-cat-card-header {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        gap: 4px !important;
+                        font-size: 0.68rem !important;
+                        font-weight: 700 !important;
+                        color: #94a3b8 !important;
+                        white-space: nowrap !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
+                        max-width: 100% !important;
+                    }
+
+                    .mob-cat-card-header i {
+                        font-size: 0.72rem !important;
+                        flex-shrink: 0 !important;
+                    }
+
+                    .mob-cat-card-num {
+                        font-size: 1.05rem !important;
+                        font-weight: 900 !important;
+                        color: #ffffff !important;
+                        font-family: 'SFMono-Regular', Consolas, Menlo, monospace !important;
+                        line-height: 1.1 !important;
+                    }
+
+                    @keyframes pulseLive {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.4; transform: scale(0.8); }
+                    }
+                }
+
                 .collapse-content {
                     max-height: 0;
                     overflow: hidden;

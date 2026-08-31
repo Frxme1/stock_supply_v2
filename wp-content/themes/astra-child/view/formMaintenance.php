@@ -234,6 +234,11 @@ function form_maintenance($editing = null)
             </div>
         </div>
 
+        <?php
+        $qr_details_only = true;
+        include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php');
+        ?>
+
         <form method="POST" action="" id="maintenance-device-form" class="maint-main-form" enctype="multipart/form-data">
             <?php wp_nonce_field('update_maintenance_nonce', '_maint_nonce'); ?>
             <input type="hidden" name="DeviceID" value="<?= esc_attr($editing->DeviceID ?? '') ?>">
@@ -254,7 +259,7 @@ function form_maintenance($editing = null)
             <!-- Mobile Hero Device Ticket Card (All-in-One Device Specs + Real-time Sync) -->
             <div class="maint-mobile-hero-card mobile-only-el">
                 <div class="maint-badge-glow"></div>
-                
+
                 <!-- Top Badges Row -->
                 <div class="maint-mob-hero-top">
                     <div class="maint-mob-id-pill">
@@ -277,7 +282,8 @@ function form_maintenance($editing = null)
                             style="display:none; width: 56px; height: 56px; border-radius: 14px; object-fit: cover; border: 2px solid #f59e0b; cursor: zoom-in;">
                     </div>
                     <div class="maint-mob-hero-text">
-                        <div class="maint-mob-hero-name"><?= esc_html(!empty($editing->Model) ? $editing->Model : 'Hardware Equipment') ?></div>
+                        <div class="maint-mob-hero-name">
+                            <?= esc_html(!empty($editing->Model) ? $editing->Model : 'Hardware Equipment') ?></div>
                         <div class="maint-mob-hero-tags">
                             <?php if (!empty($editing->BrandName)): ?>
                                 <span class="maint-tag-pill brand"><?= esc_html($editing->BrandName) ?></span>
@@ -286,7 +292,8 @@ function form_maintenance($editing = null)
                                 <span class="maint-tag-pill cat"><?= esc_html($editing->CategoryName) ?></span>
                             <?php endif; ?>
                             <?php if (!empty($editing->SerialNumber) && $editing->SerialNumber !== '—'): ?>
-                                <span class="maint-tag-pill sn"><i class="fa-solid fa-barcode me-1"></i><?= esc_html($editing->SerialNumber) ?></span>
+                                <span class="maint-tag-pill sn"><i
+                                        class="fa-solid fa-barcode me-1"></i><?= esc_html($editing->SerialNumber) ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -295,12 +302,16 @@ function form_maintenance($editing = null)
                 <!-- Live Dynamic Ticket Preview Bar -->
                 <div class="maint-mob-live-strip">
                     <div class="maint-mob-strip-item">
-                        <span class="maint-mob-strip-label"><i class="fa-solid fa-calendar-day me-1"></i> SERVICE DATE</span>
-                        <span class="maint-mob-strip-val" id="preview-maint-date-mob"><?= esc_html($dateValue ?: date('Y-m-d')) ?></span>
+                        <span class="maint-mob-strip-label"><i class="fa-solid fa-calendar-day me-1"></i> SERVICE
+                            DATE</span>
+                        <span class="maint-mob-strip-val"
+                            id="preview-maint-date-mob"><?= esc_html($dateValue ?: date('Y-m-d')) ?></span>
                     </div>
                     <div class="maint-mob-strip-item strip-reason">
-                        <span class="maint-mob-strip-label"><i class="fa-solid fa-triangle-exclamation me-1"></i> ISSUE / REASON</span>
-                        <span class="maint-mob-strip-val text-amber" id="preview-maint-reason-mob"><?= esc_html($details_val ?: 'Select or enter reason') ?></span>
+                        <span class="maint-mob-strip-label"><i class="fa-solid fa-triangle-exclamation me-1"></i> ISSUE /
+                            REASON</span>
+                        <span class="maint-mob-strip-val text-amber"
+                            id="preview-maint-reason-mob"><?= esc_html($details_val ?: 'Select or enter reason') ?></span>
                     </div>
                 </div>
             </div>
@@ -312,7 +323,8 @@ function form_maintenance($editing = null)
 
                     <!-- Section 1: Device Information (Desktop Only) -->
                     <div class="maint-section-divider desktop-only-el">
-                        <span class="maint-section-title"><i class="fa-solid fa-circle-info me-1"></i> Device Information</span>
+                        <span class="maint-section-title"><i class="fa-solid fa-circle-info me-1"></i> Device
+                            Information</span>
                     </div>
 
                     <div class="maint-fields-grid desktop-only-el">
@@ -322,8 +334,8 @@ function form_maintenance($editing = null)
                                 <i class="fa-solid fa-fingerprint maint-field-icon"></i>
                                 Device ID
                             </label>
-                            <input type="text" id="maint_device_id"
-                                value="<?= esc_attr($editing->DeviceID ?? '') ?>" required readonly class="input-readonly">
+                            <input type="text" id="maint_device_id" value="<?= esc_attr($editing->DeviceID ?? '') ?>"
+                                required readonly class="input-readonly">
                         </div>
 
                         <!-- Brand -->
@@ -369,7 +381,8 @@ function form_maintenance($editing = null)
 
                     <!-- Section 2: Maintenance Details -->
                     <div class="maint-section-divider mt-4">
-                        <span class="maint-section-title"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Repair Information</span>
+                        <span class="maint-section-title"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Repair
+                            Information</span>
                     </div>
 
                     <div class="maint-fields-grid">
@@ -409,61 +422,63 @@ function form_maintenance($editing = null)
                                 Additional Notes / Custom Reason
                             </label>
 
-                            <!-- Quick Clickable Symptom Chips (FontAwesome Icons) -->
+                            <!-- Quick Clickable Symptom Chips (Compact & Clean - Image 1 Style) -->
                             <div class="maint-quick-chips-bar">
                                 <div class="maint-chips-header">
-                                    <span class="maint-chips-label">
-                                        <i class="fa-solid fa-bolt text-warning me-1"></i> Quick Symptom Selection:
-                                    </span>
-                                    <span class="maint-chips-hint">Tap to auto-fill</span>
+                                    <div class="maint-chips-title">
+                                        <i class="fa-solid fa-bolt text-warning"></i>
+                                        <span>Quick Symptoms:</span>
+                                    </div>
                                 </div>
                                 <div class="maint-chips-grid" id="maint_symptom_chips">
                                     <button type="button" class="maint-chip-btn" data-symptom="Cracked / Defective Screen"
                                         data-main-reason="Screen Issue">
-                                        <i class="fa-solid fa-desktop text-danger"></i>
-                                        <span>Cracked Screen</span>
+                                        <i class="fa-solid fa-desktop text-primary"></i>
+                                        <span>Screen</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="Battery Degraded / Swollen"
                                         data-main-reason="Battery Issue">
-                                        <i class="fa-solid fa-battery-quarter text-warning"></i>
-                                        <span>Battery Degraded</span>
+                                        <i class="fa-solid fa-battery-half text-success"></i>
+                                        <span>Battery</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="No Power / Auto Shutdown"
                                         data-main-reason="Power Issue">
                                         <i class="fa-solid fa-power-off text-danger"></i>
-                                        <span>No Power</span>
+                                        <span>Power</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="Keyboard / Touchpad Failure"
                                         data-main-reason="Keyboard / Mouse Issue">
-                                        <i class="fa-solid fa-keyboard text-primary"></i>
-                                        <span>Keyboard / Touchpad</span>
+                                        <i class="fa-solid fa-keyboard text-secondary"></i>
+                                        <span>Keyboard</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn"
                                         data-symptom="OS Reinstall / Software Glitch" data-main-reason="Software Issue">
                                         <i class="fa-solid fa-arrows-rotate text-info"></i>
-                                        <span>OS / Software</span>
+                                        <span>OS</span>
+                                    </button>
+                                    <button type="button" class="maint-chip-btn" data-symptom="Upgrade RAM / Storage SSD"
+                                        data-main-reason="Hardware Upgrade">
+                                        <i class="fa-solid fa-microchip text-primary"></i>
+                                        <span>Upgrade</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn"
                                         data-symptom="Faulty Charger / Damaged Port" data-main-reason="Power Issue">
                                         <i class="fa-solid fa-plug text-warning"></i>
-                                        <span>Charger / Port</span>
-                                    </button>
-                                    <button type="button" class="maint-chip-btn" data-symptom="Upgrade RAM / Storage SSD"
-                                        data-main-reason="Hardware Upgrade">
-                                        <i class="fa-solid fa-microchip text-success"></i>
-                                        <span>Upgrade RAM/SSD</span>
+                                        <span>Charger</span>
                                     </button>
                                     <button type="button" class="maint-chip-btn" data-symptom="Overheating / Loud Fan Noise"
                                         data-main-reason="Other Issue">
-                                        <i class="fa-solid fa-fan text-secondary"></i>
-                                        <span>Overheating / Fan</span>
+                                        <i class="fa-solid fa-fan text-muted"></i>
+                                        <span>Fan / Heat</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <input type="text" name="OtherDetails" id="OtherDetails"
-                                placeholder="Enter issue details or select from tags above..."
-                                value="<?= esc_attr($other_text) ?>" autocomplete="off">
+                            <div class="maint-custom-reason-input-wrap">
+                                <input type="text" name="OtherDetails" id="OtherDetails"
+                                    placeholder="e.g. Broken Screen, Battery Degraded..."
+                                    value="<?= esc_attr($other_text) ?>" autocomplete="off">
+                            </div>
                         </div>
 
                         <!-- Condition Photo Upload (Full Width Span 2) -->
@@ -480,7 +495,8 @@ function form_maintenance($editing = null)
                                         <img id="maint_photo_img" src="" alt="Condition Photo Preview"
                                             onclick="openPhotoModal(this.src)" title="Click to enlarge image"
                                             style="cursor: zoom-in;">
-                                        <span class="maint-photo-preview-badge"><i class="fa-solid fa-check me-1"></i>Attached</span>
+                                        <span class="maint-photo-preview-badge"><i
+                                                class="fa-solid fa-check me-1"></i>Attached</span>
                                         <button type="button" class="maint-photo-clear-btn" onclick="clearMaintPhoto()"
                                             title="Clear photo">
                                             <i class="fa-solid fa-xmark"></i>
@@ -719,6 +735,137 @@ function form_maintenance($editing = null)
             transform: scale(1.08);
             box-shadow: 0 0 28px rgba(245, 158, 11, 0.75) !important;
             border-color: #f59e0b !important;
+        }
+
+        /* --- SHARED QUICK SYMPTOM CHIPS & INPUT ST        /* --- SHARED QUICK SYMPTOM CHIPS & INPUT STYLES (IMAGE 1 STYLE) --- */
+        #maintenance-form-wrapper .maint-quick-chips-bar {
+            background: #fffdf5 !important;
+            border: 1.5px solid #fde68a !important;
+            border-radius: 16px !important;
+            padding: 12px 14px !important;
+            margin-bottom: 12px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+
+        #maintenance-form-wrapper .maint-chips-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            margin-bottom: 10px !important;
+            width: 100% !important;
+        }
+
+        #maintenance-form-wrapper .maint-chips-title {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            font-size: 0.82rem !important;
+            color: #92400e !important;
+            font-weight: 700 !important;
+        }
+
+        #maintenance-form-wrapper .maint-chips-hint {
+            font-size: 0.72rem !important;
+            color: #b45309 !important;
+            font-weight: 700 !important;
+            text-decoration: underline !important;
+            background: transparent !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+
+        #maintenance-form-wrapper .maint-chips-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px 8px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        #maintenance-form-wrapper .maint-chip-btn {
+            all: unset !important;
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 6px !important;
+            padding: 6px 10px !important;
+            background: #ffffff !important;
+            border: 1.5px solid #fde68a !important;
+            border-radius: 10px !important;
+            cursor: pointer !important;
+            font-weight: 700 !important;
+            font-size: 0.8rem !important;
+            color: #78350f !important;
+            transition: all 0.15s ease !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+            user-select: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            text-overflow: ellipsis !important;
+            height: 36px !important;
+        }
+
+        #maintenance-form-wrapper .maint-chip-btn:hover {
+            background: #fef9c3 !important;
+            border-color: #f59e0b !important;
+            transform: translateY(-1px) !important;
+        }
+
+        #maintenance-form-wrapper .maint-chip-btn:active {
+            transform: scale(0.97) !important;
+        }
+
+        /* Selected State */
+        #maintenance-form-wrapper .maint-chip-btn.is-selected {
+            background: #fef3c7 !important;
+            border-color: #f59e0b !important;
+            color: #78350f !important;
+            font-weight: 800 !important;
+            box-shadow: 0 0 0 1.5px #f59e0b, 0 2px 6px rgba(245, 158, 11, 0.2) !important;
+        }
+
+        #maintenance-form-wrapper .maint-chip-btn i {
+            font-size: 0.85rem !important;
+            flex-shrink: 0 !important;
+        }
+
+        #maintenance-form-wrapper .maint-chip-btn span {
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        /* Custom Reason Input Wrap */
+        #maintenance-form-wrapper .maint-custom-reason-input-wrap {
+            position: relative !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        #maintenance-form-wrapper .maint-custom-reason-input-wrap input {
+            width: 100% !important;
+            height: 46px !important;
+            border-radius: 14px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            padding: 0 16px !important;
+            font-size: 0.88rem !important;
+            color: #0f172a !important;
+            background: #ffffff !important;
+            box-sizing: border-box !important;
+            transition: all 0.2s ease !important;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+        }
+
+        #maintenance-form-wrapper .maint-custom-reason-input-wrap input:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+            outline: none !important;
         }
 
         /* Custom Fullscreen Image Lightbox */
@@ -1625,70 +1772,148 @@ function form_maintenance($editing = null)
                 background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%) !important;
             }
 
-            /* Quick Symptom Chips on Mobile */
+            /* =========================================
+                   Quick Symptom Tags & Custom Reason (Image 1 Style)
+                   ========================================= */
             #maintenance-form-wrapper .maint-quick-chips-bar {
-                padding: 12px 14px !important;
-                background: #f8fafc !important;
+                background: #fffdf5 !important;
+                border: 1.5px solid #fde68a !important;
                 border-radius: 16px !important;
-                border: 1.5px solid #e2e8f0 !important;
+                padding: 12px 14px !important;
                 margin-bottom: 12px !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
             }
 
             #maintenance-form-wrapper .maint-chips-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 9px;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                margin-bottom: 10px !important;
+                width: 100% !important;
+            }
+
+            #maintenance-form-wrapper .maint-chips-title {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                font-size: 0.82rem !important;
+                color: #92400e !important;
+                font-weight: 700 !important;
             }
 
             #maintenance-form-wrapper .maint-chips-hint {
-                font-size: 0.72rem;
-                color: #64748b;
-                font-weight: 600;
+                font-size: 0.72rem !important;
+                color: #b45309 !important;
+                font-weight: 700 !important;
+                text-decoration: underline !important;
+                background: transparent !important;
+                padding: 0 !important;
+                border: none !important;
             }
 
             #maintenance-form-wrapper .maint-chips-grid {
-                display: flex !important;
-                flex-wrap: wrap !important;
-                gap: 6px !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 6px 8px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
             }
 
             #maintenance-form-wrapper .maint-chip-btn {
-                padding: 8px 12px !important;
-                font-size: 0.8rem !important;
+                all: unset !important;
+                box-sizing: border-box !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 6px !important;
+                padding: 6px 10px !important;
+                background: #ffffff !important;
+                border: 1.5px solid #fde68a !important;
                 border-radius: 10px !important;
-                min-height: 38px !important;
-                flex-grow: 1;
-                justify-content: center;
+                cursor: pointer !important;
+                font-weight: 700 !important;
+                font-size: 0.8rem !important;
+                color: #78350f !important;
+                transition: all 0.15s ease !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+                user-select: none !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                overflow: hidden !important;
+                white-space: nowrap !important;
+                text-overflow: ellipsis !important;
+                height: 36px !important;
             }
-        }
-            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-            user-select: none;
-            line-height: 1.3;
-        }
 
-        .maint-chip-btn:hover {
-            background: #f1f5f9;
-            border-color: #94a3b8;
-            color: #0f172a;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 8px -2px rgba(15, 23, 42, 0.12);
-        }
+            #maintenance-form-wrapper .maint-chip-btn:hover {
+                background: #fef9c3 !important;
+                border-color: #f59e0b !important;
+                transform: translateY(-1px) !important;
+            }
 
-        .maint-chip-btn:active {
-            transform: translateY(0);
-        }
+            #maintenance-form-wrapper .maint-chip-btn:active {
+                transform: scale(0.97) !important;
+            }
 
-        .maint-chip-btn.is-selected {
-            background: #eff6ff;
-            border-color: #2563eb;
-            color: #1d4ed8;
-            box-shadow: 0 0 0 1.5px #2563eb, 0 3px 8px -1px rgba(37, 99, 235, 0.2);
-        }
+            /* Selected State */
+            #maintenance-form-wrapper .maint-chip-btn.is-selected {
+                background: #fef3c7 !important;
+                border-color: #f59e0b !important;
+                color: #78350f !important;
+                font-weight: 800 !important;
+                box-shadow: 0 0 0 1.5px #f59e0b, 0 2px 6px rgba(245, 158, 11, 0.2) !important;
+            }
 
-        .maint-chip-btn.is-selected i {
-            transform: scale(1.15);
+            #maintenance-form-wrapper .maint-chip-btn i {
+                font-size: 0.85rem !important;
+                flex-shrink: 0 !important;
+            }
+
+            #maintenance-form-wrapper .maint-chip-btn span {
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            /* Custom Reason Input Wrap */
+            #maintenance-form-wrapper .maint-custom-reason-input-wrap {
+                position: relative !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            #maintenance-form-wrapper .maint-custom-reason-input-wrap input {
+                width: 100% !important;
+                height: 46px !important;
+                border-radius: 14px !important;
+                border: 1.5px solid #cbd5e1 !important;
+                padding: 0 16px !important;
+                font-size: 0.88rem !important;
+                color: #0f172a !important;
+                background: #ffffff !important;
+                box-sizing: border-box !important;
+                transition: all 0.2s ease !important;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+            }
+
+            #maintenance-form-wrapper .maint-custom-reason-input-wrap input:focus {
+                border-color: #3b82f6 !important;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+                outline: none !important;
+            }
+
+            #maintenance-form-wrapper .maint-input-inner-icon {
+                position: absolute !important;
+                left: 15px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                color: #94a3b8 !important;
+                font-size: 0.85rem !important;
+                pointer-events: none !important;
+            }
         }
 
         /* Animations */

@@ -84,6 +84,14 @@ function child_enqueue_styles()
     // Enqueue Mobile Load More JS
     $mlm_js_path = $theme_dir . '/js/mobile_load_more.js';
     wp_enqueue_script('mobile-load-more-js', $theme_uri . '/js/mobile_load_more.js', array('jquery'), file_exists($mlm_js_path) ? filemtime($mlm_js_path) : CHILD_THEME_ASTRA_CHILD_VERSION, true);
+
+    // Enqueue Universal Quick Peek & Slide-Over Drawers
+    $qpd_js_path = $theme_dir . '/js/quick-peek-drawers.js';
+    wp_enqueue_script('quick-peek-drawers', $theme_uri . '/js/quick-peek-drawers.js', array('jquery'), file_exists($qpd_js_path) ? filemtime($qpd_js_path) : CHILD_THEME_ASTRA_CHILD_VERSION, true);
+    wp_localize_script('quick-peek-drawers', 'stockSupplyAjax', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'site_url' => home_url()
+    ));
 }
 add_action('wp_enqueue_scripts', 'child_enqueue_styles', 15);
 
@@ -1304,6 +1312,31 @@ function stock_supply_ajax_get_device_details()
             ORDER BY o.Nickname ASC
         ");
 
+        // Query full device history for instant scan history view
+        $history_logs = $wpdb->get_results($wpdb->prepare("
+            SELECT Action, Date, Description, user_email, Owner, Photo
+            FROM History_new
+            WHERE CAST(DeviceID AS CHAR) = %s AND DeviceID IS NOT NULL AND DeviceID != '' AND DeviceID != '0'
+            ORDER BY Date DESC, HistoryID DESC
+            LIMIT 25
+        ", $device->DeviceID));
+
+        $formatted_history = array_map(function ($h) {
+            return [
+                'action' => $h->Action,
+                'date' => date('d M Y, H:i', strtotime($h->Date)),
+                'desc' => $h->Description,
+                'user' => strtolower($h->user_email ?: '-'),
+                'owner' => stock_supply_format_nickname_with_initial('', '', '', $h->Owner),
+                'photo' => $h->Photo ?: null
+            ];
+        }, $history_logs);
+
+        // Active maintenance if in repair
+        $active_maint = $wpdb->get_row($wpdb->prepare("
+            SELECT * FROM Maintenance WHERE DeviceID = %s ORDER BY MaintenanceID DESC LIMIT 1
+        ", $device->DeviceID));
+
         wp_send_json_success([
             'DeviceID' => $device->DeviceID,
             'SerialNumber' => $device->SerialNumber ?: '-',
@@ -1317,7 +1350,16 @@ function stock_supply_ajax_get_device_details()
             'ReceiveDate' => $device->ReceiveDate ?: '-',
             'ExpectedReturnDate' => $device->ExpectedReturnDate ?: '-',
             'RepairDate' => $device->RepairDate ?: '-',
-            'all_owners' => $owners
+            'all_owners' => $owners,
+            'history' => $formatted_history,
+            'maintenance' => $active_maint ? [
+                'details' => $active_maint->Details ?: 'No details provided',
+                'date' => $active_maint->RepairDate ?: $active_maint->CreatedAt
+            ] : null,
+            'nonces' => [
+                'device_action_nonce' => wp_create_nonce('device_action_nonce'),
+                'stock_supply_ajax_nonce' => wp_create_nonce('stock_supply_ajax_nonce')
+            ]
         ]);
     } else {
         wp_send_json_error(['message' => "Device Not Found for code: {$code}"]);
@@ -2513,6 +2555,211 @@ function custom_wp_login_footer()
     <?php
 }
 add_action('login_footer', 'custom_wp_login_footer');
+
+
+/* ============================================================
+   AJAX ENDPOINTS FOR UNIVERSAL QUICK PEEK DRAWERS
+   ============================================================ */
+
+/**
+ * AJAX: Instant Device Quick Peek
+ */
+function stock_supply_ajax_get_quick_device_peek()
+{
+    global $wpdb;
+    $device_id = sanitize_text_field($_GET['device_id'] ?? $_POST['device_id'] ?? '');
+    if (empty($device_id)) {
+        wp_send_json_error(['message' => 'Device ID is required.']);
+    }
+
+    $table_devices = 'Devices';
+    $table_brands = 'Brands';
+    $table_cats = 'Categories';
+    $table_statuses = 'Statuses';
+    $table_owners = 'Owners';
+    $table_depts = 'Departments';
+    $table_pos = 'Positions';
+    $table_history = 'History_new';
+
+    $device = $wpdb->get_row($wpdb->prepare("
+        SELECT d.*, 
+               b.BrandName, 
+               c.CategoryName, 
+               s.StatusName, 
+               kw.KeywordName,
+               o.Nickname, o.FirstName, o.LastName, o.Email as OwnerEmail,
+               dept.DepartmentName,
+               pos.PositionName
+        FROM {$table_devices} d
+        LEFT JOIN {$table_brands} b ON d.BrandID = b.BrandID
+        LEFT JOIN {$table_cats} c ON d.CategoryID = c.CategoryID
+        LEFT JOIN {$table_statuses} s ON d.StatusID = s.StatusID
+        LEFT JOIN Keywords kw ON d.KeywordID = kw.KeywordID
+        LEFT JOIN {$table_owners} o ON d.OwnerID = o.OwnerID
+        LEFT JOIN {$table_depts} dept ON o.DepartmentID = dept.DepartmentID
+        LEFT JOIN {$table_pos} pos ON o.PositionID = pos.PositionID
+        WHERE d.DeviceID = %s
+    ", $device_id));
+
+    if (!$device) {
+        wp_send_json_error(['message' => 'Device not found.']);
+    }
+
+    $active_maintenance = $wpdb->get_row($wpdb->prepare("
+        SELECT * FROM Maintenance
+        WHERE DeviceID = %s
+        ORDER BY MaintenanceID DESC
+        LIMIT 1
+    ", $device_id));
+
+    $recent_history = $wpdb->get_results($wpdb->prepare("
+        SELECT Action, Date, Description, user_email, Owner
+        FROM {$table_history}
+        WHERE CAST(DeviceID AS CHAR) = %s AND DeviceID IS NOT NULL AND DeviceID != '' AND DeviceID != '0'
+        ORDER BY Date DESC, HistoryID DESC
+        LIMIT 3
+    ", $device_id));
+
+    $cat_slug = !empty($device->CategoryName) ? sanitize_title($device->CategoryName) : 'home';
+    if (!in_array($cat_slug, ['laptop', 'monitor', 'accessories'])) {
+        $cat_slug = 'home';
+    }
+
+    $formatted_owner = stock_supply_format_nickname_with_initial($device->Nickname, $device->FirstName, $device->LastName);
+
+    wp_send_json_success([
+        'device_id' => $device->DeviceID,
+        'brand' => $device->BrandName ?: '',
+        'model' => $device->Model ?: '',
+        'category' => $device->CategoryName ?: 'Equipment',
+        'category_slug' => $cat_slug,
+        'status' => $device->StatusName ?: 'Available',
+        'serial_number' => $device->SerialNumber ?: '-',
+        'specs' => $device->KeywordName ?: ($device->Specifications ?? '-'),
+        'receive_date' => $device->ReceiveDate ?: '-',
+        'owner_id' => $device->OwnerID,
+        'owner_name' => $formatted_owner,
+        'owner_nickname' => $device->Nickname ?: '',
+        'department' => $device->DepartmentName ?: '-',
+        'position' => $device->PositionName ?: '-',
+        'maintenance' => $active_maintenance ? [
+            'id' => $active_maintenance->MaintenanceID,
+            'details' => $active_maintenance->Details ?: 'No details',
+            'repair_date' => $active_maintenance->RepairDate ?: $active_maintenance->CreatedAt
+        ] : null,
+        'history' => array_map(function ($h) {
+            return [
+                'action' => $h->Action,
+                'date' => date('d M Y, H:i', strtotime($h->Date)),
+                'desc' => $h->Description,
+                'user' => strtolower($h->user_email ?: '-'),
+                'owner' => $h->Owner ?: '-'
+            ];
+        }, $recent_history),
+        'nonces' => [
+            'device_action_nonce' => wp_create_nonce('device_action_nonce')
+        ],
+        'urls' => [
+            'view' => home_url('/' . $cat_slug . '/?view=' . urlencode($device->DeviceID)),
+            'receive' => home_url('/' . $cat_slug . '/?receive=' . urlencode($device->DeviceID)),
+            'maintenance' => home_url('/' . $cat_slug . '/?maintenance=' . urlencode($device->DeviceID)),
+            'edit' => home_url('/' . $cat_slug . '/?edit=' . urlencode($device->DeviceID))
+        ]
+    ]);
+}
+add_action('wp_ajax_get_quick_device_peek', 'stock_supply_ajax_get_quick_device_peek');
+add_action('wp_ajax_nopriv_get_quick_device_peek', 'stock_supply_ajax_get_quick_device_peek');
+
+/**
+ * AJAX: Instant Employee Equipment Profile Peek
+ */
+function stock_supply_ajax_get_quick_employee_peek()
+{
+    global $wpdb;
+    $owner_id = intval($_GET['owner_id'] ?? $_POST['owner_id'] ?? 0);
+    if ($owner_id <= 0) {
+        wp_send_json_error(['message' => 'Employee ID is required.']);
+    }
+
+    $table_owners = 'Owners';
+    $table_depts = 'Departments';
+    $table_pos = 'Positions';
+    $table_status = 'Status_Employee';
+    $table_devices = 'Devices';
+    $table_brands = 'Brands';
+    $table_cats = 'Categories';
+
+    $owner = $wpdb->get_row($wpdb->prepare("
+        SELECT o.*, d.DepartmentName, p.PositionName, se.Status_name as StatusName
+        FROM {$table_owners} o
+        LEFT JOIN {$table_depts} d ON o.DepartmentID = d.DepartmentID
+        LEFT JOIN {$table_pos} p ON o.PositionID = p.PositionID
+        LEFT JOIN {$table_status} se ON o.StatusID = se.StatusID
+        WHERE o.OwnerID = %d
+    ", $owner_id));
+
+    if (!$owner) {
+        wp_send_json_error(['message' => 'Employee not found.']);
+    }
+
+    $assigned_devices = $wpdb->get_results($wpdb->prepare("
+        SELECT d.DeviceID, c.CategoryName, b.BrandName, d.Model, d.SerialNumber, s.StatusName, d.ReceiveDate
+        FROM {$table_devices} d
+        LEFT JOIN {$table_brands} b ON d.BrandID = b.BrandID
+        LEFT JOIN {$table_cats} c ON d.CategoryID = c.CategoryID
+        LEFT JOIN Statuses s ON d.StatusID = s.StatusID
+        WHERE d.OwnerID = %d
+        ORDER BY d.CategoryID ASC, d.DeviceID ASC
+    ", $owner_id));
+
+    $display_name = stock_supply_format_nickname_with_initial($owner->Nickname, $owner->FirstName, $owner->LastName);
+
+    $formatted_devices = array_map(function ($d) use ($display_name, $owner) {
+        $cat_slug = !empty($d->CategoryName) ? sanitize_title($d->CategoryName) : 'home';
+        if (!in_array($cat_slug, ['laptop', 'monitor', 'accessories'])) {
+            $cat_slug = 'home';
+        }
+        return [
+            'id' => $d->DeviceID,
+            'category' => $d->CategoryName ?: 'Equipment',
+            'category_slug' => $cat_slug,
+            'brand' => $d->BrandName ?: '',
+            'model' => $d->Model ?: '',
+            'serial_number' => $d->SerialNumber ?: '-',
+            'receive_date' => $d->ReceiveDate ?: '-',
+            'view_url' => home_url('/' . $cat_slug . '/?view=' . urlencode($d->DeviceID)),
+            'return_data' => [
+                'id' => $d->DeviceID,
+                'brand' => $d->BrandName ?: '',
+                'model' => $d->Model ?: '',
+                'category' => $d->CategoryName ?: '',
+                'serialNumber' => $d->SerialNumber ?: '',
+                'owner' => $owner->Nickname ?: $display_name,
+                'department' => $owner->DepartmentName ?? '',
+                'nonce' => wp_create_nonce('device_action_nonce')
+            ]
+        ];
+    }, $assigned_devices);
+
+    wp_send_json_success([
+        'owner_id' => $owner->OwnerID,
+        'nickname' => $owner->Nickname ?: '-',
+        'first_name' => $owner->FirstName ?: '',
+        'last_name' => $owner->LastName ?: '',
+        'display_name' => $display_name,
+        'email' => strtolower($owner->Email ?: '-'),
+        'department' => $owner->DepartmentName ?: '-',
+        'position' => $owner->PositionName ?: '-',
+        'status' => $owner->StatusName ?: 'Active',
+        'device_count' => count($assigned_devices),
+        'devices' => $formatted_devices,
+        'edit_url' => home_url('/Owner/?edit=' . $owner->OwnerID),
+        'view_url' => home_url('/Owner/?view=' . $owner->OwnerID)
+    ]);
+}
+add_action('wp_ajax_get_quick_employee_peek', 'stock_supply_ajax_get_quick_employee_peek');
+add_action('wp_ajax_nopriv_get_quick_employee_peek', 'stock_supply_ajax_get_quick_employee_peek');
+
 
 
 

@@ -6,11 +6,21 @@
         <i class="fa-solid fa-chevron-right text-muted"></i>
     </button>
 
-    <?php foreach ($rows as $row): ?>
-        <div class="mobile-device-card">
+    <?php foreach ($rows as $row): 
+        $is_new_device = (!empty($row->CreatedAt) && strtotime($row->CreatedAt) >= strtotime('-7 days')) ||
+                         (!empty($row->ReceiveDate) && strtotime($row->ReceiveDate) >= strtotime('-7 days'));
+    ?>
+        <div class="mobile-device-card"
+            onclick="if(!event.target.closest('a, button')) { window.openDeviceQuickPeek('<?= esc_js($row->DeviceID) ?>'); }"
+            style="cursor: pointer;">
             <div class="mobile-device-header">
                 <div class="mobile-device-title-area">
-                    <div class="mobile-device-title"><?= htmlspecialchars($row->Brand . ' ' . $row->Model) ?></div>
+                    <div class="mobile-device-title">
+                        <?= htmlspecialchars($row->Brand . ' ' . $row->Model) ?>
+                        <?php if ($is_new_device): ?>
+                            <span class="mobile-new-badge">NEW</span>
+                        <?php endif; ?>
+                    </div>
                     <div class="mobile-device-meta">SN: <?= htmlspecialchars($row->SerialNumber ?: '-') ?></div>
                 </div>
                 <?php
@@ -45,18 +55,24 @@
                     }
                     ?>
                 </div>
-                <div class="mobile-device-id"><strong><?= $row->DeviceID ?></strong></div>
+                <div class="mobile-device-id"
+                    onclick="event.stopPropagation(); window.openDeviceQuickPeek('<?= esc_js($row->DeviceID) ?>')">
+                    <strong style="color:#2563eb;"><i class="fa-solid fa-bolt" style="font-size:0.75rem;"></i>
+                        <?= $row->DeviceID ?></strong>
+                </div>
             </div>
             <div class="mobile-device-actions">
+                <button type="button" class="mobile-btn-action mobile-btn-peek"
+                    onclick="event.stopPropagation(); window.openDeviceQuickPeek('<?= esc_js($row->DeviceID) ?>')">
+                    <i class="fa-solid fa-bolt"></i> Peek
+                </button>
                 <?php if (strcasecmp($row->Status, 'Maintenance') === 0): ?>
-                    <a href="?maintenance=<?= $row->DeviceID ?>" class="mobile-btn-action mobile-btn-secondary"><i
-                            class="fa-solid fa-gear"></i> Edit</a>
+                    <a href="?maintenance=<?= $row->DeviceID ?>" class="mobile-btn-action mobile-btn-secondary"
+                        style="flex: 1;"><i class="fa-solid fa-gear"></i> Edit</a>
                 <?php else: ?>
-                    <a href="?edit=<?= $row->DeviceID ?>" class="mobile-btn-action mobile-btn-secondary"><i
+                    <a href="?edit=<?= $row->DeviceID ?>" class="mobile-btn-action mobile-btn-secondary" style="flex: 1;"><i
                             class="fa-solid fa-gear"></i> Edit</a>
                 <?php endif; ?>
-                <a href="?view=<?= esc_attr($row->DeviceID) ?>" class="mobile-btn-action mobile-btn-primary"><i
-                        class="fa-solid fa-magnifying-glass"></i> View</a>
             </div>
         </div>
     <?php endforeach; ?>

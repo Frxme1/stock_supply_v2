@@ -181,6 +181,19 @@
         color: #0f172a !important;
     }
 
+    .mobile-btn-peek {
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%) !important;
+        color: #4338ca !important;
+        border: 1.5px solid #c7d2fe !important;
+        font-weight: 700 !important;
+    }
+
+    .mobile-btn-peek:hover,
+    .mobile-btn-peek:active {
+        background: #c7d2fe !important;
+        color: #3730a3 !important;
+    }
+
     .quick-action-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;

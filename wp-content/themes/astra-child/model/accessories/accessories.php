@@ -334,17 +334,16 @@ function device_crud_acc_sories()
                                                         onclick="quickSwapDevice('<?= esc_js($row->DeviceID) ?>'); return false;"
                                                         class="text-warning"><i class="fa-solid fa-arrows-rotate"></i> Quick
                                                         Swap</a>
-                                                    <a href="#"
-                                                        data-device="<?= esc_attr(wp_json_encode([
-                                                            'id'           => $row->DeviceID,
-                                                            'brand'        => $row->Brand ?? '',
-                                                            'model'        => $row->Model ?? '',
-                                                            'category'     => $row->Category ?? 'Accessories',
-                                                            'serialNumber' => $row->SerialNumber ?? '',
-                                                            'owner'        => $row->Owner ?? '',
-                                                            'department'   => $row->Department ?? '',
-                                                            'nonce'        => $dev_action_nonce
-                                                        ])) ?>"
+                                                    <a href="#" data-device="<?= esc_attr(wp_json_encode([
+                                                        'id' => $row->DeviceID,
+                                                        'brand' => $row->Brand ?? '',
+                                                        'model' => $row->Model ?? '',
+                                                        'category' => $row->Category ?? 'Accessories',
+                                                        'serialNumber' => $row->SerialNumber ?? '',
+                                                        'owner' => $row->Owner ?? '',
+                                                        'department' => $row->Department ?? '',
+                                                        'nonce' => $dev_action_nonce
+                                                    ])) ?>"
                                                         onclick="handleReturnDeviceClick(this); return false;"><i
                                                             class="fa-solid fa-rotate-left"></i>
                                                         Return</a>

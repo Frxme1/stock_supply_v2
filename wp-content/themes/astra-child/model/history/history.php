@@ -299,6 +299,75 @@ function form_history()
             .badge-default::before {
                 background: #94a3b8;
             }
+
+            /* Mobile Horizontal Touch Slide for History Action Chips */
+            @media (max-width: 768px) {
+                .dtl-stats {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    flex-wrap: nowrap !important;
+                    overflow-x: auto !important;
+                    overflow-y: hidden !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    padding: 6px 4px 14px 4px !important;
+                    margin-bottom: 1.2rem !important;
+                    gap: 8px !important;
+                    scrollbar-width: none !important;
+                    -ms-overflow-style: none !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+
+                .dtl-stats::-webkit-scrollbar {
+                    display: none !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                }
+
+                .dtl-stat-chip {
+                    flex: 0 0 auto !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    white-space: nowrap !important;
+                    padding: 8px 16px !important;
+                    font-size: 0.85rem !important;
+                    font-weight: 700 !important;
+                    border-radius: 9999px !important;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+                    border: 1.5px solid #cbd5e1 !important;
+                    background: #ffffff !important;
+                    color: #334155 !important;
+                    text-decoration: none !important;
+                    user-select: none !important;
+                    transition: transform 0.15s ease, background-color 0.15s ease !important;
+                }
+
+                .dtl-stat-chip:active {
+                    transform: scale(0.96) !important;
+                }
+
+                .dtl-stat-chip.active {
+                    background: #1e40af !important;
+                    border-color: #1e40af !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 4px 14px rgba(30, 64, 175, 0.3) !important;
+                }
+
+                .dtl-stat-chip.active .dtl-stat-count {
+                    background: rgba(255, 255, 255, 0.25) !important;
+                    color: #ffffff !important;
+                }
+
+                .dtl-stat-chip .dtl-stat-count {
+                    background: #0f172a !important;
+                    color: #ffffff !important;
+                    padding: 2px 8px !important;
+                    border-radius: 6px !important;
+                    font-size: 0.75rem !important;
+                    font-weight: 800 !important;
+                    margin-left: 6px !important;
+                }
+            }
         </style>
 
         <link rel="stylesheet" href="<?= get_stylesheet_directory_uri() ?>/css/device_timeline.css?v=<?= time() ?>">
@@ -368,6 +437,7 @@ function form_history()
                 </div>
             </div>
         </form>
+        <?php include(get_stylesheet_directory() . '/model/shared/qr_scanner_bar.php'); ?>
 
         <div class="dtl-history-timeline-wrapper mt-4">
             <?php

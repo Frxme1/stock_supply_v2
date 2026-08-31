@@ -272,41 +272,6 @@ function device_dashboard()
 
         </div>
 
-        <!-- ===== SECTION 2: Status Cards ===== -->
-        <div class="next-grid mt-4">
-            <?php
-            $delay2 = 0;
-            foreach ($status_config as $status => $config):
-                $count = $summary_map[$status] ?? 0;
-                $percent = $total_devices > 0 ? round(($count / $total_devices) * 100, 0) : 0;
-                ?>
-                <div class="next-card slide-up clickable-card"
-                    onclick="triggerChartFilter('<?= esc_url($status_urls[$status] ?? home_url('/home/')) ?>')"
-                    style="animation-delay: <?= $delay2 ?>s; cursor: pointer;" title="View <?= esc_attr($status) ?> devices">
-                    <?php $delay2 += 0.05; ?>
-                    <div class="next-card-header">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="next-status-dot" style="background: <?= $config['color'] ?>;"></span>
-                            <span class="next-card-title"><?= esc_html($status) ?></span>
-                        </div>
-                        <div class="next-icon-wrapper-sm" style="color: <?= $config['color'] ?>;">
-                            <?= $config['icon'] ?>
-                        </div>
-                    </div>
-                    <div class="next-card-body mt-3">
-                        <span class="next-number-md count-up" data-count="<?= $count ?>">0</span>
-                        <div class="next-progress-wrap mt-2">
-                            <div class="next-progress-bar">
-                                <div class="next-progress-fill" style="width: 0%; background: <?= $config['color'] ?>;"
-                                    data-width="<?= $percent ?>%"></div>
-                            </div>
-                            <span class="next-progress-text"><?= $percent ?>%</span>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
         <!-- ===== SECTION 2.5: Stock Monitor — Live ===== -->
         <input type="hidden" id="stock-monitor-ajax-url" value="<?= admin_url('admin-ajax.php') ?>">
 

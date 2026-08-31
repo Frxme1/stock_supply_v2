@@ -438,7 +438,8 @@ function form_owner()
                     <div
                         style="padding-top: 10px; border-top: 1px dashed #e2e8f0; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 6px;">
                         <?php if (!empty($row->Email)): ?>
-                            <div style="text-transform: lowercase;"><i class="fa-regular fa-envelope me-1" style="color: #94a3b8; width: 16px;"></i>
+                            <div style="text-transform: lowercase;"><i class="fa-regular fa-envelope me-1"
+                                    style="color: #94a3b8; width: 16px;"></i>
                                 <?= esc_html(strtolower($row->Email)) ?>
                             </div>
                         <?php endif; ?>
@@ -456,12 +457,12 @@ function form_owner()
 
                     <!-- Action Buttons -->
                     <div class="d-flex gap-2 justify-content-end mt-3 pt-2" style="border-top: 1px dashed #f1f5f9;">
-                        <a href="?view=<?= $row->OwnerID ?>" class="btn btn-sm btn-outline-primary"
-                            style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; text-decoration: none;">
-                            <i class="fa-solid fa-eye me-1"></i> View Details
-                        </a>
+                        <button type="button" onclick="window.openEmployeeQuickDrawer('<?= $row->OwnerID ?>')" class="btn btn-sm"
+                            style="border-radius: 8px; font-weight: 700; font-size: 0.8rem; padding: 6px 14px; background: #eef2ff; color: #4f46e5; border: 1.5px solid #c7d2fe; flex: 1;">
+                            <i class="fa-solid fa-bolt me-1"></i> Hardware
+                        </button>
                         <a href="?edit=<?= $row->OwnerID ?>" class="btn btn-sm btn-outline-secondary"
-                            style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; text-decoration: none;">
+                            style="border-radius: 8px; font-weight: 600; font-size: 0.8rem; padding: 6px 14px; text-decoration: none; flex: 1; text-align: center;">
                             <i class="fa-solid fa-gear me-1"></i> Edit
                         </a>
                         <button type="button"
@@ -498,7 +499,7 @@ function form_owner()
                 <?php foreach ($rows as $index => $row): ?>
                     <tr class="next-table-row" style="animation-delay: <?= min($index * 0.05, 1) ?>s;">
                         <td class="text-start align-middle" data-label="Nickname">
-                            <?php 
+                            <?php
                             $nickFormatted = stock_supply_format_nickname_with_initial($row->Nickname, $row->FirstName, $row->LastName);
                             ?>
                             <strong><?= esc_html($nickFormatted) ?></strong>
@@ -506,7 +507,8 @@ function form_owner()
                         <td class="text-start align-middle" data-label="Employee">
                             <?= !empty(trim($row->FirstName . ' ' . $row->LastName)) ? esc_html(trim($row->FirstName . ' ' . $row->LastName)) : '-' ?>
                         </td>
-                        <td class="text-start align-middle text-muted" data-label="Email" style="text-transform: lowercase !important;">
+                        <td class="text-start align-middle text-muted" data-label="Email"
+                            style="text-transform: lowercase !important;">
                             <?= !empty($row->Email) ? esc_html(strtolower($row->Email)) : '-' ?>
                         </td>
                         <td class="text-start align-middle" data-label="Department">
@@ -534,7 +536,8 @@ function form_owner()
                                 <div class="dropdown-menu action-dropdown text-start">
                                     <div class="action-dropdown-header">Actions</div>
                                     <div class="action-dropdown-separator"></div>
-                                    <a href="?view=<?= $row->OwnerID ?>"><i class="fa-solid fa-eye text-primary"></i> View Details</a>
+                                    <a href="?view=<?= $row->OwnerID ?>"><i class="fa-solid fa-eye text-primary"></i> View
+                                        Details</a>
                                     <a href="?edit=<?= $row->OwnerID ?>"><i class="fa-solid fa-gear"></i> Edit</a>
                                     <a href="#"
                                         onclick="confirmDelete('<?= $row->OwnerID ?>', '<?= wp_create_nonce('delete_owner_nonce') ?>')"><i

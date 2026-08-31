@@ -293,9 +293,30 @@ function edit_device_form($editing = null)
             <?php wp_nonce_field('edit_device_nonce', '_edit_dev_nonce'); ?>
             <input type="hidden" name="DeviceID" value="<?= esc_attr($editing->DeviceID ?? '') ?>">
 
-            <!-- Mobile Only Header -->
-            <div class="mobile-only-header">
-                <h2>Edit Device</h2>
+            <!-- Mobile Only Header & Live Holographic Ticket Card -->
+            <div class="mobile-only-header mobile-only-element">
+                <div class="mobile-hero-ticket-card">
+                    <div class="mob-hero-top">
+                        <span class="mob-hero-id-pill"><i class="fa-solid fa-fingerprint me-1"></i> <?= esc_html($editing->DeviceID ?? '') ?></span>
+                        <span class="mob-hero-status-badge" id="mob-preview-status-pill" style="color: <?= $init_conf['color'] ?>; background: <?= $init_conf['bg'] ?>; border: 1px solid <?= $init_conf['border'] ?>;">
+                            <span class="mob-hero-status-dot" id="mob-preview-status-dot" style="background: <?= $init_conf['dot'] ?>; box-shadow: 0 0 8px <?= $init_conf['dot'] ?>;"></span>
+                            <span id="mob-preview-status-text"><?= esc_html($editing->Status ?? 'Available') ?></span>
+                        </span>
+                    </div>
+                    <div class="mob-hero-main">
+                        <?php 
+                        $cat_icon = (stripos($currentCategoryName, 'Monitor') !== false) ? 'fa-desktop' : ((stripos($currentCategoryName, 'Access') !== false) ? 'fa-keyboard' : 'fa-laptop');
+                        ?>
+                        <div class="mob-hero-icon-box">
+                            <i class="fa-solid <?= $cat_icon ?>" id="mob-preview-cat-icon"></i>
+                        </div>
+                        <div class="mob-hero-info">
+                            <div class="mob-hero-brand" id="mob-preview-brand-text"><?= esc_html($current_brand_name ?: 'Brand') ?></div>
+                            <div class="mob-hero-model" id="mob-preview-model-text"><?= esc_html($editing->Model ?? 'Asset') ?></div>
+                            <div class="mob-hero-meta">SN: <span id="mob-preview-serial-text"><?= esc_html($editing->SerialNumber ?: '—') ?></span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Desktop & Mobile Layout Grid -->
@@ -510,13 +531,52 @@ function edit_device_form($editing = null)
                         <div class="form-group modern-group" id="reason-group" style="display: none; grid-column: span 2;">
                             <div class="field-header">
                                 <label for="Reason">
-                                    <i class="fa-solid fa-circle-exclamation field-icon-desktop desktop-only-element"></i>
-                                    Reason / Notes <span class="required-star">*</span>
+                                    <i class="fa-solid fa-wrench" id="reason-label-icon" style="color: #f59e0b; margin-right: 6px;"></i>
+                                    <span id="reason-label-text">Maintenance Reason / Issue Details</span> <span class="required-star" id="reason-required-star">*</span>
                                 </label>
                             </div>
+
+                            <!-- Maintenance Dedicated Banner & Quick Tags -->
+                            <div id="maint-quick-helper-box" style="display: none; margin-bottom: 12px; background: #fffdf5; border: 1.5px solid #fde68a; border-radius: 16px; padding: 12px 14px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: #92400e; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="fa-solid fa-bolt text-warning"></i> Quick Symptoms:
+                                    </span>
+                                    <a href="<?= esc_url(home_url('/home/?maintenance=' . urlencode($editing->DeviceID ?? ''))) ?>" class="btn-open-full-maint" style="font-size: 0.75rem; font-weight: 700; color: #b45309; text-decoration: underline;">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Full Form & Photo
+                                    </a>
+                                </div>
+                                <div class="maint-edit-tags-grid">
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="Cracked Screen" onclick="appendEditReasonTag('Cracked Screen', this)">
+                                        <i class="fa-solid fa-desktop text-primary me-1"></i> Screen
+                                    </button>
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="Battery Degraded" onclick="appendEditReasonTag('Battery Degraded', this)">
+                                        <i class="fa-solid fa-battery-half text-success me-1"></i> Battery
+                                    </button>
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="No Power" onclick="appendEditReasonTag('No Power', this)">
+                                        <i class="fa-solid fa-power-off text-danger me-1"></i> Power
+                                    </button>
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="Keyboard / Trackpad" onclick="appendEditReasonTag('Keyboard / Trackpad', this)">
+                                        <i class="fa-solid fa-keyboard text-secondary me-1"></i> Keyboard
+                                    </button>
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="OS Reinstall" onclick="appendEditReasonTag('OS Reinstall', this)">
+                                        <i class="fa-solid fa-arrows-rotate text-info me-1"></i> OS
+                                    </button>
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="Upgrade RAM/SSD" onclick="appendEditReasonTag('Upgrade RAM/SSD', this)">
+                                        <i class="fa-solid fa-microchip text-primary me-1"></i> Upgrade
+                                    </button>
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="Faulty Charger / Port" onclick="appendEditReasonTag('Faulty Charger / Port', this)">
+                                        <i class="fa-solid fa-plug text-warning me-1"></i> Charger
+                                    </button>
+                                    <button type="button" class="maint-edit-tag-btn" data-tag="Overheating / Fan" onclick="appendEditReasonTag('Overheating / Fan', this)">
+                                        <i class="fa-solid fa-fan text-muted me-1"></i> Fan / Heat
+                                    </button>
+                                </div>
+                            </div>
+
                             <div class="field-input-wrap">
                                 <input type="text" name="Reason" id="Reason"
-                                    placeholder="Please enter reason (Required for Retired)">
+                                    placeholder="e.g. Broken Screen, Battery Degraded, No Power...">
                             </div>
                         </div>
 
@@ -682,6 +742,90 @@ function edit_device_form($editing = null)
         .mobile-only-header,
         .mobile-only-element {
             display: block !important;
+        }
+
+        /* =============================================================
+           GLOBAL / SHARED QUICK SYMPTOM TAGS (APPLIES TO BOTH MOBILE & DESKTOP)
+           ============================================================= */
+        #maint-quick-helper-box {
+            background: #fffdf5 !important;
+            border: 1.5px solid #fde68a !important;
+            border-radius: 16px !important;
+            padding: 12px 14px !important;
+            margin-bottom: 12px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+
+        .maint-edit-tags-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px 8px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        button.maint-edit-tag-btn,
+        .maint-edit-tag-btn {
+            all: unset !important;
+            box-sizing: border-box !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 6px !important;
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            border: 1.5px solid #fde68a !important;
+            border-radius: 10px !important;
+            padding: 6px 10px !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            color: #78350f !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+            transition: all 0.15s ease !important;
+            user-select: none !important;
+            height: 36px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        button.maint-edit-tag-btn:hover,
+        .maint-edit-tag-btn:hover {
+            background: #fef9c3 !important;
+            background-color: #fef9c3 !important;
+            border-color: #f59e0b !important;
+            color: #78350f !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.15) !important;
+        }
+
+        button.maint-edit-tag-btn:active,
+        .maint-edit-tag-btn:active {
+            transform: scale(0.97) !important;
+            background: #fef3c7 !important;
+            background-color: #fef3c7 !important;
+        }
+
+        button.maint-edit-tag-btn i,
+        .maint-edit-tag-btn i {
+            font-size: 0.85rem !important;
+            flex-shrink: 0 !important;
+        }
+
+        button.maint-edit-tag-btn.is-selected,
+        .maint-edit-tag-btn.is-selected {
+            background: #fef3c7 !important;
+            background-color: #fef3c7 !important;
+            border-color: #f59e0b !important;
+            color: #78350f !important;
+            font-weight: 800 !important;
+            box-shadow: 0 0 0 1.5px #f59e0b, 0 2px 6px rgba(245, 158, 11, 0.2) !important;
         }
 
         /* =============================================================
@@ -998,6 +1142,18 @@ function edit_device_form($editing = null)
             #btn-toggle-new-brand:active {
                 transform: translateY(0) !important;
                 box-shadow: 0 1px 2px rgba(67, 56, 202, 0.15) !important;
+            }
+
+            /* Desktop overrides for Quick Symptom Tags */
+            .maint-edit-tags-grid {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 8px !important;
+            }
+
+            button.maint-edit-tag-btn,
+            .maint-edit-tag-btn {
+                height: 38px !important;
+                font-size: 0.82rem !important;
             }
 
             /* Desktop Actions */
@@ -1347,6 +1503,125 @@ function edit_device_form($editing = null)
                 align-items: center !important;
                 justify-content: center !important;
             }
+
+            /* Mobile Hero Device Ticket Card */
+            .mobile-hero-ticket-card {
+                background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
+                border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+                border-radius: 20px !important;
+                padding: 16px !important;
+                margin-bottom: 16px !important;
+                color: #ffffff !important;
+                box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25) !important;
+                overflow: hidden !important;
+                text-align: left !important;
+            }
+
+            .mob-hero-top {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                margin-bottom: 12px !important;
+            }
+
+            .mob-hero-id-pill {
+                font-size: 0.85rem !important;
+                font-weight: 800 !important;
+                color: #fed7aa !important;
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.18) !important;
+                padding: 3px 12px !important;
+                border-radius: 8px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                font-family: 'SFMono-Regular', Consolas, Menlo, monospace !important;
+            }
+
+            .mob-hero-status-badge {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                font-size: 0.72rem !important;
+                font-weight: 700 !important;
+                padding: 4px 12px !important;
+                border-radius: 999px !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.04em !important;
+                transition: all 0.25s ease !important;
+            }
+
+            .mob-hero-status-dot {
+                width: 8px !important;
+                height: 8px !important;
+                border-radius: 50% !important;
+                display: inline-block !important;
+                transition: all 0.25s ease !important;
+            }
+
+            .mob-hero-main {
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
+            }
+
+            .mob-hero-icon-box {
+                width: 44px !important;
+                height: 44px !important;
+                min-width: 44px !important;
+                border-radius: 12px !important;
+                background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+                color: #ffffff !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 1.25rem !important;
+                box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
+            }
+
+            .mob-hero-info {
+                flex: 1 !important;
+                min-width: 0 !important;
+            }
+
+            .mob-hero-brand {
+                font-size: 0.72rem !important;
+                font-weight: 700 !important;
+                color: #818cf8 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
+            }
+
+            .mob-hero-model {
+                font-size: 1.05rem !important;
+                font-weight: 800 !important;
+                color: #ffffff !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                line-height: 1.25 !important;
+            }
+
+            .mob-hero-meta {
+                font-size: 0.75rem !important;
+                color: #94a3b8 !important;
+                margin-top: 2px !important;
+            }
+
+            /* Quick symptom tags in edit form */
+            .maint-edit-tags-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 6px 8px !important;
+            }
+            button.maint-edit-tag-btn,
+            .maint-edit-tag-btn {
+                height: 36px !important;
+                font-size: 0.78rem !important;
+                padding: 6px 8px !important;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                border: 1.5px solid #fde68a !important;
+                color: #78350f !important;
+            }
         }
 
         /* Shared Animations */
@@ -1526,6 +1801,44 @@ function edit_device_form($editing = null)
             }
         });
 
+        window.appendEditReasonTag = function (tag, btn) {
+            const reasonInput = document.getElementById('Reason');
+            if (!reasonInput) return;
+            let val = reasonInput.value.trim();
+            let parts = val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            if (btn && btn.classList.contains('is-selected')) {
+                // Deselect: remove this tag
+                parts = parts.filter(p => p.toLowerCase() !== tag.toLowerCase());
+                btn.classList.remove('is-selected');
+            } else {
+                // Select: add tag if not present
+                if (!parts.some(p => p.toLowerCase() === tag.toLowerCase())) {
+                    parts.push(tag);
+                }
+                if (btn) btn.classList.add('is-selected');
+            }
+
+            reasonInput.value = parts.join(', ');
+            reasonInput.focus();
+        };
+
+        function syncEditReasonButtons() {
+            const reasonInput = document.getElementById('Reason');
+            if (!reasonInput) return;
+            const val = reasonInput.value.trim().toLowerCase();
+            const parts = val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const buttons = document.querySelectorAll('.maint-edit-tag-btn');
+            buttons.forEach(btn => {
+                const tag = (btn.getAttribute('data-tag') || btn.innerText || '').trim().toLowerCase();
+                if (parts.some(p => tag.includes(p) || p.includes(tag))) {
+                    btn.classList.add('is-selected');
+                } else {
+                    btn.classList.remove('is-selected');
+                }
+            });
+        }
+
         function updateLivePreview() {
             const modelInput = document.getElementById('model_input');
             const brandSelect = document.getElementById('edit-brand-select');
@@ -1534,34 +1847,44 @@ function edit_device_form($editing = null)
             const statusSelect = document.getElementById('StatusID');
             const ownerInput = document.getElementById('edit_owner_search_input');
 
+            // Desktop elements
             const pModel = document.getElementById('preview-model-text');
             const pBrand = document.getElementById('preview-brand-text');
             const pSerial = document.getElementById('preview-serial-text');
             const pOwner = document.getElementById('preview-owner-text');
-
             const pStatus = document.getElementById('preview-status-text');
             const pStatusPill = document.getElementById('preview-status-pill');
             const pStatusDot = document.getElementById('preview-status-dot');
 
-            if (pModel && modelInput) {
-                pModel.textContent = modelInput.value.trim() || 'Hardware Asset';
+            // Mobile elements
+            const mModel = document.getElementById('mob-preview-model-text');
+            const mBrand = document.getElementById('mob-preview-brand-text');
+            const mSerial = document.getElementById('mob-preview-serial-text');
+            const mStatus = document.getElementById('mob-preview-status-text');
+            const mStatusPill = document.getElementById('mob-preview-status-pill');
+            const mStatusDot = document.getElementById('mob-preview-status-dot');
+
+            const modelVal = modelInput ? (modelInput.value.trim() || 'Hardware Asset') : 'Hardware Asset';
+            let brandVal = 'Manufacturer Brand';
+            if (newBrandInput && newBrandInput.value.trim()) {
+                brandVal = newBrandInput.value.trim();
+            } else if (brandSelect && brandSelect.selectedIndex >= 0) {
+                const opt = brandSelect.options[brandSelect.selectedIndex];
+                brandVal = (opt && brandSelect.value) ? opt.text : 'Manufacturer Brand';
             }
-            if (pBrand) {
-                if (newBrandInput && newBrandInput.value.trim()) {
-                    pBrand.textContent = newBrandInput.value.trim();
-                } else if (brandSelect && brandSelect.selectedIndex >= 0) {
-                    const opt = brandSelect.options[brandSelect.selectedIndex];
-                    pBrand.textContent = (opt && brandSelect.value) ? opt.text : 'Manufacturer Brand';
-                } else {
-                    pBrand.textContent = 'Manufacturer Brand';
-                }
-            }
-            if (pSerial && serialInput) {
-                pSerial.textContent = serialInput.value.trim() || '—';
-            }
-            if (pOwner && ownerInput) {
-                pOwner.textContent = ownerInput.value.trim() || 'None';
-            }
+            const serialVal = serialInput ? (serialInput.value.trim() || '—') : '—';
+            const ownerVal = ownerInput ? (ownerInput.value.trim() || 'None') : 'None';
+
+            // Desktop sync
+            if (pModel) pModel.textContent = modelVal;
+            if (pBrand) pBrand.textContent = brandVal;
+            if (pSerial) pSerial.textContent = serialVal;
+            if (pOwner) pOwner.textContent = ownerVal;
+
+            // Mobile sync
+            if (mModel) mModel.textContent = modelVal;
+            if (mBrand) mBrand.textContent = brandVal;
+            if (mSerial) mSerial.textContent = serialVal;
 
             if (statusSelect && statusSelect.selectedIndex >= 0) {
                 const opt = statusSelect.options[statusSelect.selectedIndex];
@@ -1573,7 +1896,10 @@ function edit_device_form($editing = null)
                     dot: '#818cf8'
                 };
 
-                if (pStatus) pStatus.textContent = opt ? opt.text : 'Status';
+                const statusLabel = opt ? opt.text : 'Status';
+
+                // Desktop status sync
+                if (pStatus) pStatus.textContent = statusLabel;
                 if (pStatusPill) {
                     pStatusPill.style.color = conf.color;
                     pStatusPill.style.backgroundColor = conf.bg;
@@ -1582,6 +1908,18 @@ function edit_device_form($editing = null)
                 if (pStatusDot) {
                     pStatusDot.style.backgroundColor = conf.dot;
                     pStatusDot.style.boxShadow = `0 0 8px ${conf.dot}`;
+                }
+
+                // Mobile status sync
+                if (mStatus) mStatus.textContent = statusLabel;
+                if (mStatusPill) {
+                    mStatusPill.style.color = conf.color;
+                    mStatusPill.style.backgroundColor = conf.bg;
+                    mStatusPill.style.borderColor = conf.border;
+                }
+                if (mStatusDot) {
+                    mStatusDot.style.backgroundColor = conf.dot;
+                    mStatusDot.style.boxShadow = `0 0 8px ${conf.dot}`;
                 }
             }
         }
@@ -1636,21 +1974,40 @@ function edit_device_form($editing = null)
                 const statusName = selectedOption ? (selectedOption.getAttribute('data-name') || '').toLowerCase() : '';
                 const reasonGroup = document.getElementById('reason-group');
                 const reasonInput = document.getElementById('Reason');
+                const reasonLabelText = document.getElementById('reason-label-text');
+                const reasonLabelIcon = document.getElementById('reason-label-icon');
+                const reasonRequiredStar = document.getElementById('reason-required-star');
+                const maintHelper = document.getElementById('maint-quick-helper-box');
 
                 if (statusName === 'retired') {
-                    if (reasonGroup) reasonGroup.style.display = 'flex';
+                    if (reasonGroup) reasonGroup.style.display = 'block';
+                    if (reasonLabelText) reasonLabelText.textContent = 'Retirement Reason';
+                    if (reasonLabelIcon) {
+                        reasonLabelIcon.className = 'fa-solid fa-ban';
+                        reasonLabelIcon.style.color = '#ef4444';
+                    }
+                    if (reasonRequiredStar) reasonRequiredStar.style.display = 'inline';
                     if (reasonInput) {
                         reasonInput.required = true;
                         reasonInput.placeholder = 'Please enter reason (Required for Retired)';
                     }
+                    if (maintHelper) maintHelper.style.display = 'none';
                 } else if (statusName === 'maintenance') {
-                    if (reasonGroup) reasonGroup.style.display = 'flex';
+                    if (reasonGroup) reasonGroup.style.display = 'block';
+                    if (reasonLabelText) reasonLabelText.textContent = 'Maintenance Reason / Issue Details';
+                    if (reasonLabelIcon) {
+                        reasonLabelIcon.className = 'fa-solid fa-wrench';
+                        reasonLabelIcon.style.color = '#f59e0b';
+                    }
+                    if (reasonRequiredStar) reasonRequiredStar.style.display = 'none';
                     if (reasonInput) {
                         reasonInput.required = false;
-                        reasonInput.placeholder = 'Please enter maintenance details / reason (Optional)';
+                        reasonInput.placeholder = 'e.g. Broken Screen, Battery Degraded, No Power...';
                     }
+                    if (maintHelper) maintHelper.style.display = 'block';
                 } else {
                     if (reasonGroup) reasonGroup.style.display = 'none';
+                    if (maintHelper) maintHelper.style.display = 'none';
                     if (reasonInput) {
                         reasonInput.required = false;
                         reasonInput.value = '';
@@ -1662,8 +2019,10 @@ function edit_device_form($editing = null)
                     if (ownerSelect) ownerSelect.value = '';
                     const ownerInput = document.getElementById('edit_owner_search_input');
                     if (ownerInput) ownerInput.value = '';
+                    const mobOwnerSelect = document.getElementById('mobile_owner_select');
+                    if (mobOwnerSelect) mobOwnerSelect.value = '';
                 } else {
-                    if (ownerGroup) ownerGroup.style.display = 'flex';
+                    if (ownerGroup) ownerGroup.style.display = 'block';
                 }
 
                 if (statusName === 'retired') {
@@ -1705,6 +2064,12 @@ function edit_device_form($editing = null)
             }
             if (modelInput) modelInput.addEventListener('input', updateLivePreview);
             if (serialInput) serialInput.addEventListener('input', updateLivePreview);
+
+            const reasonInputEl = document.getElementById('Reason');
+            if (reasonInputEl) {
+                reasonInputEl.addEventListener('input', syncEditReasonButtons);
+                syncEditReasonButtons();
+            }
 
             // Form Submit Validation
             const editForm = document.getElementById('edit-device-form');
