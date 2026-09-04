@@ -270,20 +270,7 @@ function device_crud_monitor()
                                         <?= !empty($row->SerialNumber) ? $row->SerialNumber : '-' ?></small>
                                 </td>
                                 <td class="text-start align-middle" data-label="Owner" style="min-width: 120px;">
-                                    <?php
-                                    $owner = trim($row->Owner ?? '');
-                                    $nickname = trim($row->Nickname ?? '');
-                                    $formattedOwner = stock_supply_format_nickname_with_initial($nickname, '', '', $owner);
-                                    if ($formattedOwner === '-' || empty($formattedOwner)) {
-                                        echo '-';
-                                    } else {
-                                        echo htmlspecialchars($formattedOwner);
-                                        $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
-                                        if (!empty($deptAbbr)) {
-                                            echo ' <span class="owner-dept text-muted" style="font-size: 0.85em;">' . htmlspecialchars($deptAbbr) . '</span>';
-                                        }
-                                    }
-                                    ?>
+                                    <?= stock_supply_render_table_owner($row->DeviceID, $row->Owner ?? '', $row->Nickname ?? '', $row->Department ?? '', $row->Status ?? '') ?>
                                 </td>
                                 <td class="text-start align-middle" data-label="Status" style="min-width: 135px;">
                                     <?php

@@ -37,24 +37,12 @@ function device_view_details($device_id = null)
         return ob_get_clean() . '<p>No Device ID provided.</p>';
     }
 
-    // Query Device details with Category, Brand, Status, Keyword, Owner, and Department (with smart owner fallback for repair/maintenance cases)
+    // Query Device details with Category, Brand, Status, Keyword, Active Owner, and Department
     $device = $wpdb->get_row($wpdb->prepare("
         SELECT d.*, b.BrandName, c.CategoryName, s.StatusName, kw.KeywordName,
-               COALESCE(
-                   o.Nickname,
-                   (SELECT o2.Nickname FROM Repair_Requests rr2 LEFT JOIN Owners o2 ON rr2.OwnerID = o2.OwnerID WHERE rr2.DeviceID = d.DeviceID ORDER BY rr2.RequestID DESC LIMIT 1),
-                   (SELECT h.Owner FROM History_new h WHERE h.DeviceID = d.DeviceID AND h.Owner IS NOT NULL AND h.Owner != '-' AND h.Owner != '' ORDER BY h.Date DESC, h.HistoryID DESC LIMIT 1)
-               ) AS OwnerNickname,
-               COALESCE(
-                   TRIM(CONCAT(COALESCE(o.FirstName, ''), ' ', COALESCE(o.LastName, ''))),
-                   (SELECT TRIM(CONCAT(COALESCE(o3.FirstName, ''), ' ', COALESCE(o3.LastName, ''))) FROM Repair_Requests rr3 LEFT JOIN Owners o3 ON rr3.OwnerID = o3.OwnerID WHERE rr3.DeviceID = d.DeviceID ORDER BY rr3.RequestID DESC LIMIT 1),
-                   (SELECT TRIM(CONCAT(COALESCE(o4.FirstName, ''), ' ', COALESCE(o4.LastName, ''))) FROM History_new h2 LEFT JOIN Owners o4 ON (h2.Owner = o4.Nickname OR h2.Owner = CONCAT(o4.FirstName, ' ', o4.LastName)) WHERE h2.DeviceID = d.DeviceID AND h2.Owner IS NOT NULL AND h2.Owner != '-' AND h2.Owner != '' ORDER BY h2.Date DESC, h2.HistoryID DESC LIMIT 1)
-               ) AS OwnerFullname,
-               COALESCE(
-                   dept.DepartmentName,
-                   (SELECT d2.DepartmentName FROM Repair_Requests rr4 LEFT JOIN Owners o5 ON rr4.OwnerID = o5.OwnerID LEFT JOIN Departments d2 ON o5.DepartmentID = d2.DepartmentID WHERE rr4.DeviceID = d.DeviceID ORDER BY rr4.RequestID DESC LIMIT 1),
-                   (SELECT d3.DepartmentName FROM History_new h3 LEFT JOIN Owners o6 ON (h3.Owner = o6.Nickname OR h3.Owner = CONCAT(o6.FirstName, ' ', o6.LastName)) LEFT JOIN Departments d3 ON o6.DepartmentID = d3.DepartmentID WHERE h3.DeviceID = d.DeviceID AND h3.Owner IS NOT NULL AND h3.Owner != '-' AND h3.Owner != '' ORDER BY h3.Date DESC, h3.HistoryID DESC LIMIT 1)
-               ) AS DepartmentName
+               o.Nickname AS ActiveOwnerNickname,
+               TRIM(CONCAT(COALESCE(o.FirstName, ''), ' ', COALESCE(o.LastName, ''))) AS ActiveOwnerFullname,
+               dept.DepartmentName AS ActiveDepartmentName
         FROM {$table_device} d
         LEFT JOIN {$table_brand} b ON d.BrandID = b.BrandID
         LEFT JOIN {$table_cat} c ON d.CategoryID = c.CategoryID
@@ -68,6 +56,21 @@ function device_view_details($device_id = null)
     if (!$device) {
         return ob_get_clean() . '<p>Device not found.</p>';
     }
+
+    // Backwards-compatible aliases
+    $device->OwnerNickname = $device->ActiveOwnerNickname;
+    $device->OwnerFullname = $device->ActiveOwnerFullname;
+    $device->DepartmentName = $device->ActiveDepartmentName;
+
+    // Determine Active Owner vs. Last Known Owner
+    $has_active_owner = !empty($device->ActiveOwnerNickname) || (!empty($device->ActiveOwnerFullname) && $device->ActiveOwnerFullname !== ' ');
+    $active_owner_raw = $has_active_owner ? stock_supply_format_nickname_with_initial($device->ActiveOwnerNickname, '', '', $device->ActiveOwnerFullname) : '';
+    $active_owner_formatted = $has_active_owner ? stock_supply_format_owner_with_dept($active_owner_raw, $device->ActiveDepartmentName) : '-';
+
+    // Last known owner from history/requests if device currently has no active owner
+    $last_owner_info = !$has_active_owner ? stock_supply_get_device_last_owner($device->DeviceID) : null;
+    $last_owner_formatted = $last_owner_info['formatted'] ?? '';
+    $last_owner_name = $last_owner_info['name'] ?? '';
 
     // Query Active / Latest Maintenance Record
     $active_maintenance = $wpdb->get_row($wpdb->prepare("
@@ -1007,8 +1010,8 @@ function device_view_details($device_id = null)
                             'model'        => $device->Model ?? '',
                             'category'     => $device->CategoryName ?? '',
                             'serialNumber' => $device->SerialNumber ?? '',
-                            'owner'        => $device->OwnerNickname ?: ($device->OwnerFullname ?? ''),
-                            'department'   => $device->DepartmentName ?? '',
+                            'owner'        => $has_active_owner ? $active_owner_raw : '-',
+                            'department'   => $has_active_owner ? ($device->ActiveDepartmentName ?? '') : '',
                             'details'      => $active_maintenance->Details ?? '',
                             'repairDate'   => $repair_date_raw,
                             'nonce'        => $dev_action_nonce
@@ -1089,11 +1092,17 @@ function device_view_details($device_id = null)
                             <span class="vd-maint-meta-label">
                                 <i class="fa-solid fa-user text-indigo-500"></i> Assigned Owner
                             </span>
-                            <span class="vd-maint-meta-val">
-                                <?php
-                                $ownerDisplay = stock_supply_format_nickname_with_initial($device->OwnerNickname, '', '', $device->OwnerFullname);
-                                echo esc_html(formatName(stock_supply_format_owner_with_dept($ownerDisplay, $device->DepartmentName)));
-                                ?>
+                            <span class="vd-maint-meta-val d-flex align-items-center">
+                                <?php if ($has_active_owner): ?>
+                                    <strong><?= esc_html(formatName($active_owner_formatted)) ?></strong>
+                                <?php elseif (!empty($last_owner_formatted)): ?>
+                                    <span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);" title="Previous Owner">
+                                        <i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 0.72rem;"></i>
+                                        <span>Prev: <?= esc_html($last_owner_formatted) ?></span>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted fw-bold">-</span>
+                                <?php endif; ?>
                             </span>
                         </div>
 
@@ -1211,11 +1220,17 @@ function device_view_details($device_id = null)
                 <div class="vd-info-label">
                     <i class="fa-solid fa-user text-indigo-500"></i> Current Owner
                 </div>
-                <div class="vd-info-value">
-                    <?php
-                    $ownerDisplay = stock_supply_format_nickname_with_initial($device->OwnerNickname, '', '', $device->OwnerFullname);
-                    echo esc_html(formatName(stock_supply_format_owner_with_dept($ownerDisplay, $device->DepartmentName)));
-                    ?>
+                <div class="vd-info-value d-flex align-items-center flex-wrap gap-2">
+                    <?php if ($has_active_owner): ?>
+                        <span><?= esc_html(formatName($active_owner_formatted)) ?></span>
+                    <?php elseif (!empty($last_owner_formatted)): ?>
+                        <span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);" title="Previous Owner">
+                            <i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 0.72rem;"></i>
+                            <span>Prev: <?= esc_html($last_owner_formatted) ?></span>
+                        </span>
+                    <?php else: ?>
+                        <span class="text-muted">-</span>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -1255,15 +1270,17 @@ function device_view_details($device_id = null)
                 'change'      => ['class' => 'dtl-action-status', 'icon' => 'fa-arrows-rotate'],
             ];
 
-            function dtl_get_action_info($action, $map)
-            {
-                $lower = strtolower(trim($action));
-                foreach ($map as $key => $info) {
-                    if (strpos($lower, $key) !== false) {
-                        return $info;
+            if (!function_exists('dtl_get_action_info')) {
+                function dtl_get_action_info($action, $map)
+                {
+                    $lower = strtolower(trim($action));
+                    foreach ($map as $key => $info) {
+                        if (strpos($lower, $key) !== false) {
+                            return $info;
+                        }
                     }
+                    return ['class' => 'dtl-action-default', 'icon' => 'fa-circle'];
                 }
-                return ['class' => 'dtl-action-default', 'icon' => 'fa-circle'];
             }
 
             $grouped = [];

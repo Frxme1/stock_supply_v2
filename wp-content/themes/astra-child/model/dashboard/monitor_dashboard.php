@@ -36,13 +36,29 @@ function device_dashboard_monitor()
         $summary_map[$row->Status] = intval($row->count);
     }
 
+    // Query Brand breakdown for Monitor
+    $brand_summary = $wpdb->get_results("
+        SELECT Brand, COUNT(*) as count
+        FROM $table_device_wn
+        WHERE Category = 'Monitor' AND Brand IS NOT NULL AND Brand != '' AND Brand != '-'
+        GROUP BY Brand
+        ORDER BY count DESC
+    ");
+
+    $current_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
+    $in_use_count = $summary_map['In Use'] ?? 0;
+    $available_count = $summary_map['Available'] ?? 0;
+    $active_total = $in_use_count + $available_count;
+    $in_use_rate = $active_total > 0 ? round(($in_use_count / $active_total) * 100, 1) : 0;
+    $available_rate = $active_total > 0 ? round(100 - $in_use_rate, 1) : 0;
+
     ob_start();
 ?>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <div class="next-dashboard">
-        <div class="next-grid mt-4">
+        <div class="next-grid monitor-status-grid mt-4">
             <?php foreach ($status_config as $status => $config):
                 $count = $summary_map[$status] ?? 0;
                 $percent = $total_monitor > 0 ? round(($count / $total_monitor) * 100, 0) : 0;
@@ -71,25 +87,66 @@ function device_dashboard_monitor()
             <?php endforeach; ?>
         </div>
 
-        <div class="next-grid-2 mt-4" style="grid-template-columns: 1fr;">
-            <div class="next-card slide-up" style="animation-delay: 0.2s;">
-                <h3 class="next-section-title">All Monitor</h3>
-                <div class="next-donut-container mt-4" style="justify-content: center; gap: 3rem;">
-                    <?php
-                    $percent_monitor = $total_devices > 0 ? round(($total_monitor / $total_devices) * 100, 1) : 0;
-                    $monitor_sectors = [
-                        ['label' => 'Monitor', 'pct' => $percent_monitor, 'color' => '#FDB840'],
-                        ['label' => 'Other Devices', 'pct' => max(0, round(100 - $percent_monitor, 1)), 'color' => '#e5e7eb'],
-                    ];
-                    echo render_sectors_donut([
-                        'symbol' => 'MONITOR',
-                        'caption' => $total_monitor . ' units',
-                        'sectors' => $monitor_sectors,
-                    ]);
+        <!-- ===== SECTION 2: Modern Overview Bar ===== -->
+        <div class="mt-4">
+            <div class="next-card slide-up monitor-overview-bar" style="animation-delay: 0.2s;">
+                <!-- Left: Identity & Total Units -->
+                <div class="monitor-brand-group">
+                    <div class="monitor-icon-box">
+                        <i class="fa-solid fa-desktop"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h3 class="next-section-title mb-0">All Monitors</h3>
+                            <span class="monitor-total-badge">
+                                <span class="count-up" data-count="<?= intval($total_monitor) ?>">0</span> Total
+                            </span>
+                        </div>
+                        <span class="monitor-meta-desc">Monitor inventory & brand breakdown</span>
+                    </div>
+                </div>
+
+                <!-- Center: Interactive Brand Pills -->
+                <div class="monitor-pills-wrap">
+                    <?php foreach ($brand_summary as $br):
+                        $b_name = $br->Brand;
+                        $b_cnt = intval($br->count);
+                        $is_active = ($current_brand === $b_name);
+                        $b_url = home_url('/monitor/?filter_brand=' . urlencode($b_name));
                     ?>
-                    <div class="text-center">
-                        <div class="next-number" style="font-size: 3.5rem; color: #FDB840;"><span class="count-up" data-count="<?= $total_monitor ?>">0</span></div>
-                        <div class="next-trend-text mt-2">Units Registered</div>
+                        <a href="<?= esc_url($b_url) ?>" 
+                           class="monitor-type-pill <?= $is_active ? 'is-active' : '' ?>"
+                           onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url($b_url) ?>'); return false;}else{window.location.href='<?= esc_url($b_url) ?>'; return false;}"
+                           title="Filter by <?= esc_attr($b_name) ?>">
+                            <i class="fa-solid fa-tag monitor-pill-icon"></i>
+                            <span class="monitor-pill-name"><?= esc_html($b_name) ?></span>
+                            <span class="monitor-pill-count count-up" data-count="<?= $b_cnt ?>">0</span>
+                        </a>
+                    <?php endforeach; ?>
+                    <?php if (!empty($current_brand)): ?>
+                        <a href="<?= esc_url(home_url('/monitor/')) ?>" 
+                           class="monitor-type-pill monitor-pill-reset"
+                           onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url(home_url('/monitor/')) ?>'); return false;}else{window.location.href='<?= esc_url(home_url('/monitor/')) ?>'; return false;}"
+                           title="Clear brand filter">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Clear</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Right: Utilization Rate -->
+                <div class="monitor-utilization-wrap">
+                    <div class="monitor-util-header">
+                        <span class="monitor-util-title">Allocation Status</span>
+                        <span class="monitor-util-pct"><?= $in_use_rate ?>% In Use</span>
+                    </div>
+                    <div class="monitor-util-track" title="In Use: <?= $in_use_count ?> (<?= $in_use_rate ?>%) · Available: <?= $available_count ?> (<?= $available_rate ?>%)">
+                        <div class="monitor-util-fill in-use" style="width: <?= $in_use_rate ?>%;"></div>
+                        <div class="monitor-util-fill available" style="width: <?= $available_rate ?>%;"></div>
+                    </div>
+                    <div class="monitor-util-legend">
+                        <span class="monitor-legend-item"><span class="monitor-dot in-use"></span> In Use: <strong><?= $in_use_count ?></strong></span>
+                        <span class="monitor-legend-item"><span class="monitor-dot available"></span> Available: <strong><?= $available_count ?></strong></span>
                     </div>
                 </div>
             </div>
@@ -97,7 +154,261 @@ function device_dashboard_monitor()
     </div>
 
     <style>
-        /* monitor_dashboard — shared styles from dashboard_cards.css */
+        /* Modern Overview Bar Styling */
+        .monitor-overview-bar {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            padding: 1.15rem 1.5rem !important;
+            box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.03), 0 2px 6px -1px rgba(0, 0, 0, 0.02) !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .monitor-brand-group {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-width: 220px;
+        }
+
+        .monitor-icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(253, 184, 64, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%);
+            color: #d97706;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            border: 1px solid rgba(253, 184, 64, 0.25);
+            box-shadow: 0 2px 5px rgba(217, 119, 6, 0.08);
+            flex-shrink: 0;
+        }
+
+        .monitor-total-badge {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #b45309;
+            background: #fefce8;
+            border: 1px solid #fde68a;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            letter-spacing: 0.01em;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .monitor-meta-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Center Pills */
+        .monitor-pills-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .monitor-type-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 6px 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            color: #334155;
+            text-decoration: none !important;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .monitor-type-pill:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #d97706;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .monitor-type-pill.is-active {
+            background: #fefce8;
+            border-color: #fcd34d;
+            color: #b45309;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+            font-weight: 600;
+        }
+
+        .monitor-pill-icon {
+            font-size: 0.85rem;
+            color: #64748b;
+            transition: color 0.2s ease;
+        }
+
+        .monitor-type-pill:hover .monitor-pill-icon,
+        .monitor-type-pill.is-active .monitor-pill-icon {
+            color: #d97706;
+        }
+
+        .monitor-pill-count {
+            background: #e2e8f0;
+            color: #0f172a;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .monitor-type-pill:hover .monitor-pill-count {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .monitor-type-pill.is-active .monitor-pill-count {
+            background: #f59e0b;
+            color: #ffffff;
+        }
+
+        .monitor-pill-reset {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+            font-size: 0.78rem;
+        }
+
+        .monitor-pill-reset:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #b91c1c;
+        }
+
+        /* Right Side: Utilization Bar */
+        .monitor-utilization-wrap {
+            min-width: 210px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .monitor-util-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+
+        .monitor-util-title {
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .monitor-util-pct {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .monitor-util-track {
+            display: flex;
+            height: 7px;
+            background: #f1f5f9;
+            border-radius: 9999px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .monitor-util-fill.in-use {
+            background: #f05353;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .monitor-util-fill.available {
+            background: #6abf57;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .monitor-util-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.74rem;
+            color: #64748b;
+        }
+
+        .monitor-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .monitor-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .monitor-dot.in-use { background: #f05353; }
+        .monitor-dot.available { background: #6abf57; }
+
+        @media (max-width: 992px) {
+            .monitor-overview-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .monitor-pills-wrap {
+                justify-content: flex-start;
+            }
+            .monitor-utilization-wrap {
+                width: 100%;
+            }
+        }
+
+        /* 5-column layout for Status Cards */
+        .monitor-status-grid {
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 1.25rem !important;
+        }
+
+        @media (max-width: 1200px) {
+            .monitor-status-grid {
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .monitor-status-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .monitor-status-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.5rem !important;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .monitor-status-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
     
     <script>

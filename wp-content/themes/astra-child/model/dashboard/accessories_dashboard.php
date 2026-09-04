@@ -36,13 +36,37 @@ function device_dashboard_accessories()
         $summary_map[$row->Status] = intval($row->count);
     }
 
+    // Query Keyword breakdown for Accessories
+    $keyword_summary = $wpdb->get_results("
+        SELECT Keyword, COUNT(*) as count
+        FROM $table_device_wn
+        WHERE Category = 'Accessories' AND Keyword IS NOT NULL AND Keyword != ''
+        GROUP BY Keyword
+        ORDER BY count DESC
+    ");
+
+    $keyword_icons = [
+        'Mouse'    => 'fa-solid fa-computer-mouse',
+        'Keyboard' => 'fa-solid fa-keyboard',
+        'PC'       => 'fa-solid fa-desktop',
+        'SSD'      => 'fa-solid fa-hard-drive',
+        'Adapter'  => 'fa-solid fa-plug',
+    ];
+
+    $current_keyword = isset($_GET['filter_keyword']) ? trim($_GET['filter_keyword']) : '';
+    $in_use_count = $summary_map['In Use'] ?? 0;
+    $available_count = $summary_map['Available'] ?? 0;
+    $active_total = $in_use_count + $available_count;
+    $in_use_rate = $active_total > 0 ? round(($in_use_count / $active_total) * 100, 1) : 0;
+    $available_rate = $active_total > 0 ? round(100 - $in_use_rate, 1) : 0;
+
     ob_start();
 ?>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <div class="next-dashboard">
-        <div class="next-grid mt-4">
+        <div class="next-grid acc-status-grid mt-4">
             <?php foreach ($status_config as $status => $config):
                 $count = $summary_map[$status] ?? 0;
                 $percent = $total_accessories > 0 ? round(($count / $total_accessories) * 100, 0) : 0;
@@ -71,25 +95,67 @@ function device_dashboard_accessories()
             <?php endforeach; ?>
         </div>
 
-        <div class="next-grid-2 mt-4" style="grid-template-columns: 1fr;">
-            <div class="next-card slide-up" style="animation-delay: 0.2s;">
-                <h3 class="next-section-title">All Accessories</h3>
-                <div class="next-donut-container mt-4" style="justify-content: center; gap: 3rem;">
-                    <?php
-                    $percent_accessories = $total_devices > 0 ? round(($total_accessories / $total_devices) * 100, 1) : 0;
-                    $acc_sectors = [
-                        ['label' => 'Accessories', 'pct' => $percent_accessories, 'color' => '#6ABF57'],
-                        ['label' => 'Other Devices', 'pct' => max(0, round(100 - $percent_accessories, 1)), 'color' => '#e5e7eb'],
-                    ];
-                    echo render_sectors_donut([
-                        'symbol' => 'ACCESSORIES',
-                        'caption' => $total_accessories . ' units',
-                        'sectors' => $acc_sectors,
-                    ]);
+        <!-- ===== SECTION 2: Modern Overview Bar ===== -->
+        <div class="mt-4">
+            <div class="next-card slide-up acc-overview-bar" style="animation-delay: 0.2s;">
+                <!-- Left: Identity & Total Units -->
+                <div class="acc-brand-group">
+                    <div class="acc-icon-box">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h3 class="next-section-title mb-0">All Accessories</h3>
+                            <span class="acc-total-badge">
+                                <span class="count-up" data-count="<?= intval($total_accessories) ?>">0</span> Total
+                            </span>
+                        </div>
+                        <span class="acc-meta-desc">Hardware accessories inventory & breakdown</span>
+                    </div>
+                </div>
+
+                <!-- Center: Interactive Keyword Pills -->
+                <div class="acc-pills-wrap">
+                    <?php foreach ($keyword_summary as $kw):
+                        $kw_name = $kw->Keyword;
+                        $kw_cnt = intval($kw->count);
+                        $icon = $keyword_icons[$kw_name] ?? 'fa-solid fa-microchip';
+                        $is_active = ($current_keyword === $kw_name);
+                        $kw_url = home_url('/accessories/?filter_keyword=' . urlencode($kw_name));
                     ?>
-                    <div class="text-center">
-                        <div class="next-number" style="font-size: 3.5rem; color: #6ABF57;"><span class="count-up" data-count="<?= $total_accessories ?>">0</span></div>
-                        <div class="next-trend-text mt-2">Units Registered</div>
+                        <a href="<?= esc_url($kw_url) ?>" 
+                           class="acc-type-pill <?= $is_active ? 'is-active' : '' ?>"
+                           onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url($kw_url) ?>'); return false;}else{window.location.href='<?= esc_url($kw_url) ?>'; return false;}"
+                           title="Filter by <?= esc_attr($kw_name) ?>">
+                            <i class="<?= esc_attr($icon) ?> acc-pill-icon"></i>
+                            <span class="acc-pill-name"><?= esc_html($kw_name) ?></span>
+                            <span class="acc-pill-count count-up" data-count="<?= $kw_cnt ?>">0</span>
+                        </a>
+                    <?php endforeach; ?>
+                    <?php if (!empty($current_keyword)): ?>
+                        <a href="<?= esc_url(home_url('/accessories/')) ?>" 
+                           class="acc-type-pill acc-pill-reset"
+                           onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url(home_url('/accessories/')) ?>'); return false;}else{window.location.href='<?= esc_url(home_url('/accessories/')) ?>'; return false;}"
+                           title="Clear keyword filter">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Clear</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Right: Utilization Rate -->
+                <div class="acc-utilization-wrap">
+                    <div class="acc-util-header">
+                        <span class="acc-util-title">Allocation Status</span>
+                        <span class="acc-util-pct"><?= $in_use_rate ?>% In Use</span>
+                    </div>
+                    <div class="acc-util-track" title="In Use: <?= $in_use_count ?> (<?= $in_use_rate ?>%) · Available: <?= $available_count ?> (<?= $available_rate ?>%)">
+                        <div class="acc-util-fill in-use" style="width: <?= $in_use_rate ?>%;"></div>
+                        <div class="acc-util-fill available" style="width: <?= $available_rate ?>%;"></div>
+                    </div>
+                    <div class="acc-util-legend">
+                        <span class="acc-legend-item"><span class="acc-dot in-use"></span> In Use: <strong><?= $in_use_count ?></strong></span>
+                        <span class="acc-legend-item"><span class="acc-dot available"></span> Available: <strong><?= $available_count ?></strong></span>
                     </div>
                 </div>
             </div>
@@ -97,7 +163,261 @@ function device_dashboard_accessories()
     </div>
 
     <style>
-        /* accessories_dashboard — shared styles from dashboard_cards.css */
+        /* Modern Overview Bar Styling */
+        .acc-overview-bar {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            padding: 1.15rem 1.5rem !important;
+            box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.03), 0 2px 6px -1px rgba(0, 0, 0, 0.02) !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .acc-brand-group {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-width: 220px;
+        }
+
+        .acc-icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
+            color: #059669;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 2px 5px rgba(5, 150, 105, 0.08);
+            flex-shrink: 0;
+        }
+
+        .acc-total-badge {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #059669;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            letter-spacing: 0.01em;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .acc-meta-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Center Pills */
+        .acc-pills-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .acc-type-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 6px 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            color: #334155;
+            text-decoration: none !important;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .acc-type-pill:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #059669;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .acc-type-pill.is-active {
+            background: #ecfdf5;
+            border-color: #6ee7b7;
+            color: #047857;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+            font-weight: 600;
+        }
+
+        .acc-pill-icon {
+            font-size: 0.85rem;
+            color: #64748b;
+            transition: color 0.2s ease;
+        }
+
+        .acc-type-pill:hover .acc-pill-icon,
+        .acc-type-pill.is-active .acc-pill-icon {
+            color: #059669;
+        }
+
+        .acc-pill-count {
+            background: #e2e8f0;
+            color: #0f172a;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .acc-type-pill:hover .acc-pill-count {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .acc-type-pill.is-active .acc-pill-count {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .acc-pill-reset {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+            font-size: 0.78rem;
+        }
+
+        .acc-pill-reset:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #b91c1c;
+        }
+
+        /* Right Side: Utilization Bar */
+        .acc-utilization-wrap {
+            min-width: 210px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .acc-util-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+
+        .acc-util-title {
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .acc-util-pct {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .acc-util-track {
+            display: flex;
+            height: 7px;
+            background: #f1f5f9;
+            border-radius: 9999px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .acc-util-fill.in-use {
+            background: #f05353;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .acc-util-fill.available {
+            background: #6abf57;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .acc-util-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.74rem;
+            color: #64748b;
+        }
+
+        .acc-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .acc-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .acc-dot.in-use { background: #f05353; }
+        .acc-dot.available { background: #6abf57; }
+
+        @media (max-width: 992px) {
+            .acc-overview-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .acc-pills-wrap {
+                justify-content: flex-start;
+            }
+            .acc-utilization-wrap {
+                width: 100%;
+            }
+        }
+
+        /* 5-column layout for Accessories Status Cards */
+        .acc-status-grid {
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 1.25rem !important;
+        }
+
+        @media (max-width: 1200px) {
+            .acc-status-grid {
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .acc-status-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .acc-status-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.5rem !important;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .acc-status-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 
     

@@ -40,20 +40,9 @@
             <div class="mobile-device-body">
                 <div class="mobile-device-owner">
                     <i class="fa-solid fa-user"></i>
-                    <?php
-                    $owner = trim($row->Owner ?? '');
-                    $nickname = trim($row->Nickname ?? '');
-                    $formattedOwner = stock_supply_format_nickname_with_initial($nickname, '', '', $owner);
-                    if ($formattedOwner === '-' || empty($formattedOwner)) {
-                        echo '-';
-                    } else {
-                        echo htmlspecialchars($formattedOwner);
-                        $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
-                        if (!empty($deptAbbr)) {
-                            echo ' <span class="text-muted small">' . htmlspecialchars($deptAbbr) . '</span>';
-                        }
-                    }
-                    ?>
+                    <div>
+                        <?= stock_supply_render_table_owner($row->DeviceID, $row->Owner ?? '', $row->Nickname ?? '', $row->Department ?? '', $row->Status ?? '') ?>
+                    </div>
                 </div>
                 <div class="mobile-device-id"
                     onclick="event.stopPropagation(); window.openDeviceQuickPeek('<?= esc_js($row->DeviceID) ?>')">

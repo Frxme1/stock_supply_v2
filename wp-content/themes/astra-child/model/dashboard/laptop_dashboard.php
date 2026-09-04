@@ -36,13 +36,29 @@ function device_dashboard_laptop()
         $summary_map[$row->Status] = intval($row->count);
     }
 
+    // Query Brand breakdown for Laptop
+    $brand_summary = $wpdb->get_results("
+        SELECT Brand, COUNT(*) as count
+        FROM $table_device_wn
+        WHERE Category = 'Laptop' AND Brand IS NOT NULL AND Brand != '' AND Brand != '-'
+        GROUP BY Brand
+        ORDER BY count DESC
+    ");
+
+    $current_brand = isset($_GET['filter_brand']) ? trim($_GET['filter_brand']) : '';
+    $in_use_count = $summary_map['In Use'] ?? 0;
+    $available_count = $summary_map['Available'] ?? 0;
+    $active_total = $in_use_count + $available_count;
+    $in_use_rate = $active_total > 0 ? round(($in_use_count / $active_total) * 100, 1) : 0;
+    $available_rate = $active_total > 0 ? round(100 - $in_use_rate, 1) : 0;
+
     ob_start();
 ?>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <div class="next-dashboard">
-        <div class="next-grid mt-4">
+        <div class="next-grid laptop-status-grid mt-4">
             <?php foreach ($status_config as $status => $config):
                 $count = $summary_map[$status] ?? 0;
                 $percent = $total_laptop > 0 ? round(($count / $total_laptop) * 100, 0) : 0;
@@ -71,25 +87,66 @@ function device_dashboard_laptop()
             <?php endforeach; ?>
         </div>
 
-        <div class="next-grid-2 mt-4" style="grid-template-columns: 1fr;">
-            <div class="next-card slide-up" style="animation-delay: 0.2s;">
-                <h3 class="next-section-title">All Laptop</h3>
-                <div class="next-donut-container mt-4" style="justify-content: center; gap: 3rem;">
-                    <?php
-                    $percent_laptop = $total_devices > 0 ? round(($total_laptop / $total_devices) * 100, 1) : 0;
-                    $laptop_sectors = [
-                        ['label' => 'Laptop', 'pct' => $percent_laptop, 'color' => '#15A5DA'],
-                        ['label' => 'Other Devices', 'pct' => max(0, round(100 - $percent_laptop, 1)), 'color' => '#e5e7eb'],
-                    ];
-                    echo render_sectors_donut([
-                        'symbol' => 'LAPTOP',
-                        'caption' => $total_laptop . ' units',
-                        'sectors' => $laptop_sectors,
-                    ]);
+        <!-- ===== SECTION 2: Modern Overview Bar ===== -->
+        <div class="mt-4">
+            <div class="next-card slide-up laptop-overview-bar" style="animation-delay: 0.2s;">
+                <!-- Left: Identity & Total Units -->
+                <div class="laptop-brand-group">
+                    <div class="laptop-icon-box">
+                        <i class="fa-solid fa-laptop"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h3 class="next-section-title mb-0">All Laptops</h3>
+                            <span class="laptop-total-badge">
+                                <span class="count-up" data-count="<?= intval($total_laptop) ?>">0</span> Total
+                            </span>
+                        </div>
+                        <span class="laptop-meta-desc">Laptop inventory & brand breakdown</span>
+                    </div>
+                </div>
+
+                <!-- Center: Interactive Brand Pills -->
+                <div class="laptop-pills-wrap">
+                    <?php foreach ($brand_summary as $br):
+                        $b_name = $br->Brand;
+                        $b_cnt = intval($br->count);
+                        $is_active = ($current_brand === $b_name);
+                        $b_url = home_url('/laptop/?filter_brand=' . urlencode($b_name));
                     ?>
-                    <div class="text-center">
-                        <div class="next-number" style="font-size: 3.5rem; color: #15A5DA;"><span class="count-up" data-count="<?= $total_laptop ?>">0</span></div>
-                        <div class="next-trend-text mt-2">Units Registered</div>
+                        <a href="<?= esc_url($b_url) ?>" 
+                           class="laptop-type-pill <?= $is_active ? 'is-active' : '' ?>"
+                           onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url($b_url) ?>'); return false;}else{window.location.href='<?= esc_url($b_url) ?>'; return false;}"
+                           title="Filter by <?= esc_attr($b_name) ?>">
+                            <i class="fa-solid fa-tag laptop-pill-icon"></i>
+                            <span class="laptop-pill-name"><?= esc_html($b_name) ?></span>
+                            <span class="laptop-pill-count count-up" data-count="<?= $b_cnt ?>">0</span>
+                        </a>
+                    <?php endforeach; ?>
+                    <?php if (!empty($current_brand)): ?>
+                        <a href="<?= esc_url(home_url('/laptop/')) ?>" 
+                           class="laptop-type-pill laptop-pill-reset"
+                           onclick="if(window.triggerChartFilter){window.triggerChartFilter('<?= esc_url(home_url('/laptop/')) ?>'); return false;}else{window.location.href='<?= esc_url(home_url('/laptop/')) ?>'; return false;}"
+                           title="Clear brand filter">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Clear</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Right: Utilization Rate -->
+                <div class="laptop-utilization-wrap">
+                    <div class="laptop-util-header">
+                        <span class="laptop-util-title">Allocation Status</span>
+                        <span class="laptop-util-pct"><?= $in_use_rate ?>% In Use</span>
+                    </div>
+                    <div class="laptop-util-track" title="In Use: <?= $in_use_count ?> (<?= $in_use_rate ?>%) · Available: <?= $available_count ?> (<?= $available_rate ?>%)">
+                        <div class="laptop-util-fill in-use" style="width: <?= $in_use_rate ?>%;"></div>
+                        <div class="laptop-util-fill available" style="width: <?= $available_rate ?>%;"></div>
+                    </div>
+                    <div class="laptop-util-legend">
+                        <span class="laptop-legend-item"><span class="laptop-dot in-use"></span> In Use: <strong><?= $in_use_count ?></strong></span>
+                        <span class="laptop-legend-item"><span class="laptop-dot available"></span> Available: <strong><?= $available_count ?></strong></span>
                     </div>
                 </div>
             </div>
@@ -97,7 +154,261 @@ function device_dashboard_laptop()
     </div>
 
     <style>
-        /* laptop_dashboard — shared styles from dashboard_cards.css */
+        /* Modern Overview Bar Styling */
+        .laptop-overview-bar {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            padding: 1.15rem 1.5rem !important;
+            box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.03), 0 2px 6px -1px rgba(0, 0, 0, 0.02) !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .laptop-brand-group {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-width: 220px;
+        }
+
+        .laptop-icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(21, 165, 218, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            border: 1px solid rgba(21, 165, 218, 0.2);
+            box-shadow: 0 2px 5px rgba(2, 132, 199, 0.08);
+            flex-shrink: 0;
+        }
+
+        .laptop-total-badge {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #0284c7;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            letter-spacing: 0.01em;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .laptop-meta-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Center Pills */
+        .laptop-pills-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .laptop-type-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 6px 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            color: #334155;
+            text-decoration: none !important;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .laptop-type-pill:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #0284c7;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .laptop-type-pill.is-active {
+            background: #f0f9ff;
+            border-color: #7dd3fc;
+            color: #0369a1;
+            box-shadow: 0 0 0 2px rgba(21, 165, 218, 0.2);
+            font-weight: 600;
+        }
+
+        .laptop-pill-icon {
+            font-size: 0.85rem;
+            color: #64748b;
+            transition: color 0.2s ease;
+        }
+
+        .laptop-type-pill:hover .laptop-pill-icon,
+        .laptop-type-pill.is-active .laptop-pill-icon {
+            color: #0284c7;
+        }
+
+        .laptop-pill-count {
+            background: #e2e8f0;
+            color: #0f172a;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .laptop-type-pill:hover .laptop-pill-count {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .laptop-type-pill.is-active .laptop-pill-count {
+            background: #0284c7;
+            color: #ffffff;
+        }
+
+        .laptop-pill-reset {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+            font-size: 0.78rem;
+        }
+
+        .laptop-pill-reset:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #b91c1c;
+        }
+
+        /* Right Side: Utilization Bar */
+        .laptop-utilization-wrap {
+            min-width: 210px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .laptop-util-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+
+        .laptop-util-title {
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .laptop-util-pct {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .laptop-util-track {
+            display: flex;
+            height: 7px;
+            background: #f1f5f9;
+            border-radius: 9999px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .laptop-util-fill.in-use {
+            background: #f05353;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .laptop-util-fill.available {
+            background: #6abf57;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .laptop-util-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.74rem;
+            color: #64748b;
+        }
+
+        .laptop-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .laptop-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .laptop-dot.in-use { background: #f05353; }
+        .laptop-dot.available { background: #6abf57; }
+
+        @media (max-width: 992px) {
+            .laptop-overview-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .laptop-pills-wrap {
+                justify-content: flex-start;
+            }
+            .laptop-utilization-wrap {
+                width: 100%;
+            }
+        }
+
+        /* 5-column layout for Status Cards */
+        .laptop-status-grid {
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 1.25rem !important;
+        }
+
+        @media (max-width: 1200px) {
+            .laptop-status-grid {
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .laptop-status-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .laptop-status-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.5rem !important;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .laptop-status-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 
     

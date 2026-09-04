@@ -2440,6 +2440,117 @@ function stock_supply_format_owner_with_dept($owner_name, $dept)
 }
 
 /**
+ * Helper to fetch last known owner for a device when it has no currently assigned owner.
+ * Useful for devices under maintenance or in stock.
+ *
+ * @param string $device_id
+ * @return array|null ['name' => string, 'dept' => string, 'formatted' => string] or null
+ */
+function stock_supply_get_device_last_owner($device_id)
+{
+    global $wpdb;
+    static $last_owner_cache = [];
+
+    $device_id = trim((string) $device_id);
+    if (empty($device_id)) {
+        return null;
+    }
+
+    if (array_key_exists($device_id, $last_owner_cache)) {
+        return $last_owner_cache[$device_id];
+    }
+
+    // 1. Check Repair_Requests (submitted requester)
+    $rr = $wpdb->get_row($wpdb->prepare("
+        SELECT o.Nickname, o.FirstName, o.LastName, dept.DepartmentName
+        FROM Repair_Requests rr
+        LEFT JOIN Owners o ON rr.OwnerID = o.OwnerID
+        LEFT JOIN Departments dept ON o.DepartmentID = dept.DepartmentID
+        WHERE rr.DeviceID = %s
+        ORDER BY rr.RequestID DESC
+        LIMIT 1
+    ", $device_id));
+
+    if ($rr && (!empty($rr->Nickname) || !empty($rr->FirstName))) {
+        $fullName = trim(($rr->FirstName ?? '') . ' ' . ($rr->LastName ?? ''));
+        $display = stock_supply_format_nickname_with_initial($rr->Nickname, '', '', $fullName);
+        $res = [
+            'name'      => $display,
+            'dept'      => $rr->DepartmentName ?? '',
+            'formatted' => stock_supply_format_owner_with_dept($display, $rr->DepartmentName ?? '')
+        ];
+        $last_owner_cache[$device_id] = $res;
+        return $res;
+    }
+
+    // 2. Check History_new for last owner
+    $hist = $wpdb->get_row($wpdb->prepare("
+        SELECT h.Owner, dept.DepartmentName, o.Nickname, o.FirstName, o.LastName
+        FROM History_new h
+        LEFT JOIN Owners o ON (h.Owner = o.Nickname OR h.Owner = CONCAT(o.FirstName, ' ', o.LastName))
+        LEFT JOIN Departments dept ON o.DepartmentID = dept.DepartmentID
+        WHERE h.DeviceID = %s
+          AND h.Owner IS NOT NULL
+          AND h.Owner != '-'
+          AND h.Owner != ''
+          AND h.Owner != 'NULL'
+        ORDER BY h.Date DESC, h.HistoryID DESC
+        LIMIT 1
+    ", $device_id));
+
+    if ($hist && !empty($hist->Owner)) {
+        $rawOwner = trim($hist->Owner);
+        $fullName = trim(($hist->FirstName ?? '') . ' ' . ($hist->LastName ?? ''));
+        $display = stock_supply_format_nickname_with_initial($hist->Nickname ?: $rawOwner, '', '', $fullName);
+        if (empty($display) || $display === '-') {
+            $display = $rawOwner;
+        }
+        $res = [
+            'name'      => $display,
+            'dept'      => $hist->DepartmentName ?? '',
+            'formatted' => stock_supply_format_owner_with_dept($display, $hist->DepartmentName ?? '')
+        ];
+        $last_owner_cache[$device_id] = $res;
+        return $res;
+    }
+
+    $last_owner_cache[$device_id] = null;
+    return null;
+}
+
+/**
+ * Helper to render the owner column in device tables/lists.
+ * If owner is empty and status is Maintenance, shows '-' and a subtle previous owner note.
+ */
+function stock_supply_render_table_owner($device_id, $owner_field, $nickname_field, $dept_field, $status = '')
+{
+    $owner = trim($owner_field ?? '');
+    $nickname = trim($nickname_field ?? '');
+    $formattedOwner = stock_supply_format_nickname_with_initial($nickname, '', '', $owner);
+
+    if ($formattedOwner === '-' || empty($formattedOwner)) {
+        if (strcasecmp($status ?? '', 'Maintenance') === 0) {
+            $last_owner = stock_supply_get_device_last_owner($device_id);
+            if (!empty($last_owner['formatted'])) {
+                return '<span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);" title="Previous Owner">' .
+                       '<i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 0.72rem;"></i>' .
+                       '<span>Prev: ' . esc_html($last_owner['formatted']) . '</span>' .
+                       '</span>';
+            }
+        }
+        return '<span class="owner-empty text-muted">-</span>';
+    }
+
+    $html = '<span class="owner-name">' . htmlspecialchars($formattedOwner) . '</span>';
+    $deptAbbr = stock_supply_get_dept_abbr($dept_field ?? '');
+    if (!empty($deptAbbr)) {
+        $html .= ' <span class="owner-dept text-muted" style="font-size: 0.85em;">' . htmlspecialchars($deptAbbr) . '</span>';
+    }
+    return $html;
+}
+
+
+/**
  * Helper to format Employee Nickname with first letter of Last Name (e.g. "Frame S.")
  */
 function stock_supply_format_nickname_with_initial($nickname, $firstName = '', $lastName = '', $ownerField = '')

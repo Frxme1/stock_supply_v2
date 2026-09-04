@@ -407,21 +407,7 @@ function device_crud()
                                         </div>
                                     </td>
                                     <td class="text-start align-middle" data-label="Owner">
-                                        <?php
-                                        $owner = trim($row->Owner ?? '');
-                                        $nickname = trim($row->Nickname ?? '');
-                                        $formattedOwner = stock_supply_format_nickname_with_initial($nickname, '', '', $owner);
-
-                                        if ($formattedOwner === '-' || empty($formattedOwner)) {
-                                            echo '<span class="text-muted">-</span>';
-                                        } else {
-                                            echo '<span class="owner-name">' . htmlspecialchars($formattedOwner) . '</span>';
-                                            $deptAbbr = stock_supply_get_dept_abbr($row->Department ?? '');
-                                            if (!empty($deptAbbr)) {
-                                                echo ' <span class="owner-dept text-muted" style="font-size: 0.85em;">' . htmlspecialchars($deptAbbr) . '</span>';
-                                            }
-                                        }
-                                        ?>
+                                        <?= stock_supply_render_table_owner($row->DeviceID, $row->Owner ?? '', $row->Nickname ?? '', $row->Department ?? '', $row->Status ?? '') ?>
                                     </td>
                                     <td class="text-start align-middle" data-label="Status">
                                         <?php

@@ -134,9 +134,24 @@ function employee_dashboard()
 
         <!-- ===== SECTION 3: Employees by Department Chart ===== -->
         <div class="mt-4 bottom-chart-wrapper">
-            <div class="next-card slide-up" style="animation-delay: 0.7s;">
-                <h3 class="next-section-title">Employees by Department</h3>
-                <div id="chart-department" class="mt-3"></div>
+            <div class="next-card slide-up dept-chart-card" style="animation-delay: 0.7s;">
+                <div class="dept-chart-header">
+                    <div class="dept-title-group">
+                        <div class="dept-title-icon">
+                            <i class="fa-solid fa-chart-column"></i>
+                        </div>
+                        <div>
+                            <h3 class="next-section-title">Employees by Department</h3>
+                            <span class="dept-subtitle">Headcount distribution across departments</span>
+                        </div>
+                    </div>
+                    <div class="dept-meta-badges">
+                        <span class="dept-total-pill">
+                            <i class="fa-solid fa-users text-primary me-1"></i> Total <strong><?= intval(array_sum($dept_counts)) ?></strong> Employees
+                        </span>
+                    </div>
+                </div>
+                <div id="chart-department" class="mt-2"></div>
             </div>
         </div>
 
@@ -352,6 +367,155 @@ function employee_dashboard()
                 grid-template-columns: 1fr !important;
             }
         }
+
+        /* ===== Department Chart Card Styling ===== */
+        .dept-chart-card {
+            padding: 1.5rem !important;
+            border-radius: 16px !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02) !important;
+            background: #ffffff !important;
+        }
+
+        .dept-chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+
+        .dept-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .dept-title-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(14, 165, 233, 0.08) 100%);
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.08);
+            flex-shrink: 0;
+        }
+
+        .dept-rank-badge {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            letter-spacing: 0.01em;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .dept-subtitle {
+            font-size: 0.82rem;
+            color: #64748b;
+            display: block;
+            margin-top: 3px;
+        }
+
+        .dept-meta-badges {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .dept-total-pill {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #334155;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 5px 11px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .dept-hint-badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #64748b;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 5px 11px;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .dept-hint-badge:hover {
+            color: #2563eb;
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+
+        /* ApexCharts Overrides for Dept Chart */
+        #chart-department {
+            position: relative;
+            margin-top: 0.5rem;
+        }
+
+        #chart-department .apexcharts-bar-area {
+            cursor: pointer !important;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease !important;
+        }
+
+        #chart-department .apexcharts-bar-area:hover {
+            filter: brightness(1.08) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15)) !important;
+        }
+
+        #chart-department .apexcharts-yaxis-label {
+            font-weight: 600 !important;
+            fill: #1e293b !important;
+            cursor: pointer !important;
+            transition: fill 0.15s ease;
+        }
+
+        #chart-department .apexcharts-yaxis-label:hover {
+            fill: #2563eb !important;
+        }
+
+        #chart-department .apexcharts-datalabel {
+            pointer-events: none;
+        }
+
+        #chart-department .apexcharts-tooltip {
+            border-radius: 10px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+            border: 1px solid #e2e8f0 !important;
+            font-family: inherit !important;
+            overflow: hidden !important;
+        }
+
+        @media (max-width: 768px) {
+            .dept-chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            .dept-meta-badges {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
     </style>
 
     <script>
@@ -404,34 +568,178 @@ function employee_dashboard()
         }
 
         function initEmpApexCharts() {
+            var deptLabels = <?= $js_dept_labels ?>;
+            var deptCounts = <?= $js_dept_counts ?>;
+            var totalEmployees = <?= intval($total_employees) ?>;
+            var maxCount = deptCounts.length > 0 ? Math.max.apply(null, deptCounts) : 10;
+            // Pad max count so outside data labels have comfortable breathing room
+            var xMax = Math.ceil(maxCount * 1.12);
+
             // Employees by Department Chart
             var optionsDept = {
-                series: [{ name: 'Employees', data: <?= $js_dept_counts ?> }],
+                series: [{ name: 'Employees', data: deptCounts }],
                 chart: {
                     type: 'bar',
-                    height: 280,
-                    fontFamily: 'inherit',
+                    height: 330,
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                     toolbar: { show: false },
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 700,
+                        animateGradually: {
+                            enabled: true,
+                            delay: 120
+                        },
+                        dynamicAnimation: {
+                            enabled: true,
+                            speed: 350
+                        }
+                    },
                     events: {
                         dataPointSelection: function (event, chartContext, config) {
-                            var categories = <?= $js_dept_labels ?>;
-                            var selected = categories[config.dataPointIndex];
-                            if (selected) {
-                                window.location.href = '<?= esc_url(home_url('/owner/?filter_department=')) ?>' + encodeURIComponent(selected);
+                            if (config.dataPointIndex >= 0 && config.dataPointIndex < deptLabels.length) {
+                                var selected = deptLabels[config.dataPointIndex];
+                                if (selected) {
+                                    window.location.href = '<?= esc_url(home_url('/owner/?filter_department=')) ?>' + encodeURIComponent(selected);
+                                }
                             }
                         }
                     }
                 },
                 plotOptions: {
-                    bar: { borderRadius: 5, horizontal: true, distributed: true, barHeight: '55%' }
+                    bar: {
+                        horizontal: true,
+                        barHeight: '62%',
+                        borderRadius: 6,
+                        borderRadiusApplication: 'end',
+                        distributed: true,
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
                 },
-                colors: ['#6ABF57', '#15A5DA', '#FDB840', '#F05353', '#8B5CF6', '#EC4899', '#14B8A6'],
-                dataLabels: { enabled: true },
-                xaxis: { categories: <?= $js_dept_labels ?> },
+                colors: [
+                    '#3B82F6', // Blue
+                    '#0EA5E9', // Sky Blue
+                    '#10B981', // Emerald
+                    '#F59E0B', // Amber
+                    '#8B5CF6', // Violet
+                    '#EC4899', // Pink
+                    '#06B6D4', // Cyan
+                    '#6366F1'  // Indigo
+                ],
+                dataLabels: {
+                    enabled: true,
+                    textAnchor: 'start',
+                    offsetX: 10,
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        colors: ['#334155']
+                    },
+                    formatter: function (val) {
+                        return val;
+                    },
+                    dropShadow: {
+                        enabled: false
+                    }
+                },
+                grid: {
+                    borderColor: '#f1f5f9',
+                    strokeDashArray: 4,
+                    xaxis: {
+                        lines: { show: true }
+                    },
+                    yaxis: {
+                        lines: { show: false }
+                    },
+                    padding: {
+                        top: -10,
+                        right: 40,
+                        bottom: 0,
+                        left: 10
+                    }
+                },
+                xaxis: {
+                    categories: deptLabels,
+                    max: xMax,
+                    labels: {
+                        style: {
+                            colors: '#94a3b8',
+                            fontSize: '11px',
+                            fontWeight: 500
+                        },
+                        formatter: function (val) {
+                            return Math.floor(val);
+                        }
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#1e293b',
+                            fontSize: '13px',
+                            fontWeight: 600
+                        }
+                    }
+                },
+                tooltip: {
+                    theme: 'light',
+                    custom: function (opts) {
+                        var series = opts.series;
+                        var seriesIndex = opts.seriesIndex;
+                        var dataPointIndex = opts.dataPointIndex;
+                        var w = opts.w;
+                        var dept = deptLabels[dataPointIndex] || '';
+                        var val = series[seriesIndex][dataPointIndex];
+                        var pct = totalEmployees > 0 ? ((val / totalEmployees) * 100).toFixed(1) : 0;
+                        var color = w.globals.colors[dataPointIndex % w.globals.colors.length];
+
+                        return '<div style="padding: 10px 14px; min-width: 160px;">' +
+                            '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">' +
+                                '<span style="width: 10px; height: 10px; border-radius: 3px; background: ' + color + '; display: inline-block;"></span>' +
+                                '<strong style="color: #0f172a; font-size: 13px;">' + dept + '</strong>' +
+                            '</div>' +
+                            '<div style="font-size: 12px; color: #475569; display: flex; justify-content: space-between; margin-bottom: 3px;">' +
+                                '<span>Employees:</span>' +
+                                '<strong style="color: #0f172a;">' + val + '</strong>' +
+                            '</div>' +
+                            '<div style="font-size: 12px; color: #475569; display: flex; justify-content: space-between; margin-bottom: 6px;">' +
+                                '<span>Share:</span>' +
+                                '<strong style="color: #2563eb;">' + pct + '%</strong>' +
+                            '</div>' +
+                            '<div style="border-top: 1px dashed #e2e8f0; padding-top: 5px; font-size: 11px; color: #3b82f6; text-align: center;">' +
+                                '<i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; margin-right: 4px;"></i>Click to view employees' +
+                            '</div>' +
+                        '</div>';
+                    }
+                },
                 legend: { show: false }
             };
-            var chartDept = new ApexCharts(document.querySelector("#chart-department"), optionsDept);
-            chartDept.render();
+
+            var chartEl = document.querySelector("#chart-department");
+            if (chartEl) {
+                chartEl.innerHTML = '';
+                var chartDept = new ApexCharts(chartEl, optionsDept);
+                chartDept.render();
+
+                // Make Y-Axis department labels clickable too
+                setTimeout(function() {
+                    var yLabels = document.querySelectorAll('#chart-department .apexcharts-yaxis-label');
+                    yLabels.forEach(function(lbl, idx) {
+                        lbl.style.cursor = 'pointer';
+                        lbl.onclick = function() {
+                            var deptName = deptLabels[idx];
+                            if (deptName) {
+                                window.location.href = '<?= esc_url(home_url('/owner/?filter_department=')) ?>' + encodeURIComponent(deptName);
+                            }
+                        };
+                    });
+                }, 600);
+            }
         }
 
         if (document.readyState === 'loading') {

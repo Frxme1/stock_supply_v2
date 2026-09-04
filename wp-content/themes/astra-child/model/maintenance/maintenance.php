@@ -50,19 +50,19 @@ function device_crud_maintenance()
 
     // Fetch all active maintenance devices matching query (Clean Deduplicated Query with Smart Owner Fallback)
     $all_active_maintenance = $wpdb->get_results("
-        SELECT d.DeviceID, c.CategoryName AS Category, b.BrandName AS Brand, d.Model, d.SerialNumber,
+        SELECT d.DeviceID, d.OwnerID, c.CategoryName AS Category, b.BrandName AS Brand, d.Model, d.SerialNumber,
                COALESCE(m.RepairDate, d.RepairDate) AS RepairDate,
                m.MaintenanceID, m.CreatedAt, m.Details, m.Photo,
                s.StatusName AS Status,
+               o.Nickname AS ActiveNickname,
+               TRIM(CONCAT(COALESCE(o.FirstName, ''), ' ', COALESCE(o.LastName, ''))) AS ActiveFullname,
+               dept.DepartmentName AS ActiveDepartment,
                COALESCE(
-                   NULLIF(o.Nickname, ''),
-                   NULLIF(TRIM(CONCAT(COALESCE(o.FirstName, ''), ' ', COALESCE(o.LastName, ''))), ''),
                    (SELECT o2.Nickname FROM Repair_Requests rr2 LEFT JOIN Owners o2 ON rr2.OwnerID = o2.OwnerID WHERE rr2.DeviceID = d.DeviceID ORDER BY rr2.RequestID DESC LIMIT 1),
                    (SELECT TRIM(CONCAT(COALESCE(o2.FirstName, ''), ' ', COALESCE(o2.LastName, ''))) FROM Repair_Requests rr2 LEFT JOIN Owners o2 ON rr2.OwnerID = o2.OwnerID WHERE rr2.DeviceID = d.DeviceID ORDER BY rr2.RequestID DESC LIMIT 1),
                    (SELECT h.Owner FROM History_new h WHERE h.DeviceID = d.DeviceID AND h.Owner IS NOT NULL AND h.Owner != '-' AND h.Owner != '' ORDER BY h.Date DESC, h.HistoryID DESC LIMIT 1),
-                   '-'
-               ) AS Owner,
-               o.Nickname,
+                   ''
+               ) AS FallbackOwner,
                COALESCE(
                    dept.DepartmentName,
                    (SELECT d2.DepartmentName FROM Repair_Requests rr3 LEFT JOIN Owners o3 ON rr3.OwnerID = o3.OwnerID LEFT JOIN Departments d2 ON o3.DepartmentID = d2.DepartmentID WHERE rr3.DeviceID = d.DeviceID ORDER BY rr3.RequestID DESC LIMIT 1),
@@ -263,7 +263,16 @@ function device_crud_maintenance()
                     <?php
                     $dev_action_nonce = wp_create_nonce('device_action_nonce');
                     foreach ($all_active_maintenance as $idx => $item):
-                        $deptAbbr = stock_supply_get_dept_abbr($item->Department ?? '');
+                        $has_active_owner = !empty($item->OwnerID) && (!empty($item->ActiveNickname) || (!empty($item->ActiveFullname) && $item->ActiveFullname !== ' '));
+                        $active_owner_raw = $has_active_owner ? stock_supply_format_nickname_with_initial($item->ActiveNickname, '', '', $item->ActiveFullname) : '';
+                        $active_owner_formatted = $has_active_owner ? stock_supply_format_owner_with_dept($active_owner_raw, $item->ActiveDepartment) : '-';
+
+                        $prev_owner_raw = !$has_active_owner && !empty($item->FallbackOwner) ? stock_supply_format_nickname_with_initial($item->FallbackOwner, '', '', '') : '';
+                        if (empty($prev_owner_raw) || $prev_owner_raw === '-') {
+                            $prev_owner_raw = $item->FallbackOwner ?? '';
+                        }
+                        $prev_formatted = !$has_active_owner && !empty($prev_owner_raw) ? stock_supply_format_owner_with_dept($prev_owner_raw, $item->Department) : '';
+                        if ($prev_formatted === '-') $prev_formatted = '';
                         ?>
                         <div class="mobile-maintenance-card slide-up">
                             <!-- Header: Title, Category Pill & Status Badge -->
@@ -287,8 +296,17 @@ function device_crud_maintenance()
                                 <div class="maint-info-row">
                                     <span class="maint-info-label"><i class="fa-solid fa-user" style="color: #6366f1;"></i>
                                         Owner</span>
-                                    <span
-                                        class="maint-info-value"><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></span>
+                                    <span class="maint-info-value d-flex align-items-center gap-1 flex-wrap">
+                                        <?php if ($has_active_owner): ?>
+                                            <?= esc_html(formatName($active_owner_formatted)) ?>
+                                        <?php elseif (!empty($prev_formatted)): ?>
+                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-size: 0.76rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Previous Owner">
+                                                <i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 0.7rem;"></i>Prev: <?= esc_html($prev_formatted) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </span>
                                 </div>
                                 <div class="maint-info-row">
                                     <span class="maint-info-label"><i class="fa-solid fa-barcode" style="color: #64748b;"></i>
@@ -321,14 +339,13 @@ function device_crud_maintenance()
                                     </div>
                                 <?php endif; ?>
 
-                                <!-- Issue Box -->
-                                <div class="mobile-maint-issue-box">
-                                    <div class="issue-box-title">
-                                        <i class="fa-solid fa-triangle-exclamation"></i> Issue / Repair Reason
-                                    </div>
-                                    <div class="issue-box-content">
+                                <!-- Issue Summary -->
+                                <div class="maint-info-row" style="align-items: flex-start;">
+                                    <span class="maint-info-label"><i class="fa-solid fa-triangle-exclamation"
+                                            style="color: #ea580c;"></i> Issue</span>
+                                    <span class="maint-info-value text-break" style="color: #b45309; font-weight: 600;">
                                         <?= esc_html($item->Details ?: 'No additional details specified') ?>
-                                    </div>
+                                    </span>
                                 </div>
                             </div>
 
@@ -343,9 +360,9 @@ function device_crud_maintenance()
                                     'model' => $item->Model ?? '',
                                     'category' => $item->Category ?? '',
                                     'serialNumber' => $item->SerialNumber ?? '',
-                                    'owner' => !empty($item->Nickname) ? $item->Nickname : (!empty(trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner ?? ''))) ? trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner)) : ($item->Owner ?? '')),
-                                    'nickname' => $item->Nickname ?? '',
-                                    'department' => $item->Department ?? '',
+                                    'owner' => $has_active_owner ? $active_owner_raw : '-',
+                                    'nickname' => $has_active_owner ? ($item->ActiveNickname ?? '') : '',
+                                    'department' => $has_active_owner ? ($item->ActiveDepartment ?? '') : '',
                                     'details' => $item->Details ?? '',
                                     'repairDate' => $item->RepairDate ?? '',
                                     'nonce' => $dev_action_nonce
@@ -382,6 +399,17 @@ function device_crud_maintenance()
                             $is_latest = ($idx === 0 && empty($search));
                             $is_recent = !empty($item->RepairDate) && strtotime($item->RepairDate) >= strtotime('-7 days') && strtotime($item->RepairDate) <= (current_time('timestamp') + 86400);
                             $delay = min(0.6, $idx * 0.05);
+
+                            $has_active_owner = !empty($item->OwnerID) && (!empty($item->ActiveNickname) || (!empty($item->ActiveFullname) && $item->ActiveFullname !== ' '));
+                            $active_owner_raw = $has_active_owner ? stock_supply_format_nickname_with_initial($item->ActiveNickname, '', '', $item->ActiveFullname) : '';
+                            $active_owner_formatted = $has_active_owner ? stock_supply_format_owner_with_dept($active_owner_raw, $item->ActiveDepartment) : '-';
+
+                            $prev_owner_raw = !$has_active_owner && !empty($item->FallbackOwner) ? stock_supply_format_nickname_with_initial($item->FallbackOwner, '', '', '') : '';
+                            if (empty($prev_owner_raw) || $prev_owner_raw === '-') {
+                                $prev_owner_raw = $item->FallbackOwner ?? '';
+                            }
+                            $prev_formatted = !$has_active_owner && !empty($prev_owner_raw) ? stock_supply_format_owner_with_dept($prev_owner_raw, $item->Department) : '';
+                            if ($prev_formatted === '-') $prev_formatted = '';
                             ?>
                             <div class="maint-card slide-up"
                                 style="animation-delay: <?= $delay ?>s; background: <?= ($is_latest || $is_recent) ? 'linear-gradient(180deg, #ffffff 0%, #fffbeb 100%)' : '#ffffff' ?>; border: <?= $is_latest ? '2px solid #ea580c' : ($is_recent ? '1.5px solid #f97316' : '1.5px solid #e2e8f0') ?>; border-radius: 20px; padding: 22px; box-shadow: <?= $is_latest ? '0 10px 28px rgba(234, 88, 12, 0.16)' : '0 4px 16px rgba(15, 23, 42, 0.04)' ?>; position: relative; transition: all 0.28s ease; overflow: hidden; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;"
@@ -431,12 +459,23 @@ function device_crud_maintenance()
                                 <?php endif; ?>
 
                                 <!-- Owner & Department -->
-                                <div class="d-flex align-items-center gap-3 mb-2 flex-wrap"
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap"
                                     style="font-size: 0.86rem; color: #334155; font-weight: 500;">
-                                    <?php if (!empty($item->Owner)): ?>
+                                    <?php if ($has_active_owner): ?>
                                         <div>
                                             <i class="fa-solid fa-user me-1" style="color: #6366f1;"></i>
-                                            <strong><?= esc_html(formatName(stock_supply_format_owner_with_dept($item->Owner, $item->Department))) ?></strong>
+                                            <strong><?= esc_html(formatName($active_owner_formatted)) ?></strong>
+                                        </div>
+                                    <?php elseif (!empty($prev_formatted)): ?>
+                                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                                            <span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-size: 0.76rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Previous Owner">
+                                                <i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 0.7rem;"></i>Prev: <?= esc_html($prev_formatted) ?>
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <i class="fa-solid fa-user me-1 text-muted"></i>
+                                            <span class="text-muted fw-bold">-</span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -459,24 +498,27 @@ function device_crud_maintenance()
                                                 style="width: 50px; height: 38px; object-fit: cover; border-radius: 6px; border: 1.5px solid #e2e8f0; transition: transform 0.15s ease;"
                                                 onmouseover="this.style.transform='scale(1.08)';"
                                                 onmouseout="this.style.transform='scale(1)';" title="Click to view photo">
-                                            <span><i class="fa-solid fa-camera"></i> View</span>
+                                            <span>View Photo</span>
                                         </a>
                                     </div>
                                 <?php endif; ?>
 
-                                <!-- Repair Reason / Details Box -->
+                                <!-- Issue Details -->
                                 <div
-                                    style="font-size: 0.86rem; color: #92400e; background: #fffbeb; border: 1.5px solid #fde047; padding: 12px 14px; border-radius: 14px; font-weight: 600; line-height: 1.45; margin-bottom: 18px; flex-grow: 1;">
+                                    style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.84rem; flex-grow: 1;">
                                     <div
-                                        style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #b45309; margin-bottom: 2px; font-weight: 700;">
-                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Issue / Repair Reason
+                                        style="font-weight: 700; color: #b45309; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                        Reported Issue:
                                     </div>
-                                    <?= esc_html($item->Details ?: 'No additional details specified') ?>
+                                    <div style="color: #78350f; font-weight: 500; line-height: 1.45;">
+                                        <?= esc_html($item->Details ?: 'No specific issue details provided.') ?>
+                                    </div>
                                 </div>
 
-                                <!-- Action Buttons (Fixed / Pinned to bottom of card) -->
-                                <div class="d-flex gap-2 justify-content-end pt-3 mt-auto"
-                                    style="border-top: 1px dashed #e2e8f0; width: 100%;">
+                                <!-- Card Actions Bottom Bar -->
+                                <div class="d-flex align-items-center justify-content-between gap-2 pt-2"
+                                    style="border-top: 1px dashed #e2e8f0; margin-top: auto;">
                                     <a href="?view=<?= esc_attr($item->DeviceID) ?>" class="btn btn-sm btn-outline-secondary"
                                         style="border-radius: 10px; font-weight: 600; font-size: 0.83rem; padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
                                         <i class="fa-solid fa-magnifying-glass"></i> Details
@@ -487,9 +529,9 @@ function device_crud_maintenance()
                                         'model' => $item->Model ?? '',
                                         'category' => $item->Category ?? '',
                                         'serialNumber' => $item->SerialNumber ?? '',
-                                        'owner' => !empty($item->Nickname) ? $item->Nickname : (!empty(trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner ?? ''))) ? trim(preg_replace('/\s*\(.*?\)/', '', $item->Owner)) : ($item->Owner ?? '')),
-                                        'nickname' => $item->Nickname ?? '',
-                                        'department' => $item->Department ?? '',
+                                        'owner' => $has_active_owner ? $active_owner_raw : '-',
+                                        'nickname' => $has_active_owner ? ($item->ActiveNickname ?? '') : '',
+                                        'department' => $has_active_owner ? ($item->ActiveDepartment ?? '') : '',
                                         'details' => $item->Details ?? '',
                                         'repairDate' => $item->RepairDate ?? '',
                                         'nonce' => $dev_action_nonce
