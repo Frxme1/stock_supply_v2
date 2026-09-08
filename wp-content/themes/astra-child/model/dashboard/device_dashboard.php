@@ -29,12 +29,6 @@ function device_dashboard()
     foreach ($status_summary as $row) {
         $summary_map[$row->Status] = intval($row->count);
     }
-    // Prepare Data for ApexCharts
-    $js_status_labels = json_encode(array_keys($summary_map));
-    $js_status_counts = json_encode(array_values($summary_map));
-
-    $js_cat_labels = json_encode(['Monitor', 'Laptop', 'Accessories']);
-    $js_cat_counts = json_encode([(int) $total_monitor, (int) $total_laptop, (int) $total_accessories]);
 
     $dept_summary = $wpdb->get_results("
         SELECT Department, COUNT(*) as count 
@@ -368,42 +362,109 @@ function device_dashboard()
             </div>
         </div>
 
-        <!-- ===== SECTION 3: Charts ===== -->
-        <div class="next-grid-3 mt-4">
+        <!-- ===== SECTION 3: Charts & Analytics ===== -->
+        <div class="next-grid-2 mt-4">
 
-            <!-- Donut Chart -->
-            <div class="next-card slide-up" style="animation-delay: 0.4s;">
-                <h3 class="next-section-title">Device Distribution</h3>
-                <div id="chart-distribution" class="mt-4 flex justify-center items-center"
-                    style="padding-top: 65px; padding-left: 30px">
-                    <?php
-                    $pct_monitor = $total_devices > 0 ? round(($total_monitor / $total_devices) * 100, 1) : 0;
-                    $pct_laptop = $total_devices > 0 ? round(($total_laptop / $total_devices) * 100, 1) : 0;
-                    $pct_acc = $total_devices > 0 ? round(($total_accessories / $total_devices) * 100, 1) : 0;
-                    $device_sectors = [
-                        ['label' => 'Monitor', 'pct' => $pct_monitor, 'color' => '#FDB840', 'url' => home_url('/monitor/')],
-                        ['label' => 'Laptop', 'pct' => $pct_laptop, 'color' => '#15A5DA', 'url' => home_url('/laptop/')],
-                        ['label' => 'Accessories', 'pct' => $pct_acc, 'color' => '#6ABF57', 'url' => home_url('/accessories/')],
-                    ];
-                    echo render_sectors_donut([
-                        'symbol' => 'DEVICES',
-                        'caption' => $total_devices . ' total units',
-                        'sectors' => $device_sectors,
-                    ]);
-                    ?>
+            <!-- Donut Chart: Device Distribution -->
+            <div class="next-card slide-up" style="animation-delay: 0.25s;">
+                <div class="dash-chart-card-header">
+                    <div>
+                        <div class="dash-chart-card-eyebrow">
+                            <i class="fa-solid fa-chart-pie" style="color: #0ea5e9;"></i> Category Breakdown
+                        </div>
+                        <h3 class="next-section-title mb-0">Device Distribution</h3>
+                    </div>
+                    <span class="dash-chart-badge"><?= number_format($total_devices) ?> Total Units</span>
+                </div>
+
+                <div class="dash-dist-grid">
+                    <!-- Left: ApexCharts Donut Chart with Center Total -->
+                    <div class="dash-dist-chart-wrap">
+                        <div id="chart-distribution-donut"></div>
+                    </div>
+
+                    <!-- Right: Interactive Category Stat Cards -->
+                    <div class="dash-dist-stats-list">
+                        <?php
+                        $pct_laptop = $total_devices > 0 ? round(($total_laptop / $total_devices) * 100, 1) : 0;
+                        $pct_monitor = $total_devices > 0 ? round(($total_monitor / $total_devices) * 100, 1) : 0;
+                        $pct_acc = $total_devices > 0 ? round(($total_accessories / $total_devices) * 100, 1) : 0;
+
+                        $cat_stat_items = [
+                            [
+                                'name'      => 'Laptop',
+                                'count'     => (int)$total_laptop,
+                                'pct'       => $pct_laptop,
+                                'color'     => '#0ea5e9',
+                                'bg'        => 'rgba(14, 165, 233, 0.08)',
+                                'border'    => 'rgba(14, 165, 233, 0.2)',
+                                'icon'      => 'fa-laptop',
+                                'url'       => home_url('/laptop/'),
+                                'index'     => 0,
+                            ],
+                            [
+                                'name'      => 'Monitor',
+                                'count'     => (int)$total_monitor,
+                                'pct'       => $pct_monitor,
+                                'color'     => '#f59e0b',
+                                'bg'        => 'rgba(245, 158, 11, 0.08)',
+                                'border'    => 'rgba(245, 158, 11, 0.2)',
+                                'icon'      => 'fa-desktop',
+                                'url'       => home_url('/monitor/'),
+                                'index'     => 1,
+                            ],
+                            [
+                                'name'      => 'Accessories',
+                                'count'     => (int)$total_accessories,
+                                'pct'       => $pct_acc,
+                                'color'     => '#10b981',
+                                'bg'        => 'rgba(16, 185, 129, 0.08)',
+                                'border'    => 'rgba(16, 185, 129, 0.2)',
+                                'icon'      => 'fa-plug',
+                                'url'       => home_url('/accessories/'),
+                                'index'     => 2,
+                            ],
+                        ];
+                        foreach ($cat_stat_items as $ci):
+                        ?>
+                            <a href="<?= esc_url($ci['url']) ?>" 
+                               class="dash-dist-stat-item" 
+                               data-index="<?= $ci['index'] ?>"
+                               title="View all <?= esc_attr($ci['name']) ?>">
+                                <div class="dash-dist-stat-icon" style="background: <?= $ci['bg'] ?>; color: <?= $ci['color'] ?>; border: 1px solid <?= $ci['border'] ?>;">
+                                    <i class="fa-solid <?= $ci['icon'] ?>"></i>
+                                </div>
+                                <div class="dash-dist-stat-main">
+                                    <div class="dash-dist-stat-header">
+                                        <span class="dash-dist-stat-name"><?= esc_html($ci['name']) ?></span>
+                                        <span class="dash-dist-stat-pct" style="color: <?= $ci['color'] ?>; background: <?= $ci['bg'] ?>;"><?= $ci['pct'] ?>%</span>
+                                    </div>
+                                    <div class="dash-dist-stat-bar-track">
+                                        <div class="dash-dist-stat-bar-fill" style="width: <?= $ci['pct'] ?>%; background: <?= $ci['color'] ?>;"></div>
+                                    </div>
+                                    <div class="dash-dist-stat-sub">
+                                        <span class="dash-dist-stat-count"><strong><?= number_format($ci['count']) ?></strong> units</span>
+                                        <span class="dash-dist-stat-action"><i class="fa-solid fa-arrow-right"></i></span>
+                                    </div>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
 
-            <!-- Status Overview Chart -->
-            <div class="next-card slide-up" style="animation-delay: 0.25s;">
-                <h3 class="next-section-title">Status Overview</h3>
-                <div id="chart-status" class="mt-4"></div>
-            </div>
-
-            <!-- Department Chart -->
+            <!-- Department Chart: Devices by Department -->
             <div class="next-card slide-up" style="animation-delay: 0.3s;">
-                <h3 class="next-section-title">Devices by Department</h3>
-                <div id="chart-department" class="mt-4"></div>
+                <div class="dash-chart-card-header">
+                    <div>
+                        <div class="dash-chart-card-eyebrow">
+                            <i class="fa-solid fa-building" style="color: #6366f1;"></i> Department Allocation
+                        </div>
+                        <h3 class="next-section-title mb-0">Devices by Department</h3>
+                    </div>
+                    <span class="dash-chart-badge">Top <?= count($dept_labels) ?> Departments</span>
+                </div>
+                <div id="chart-department" class="mt-2"></div>
             </div>
 
         </div>
@@ -631,6 +692,183 @@ function device_dashboard()
         .dash-scan-popup {
             border-radius: 16px !important;
         }
+
+        /* ---- Chart Section Enhancements (2-Column Balanced Grid) ---- */
+        .dash-chart-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dash-chart-card-eyebrow {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 3px;
+        }
+
+        .dash-chart-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 11px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 9999px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #475569;
+            white-space: nowrap;
+        }
+
+        /* ---- Device Distribution Modern Redesign ---- */
+        .dash-dist-grid {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 1.25rem;
+            align-items: center;
+            min-height: 320px;
+            padding: 0.25rem 0;
+        }
+
+        .dash-dist-chart-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dash-dist-stats-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            justify-content: center;
+        }
+
+        .dash-dist-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.75rem 1rem;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+            text-decoration: none !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+        }
+
+        .dash-dist-stat-item:hover {
+            transform: translateY(-2px);
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .dash-dist-stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .dash-dist-stat-item:hover .dash-dist-stat-icon {
+            transform: scale(1.08);
+        }
+
+        .dash-dist-stat-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dash-dist-stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .dash-dist-stat-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: -0.01em;
+        }
+
+        .dash-dist-stat-pct {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            line-height: 1.3;
+        }
+
+        .dash-dist-stat-bar-track {
+            height: 6px;
+            background: #f1f5f9;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .dash-dist-stat-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .dash-dist-stat-sub {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .dash-dist-stat-count strong {
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .dash-dist-stat-action {
+            color: #94a3b8;
+            font-size: 0.7rem;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .dash-dist-stat-item:hover .dash-dist-stat-action {
+            transform: translateX(3px);
+            color: #2563eb;
+        }
+
+        @media (max-width: 1280px) {
+            .dash-dist-grid {
+                grid-template-columns: 210px 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dash-dist-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+                min-height: auto;
+            }
+        }
     </style>
 
     <script>
@@ -730,39 +968,114 @@ function device_dashboard()
         window.triggerChartFilter = triggerChartFilter;
 
         function initApexCharts() {
-            // Chart 2: Status Overview
-            var optionsStatus = {
-                series: [{ name: 'Devices', data: <?= $js_status_counts ?> }],
-                chart: {
-                    type: 'bar',
-                    height: 320,
-                    fontFamily: 'inherit',
-                    toolbar: { show: false },
-                    events: {
-                        dataPointSelection: function (event, chartContext, config) {
-                            var categories = <?= $js_status_labels ?>;
-                            var selected = categories[config.dataPointIndex];
-                            if (selected === 'Maintenance') {
-                                window.location.href = '<?= esc_url(home_url('/maintenance/')) ?>';
-                            } else if (selected) {
-                                var targetUrl = '<?= esc_url(home_url('/home/')) ?>?filter_status=' + encodeURIComponent(selected);
-                                triggerChartFilter(targetUrl);
+            // Chart 1: Category Donut Chart
+            var catDonutEl = document.querySelector("#chart-distribution-donut");
+            if (catDonutEl) {
+                var catLabels = ['Laptop', 'Monitor', 'Accessories'];
+                var catSeries = [<?= (int)$total_laptop ?>, <?= (int)$total_monitor ?>, <?= (int)$total_accessories ?>];
+                var catColors = ['#0ea5e9', '#f59e0b', '#10b981'];
+                var catUrls = [
+                    '<?= esc_url(home_url('/laptop/')) ?>',
+                    '<?= esc_url(home_url('/monitor/')) ?>',
+                    '<?= esc_url(home_url('/accessories/')) ?>'
+                ];
+
+                var optionsCatDonut = {
+                    series: catSeries,
+                    labels: catLabels,
+                    colors: catColors,
+                    chart: {
+                        type: 'donut',
+                        height: 270,
+                        fontFamily: 'inherit',
+                        toolbar: { show: false },
+                        events: {
+                            dataPointSelection: function (event, chartContext, config) {
+                                var idx = config.dataPointIndex;
+                                if (catUrls[idx]) {
+                                    window.location.href = catUrls[idx];
+                                }
                             }
                         }
-                    }
-                },
-                xaxis: { categories: <?= $js_status_labels ?> },
-                colors: ['#6ABF57', '#F05353', '#FDB840', '#919191'],
-                plotOptions: {
-                    bar: { borderRadius: 6, columnWidth: '45%', distributed: true }
-                },
-                legend: { show: false },
-                dataLabels: { enabled: true, style: { colors: ['#fff'] } }
-            };
-            var chartStatus = new ApexCharts(document.querySelector("#chart-status"), optionsStatus);
-            chartStatus.render();
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '72%',
+                                labels: {
+                                    show: true,
+                                    name: {
+                                        show: true,
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        color: '#64748b',
+                                        offsetY: -4
+                                    },
+                                    value: {
+                                        show: true,
+                                        fontSize: '22px',
+                                        fontWeight: 800,
+                                        color: '#0f172a',
+                                        offsetY: 6,
+                                        formatter: function (val) {
+                                            return Number(val).toLocaleString();
+                                        }
+                                    },
+                                    total: {
+                                        show: true,
+                                        showAlways: true,
+                                        label: 'TOTAL ASSETS',
+                                        fontSize: '10px',
+                                        fontWeight: 700,
+                                        color: '#94a3b8',
+                                        formatter: function (w) {
+                                            var total = w.globals.seriesTotals.reduce(function (a, b) {
+                                                return a + b;
+                                            }, 0);
+                                            return total.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        width: 3,
+                        colors: ['#ffffff']
+                    },
+                    legend: {
+                        show: false
+                    },
+                    tooltip: {
+                        theme: 'light',
+                        y: {
+                            formatter: function (val) {
+                                var total = <?= (int)$total_devices ?>;
+                                var pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                return val.toLocaleString() + ' units (' + pct + '%)';
+                            }
+                        }
+                    },
+                    responsive: [{
+                        breakpoint: 480,
+                        options: {
+                            chart: {
+                                height: 230
+                            }
+                        }
+                    }]
+                };
+                var chartCatDonut = new ApexCharts(catDonutEl, optionsCatDonut);
+                chartCatDonut.render();
+            }
 
-            // Chart 3: Devices by Department
+            var deptContainer = document.querySelector("#chart-department");
+            if (!deptContainer) return;
+
+            // Chart: Devices by Department
             var optionsDept = {
                 series: [{ name: 'Devices', data: <?= $js_dept_counts ?> }],
                 chart: {
@@ -782,14 +1095,57 @@ function device_dashboard()
                     }
                 },
                 plotOptions: {
-                    bar: { borderRadius: 4, horizontal: true, distributed: true }
+                    bar: {
+                        borderRadius: 6,
+                        horizontal: true,
+                        distributed: true,
+                        barHeight: '62%'
+                    }
                 },
-                colors: ['#6ABF57', '#15A5DA', '#FDB840', '#F05353', '#8B5CF6', '#EC4899', '#14B8A6'],
-                dataLabels: { enabled: true },
-                xaxis: { categories: <?= $js_dept_labels ?> },
+                colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#6366f1'],
+                dataLabels: {
+                    enabled: true,
+                    style: {
+                        fontSize: '11px',
+                        fontWeight: 700
+                    }
+                },
+                xaxis: {
+                    categories: <?= $js_dept_labels ?>,
+                    labels: {
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            colors: '#64748b'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            colors: '#334155'
+                        }
+                    }
+                },
+                grid: {
+                    borderColor: '#f1f5f9',
+                    strokeDashArray: 4,
+                    xaxis: { lines: { show: true } },
+                    yaxis: { lines: { show: false } }
+                },
+                tooltip: {
+                    theme: 'light',
+                    y: {
+                        formatter: function (val) {
+                            return val + ' devices';
+                        }
+                    }
+                },
                 legend: { show: false }
             };
-            var chartDept = new ApexCharts(document.querySelector("#chart-department"), optionsDept);
+            var chartDept = new ApexCharts(deptContainer, optionsDept);
             chartDept.render();
         }
 

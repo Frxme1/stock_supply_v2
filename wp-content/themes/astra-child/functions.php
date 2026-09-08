@@ -2475,8 +2475,8 @@ function stock_supply_get_device_last_owner($device_id)
         $fullName = trim(($rr->FirstName ?? '') . ' ' . ($rr->LastName ?? ''));
         $display = stock_supply_format_nickname_with_initial($rr->Nickname, '', '', $fullName);
         $res = [
-            'name'      => $display,
-            'dept'      => $rr->DepartmentName ?? '',
+            'name' => $display,
+            'dept' => $rr->DepartmentName ?? '',
             'formatted' => stock_supply_format_owner_with_dept($display, $rr->DepartmentName ?? '')
         ];
         $last_owner_cache[$device_id] = $res;
@@ -2506,8 +2506,8 @@ function stock_supply_get_device_last_owner($device_id)
             $display = $rawOwner;
         }
         $res = [
-            'name'      => $display,
-            'dept'      => $hist->DepartmentName ?? '',
+            'name' => $display,
+            'dept' => $hist->DepartmentName ?? '',
             'formatted' => stock_supply_format_owner_with_dept($display, $hist->DepartmentName ?? '')
         ];
         $last_owner_cache[$device_id] = $res;
@@ -2533,9 +2533,9 @@ function stock_supply_render_table_owner($device_id, $owner_field, $nickname_fie
             $last_owner = stock_supply_get_device_last_owner($device_id);
             if (!empty($last_owner['formatted'])) {
                 return '<span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);" title="Previous Owner">' .
-                       '<i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 0.72rem;"></i>' .
-                       '<span>Prev: ' . esc_html($last_owner['formatted']) . '</span>' .
-                       '</span>';
+                    '<i class="fa-solid fa-clock-rotate-left text-muted" style="font-size: 0.72rem;"></i>' .
+                    '<span>Prev: ' . esc_html($last_owner['formatted']) . '</span>' .
+                    '</span>';
             }
         }
         return '<span class="owner-empty text-muted">-</span>';
@@ -2561,16 +2561,19 @@ function stock_supply_format_nickname_with_initial($nickname, $firstName = '', $
     $owner = trim($ownerField ?? '');
 
     // Filter out literal 'NULL' strings
-    if (strcasecmp($last, 'NULL') === 0) $last = '';
-    if (strcasecmp($first, 'NULL') === 0) $first = '';
-    if (strcasecmp($nick, 'NULL') === 0) $nick = '';
+    if (strcasecmp($last, 'NULL') === 0)
+        $last = '';
+    if (strcasecmp($first, 'NULL') === 0)
+        $first = '';
+    if (strcasecmp($nick, 'NULL') === 0)
+        $nick = '';
 
     $lastInitial = '';
 
     // 1. Direct LastName check (e.g. "Sritonchai" -> "S.")
     if (!empty($last)) {
         $lastInitial = strtoupper(mb_substr($last, 0, 1)) . '.';
-    } 
+    }
     // 2. Check FirstName for multi-word full name (e.g. "Kasamapron Sritonchai" -> "S.")
     elseif (!empty($first)) {
         $parts = preg_split('/\s+/', $first);
@@ -2580,7 +2583,7 @@ function stock_supply_format_nickname_with_initial($nickname, $firstName = '', $
                 $lastInitial = strtoupper(mb_substr($lastPart, 0, 1)) . '.';
             }
         }
-    } 
+    }
     // 3. Fallback: check owner string e.g. "Mummy Sritonchai (Full-time)" or "Frame S. (Full-time)"
     elseif (!empty($owner)) {
         $clean = trim(preg_replace('/\s*\(.*?\)$/', '', $owner));

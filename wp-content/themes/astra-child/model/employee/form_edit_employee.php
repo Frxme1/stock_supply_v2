@@ -70,7 +70,33 @@ function form_edit_owner($editing = null)
             ['OwnerID' => $owner_id]
         );
 
-        if ($updated !== false) {
+        if ($updated === false) {
+            $db_err = esc_js($wpdb->last_error ?: 'Unknown database error');
+            echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to Update Employee',
+                        text: 'Error: " . $db_err . "'
+                    });
+                });
+            </script>";
+        } elseif ($updated === 0) {
+            echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No changes detected',
+                        text: 'No employee details were modified.',
+                        confirmButtonColor: '#6366f1',
+                        showConfirmButton: true
+                    });
+                });
+            </script>";
+        } else {
+            // Update timestamp for actual modifications
+            $wpdb->update($table_owner, ['UpdatedAt' => current_time('mysql')], ['OwnerID' => $owner_id]);
+
             $current_user = wp_get_current_user();
             $user_email = $current_user->user_email ?? 'system';
 
@@ -145,22 +171,11 @@ function form_edit_owner($editing = null)
                     });
                 });
             </script>";
-        } else {
-            $db_err = esc_js($wpdb->last_error ?: 'Unknown database error');
-            echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Failed to Update Employee',
-                        text: 'Error: " . $db_err . "'
-                    });
-                });
-            </script>";
         }
     }
 
     if (!$editing) {
-        $owner_id = isset($_GET['OwnerID']) ? intval($_GET['OwnerID']) : 0;
+        $owner_id = isset($_GET['OwnerID']) ? intval($_GET['OwnerID']) : (isset($_GET['edit']) ? intval($_GET['edit']) : (isset($_POST['OwnerID']) ? intval($_POST['OwnerID']) : 0));
         if ($owner_id) {
             $editing = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_owner WHERE OwnerID = %d", $owner_id));
         }

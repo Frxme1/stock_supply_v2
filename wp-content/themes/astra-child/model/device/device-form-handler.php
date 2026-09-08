@@ -54,21 +54,31 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['CategoryID'])
 
 	if (!empty($_POST['edit_id'])) {
 		$edit_id = sanitize_text_field($_POST['edit_id']);
-		$wpdb->update($table_devices, $data, ['DeviceID' => $edit_id]);
+		unset($data['CreatedAt']);
+		unset($data['UpdatedAt']);
+		$updated = $wpdb->update($table_devices, $data, ['DeviceID' => $edit_id]);
 
-		// Log history for edit
-		$wpdb->insert($table_history, [
-			'DeviceID'    => $data['DeviceID'],
-			'Action'      => 'Update Device',
-			'Date'        => current_time('mysql'),
-			'Description' => "Device ID {$data['DeviceID']} information updated",
-			'user_email'  => $user_email,
-			'CategoryID'  => $data['CategoryID'],
-			'Owner'       => '-',
-		]);
+		if ($updated === false) {
+			wp_die('Failed to update device: ' . esc_html($wpdb->last_error));
+		} elseif ($updated === 0) {
+			wp_redirect(add_query_arg('no_change', '1', wp_get_referer() ?: home_url('/home/')));
+			exit;
+		} else {
+			$wpdb->update($table_devices, ['UpdatedAt' => current_time('mysql')], ['DeviceID' => $edit_id]);
+			// Log history for edit
+			$wpdb->insert($table_history, [
+				'DeviceID'    => $data['DeviceID'],
+				'Action'      => 'Update Device',
+				'Date'        => current_time('mysql'),
+				'Description' => "Device ID {$data['DeviceID']} information updated",
+				'user_email'  => $user_email,
+				'CategoryID'  => $data['CategoryID'],
+				'Owner'       => '-',
+			]);
 
-		wp_redirect(add_query_arg('updated', '1', wp_get_referer() ?: home_url('/home/')));
-		exit;
+			wp_redirect(add_query_arg('updated', '1', wp_get_referer() ?: home_url('/home/')));
+			exit;
+		}
 	} else {
 		// Check if the serial number matches
 		if (!empty($data['SerialNumber'])) {

@@ -115,7 +115,6 @@ function edit_device_form($editing = null)
             'DepartmentID'  => $DepartmentID ?: null,
             'PositionID'    => $PositionID ?: null,
             'AddDeviceDate' => $AddDeviceDate,
-            'UpdatedAt'     => current_time('mysql'),
         ];
 
         if ($OwnerID === null) {
@@ -163,15 +162,20 @@ function edit_device_form($editing = null)
                     showConfirmButton: true
                 });
             </script>";
-        } elseif ($updated === 0) {
+        } elseif ($updated === 0 && $Reason === '') {
             echo "<script>
                 Swal.fire({
                     icon: 'info',
                     title: 'No changes detected',
+                    text: 'No device information was modified.',
+                    confirmButtonColor: '#6366f1',
                     showConfirmButton: true
                 });
             </script>";
         } else {
+            // Update timestamp for actual modifications
+            $wpdb->update($table_devices, ['UpdatedAt' => current_time('mysql')], $where);
+
             $current_user = wp_get_current_user();
             $user_email = $current_user->user_email ?? '';
 
