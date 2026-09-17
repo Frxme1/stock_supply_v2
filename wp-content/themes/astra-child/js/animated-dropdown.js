@@ -46,6 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create wrapper
             const wrapper = document.createElement('div');
             wrapper.className = 'animated-dropdown-wrapper';
+
+            if (select.id) {
+                wrapper.setAttribute('data-select-id', select.id);
+            }
+
             select.parentNode.insertBefore(wrapper, select.nextSibling);
 
             // Create button
@@ -121,13 +126,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 // Close other dropdowns first
                 document.querySelectorAll('.animated-dropdown-btn.open').forEach(b => {
-                    if (b !== btn) b.click();
+                    if (b !== btn) {
+                        b.classList.remove('open');
+                        const otherWrapper = b.closest('.animated-dropdown-wrapper');
+                        if (otherWrapper) {
+                            otherWrapper.classList.remove('open');
+                            const otherList = otherWrapper.querySelector('.animated-dropdown-list');
+                            if (otherList) otherList.classList.remove('open');
+                        }
+                    }
                 });
 
                 isOpen = !isOpen;
                 if (isOpen) {
+                    wrapper.classList.add('open');
                     btn.classList.add('open');
                     list.classList.add('open');
+
+                    // Smart alignment: check if list overflows right edge of viewport
+                    const rect = list.getBoundingClientRect();
+                    const winWidth = window.innerWidth || document.documentElement.clientWidth;
+                    if (rect.right > winWidth - 12 || wrapper.closest('.justify-content-between, .text-end, .per-page-dropdown-container')) {
+                        list.style.left = 'auto';
+                        list.style.right = '0';
+                    } else {
+                        list.style.left = '0';
+                        list.style.right = 'auto';
+                    }
+
+                    // Smart vertical positioning: check if list overflows bottom edge
+                    const winHeight = window.innerHeight || document.documentElement.clientHeight;
+                    if (rect.bottom > winHeight - 12 && rect.top > rect.height) {
+                        list.style.top = 'auto';
+                        list.style.bottom = 'calc(100% + 4px)';
+                        list.style.transformOrigin = 'bottom center';
+                    } else {
+                        list.style.top = 'calc(100% + 4px)';
+                        list.style.bottom = 'auto';
+                        list.style.transformOrigin = 'top center';
+                    }
                 } else {
                     closeDropdown();
                 }
@@ -135,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function closeDropdown() {
                 isOpen = false;
+                wrapper.classList.remove('open');
                 btn.classList.remove('open');
                 list.classList.remove('open');
             }

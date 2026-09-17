@@ -20,7 +20,7 @@ function device_crud()
 
 
     // Set up pagination
-    $page = 25; // Number of records per page
+    $page = stock_supply_get_per_page(28); // Number of records per page
     $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
     $offset = ($current_page - 1) * $page;
 
@@ -252,13 +252,13 @@ function device_crud()
 
             <form method="POST" action="" id="bulk-action-form-device">
                 <?php wp_nonce_field('bulk_device_action_nonce', 'bulk_action_nonce'); ?>
-                <div class="d-flex align-items-center mb-3">
-                    <!-- Dropdown removed as per user request -->
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                     <button type="button" class="btn btn-primary btn-sm"
                         style="border-radius: 8px; font-weight: 600; padding: 6px 16px;"
                         onclick="handleBulkAction('device')">
                         <i class="fa-solid fa-print"></i> Print Labels
                     </button>
+                    <?= stock_supply_render_per_page_dropdown($page) ?>
                 </div>
 
                 <!-- Mobile Only Inventory Dashboard Hub -->

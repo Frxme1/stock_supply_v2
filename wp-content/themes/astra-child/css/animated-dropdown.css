@@ -7,6 +7,13 @@
     -webkit-font-smoothing: antialiased;
 }
 
+/* Prevent dropdown from sinking under subsequent elements / tables / cards */
+.animated-dropdown-wrapper.open,
+.animated-dropdown-wrapper:has(.animated-dropdown-btn.open),
+.animated-dropdown-wrapper:has(.animated-dropdown-list.open) {
+    z-index: 9999 !important;
+}
+
 /* Custom Button */
 .animated-dropdown-btn {
     display: flex;
@@ -25,6 +32,7 @@
     font-size: 0.875rem;
     font-weight: 500;
     box-sizing: border-box;
+    white-space: nowrap;
 }
 
 .animated-dropdown-btn:hover,
@@ -57,25 +65,25 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 4px !important;
+    padding: 5px !important;
     margin: 0 !important;
     list-style: none !important;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    right: 0;
-    width: 100%;
     min-width: 100%;
+    width: max-content;
+    max-width: min(90vw, 360px);
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: 260px;
+    max-height: 280px;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
-    z-index: 1000;
+    z-index: 10000 !important;
     box-sizing: border-box;
 
     transform-origin: top center;
@@ -100,7 +108,7 @@
     gap: 8px;
     width: 100% !important;
     margin: 0 !important;
-    padding: 7px 10px !important;
+    padding: 8px 12px !important;
     border-radius: 6px;
     cursor: pointer;
     color: #334155;
@@ -140,6 +148,24 @@
 .animated-dropdown-item:hover .action-icon,
 .animated-dropdown-item.selected .action-icon {
     color: #2563eb;
+}
+
+/* Specific Per-Page Dropdown Styles to Prevent Sinking / Clipping */
+.per-page-dropdown-container {
+    position: relative;
+    z-index: 100;
+}
+
+.per-page-dropdown-container .animated-dropdown-wrapper {
+    width: 215px !important;
+    min-width: 215px !important;
+}
+
+.per-page-dropdown-container .animated-dropdown-list {
+    left: auto !important;
+    right: 0 !important;
+    min-width: 100% !important;
+    width: max-content !important;
 }
 
 /* Custom hide for original select on desktop (when replaced by animated custom dropdown) */

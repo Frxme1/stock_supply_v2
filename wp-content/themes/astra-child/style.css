@@ -1052,6 +1052,10 @@ input[type="email"],
 .table-custom td[data-label="Email"],
 .user-email,
 .history-user-email,
+.dtl-user-email,
+.sidebar-user-email,
+.mobile-user-email,
+.gqp-emp-hero-email,
 .ved-timeline-meta span {
     text-transform: lowercase !important;
 }

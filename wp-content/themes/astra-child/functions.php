@@ -10,6 +10,14 @@ add_action('init', function () {
     remove_action('astra_footer', 'astra_footer_markup');
 }, 99);
 
+// Force Astra to load custom sidebar (sidebar.php) on all frontend pages
+add_filter('astra_page_layout', function ($layout) {
+    if (!is_admin() && !is_page_template('template-blank-form.php')) {
+        return 'left-sidebar';
+    }
+    return $layout;
+});
+
 // Add page slug to body classes for page-specific mobile CSS targeting
 add_filter('body_class', function ($classes) {
     if (is_page()) {
@@ -314,11 +322,18 @@ add_action('admin_init', 'stock_supply_block_wp_admin_for_non_admins');
 function stock_supply_register_custom_roles()
 {
     if (!get_role('stock_staff')) {
-        add_role('stock_staff', 'Stock Staff (ผู้ดูแลสต็อก)', [
+        add_role('stock_staff', 'Stock Staff', [
             'read' => true,
             'edit_posts' => false,
             'delete_posts' => false,
         ]);
+    } else {
+        $wp_roles = wp_roles();
+        if (isset($wp_roles->roles['stock_staff']) && $wp_roles->roles['stock_staff']['name'] !== 'Stock Staff') {
+            $wp_roles->roles['stock_staff']['name'] = 'Stock Staff';
+            $wp_roles->role_names['stock_staff'] = 'Stock Staff';
+            update_option($wp_roles->role_key, $wp_roles->roles);
+        }
     }
 }
 add_action('init', 'stock_supply_register_custom_roles');
@@ -1644,10 +1659,7 @@ function stock_supply_get_sidebar_badges()
 {
     global $wpdb;
 
-    // 1. Pending Requests (Disabled)
-    $pending_requests_count = 0;
-
-    // 2. Devices under Maintenance
+    // Devices under Maintenance
     $maintenance_status_id = $wpdb->get_var("SELECT StatusID FROM Statuses WHERE StatusName = 'Maintenance'");
     $maintenance_count = 0;
     if ($maintenance_status_id) {
@@ -1658,9 +1670,9 @@ function stock_supply_get_sidebar_badges()
     }
 
     return [
-        'requests' => $pending_requests_count,
+        'requests' => 0,
         'maintenance' => $maintenance_count,
-        'total' => $pending_requests_count + $maintenance_count
+        'total' => $maintenance_count
     ];
 }
 
@@ -2873,6 +2885,58 @@ function stock_supply_ajax_get_quick_employee_peek()
 }
 add_action('wp_ajax_get_quick_employee_peek', 'stock_supply_ajax_get_quick_employee_peek');
 add_action('wp_ajax_nopriv_get_quick_employee_peek', 'stock_supply_ajax_get_quick_employee_peek');
+add_action('wp', function () {
+    remove_action('astra_header', 'astra_header_markup');
+});
+
+/**
+ * Get items per page for inventory tables
+ */
+function stock_supply_get_per_page($default = 28)
+{
+    $param = isset($_GET['per_page']) ? sanitize_text_field($_GET['per_page']) : '';
+    if ($param === 'all') {
+        return 9999;
+    }
+    $int_val = intval($param);
+    if (in_array($int_val, [28, 56, 84, 100])) {
+        return $int_val;
+    }
+    return $default;
+}
+
+/**
+ * Render items per page dropdown
+ */
+function stock_supply_render_per_page_dropdown($current_per_page)
+{
+    ?>
+    <div class="d-flex align-items-center gap-2 per-page-dropdown-container" style="font-size: 0.875rem; position: relative; z-index: 100;">
+        <label for="per_page_select" class="text-muted small mb-0 font-weight-bold" style="white-space: nowrap;">
+            <i class="fa-solid fa-list-ol"></i> Items per page:
+        </label>
+        <select id="per_page_select" class="form-select form-select-sm" style="width: 215px; min-width: 215px; border-radius: 8px; font-weight: 600; cursor: pointer; border-color: #cbd5e1;" onchange="stockSupplyChangePerPage(this.value)">
+            <option value="28" <?= $current_per_page == 28 ? 'selected' : '' ?>>28 items (1 A4 page)</option>
+            <option value="56" <?= $current_per_page == 56 ? 'selected' : '' ?>>56 items (2 A4 pages)</option>
+            <option value="84" <?= $current_per_page == 84 ? 'selected' : '' ?>>84 items (3 A4 pages)</option>
+            <option value="100" <?= $current_per_page == 100 ? 'selected' : '' ?>>100 items</option>
+            <option value="all" <?= $current_per_page >= 9999 ? 'selected' : '' ?>>All items</option>
+        </select>
+    </div>
+    <script>
+        if (typeof stockSupplyChangePerPage !== 'function') {
+            function stockSupplyChangePerPage(val) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('per_page', val);
+                url.searchParams.set('paged', 1);
+                window.location.href = url.toString();
+            }
+        }
+    </script>
+    <?php
+}
+
+
 
 
 

@@ -1,7 +1,6 @@
 <?php
-$sidebar_badges = function_exists('stock_supply_get_sidebar_badges') ? stock_supply_get_sidebar_badges() : ['requests' => 0, 'maintenance' => 0, 'total' => 0];
-$requests_count = $sidebar_badges['requests'];
-$maintenance_count = $sidebar_badges['maintenance'];
+$sidebar_badges = function_exists('stock_supply_get_sidebar_badges') ? stock_supply_get_sidebar_badges() : ['maintenance' => 0, 'total' => 0];
+$maintenance_count = $sidebar_badges['maintenance'] ?? 0;
 
 $current_user = wp_get_current_user();
 $is_logged_in = is_user_logged_in();

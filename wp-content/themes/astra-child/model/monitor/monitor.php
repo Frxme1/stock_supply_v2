@@ -3,7 +3,7 @@ function device_crud_monitor()
 {
     global $wpdb; // Access the WordPress database object
     $table_device_wn = 'DevicesWithNames'; // Table name containing device data
-    $page_size = 25; // Number of items to show per page
+    $page_size = stock_supply_get_per_page(28); // Number of items to show per page
 
     ob_start(); // Start output buffering
 
@@ -70,7 +70,7 @@ function device_crud_monitor()
 
 
     // Get device rows with limit & offset for current page
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $where_sql ORDER BY UpdatedAt DESC LIMIT $page_size OFFSET $offset");
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $where_sql ORDER BY LENGTH(DeviceID) DESC, DeviceID DESC LIMIT $page_size OFFSET $offset");
 
 
     // Get distinct brand names for the search suggestion list
@@ -226,12 +226,12 @@ function device_crud_monitor()
         <!-- Device Table -->
         <form method="POST" action="" id="bulk-action-form-monitor">
             <?php wp_nonce_field('bulk_device_action_nonce', 'bulk_action_nonce'); ?>
-            <div class="d-flex align-items-center mb-3">
-                <!-- Dropdown removed as per user request -->
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                 <button type="button" class="btn btn-primary btn-sm"
                     style="border-radius: 8px; font-weight: 600; padding: 6px 16px;" onclick="handleBulkAction('monitor')">
                     <i class="fa-solid fa-print"></i> Print Labels
                 </button>
+                <?= stock_supply_render_per_page_dropdown($page_size) ?>
             </div>
 
             <?php include(get_stylesheet_directory() . '/model/shared/mobile_device_list.php'); ?>

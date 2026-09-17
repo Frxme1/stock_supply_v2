@@ -18,7 +18,7 @@ function device_crud_acc_sories()
     echo device_dashboard_accessories();
 
 
-    $page = 25;
+    $page = stock_supply_get_per_page(28);
     $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
     $offset = ($current_page - 1) * $page;
 
@@ -68,7 +68,7 @@ function device_crud_acc_sories()
     // Fetch Device Data
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_device_wn $search_sql");
     $total_pages = ceil($total_items / $page);
-    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY UpdatedAt DESC LIMIT $page OFFSET $offset");
+    $rows = $wpdb->get_results("SELECT * FROM $table_device_wn $search_sql ORDER BY LENGTH(DeviceID) DESC, DeviceID DESC LIMIT $page OFFSET $offset");
     // -------------------------------------------
 
     if (!function_exists('formatName')) {
@@ -219,12 +219,12 @@ function device_crud_acc_sories()
 
         <form method="POST" action="" id="bulk-action-form-acc">
             <?php wp_nonce_field('bulk_device_action_nonce', 'bulk_action_nonce'); ?>
-            <div class="d-flex align-items-center mb-3">
-                <!-- Dropdown removed as per user request -->
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                 <button type="button" class="btn btn-primary btn-sm"
                     style="border-radius: 8px; font-weight: 600; padding: 6px 16px;" onclick="handleBulkAction('acc')">
                     <i class="fa-solid fa-print"></i> Print Labels
                 </button>
+                <?= stock_supply_render_per_page_dropdown($page) ?>
             </div>
 
             <?php include(get_stylesheet_directory() . '/model/shared/mobile_device_list.php'); ?>

@@ -2829,6 +2829,11 @@ html body article[id^="post-"] {
     }
 
     /* Inputs & Animated Dropdowns */
+    #advanced-filter-form .animated-dropdown-wrapper {
+        width: 100% !important;
+        display: block !important;
+    }
+
     #advanced-filter-form .form-select-sm,
     #advanced-filter-form .search-input-modern,
     #advanced-filter-form .animated-dropdown-btn {
@@ -2868,6 +2873,8 @@ html body article[id^="post-"] {
 
     #bulk-action-form-device>.d-flex {
         align-items: center;
+        position: relative;
+        z-index: 50;
     }
 
     /* 2. Laptop Page */
@@ -2877,6 +2884,8 @@ html body article[id^="post-"] {
 
     #bulk-action-form-laptop>.d-flex {
         align-items: center;
+        position: relative;
+        z-index: 50;
     }
 
     /* 3. Monitor Page */
@@ -2886,6 +2895,8 @@ html body article[id^="post-"] {
 
     #bulk-action-form-monitor>.d-flex {
         align-items: center;
+        position: relative;
+        z-index: 50;
     }
 
     /* 4. Accessories Page */
@@ -2895,6 +2906,8 @@ html body article[id^="post-"] {
 
     #bulk-action-form-acc>.d-flex {
         align-items: center;
+        position: relative;
+        z-index: 50;
     }
 
 
